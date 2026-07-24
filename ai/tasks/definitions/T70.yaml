@@ -1,0 +1,10 @@
+{
+  "id": "T70",
+  "title": "FastAPI backend contract",
+  "depends_on": ["T33", "T51", "T60"],
+  "resource_locks": [],
+  "objective": "Expose backend-neutral local generation and capability metadata through FastAPI.",
+  "owned_paths": ["apps/api/", "src/slm_lab/backends/base.py", "tests/api/"],
+  "outputs": ["OpenAI-compatible local API", "Backend capability schema", "API conformance tests"],
+  "acceptance": ["Apple, CUDA, and Qualcomm adapters follow one explicit contract", "Remote hosted jobs are not presented as local token backends", "API tests pass without paid services"]
+}

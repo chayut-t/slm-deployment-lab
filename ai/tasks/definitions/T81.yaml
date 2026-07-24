@@ -1,0 +1,10 @@
+{
+  "id": "T81",
+  "title": "Final evaluation and report",
+  "depends_on": ["T13", "T43", "T52", "T60"],
+  "resource_locks": ["t9_heavy_io"],
+  "objective": "Run frozen evaluation and produce an evidence-backed cross-platform report.",
+  "owned_paths": ["results/processed/", "results/plots/", "docs/results/final-report.md"],
+  "outputs": ["Numerical and quality evaluation", "Cross-platform performance plots", "Final limitations-aware report"],
+  "acceptance": ["Results regenerate from committed data and manifests", "Precision and platform differences are explicit", "Every public claim traces to evidence"]
+}

@@ -1,0 +1,5 @@
+schema_version: 1
+tasks: {}
+
+# The local registry may add entries containing branch, worktree, private Codex
+# thread ID, state, and timestamps. Never put real values in this example.

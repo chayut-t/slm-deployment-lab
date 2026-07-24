@@ -1,0 +1,10 @@
+{
+  "id": "T10",
+  "title": "Token, prompt, and evaluation fixtures",
+  "depends_on": ["T00"],
+  "resource_locks": [],
+  "objective": "Freeze deterministic prompts, token sequences, canaries, and evaluation fixtures.",
+  "owned_paths": ["configs/workloads/", "tests/fixtures/", "src/slm_lab/evaluation/"],
+  "outputs": ["Pinned prompt/token fixtures", "Canary and quality subsets", "Fixture revision and hash manifest"],
+  "acceptance": ["Token IDs reproduce from the pinned tokenizer", "Fixtures cover all four context sizes", "Private or licensed data is not committed"]
+}

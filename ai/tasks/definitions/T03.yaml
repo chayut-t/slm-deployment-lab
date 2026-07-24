@@ -1,0 +1,10 @@
+{
+  "id": "T03",
+  "title": "Task manifest, generated DAG, worktree, and GitHub conventions",
+  "depends_on": ["T00"],
+  "resource_locks": [],
+  "objective": "Make multi-agent work resumable, dependency-aware, private-safe, and mechanically validated.",
+  "owned_paths": ["AGENTS.md", "PLANS.md", "ai/", ".githooks/", "scripts/ai/", "scripts/repo/", "scripts/setup/", ".github/"],
+  "outputs": ["Validated task graph and definitions", "Generated status report", "Agent rules, templates, hooks, and coordination handoff"],
+  "acceptance": ["Staged-index validation rejects graph/status drift", "Completed tasks require completed dependencies and a public matching worklog", "Fresh clones reconstruct local coordination state"]
+}

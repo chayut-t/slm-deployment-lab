@@ -1,0 +1,10 @@
+{
+  "id": "T51",
+  "title": "Custom MLX runtime",
+  "depends_on": ["T12", "T50"],
+  "resource_locks": ["apple_m4_heavy"],
+  "objective": "Implement custom MLX prefill/decode execution with explicit, GQA-aware KV-cache state.",
+  "owned_paths": ["src/slm_lab/backends/mlx/", "src/slm_lab/generation/mlx.py", "tests/mlx/"],
+  "outputs": ["Custom MLX prefill and decode runtime", "GQA-aware cache layout variants", "Correctness and multi-step generation tests"],
+  "acceptance": ["Canary and numerical checks pass", "K/V heads are not needlessly materialized", "Reusable logic lives outside notebooks"]
+}

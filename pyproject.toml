@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slm-deployment-lab"
+version = "0.1.0"
+description = "Reproducible SLM deployment engineering across Qualcomm, Apple Silicon, and NVIDIA"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "mkdocs>=1.6,<2",
+  "pytest>=8,<9",
+  "ruff>=0.6,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88

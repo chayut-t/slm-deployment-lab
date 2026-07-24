@@ -1,0 +1,10 @@
+{
+  "id": "T31",
+  "title": "Qwen Workbench results on three Qualcomm targets",
+  "depends_on": ["T22", "T30"],
+  "resource_locks": ["qai_hub_submission"],
+  "objective": "Compile, infer, and profile Qwen candidates on X Elite, IQ-9075, and 8 Elite public targets.",
+  "owned_paths": ["results/raw/qualcomm/workbench/", "results/processed/qualcomm/", "docs/results/qualcomm/"],
+  "outputs": ["X Elite compile/inference/profile evidence", "IQ-9075 comparison or exact blocker", "8 Elite comparison or exact blocker"],
+  "acceptance": ["Device and toolchain versions are captured", "Numerical output is compared with reference", "Unavailable targets are reported without proxy claims"]
+}

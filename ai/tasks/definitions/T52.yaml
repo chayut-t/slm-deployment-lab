@@ -1,0 +1,10 @@
+{
+  "id": "T52",
+  "title": "Apple profiling and context sweep",
+  "depends_on": ["T13", "T51"],
+  "resource_locks": ["apple_m4_heavy", "t9_heavy_io"],
+  "objective": "Profile custom MLX execution across context lengths and explain M4 bottlenecks.",
+  "owned_paths": ["results/raw/apple/profiles/", "results/processed/apple/", "docs/results/apple/"],
+  "outputs": ["Four-context performance sweep", "MLX and Instruments trace summaries", "Power, thermal, memory, and GQA-layout analysis"],
+  "acceptance": ["TTFT, prefill, and decode are separated", "Thermal and memory pressure are recorded", "Observed behavior is explained with profile evidence"]
+}

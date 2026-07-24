@@ -1,0 +1,10 @@
+{
+  "id": "T33",
+  "title": "Integrated floating-point Qualcomm milestone or fallback",
+  "depends_on": ["T31", "T32"],
+  "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
+  "objective": "Integrate the floating Qualcomm path or complete it with the documented smallest verified fallback.",
+  "owned_paths": ["docs/results/qualcomm/floating-milestone.md", "docs/failures/qualcomm/", "results/manifests/qualcomm/"],
+  "outputs": ["Integrated floating deployment report", "Qwen boundary analysis when needed", "Fallback decision record when triggered"],
+  "acceptance": ["Compile, inference, profiling, and generation evidence form one traceable path", "Fallback use follows the plan", "Claims distinguish Qwen evidence from fallback evidence"]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "T30",
+  "title": "Workbench compile, inference, and profile adapters",
+  "depends_on": ["T01", "T02"],
+  "resource_locks": ["qai_hub_submission"],
+  "objective": "Automate public Qualcomm Workbench job submission, artifact retrieval, and result normalization.",
+  "owned_paths": ["src/slm_lab/deployment/qualcomm/ai_hub.py", "scripts/qualcomm/", "tests/deployment/qualcomm/"],
+  "outputs": ["Compile, inference, and profile adapters", "Sanitized job/result manifests", "Mocked adapter tests"],
+  "acceptance": ["Tokens and job URLs are never logged", "Compile, inference, and profile stages are independently runnable", "Raw and normalized results remain traceable"]
+}

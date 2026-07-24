@@ -1,0 +1,10 @@
+{
+  "id": "T32",
+  "title": "Device Cloud Qwen GenieX baseline and generation loop",
+  "depends_on": ["T02"],
+  "resource_locks": ["device_cloud_x_elite"],
+  "objective": "Run the ready-made Qwen baseline and an end-to-end generation loop on Device Cloud X Elite.",
+  "owned_paths": ["src/slm_lab/deployment/qualcomm/device_cloud.py", "scripts/qualcomm/device_cloud/", "docs/results/qualcomm/device-cloud.md"],
+  "outputs": ["GenieX baseline record", "End-to-end generation commands and timings", "Device Cloud environment manifest"],
+  "acceptance": ["Generation produces valid multi-token output", "Loading, tokenization, prefill, and decode timing are distinguished", "No hosted graph timing is mislabeled end-to-end"]
+}

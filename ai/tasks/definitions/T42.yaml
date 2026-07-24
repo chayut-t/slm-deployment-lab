@@ -1,0 +1,10 @@
+{
+  "id": "T42",
+  "title": "W4A8, LPBQ, LiteMP, and sensitivity evidence",
+  "depends_on": ["T41"],
+  "resource_locks": ["qai_hub_submission"],
+  "objective": "Study low-bit and mixed-precision candidates using sensitivity evidence rather than unsupported assumptions.",
+  "owned_paths": ["configs/quantization/low-bit/", "src/slm_lab/quantization/mixed_precision.py", "docs/results/quantization/low-bit.md"],
+  "outputs": ["Layer or block sensitivity map", "W4A8 and LPBQ attempts", "Bounded LiteMP or mixed-precision candidate set"],
+  "acceptance": ["Every precision claim identifies simulated or deployed state", "Quality and memory effects are measured", "Unsupported public paths have exact blockers"]
+}

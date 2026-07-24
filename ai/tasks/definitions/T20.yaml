@@ -1,0 +1,10 @@
+{
+  "id": "T20",
+  "title": "Four-context ONNX export matrix",
+  "depends_on": ["T12"],
+  "resource_locks": ["t9_heavy_io"],
+  "objective": "Export reference static prefill/decode ONNX artifacts for every context contract.",
+  "owned_paths": ["src/slm_lab/export/", "configs/models/", "results/manifests/onnx/"],
+  "outputs": ["128, 512, 1024, and 4096 ONNX artifact manifests", "Export commands and external-data checksums", "Export shape tests"],
+  "acceptance": ["Artifacts conform to frozen contracts", "Large ONNX data remains external", "Manifests identify source revisions and hashes"]
+}

@@ -1,0 +1,6 @@
+# Generated coordination output should not dominate language or review stats.
+ai/tasks/status.generated.md linguist-generated=true
+
+# Keep scripts consistently executable across clones.
+*.sh text eol=lf
+.githooks/* text eol=lf

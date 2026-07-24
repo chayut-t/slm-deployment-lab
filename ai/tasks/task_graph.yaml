@@ -1,0 +1,378 @@
+{
+  "schema_version": 1,
+  "project_plan": "docs/project/plan.md",
+  "allowed_statuses": [
+    "planned",
+    "in_progress",
+    "blocked",
+    "completed"
+  ],
+  "resource_locks": {
+    "apple_m4_heavy": {
+      "capacity": 1
+    },
+    "t9_heavy_io": {
+      "capacity": 1
+    },
+    "qai_hub_submission": {
+      "capacity": 1
+    },
+    "device_cloud_x_elite": {
+      "capacity": 1
+    },
+    "linux_nvidia_gpu": {
+      "capacity": 1,
+      "paid_fallback_requires_approval": true
+    }
+  },
+  "tasks": [
+    {
+      "id": "T00",
+      "title": "Scope and version ADR",
+      "definition": "ai/tasks/definitions/T00.yaml",
+      "status": "planned",
+      "depends_on": [],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T01",
+      "title": "Repository, environments, artifact schemas, and T9 preflight",
+      "definition": "ai/tasks/definitions/T01.yaml",
+      "status": "planned",
+      "depends_on": ["T00"],
+      "resource_locks": ["t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T02",
+      "title": "AI Hub, Device Cloud, and GPU access report with toy jobs",
+      "definition": "ai/tasks/definitions/T02.yaml",
+      "status": "planned",
+      "depends_on": ["T00"],
+      "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T03",
+      "title": "Task manifest, generated DAG, worktree, and GitHub conventions",
+      "definition": "ai/tasks/definitions/T03.yaml",
+      "status": "planned",
+      "depends_on": ["T00"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T10",
+      "title": "Token, prompt, and evaluation fixtures",
+      "definition": "ai/tasks/definitions/T10.yaml",
+      "status": "planned",
+      "depends_on": ["T00"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T11",
+      "title": "Deterministic PyTorch reference",
+      "definition": "ai/tasks/definitions/T11.yaml",
+      "status": "planned",
+      "depends_on": ["T10"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T12",
+      "title": "Static cache and tensor contract",
+      "definition": "ai/tasks/definitions/T12.yaml",
+      "status": "planned",
+      "depends_on": ["T11"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T13",
+      "title": "Benchmark and evaluation protocol",
+      "definition": "ai/tasks/definitions/T13.yaml",
+      "status": "planned",
+      "depends_on": ["T10"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T20",
+      "title": "Four-context ONNX export matrix",
+      "definition": "ai/tasks/definitions/T20.yaml",
+      "status": "planned",
+      "depends_on": ["T12"],
+      "resource_locks": ["t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T21",
+      "title": "ONNX Runtime CPU parity and graph inspection",
+      "definition": "ai/tasks/definitions/T21.yaml",
+      "status": "planned",
+      "depends_on": ["T20"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T22",
+      "title": "QNN candidates and packaging",
+      "definition": "ai/tasks/definitions/T22.yaml",
+      "status": "planned",
+      "depends_on": ["T21"],
+      "resource_locks": ["t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T30",
+      "title": "Workbench compile, inference, and profile adapters",
+      "definition": "ai/tasks/definitions/T30.yaml",
+      "status": "planned",
+      "depends_on": ["T01", "T02"],
+      "resource_locks": ["qai_hub_submission"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T31",
+      "title": "Qwen Workbench results on three Qualcomm targets",
+      "definition": "ai/tasks/definitions/T31.yaml",
+      "status": "planned",
+      "depends_on": ["T22", "T30"],
+      "resource_locks": ["qai_hub_submission"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T32",
+      "title": "Device Cloud Qwen GenieX baseline and generation loop",
+      "definition": "ai/tasks/definitions/T32.yaml",
+      "status": "planned",
+      "depends_on": ["T02"],
+      "resource_locks": ["device_cloud_x_elite"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T33",
+      "title": "Integrated floating-point Qualcomm milestone or fallback",
+      "definition": "ai/tasks/definitions/T33.yaml",
+      "status": "planned",
+      "depends_on": ["T31", "T32"],
+      "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T40",
+      "title": "AIMET and calibration environment",
+      "definition": "ai/tasks/definitions/T40.yaml",
+      "status": "planned",
+      "depends_on": ["T10", "T20"],
+      "resource_locks": ["t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T41",
+      "title": "W8 quantization evidence",
+      "definition": "ai/tasks/definitions/T41.yaml",
+      "status": "planned",
+      "depends_on": ["T40"],
+      "resource_locks": ["qai_hub_submission"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T42",
+      "title": "W4A8, LPBQ, LiteMP, and sensitivity evidence",
+      "definition": "ai/tasks/definitions/T42.yaml",
+      "status": "planned",
+      "depends_on": ["T41"],
+      "resource_locks": ["qai_hub_submission"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T43",
+      "title": "Quantized compile, inference, and profile",
+      "definition": "ai/tasks/definitions/T43.yaml",
+      "status": "planned",
+      "depends_on": ["T33", "T42"],
+      "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T50",
+      "title": "MLX-LM baseline",
+      "definition": "ai/tasks/definitions/T50.yaml",
+      "status": "planned",
+      "depends_on": ["T11"],
+      "resource_locks": ["apple_m4_heavy"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T51",
+      "title": "Custom MLX runtime",
+      "definition": "ai/tasks/definitions/T51.yaml",
+      "status": "planned",
+      "depends_on": ["T12", "T50"],
+      "resource_locks": ["apple_m4_heavy"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T52",
+      "title": "Apple profiling and context sweep",
+      "definition": "ai/tasks/definitions/T52.yaml",
+      "status": "planned",
+      "depends_on": ["T13", "T51"],
+      "resource_locks": ["apple_m4_heavy", "t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T60",
+      "title": "ONNX Runtime CUDA context sweep",
+      "definition": "ai/tasks/definitions/T60.yaml",
+      "status": "planned",
+      "depends_on": ["T02", "T13", "T20"],
+      "resource_locks": ["linux_nvidia_gpu", "t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T70",
+      "title": "FastAPI backend contract",
+      "definition": "ai/tasks/definitions/T70.yaml",
+      "status": "planned",
+      "depends_on": ["T33", "T51", "T60"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T71",
+      "title": "React UI and local demo",
+      "definition": "ai/tasks/definitions/T71.yaml",
+      "status": "planned",
+      "depends_on": ["T70"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T72",
+      "title": "Manual GitHub Actions AI Hub workflow",
+      "definition": "ai/tasks/definitions/T72.yaml",
+      "status": "planned",
+      "depends_on": ["T03", "T30"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T80",
+      "title": "Integrated guides, notebooks, and MkDocs",
+      "definition": "ai/tasks/definitions/T80.yaml",
+      "status": "planned",
+      "depends_on": ["T03", "T43", "T52", "T60", "T72"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T81",
+      "title": "Final evaluation and report",
+      "definition": "ai/tasks/definitions/T81.yaml",
+      "status": "planned",
+      "depends_on": ["T13", "T43", "T52", "T60"],
+      "resource_locks": ["t9_heavy_io"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
+      "id": "T82",
+      "title": "Reproduction and release audit",
+      "definition": "ai/tasks/definitions/T82.yaml",
+      "status": "planned",
+      "depends_on": ["T71", "T72", "T80", "T81"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    }
+  ]
+}

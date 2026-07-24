@@ -1,0 +1,10 @@
+{
+  "id": "T72",
+  "title": "Manual GitHub Actions AI Hub workflow",
+  "depends_on": ["T03", "T30"],
+  "resource_locks": [],
+  "objective": "Teach and automate manually dispatched Qualcomm jobs after the local path is stable.",
+  "owned_paths": [".github/workflows/qualcomm-benchmark.yml", "docs/learning/github_actions_for_ai_hub.md", "tests/workflows/"],
+  "outputs": ["workflow_dispatch Qualcomm workflow", "Actions learning guide", "Workflow validation tests"],
+  "acceptance": ["Secrets are never exposed to untrusted forks", "Inputs select target, context, precision, and stage", "Local scripts remain the implementation source"]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "T40",
+  "title": "AIMET and calibration environment",
+  "depends_on": ["T10", "T20"],
+  "resource_locks": ["t9_heavy_io"],
+  "objective": "Build a reproducible AIMET environment and freeze representative calibration inputs.",
+  "owned_paths": ["environments/linux-aimet/", "configs/quantization/calibration.yaml", "src/slm_lab/quantization/calibration.py"],
+  "outputs": ["Pinned AIMET environment", "Calibration corpus manifest", "Calibration preprocessing tests"],
+  "acceptance": ["Calibration revision and preprocessing are reproducible", "Data licensing is documented", "Baseline model parity is checked before quantization"]
+}

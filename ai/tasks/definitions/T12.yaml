@@ -1,0 +1,10 @@
+{
+  "id": "T12",
+  "title": "Static cache and tensor contract",
+  "depends_on": ["T11"],
+  "resource_locks": [],
+  "objective": "Freeze static prefill/decode tensor and KV-cache contracts for all context variants.",
+  "owned_paths": ["src/slm_lab/contracts/", "docs/architecture/", "tests/contracts/"],
+  "outputs": ["Prefill/decode input-output contracts", "GQA-aware KV-cache shape contract", "Contract conformance tests"],
+  "acceptance": ["Contracts cover 128, 512, 1024, and 4096 contexts", "Cache updates reproduce the PyTorch reference", "Tensor names, dtypes, and layouts are explicit"]
+}

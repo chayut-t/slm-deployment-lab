@@ -1,0 +1,10 @@
+{
+  "id": "T71",
+  "title": "React UI and local demo",
+  "depends_on": ["T70"],
+  "resource_locks": [],
+  "objective": "Build a lightweight local interface for generation, backend metadata, and benchmark evidence.",
+  "owned_paths": ["apps/web/", "docs/assets/demo/"],
+  "outputs": ["React and TypeScript UI", "Backend and result selectors", "Recorded local walkthrough"],
+  "acceptance": ["UI works with the Apple backend and replay adapter", "Qualcomm live mode is scoped to its supported environment", "No always-on paid endpoint is required"]
+}

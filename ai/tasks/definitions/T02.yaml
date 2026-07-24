@@ -1,0 +1,10 @@
+{
+  "id": "T02",
+  "title": "AI Hub, Device Cloud, and GPU access report with toy jobs",
+  "depends_on": ["T00"],
+  "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
+  "objective": "Prove public platform access and record current devices, quotas, versions, and bounded blockers.",
+  "owned_paths": ["docs/results/access/", "docs/failures/access/", "results/hosts/"],
+  "outputs": ["Sanitized public-access report", "Toy Workbench compile, inference, and profile evidence", "Device Cloud and free-GPU availability record"],
+  "acceptance": ["No access capability is assumed without evidence", "Toy Workbench lifecycle is exercised", "Paid GPU fallback is documented but not launched without approval"]
+}

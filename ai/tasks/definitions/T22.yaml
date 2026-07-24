@@ -1,0 +1,10 @@
+{
+  "id": "T22",
+  "title": "QNN candidates and packaging",
+  "depends_on": ["T21"],
+  "resource_locks": ["t9_heavy_io"],
+  "objective": "Transform reference exports into compiler-oriented QNN candidates without obscuring source parity.",
+  "owned_paths": ["src/slm_lab/graph/qnn/", "src/slm_lab/deployment/qualcomm/", "results/manifests/qnn/"],
+  "outputs": ["QNN candidate graph packages", "Transformation manifest", "Packaging and checksum commands"],
+  "acceptance": ["Reference and QNN-candidate artifacts remain distinct", "Every transformation is recorded", "Packages are ready for Workbench submission"]
+}

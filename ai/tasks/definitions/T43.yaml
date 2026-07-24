@@ -1,0 +1,10 @@
+{
+  "id": "T43",
+  "title": "Quantized compile, inference, and profile",
+  "depends_on": ["T33", "T42"],
+  "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
+  "objective": "Compile, execute, profile, and compare selected W8 and low-bit or mixed Qualcomm candidates.",
+  "owned_paths": ["results/raw/qualcomm/quantized/", "results/processed/qualcomm/quantized/", "docs/results/qualcomm/quantized.md"],
+  "outputs": ["Deployable W8 profile", "Deployable low-bit or mixed profile or bounded fallback", "Quality-latency-memory comparison"],
+  "acceptance": ["Artifact, compiler, runtime, and device identities are recorded", "At least W8 completes the full path", "Low-bit limitations are reported without overstating deployment"]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "T82",
+  "title": "Reproduction and release audit",
+  "depends_on": ["T71", "T72", "T80", "T81"],
+  "resource_locks": [],
+  "objective": "Verify clean reproduction, privacy, licenses, documentation, demo, and portfolio claims.",
+  "owned_paths": ["README.md", "LICENSE", "docs/project/release-checklist.md", "ai/handoffs/coordinator.md"],
+  "outputs": ["Clean-checkout reproduction record", "Secret, privacy, artifact, and license audit", "Release-ready README, demo, and resume bullets"],
+  "acceptance": ["Portable checks pass from a clean checkout", "Private and large artifacts are absent from Git", "Resume and README claims do not exceed measured evidence"]
+}

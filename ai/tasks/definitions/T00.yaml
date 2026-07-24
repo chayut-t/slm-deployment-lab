@@ -1,0 +1,10 @@
+{
+  "id": "T00",
+  "title": "Scope and version ADR",
+  "depends_on": [],
+  "resource_locks": [],
+  "objective": "Freeze the primary model, tokenizer, toolchain-version policy, and project scope.",
+  "owned_paths": ["docs/decisions/", "configs/models/"],
+  "outputs": ["docs/decisions/0001-model-and-version-pins.md", "configs/models/qwen3-0.6b.yaml"],
+  "acceptance": ["Immutable model and tokenizer revisions are recorded", "Required runtime and compiler version fields are defined", "Scope matches docs/project/plan.md"]
+}

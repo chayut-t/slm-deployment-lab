@@ -1,0 +1,10 @@
+{
+  "id": "T50",
+  "title": "MLX-LM baseline",
+  "depends_on": ["T11"],
+  "resource_locks": ["apple_m4_heavy"],
+  "objective": "Establish a correct, versioned MLX-LM generation and performance baseline on the current M4.",
+  "owned_paths": ["environments/macos-m4/", "src/slm_lab/backends/mlx_baseline.py", "results/raw/apple/baseline/"],
+  "outputs": ["MLX-LM parity report", "M4 host and runtime manifest", "Baseline latency and memory measurements"],
+  "acceptance": ["Outputs pass canary checks", "Exact Mac and MLX versions are recorded", "No ANE execution claim is made"]
+}

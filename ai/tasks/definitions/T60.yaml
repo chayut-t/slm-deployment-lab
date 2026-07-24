@@ -1,0 +1,10 @@
+{
+  "id": "T60",
+  "title": "ONNX Runtime CUDA context sweep",
+  "depends_on": ["T02", "T13", "T20"],
+  "resource_locks": ["linux_nvidia_gpu", "t9_heavy_io"],
+  "objective": "Run the shared ONNX workloads on NVIDIA CUDA and evaluate provider placement and I/O binding.",
+  "owned_paths": ["environments/linux-cuda/", "src/slm_lab/backends/onnx_cuda.py", "docs/results/nvidia/"],
+  "outputs": ["CUDA environment manifest", "Four-context ORT CUDA results", "Ordinary-feed versus I/O-binding comparison"],
+  "acceptance": ["Unexpected CPU fallback fails the benchmark", "CUDA synchronization and transfer accounting are explicit", "Paid GPU use occurs only after approval"]
+}

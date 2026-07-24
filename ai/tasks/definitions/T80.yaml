@@ -1,0 +1,10 @@
+{
+  "id": "T80",
+  "title": "Integrated guides, notebooks, and MkDocs",
+  "depends_on": ["T03", "T43", "T52", "T60", "T72"],
+  "resource_locks": [],
+  "objective": "Integrate hardware-focused guides, runnable notebooks, and a navigable documentation site.",
+  "owned_paths": ["docs/learning/", "notebooks/", "mkdocs.yml"],
+  "outputs": ["Phase-aligned engineering guides", "Runnable experiment notebooks", "MkDocs site"],
+  "acceptance": ["Guides link primary references, code, notebooks, and evidence", "Notebooks use reusable package logic", "Documentation builds from a clean checkout"]
+}

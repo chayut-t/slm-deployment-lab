@@ -1,0 +1,10 @@
+{
+  "id": "T11",
+  "title": "Deterministic PyTorch reference",
+  "depends_on": ["T10"],
+  "resource_locks": [],
+  "objective": "Implement deterministic full-forward and cached autoregressive reference execution.",
+  "owned_paths": ["src/slm_lab/models/", "src/slm_lab/generation/", "tests/reference/"],
+  "outputs": ["PyTorch full-forward reference", "Cached decode reference", "Deterministic numerical fixtures"],
+  "acceptance": ["Full and cached logits satisfy frozen tolerances", "Multi-token generation is deterministic", "Reference commands and versions are recorded"]
+}

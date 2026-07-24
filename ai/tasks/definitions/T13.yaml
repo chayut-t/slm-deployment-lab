@@ -1,0 +1,10 @@
+{
+  "id": "T13",
+  "title": "Benchmark and evaluation protocol",
+  "depends_on": ["T10"],
+  "resource_locks": [],
+  "objective": "Freeze numerical, quality, latency, memory, power, and reporting methodology.",
+  "owned_paths": ["configs/workloads/", "src/slm_lab/benchmark/", "docs/learning/deployment_benchmarking.md"],
+  "outputs": ["Benchmark protocol", "Result schema and statistics policy", "Small academic benchmark subset"],
+  "acceptance": ["Warm-up, repetition, synchronization, and percentiles are fixed", "Single-graph and end-to-end timing remain distinct", "Cross-platform claims retain system differences"]
+}

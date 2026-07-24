@@ -1,0 +1,10 @@
+{
+  "id": "TNN",
+  "title": "Short task title",
+  "depends_on": [],
+  "resource_locks": [],
+  "objective": "Concrete observable outcome",
+  "owned_paths": ["path/owned/by/task/"],
+  "outputs": ["Committed or checksummed deliverable"],
+  "acceptance": ["Evidence-backed completion criterion"]
+}

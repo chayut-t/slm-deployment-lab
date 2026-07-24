@@ -1,0 +1,10 @@
+{
+  "id": "T01",
+  "title": "Repository, environments, artifact schemas, and T9 preflight",
+  "depends_on": ["T00"],
+  "resource_locks": ["t9_heavy_io"],
+  "objective": "Create reproducible local environments, artifact schemas, and storage preflight checks.",
+  "owned_paths": ["pyproject.toml", "environments/", "configs/storage/", "src/slm_lab/manifests/"],
+  "outputs": ["Pinned environment definitions", "Artifact and host-manifest schemas", "T9 mount and free-space preflight"],
+  "acceptance": ["Clean environment setup is documented", "T9 preflight passes on the primary machine", "Manifest schemas validate representative fixtures"]
+}

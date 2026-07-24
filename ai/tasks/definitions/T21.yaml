@@ -1,0 +1,10 @@
+{
+  "id": "T21",
+  "title": "ONNX Runtime CPU parity and graph inspection",
+  "depends_on": ["T20"],
+  "resource_locks": [],
+  "objective": "Validate multi-step ONNX Runtime CPU behavior and inspect graph structure for deployment risks.",
+  "owned_paths": ["src/slm_lab/backends/onnx_cpu.py", "src/slm_lab/graph/", "tests/onnx/"],
+  "outputs": ["ORT CPU parity report", "Multi-step cache validation", "Graph inspection report"],
+  "acceptance": ["ORT outputs satisfy numerical tolerances", "Multiple decode steps update cache correctly", "Unsupported or dynamic patterns are identified"]
+}

@@ -1,0 +1,38 @@
+# Local AI workspace: drafts, raw logs, private registries, and feedback
+.ai-local/
+
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# macOS and editor state
+.DS_Store
+.idea/
+*.swp
+
+# Python and notebook state
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+
+# Frontend dependencies and builds
+node_modules/
+dist/
+
+# Large local artifacts. The root entry may be a symlink to external storage.
+/artifacts
+/models/
+*.onnx
+*.onnx.data
+*.bin
+*.dlc
+*.qnn
+*.tar
+*.tar.gz
