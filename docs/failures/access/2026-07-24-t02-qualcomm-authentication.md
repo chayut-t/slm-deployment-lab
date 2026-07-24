@@ -63,15 +63,45 @@ criterion is marked satisfied.
 1. Sign in to Qualcomm in the retained Chrome Workbench and Device Cloud tabs.
 2. In Workbench, create or retrieve an API token under Account → Settings →
    API Token.
-3. Configure the token locally using Qualcomm's documented
-   `qai-hub configure --api_token ...` command. Do not paste it into chat or
-   store it in the repository.
-4. Verify authentication with `qai-hub list-devices` and
-   `qai-hub list-frameworks`; keep raw output under `.ai-local/`.
-5. Run one minimal supported compile → inference → profile flow, recording
+3. Create an ignored, isolated Python 3.11 environment. The host's system
+   Python 3.9.6 is below `qai-hub` 0.53.0's Python 3.10 minimum:
+
+   ```bash
+   uv venv --python 3.11 .ai-local/envs/qai-hub-0.53.0
+   uv pip install \
+     --python .ai-local/envs/qai-hub-0.53.0/bin/python \
+     "qai-hub==0.53.0"
+   .ai-local/envs/qai-hub-0.53.0/bin/qai-hub --version
+   ```
+
+   The version command must report `0.53.0` before continuing. Do not install
+   into the system Python or add this discovery-only environment to the
+   project lockfile.
+4. Configure the token locally with the isolated executable:
+
+   ```bash
+   read -r -s "T02_QAI_HUB_TOKEN?Qualcomm credential: "
+   printf '\n'
+   .ai-local/envs/qai-hub-0.53.0/bin/qai-hub configure \
+     --api_token "$T02_QAI_HUB_TOKEN"
+   unset T02_QAI_HUB_TOKEN
+   ```
+
+   This interactive form keeps the literal value out of shell history and
+   unsets the task-specific variable immediately afterward. Do not paste the
+   token into chat, commit it, or preserve it in a script.
+5. Verify authentication with the same isolated executable, keeping raw output
+   under `.ai-local/`:
+
+   ```bash
+   .ai-local/envs/qai-hub-0.53.0/bin/qai-hub list-devices
+   .ai-local/envs/qai-hub-0.53.0/bin/qai-hub list-frameworks
+   ```
+
+6. Run one minimal supported compile → inference → profile flow, recording
    sanitized target/version/status/latency evidence and service turnaround
    separately.
-6. Observe Device Cloud minutes and X Elite availability without starting a
+7. Observe Device Cloud minutes and X Elite availability without starting a
    session; T32 owns the Qwen/GenieX execution path.
 
 If the account itself is pending approval, record the request date and service

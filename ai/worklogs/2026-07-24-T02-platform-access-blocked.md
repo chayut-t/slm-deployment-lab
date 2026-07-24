@@ -26,13 +26,16 @@ or hardware access.
   like a completed Workbench lifecycle, preserve unknown values as null, scan
   the evidence for common private markers, and require the paid command to
   remain unexecuted.
+- Corrected the reviewed restart path to create an ignored Python 3.11
+  environment, install exact `qai-hub==0.53.0`, and verify the client version
+  before any local token configuration.
 - Kept the execution plan active with restart instructions and marked T02
   blocked with no completion worklog reference.
 
 ## Verification
 
 - Command: `python3 -m unittest tests.repo.test_access_evidence -v`
-- Result: 5 tests passed.
+- Result: 6 tests passed.
 - Command: `python3 scripts/ai/render_task_status.py --check`
 - Result: passed after regenerating task status.
 - Command: `python3 scripts/repo/check_hygiene.py --all`

@@ -103,9 +103,28 @@ lifecycle when authentication permits it.
 
 Read this plan and the public access/failure reports. Have the user sign in to
 Qualcomm in the retained Workbench and Device Cloud Chrome tabs, then configure
-an API token locally without placing it in chat or the repository. Verify
-`qai-hub list-devices` and `qai-hub list-frameworks`, keeping raw output under
-`.ai-local/`. Identify a minimal supported toy model and run exactly one free
-compile, inference, and profile lifecycle. Sanitize all durable evidence before
-placing it under the owned public paths, rerun every repository gate, then move
-this plan to `ai/plans/completed/` only if all T02 acceptance criteria pass.
+an API token locally without placing it in chat or the repository. The system
+Python 3.9.6 is unsupported by `qai-hub` 0.53.0, so first create and verify an
+ignored isolated client:
+
+```bash
+uv venv --python 3.11 .ai-local/envs/qai-hub-0.53.0
+uv pip install \
+  --python .ai-local/envs/qai-hub-0.53.0/bin/python \
+  "qai-hub==0.53.0"
+.ai-local/envs/qai-hub-0.53.0/bin/qai-hub --version
+read -r -s "T02_QAI_HUB_TOKEN?Qualcomm credential: "
+printf '\n'
+.ai-local/envs/qai-hub-0.53.0/bin/qai-hub configure \
+  --api_token "$T02_QAI_HUB_TOKEN"
+unset T02_QAI_HUB_TOKEN
+.ai-local/envs/qai-hub-0.53.0/bin/qai-hub list-devices
+.ai-local/envs/qai-hub-0.53.0/bin/qai-hub list-frameworks
+```
+
+Require the version check to report `0.53.0`. Keep the literal token and raw
+device/framework output under the local privacy boundary, never in chat or
+Git. Identify a minimal supported toy model and run exactly one free compile,
+inference, and profile lifecycle. Sanitize all durable evidence before placing
+it under the owned public paths, rerun every repository gate, then move this
+plan to `ai/plans/completed/` only if all T02 acceptance criteria pass.
