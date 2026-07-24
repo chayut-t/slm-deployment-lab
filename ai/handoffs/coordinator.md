@@ -10,15 +10,18 @@ Updated: 2026-07-24
 - An independent review reproduced the public metadata hashes, identified an
   artifact-field mismatch, and passed the corrected contract and provenance
   tests on follow-up.
-- `T01`, `T02`, and `T03` are in progress on isolated task branches. T03's
-  agent rules, task graph, worklogs, local/private separation, and repository
-  automation were drafted earlier and are now being validated.
+- `T01` and `T02` remain in progress on isolated task branches.
+- `T03` is now completed on `codex/T03-agent-workflow`: regression tests
+  demonstrate staged graph/status drift rejection, dependency and public
+  worklog completion gates, and clean-clone reconstruction of ignored local
+  coordination state.
 
 ## Active work
 
 - `T01` on `codex/T01-environments-manifests`.
 - `T02` on `codex/T02-platform-access`.
-- `T03` on `codex/T03-agent-workflow`.
+- `T03` is ready for independent review and integration from
+  `codex/T03-agent-workflow`.
 
 T10 remains ready but unassigned. Respect the `t9_heavy_io`,
 `qai_hub_submission`, and `device_cloud_x_elite` resource locks.
@@ -30,5 +33,6 @@ T10 remains ready but unassigned. Respect the `t9_heavy_io`,
    `python3 scripts/ai/render_task_status.py --check`.
 3. Inspect `git status --short --ignored`.
 4. Start from the commit completing T00.
-5. Assign one ready task per branch/worktree and record real task/thread
+5. Integrate reviewed task branches in topological order, then assign one ready
+   task per branch/worktree and record real task/thread
    identity only in `.ai-local/tasks/thread-registry.yaml`.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -89,6 +90,15 @@ class TaskGraphValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Task:"):
             self.validate(graph, read_text)
 
+    def test_completed_task_requires_existing_public_worklog(self) -> None:
+        graph = copy.deepcopy(self.graph)
+        task = next(item for item in graph["tasks"] if item["id"] == "T10")
+        task["status"] = "completed"
+        task["worklog"] = "ai/worklogs/missing.md"
+
+        with self.assertRaisesRegex(ValueError, "worklog does not exist"):
+            self.validate(graph)
+
     def test_plan_parity_rejects_missing_edge(self) -> None:
         graph, tasks = self.validate(self.graph)
         plan = PLAN_PATH.read_text(encoding="utf-8").replace(
@@ -154,6 +164,16 @@ class GitSnapshotTests(unittest.TestCase):
             check=False,
         )
 
+    @staticmethod
+    def run_pre_commit(repository: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            (str(repository / ".githooks" / "pre-commit"),),
+            cwd=repository,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
     def test_complete_initial_staged_snapshot_passes(self) -> None:
         repository = self.copy_repository()
         self.run_git(repository, "init", "-q")
@@ -185,8 +205,10 @@ class GitSnapshotTests(unittest.TestCase):
         repository = self.make_repository()
         graph_path = repository / "ai" / "tasks" / "task_graph.yaml"
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
-        graph["tasks"][0]["status"] = "blocked"
-        graph["tasks"][0]["worklog"] = None
+        task = next(item for item in graph["tasks"] if item["id"] == "T10")
+        task["status"] = "in_progress"
+        task["owner"] = "Repository Test"
+        task["branch"] = "codex/T10-test"
         graph_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
         self.run_git(repository, "add", "ai/tasks/task_graph.yaml")
 
@@ -197,9 +219,13 @@ class GitSnapshotTests(unittest.TestCase):
         ).stdout
         graph_path.write_text(baseline, encoding="utf-8")
 
-        result = self.run_hygiene(repository)
+        result = self.run_pre_commit(repository)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("staged task graph", result.stderr)
+        self.assertIn(
+            "staged ai/tasks/status.generated.md does not match "
+            "the staged task graph",
+            result.stderr,
+        )
 
     def test_force_added_artifact_symlink_is_rejected(self) -> None:
         repository = self.make_repository()
@@ -215,32 +241,53 @@ class GitSnapshotTests(unittest.TestCase):
             result.stderr,
         )
 
-    def test_bootstrap_recreates_local_coordination_files(self) -> None:
+    def test_fresh_clone_installer_reconstructs_local_coordination_state(
+        self,
+    ) -> None:
         repository = self.make_repository()
+        clone = Path(self.addCleanupDirectory()) / "fresh-clone"
+        self.run_git(
+            repository.parent,
+            "clone",
+            "-q",
+            str(repository),
+            str(clone),
+        )
         missing_artifact_root = Path(self.addCleanupDirectory()) / "unmounted"
         result = subprocess.run(
-            (
-                sys.executable,
-                "scripts/setup/bootstrap_local_state.py",
-                "--artifact-root",
-                str(missing_artifact_root),
-                "--quiet",
-            ),
-            cwd=repository,
+            ("./scripts/setup/install_git_hooks.sh",),
+            cwd=clone,
+            env={
+                **os.environ,
+                "SLM_LAB_ARTIFACT_ROOT": str(missing_artifact_root),
+            },
             text=True,
             capture_output=True,
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue((repository / ".ai-local" / "README.md").is_file())
-        self.assertTrue(
-            (
-                repository
-                / ".ai-local"
-                / "tasks"
-                / "thread-registry.yaml"
-            ).is_file()
+        registry = clone / ".ai-local" / "tasks" / "thread-registry.yaml"
+        self.assertTrue((clone / ".ai-local" / "README.md").is_file())
+        self.assertEqual(
+            registry.read_text(encoding="utf-8"),
+            (clone / "ai" / "tasks" / "thread_registry.example.yaml").read_text(
+                encoding="utf-8"
+            ),
         )
+        self.assertEqual(
+            self.run_git(clone, "config", "--get", "core.hooksPath").stdout.strip(),
+            ".githooks",
+        )
+        ignored = self.run_git(
+            clone,
+            "check-ignore",
+            ".ai-local/tasks/thread-registry.yaml",
+        )
+        self.assertEqual(
+            ignored.stdout.strip(),
+            ".ai-local/tasks/thread-registry.yaml",
+        )
+        self.assertEqual(self.run_git(clone, "status", "--porcelain").stdout, "")
 
 
 if __name__ == "__main__":

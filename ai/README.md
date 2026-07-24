@@ -21,3 +21,18 @@ Approved plans, reusable prompts, sanitized handoffs, task dependencies, and
 curated engineering logs belong here. Draft thinking, raw transcripts, real
 Codex task IDs, and unsanitized outputs belong under `.ai-local/`, which is
 ignored by Git.
+
+## Fresh-clone setup
+
+Run the versioned installer once after cloning:
+
+```bash
+scripts/setup/install_git_hooks.sh
+```
+
+The installer enables `.githooks/` for the clone and reconstructs the ignored
+`.ai-local/` directory tree and local thread-registry skeleton. It also creates
+the ignored `artifacts` symlink when `SLM_LAB_ARTIFACT_ROOT` points to an
+available directory. The post-checkout hook repeats the local bootstrap
+idempotently, so later branch and worktree checkouts retain the required local
+coordination structure.
