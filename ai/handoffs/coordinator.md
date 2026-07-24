@@ -10,19 +10,18 @@ Updated: 2026-07-24
 - An independent review reproduced the public metadata hashes, identified an
   artifact-field mismatch, and passed the corrected contract and provenance
   tests on follow-up.
-- `T03` remains planned, but its dependency is now satisfied. Agent rules, task
-  graph, worklogs, local/private separation, and repository automation are
-  already drafted and should be validated as part of T03.
+- `T01`, `T02`, and `T03` are in progress on isolated task branches. T03's
+  agent rules, task graph, worklogs, local/private separation, and repository
+  automation were drafted earlier and are now being validated.
 
-## Ready work
+## Active work
 
-- `T01`: repository environments, artifact schemas, and T9 preflight.
-- `T02`: AI Hub, Device Cloud, and GPU access report with bounded toy jobs.
-- `T03`: task manifest, generated DAG, worktree, and GitHub conventions.
-- `T10`: token, prompt, and evaluation fixtures from the pinned tokenizer.
+- `T01` on `codex/T01-environments-manifests`.
+- `T02` on `codex/T02-platform-access`.
+- `T03` on `codex/T03-agent-workflow`.
 
-These tasks may proceed in separate Codex tasks and worktrees. Respect the
-`t9_heavy_io`, `qai_hub_submission`, and `device_cloud_x_elite` resource locks.
+T10 remains ready but unassigned. Respect the `t9_heavy_io`,
+`qai_hub_submission`, and `device_cloud_x_elite` resource locks.
 
 ## Resume
 
