@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "model_id": "Qwen/Qwen3-0.6B",
+  "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "source_artifact_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "git_commit": "977715a9856dfa4b2dedd606abafd09283affeb9",
+  "task_id": "T20",
+  "exporter": "torch.onnx",
+  "exporter_version": "2.7.1",
+  "opset": 18,
+  "input_contract": {
+    "name": "static-prefill-v1"
+  },
+  "cache_contract": {
+    "layout": "per-layer-bhsd"
+  },
+  "context_length": 128,
+  "precision": "fp16",
+  "quantization": null,
+  "calibration_dataset_revision": null,
+  "runtime": "onnxruntime",
+  "runtime_version": "1.22.0",
+  "qairt_version": null,
+  "target_device": "cpu-reference",
+  "device_type": "host-cpu",
+  "compile_options": {},
+  "profile_options": {},
+  "provider_options": {
+    "provider": "CPUExecutionProvider"
+  },
+  "host_manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "created_at": "2026-07-24T18:30:00Z"
+}

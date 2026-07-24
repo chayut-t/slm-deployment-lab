@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slm-lab.local/schemas/artifact-v1.schema.json",
+  "title": "SLM Lab artifact manifest v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "model_id",
+    "model_revision",
+    "tokenizer_revision",
+    "chat_template_sha256",
+    "source_artifact_sha256",
+    "git_commit",
+    "task_id",
+    "exporter",
+    "exporter_version",
+    "opset",
+    "input_contract",
+    "cache_contract",
+    "context_length",
+    "precision",
+    "quantization",
+    "calibration_dataset_revision",
+    "runtime",
+    "runtime_version",
+    "qairt_version",
+    "target_device",
+    "device_type",
+    "compile_options",
+    "profile_options",
+    "provider_options",
+    "host_manifest_sha256",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_revision": {
+      "$ref": "#/$defs/git_sha"
+    },
+    "tokenizer_revision": {
+      "$ref": "#/$defs/git_sha"
+    },
+    "chat_template_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_artifact_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "git_commit": {
+      "$ref": "#/$defs/git_sha"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^T[0-9]+$"
+    },
+    "exporter": {
+      "$ref": "#/$defs/nullable_nonempty_string"
+    },
+    "exporter_version": {
+      "$ref": "#/$defs/nullable_exact_version"
+    },
+    "opset": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "input_contract": {
+      "type": "object"
+    },
+    "cache_contract": {
+      "type": "object"
+    },
+    "context_length": {
+      "enum": [
+        128,
+        512,
+        1024,
+        4096
+      ]
+    },
+    "precision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quantization": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "calibration_dataset_revision": {
+      "$ref": "#/$defs/nullable_nonempty_string"
+    },
+    "runtime": {
+      "$ref": "#/$defs/nullable_nonempty_string"
+    },
+    "runtime_version": {
+      "$ref": "#/$defs/nullable_exact_version"
+    },
+    "qairt_version": {
+      "$ref": "#/$defs/nullable_exact_version"
+    },
+    "target_device": {
+      "$ref": "#/$defs/nullable_nonempty_string"
+    },
+    "device_type": {
+      "$ref": "#/$defs/nullable_nonempty_string"
+    },
+    "compile_options": {
+      "type": "object"
+    },
+    "profile_options": {
+      "type": "object"
+    },
+    "provider_options": {
+      "type": "object"
+    },
+    "host_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "git_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "nullable_nonempty_string": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "nullable_exact_version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "not": {
+        "enum": [
+          "latest",
+          "main",
+          "master"
+        ]
+      }
+    }
+  }
+}

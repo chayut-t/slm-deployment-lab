@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "python": {
+    "implementation": "CPython",
+    "version": "3.11.13",
+    "version_file": ".python-version"
+  },
+  "package_manager": {
+    "name": "uv",
+    "version": "0.11.32",
+    "lock_file": "uv.lock"
+  },
+  "sync_command": "uv sync --extra dev --locked",
+  "large_artifacts_in_environment": false,
+  "platform_extensions": {
+    "macos_m4": {
+      "owner_task": "T50",
+      "status": "deferred_until_compatibility_smoke_test"
+    },
+    "linux_cuda": {
+      "owner_task": "T60",
+      "status": "deferred_until_compatibility_smoke_test"
+    },
+    "linux_aimet": {
+      "owner_task": "T40",
+      "status": "deferred_until_compatibility_smoke_test"
+    },
+    "qualcomm_hosted": {
+      "owner_task": "T30",
+      "status": "deferred_until_hosted_version_capture"
+    }
+  }
+}

@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slm-lab.local/schemas/host-v1.schema.json",
+  "title": "SLM Lab sanitized host manifest v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "host_id",
+    "captured_at",
+    "operating_system",
+    "hardware",
+    "project_environment",
+    "tools",
+    "artifact_storage",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "host_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    },
+    "operating_system": {
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "build",
+        "kernel",
+        "architecture"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "$ref": "#/$defs/exact_value"
+        },
+        "build": {
+          "$ref": "#/$defs/exact_value"
+        },
+        "kernel": {
+          "$ref": "#/$defs/exact_value"
+        },
+        "architecture": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "hardware": {
+      "type": "object",
+      "required": [
+        "product",
+        "model_identifier",
+        "chip",
+        "cpu",
+        "gpu",
+        "neural_engine",
+        "unified_memory_bytes",
+        "memory_bandwidth_bytes_per_second"
+      ],
+      "properties": {
+        "product": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chip": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpu": {
+          "type": "object"
+        },
+        "gpu": {
+          "type": "object"
+        },
+        "neural_engine": {
+          "type": "object"
+        },
+        "unified_memory_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "memory_bandwidth_bytes_per_second": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "project_environment": {
+      "type": "object",
+      "required": [
+        "python_version",
+        "package_lock",
+        "package_lock_sha256"
+      ],
+      "properties": {
+        "python_version": {
+          "$ref": "#/$defs/exact_value"
+        },
+        "package_lock": {
+          "const": "uv.lock"
+        },
+        "package_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/tool_record"
+      }
+    },
+    "artifact_storage": {
+      "type": "object",
+      "required": [
+        "artifact_root_env",
+        "primary_machine_root",
+        "mount_point",
+        "volume_name",
+        "filesystem",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "artifact_root_env": {
+          "const": "SLM_LAB_ARTIFACT_ROOT"
+        },
+        "primary_machine_root": {
+          "type": "string",
+          "pattern": "^/Volumes/T9/"
+        },
+        "mount_point": {
+          "const": "/Volumes/T9"
+        },
+        "volume_name": {
+          "const": "T9"
+        },
+        "filesystem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "sanitized",
+        "excluded_fields"
+      ],
+      "properties": {
+        "sanitized": {
+          "const": true
+        },
+        "excluded_fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "exact_value": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "enum": [
+          "latest",
+          "main",
+          "master"
+        ]
+      }
+    },
+    "tool_record": {
+      "type": "object",
+      "required": [
+        "version",
+        "status",
+        "capture_command",
+        "reason"
+      ],
+      "properties": {
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "not": {
+            "enum": [
+              "latest",
+              "main",
+              "master"
+            ]
+          }
+        },
+        "status": {
+          "enum": [
+            "verified",
+            "not_installed",
+            "deferred"
+          ]
+        },
+        "capture_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "verified"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "version": {
+                "type": "null"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

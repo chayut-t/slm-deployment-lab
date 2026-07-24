@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools==80.9.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,19 +7,30 @@ name = "slm-deployment-lab"
 version = "0.1.0"
 description = "Reproducible SLM deployment engineering across Qualcomm, Apple Silicon, and NVIDIA"
 readme = "README.md"
-requires-python = ">=3.11"
-license = { file = "LICENSE" }
-dependencies = []
+requires-python = ">=3.11.13,<3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = [
+  "jsonschema==4.23.0",
+  "pyyaml==6.0.2",
+]
 
 [project.optional-dependencies]
 dev = [
-  "mkdocs>=1.6,<2",
-  "pytest>=8,<9",
-  "ruff>=0.6,<1",
+  "mkdocs==1.6.1",
+  "pytest==8.3.5",
+  "ruff==0.11.0",
 ]
+
+[project.scripts]
+slm-lab-storage-preflight = "slm_lab.manifests.storage:main"
+slm-lab-validate-manifest = "slm_lab.manifests.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"slm_lab.manifests" = ["schemas/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

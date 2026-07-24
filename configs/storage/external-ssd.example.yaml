@@ -1,20 +1,27 @@
-schema_version: 1
-artifact_root_env: SLM_LAB_ARTIFACT_ROOT
-primary_machine_default: /Volumes/T9/slm-deployment-lab
-repository_link: artifacts
-commit_policy:
-  large_artifacts: false
-  manifests: true
-  checksums: true
-  small_metrics: true
-expected_directories:
-  - hf-cache
-  - models
-  - onnx/reference
-  - onnx/qnn-candidate
-  - onnx/quantized
-  - mlx
-  - qnn
-  - profiles
-  - notebook-cache
-  - task-artifacts
+{
+  "schema_version": 1,
+  "artifact_root_env": "SLM_LAB_ARTIFACT_ROOT",
+  "primary_machine_default": "/Volumes/T9/slm-deployment-lab",
+  "required_mount": "/Volumes/T9",
+  "minimum_free_bytes": 107374182400,
+  "repository_link": "artifacts",
+  "write_probe_prefix": ".slm-lab-preflight-",
+  "commit_policy": {
+    "large_artifacts": false,
+    "manifests": true,
+    "checksums": true,
+    "small_metrics": true
+  },
+  "expected_directories": [
+    "hf-cache",
+    "models",
+    "onnx/reference",
+    "onnx/qnn-candidate",
+    "onnx/quantized",
+    "mlx",
+    "qnn",
+    "profiles",
+    "notebook-cache",
+    "task-artifacts"
+  ]
+}

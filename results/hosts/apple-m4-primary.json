@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "host_id": "apple-m4-primary",
+  "captured_at": "2026-07-24T18:30:00Z",
+  "operating_system": {
+    "name": "macOS",
+    "version": "15.7.7",
+    "build": "24G720",
+    "kernel": "24.6.0",
+    "architecture": "arm64"
+  },
+  "hardware": {
+    "product": "Mac mini (2024)",
+    "model_identifier": "Mac16,10",
+    "chip": "Apple M4",
+    "cpu": {
+      "cores": 10,
+      "performance_cores": 4,
+      "efficiency_cores": 6
+    },
+    "gpu": {
+      "integrated_cores": 10
+    },
+    "neural_engine": {
+      "cores": 16
+    },
+    "unified_memory_bytes": 17179869184,
+    "memory_bandwidth_bytes_per_second": 120000000000
+  },
+  "project_environment": {
+    "python_version": "3.11.13",
+    "package_lock": "uv.lock",
+    "package_lock_sha256": "5af1e4924cad5460e8440d29ed8ec3641be62bafb45ebbbe53991bfaac72f03a"
+  },
+  "tools": {
+    "uv": {
+      "version": "0.11.32",
+      "status": "verified",
+      "capture_command": "uv --version",
+      "reason": null
+    },
+    "system_python": {
+      "version": "3.9.6",
+      "status": "verified",
+      "capture_command": "/usr/bin/python3 --version",
+      "reason": null
+    },
+    "mlx": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import mlx; print(mlx.__version__)'",
+      "reason": "T50 owns MLX version selection and compatibility evidence."
+    },
+    "mlx_lm": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import mlx_lm; print(mlx_lm.__version__)'",
+      "reason": "T50 owns MLX-LM version selection and compatibility evidence."
+    },
+    "xcode": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "xcodebuild -version",
+      "reason": "T52 owns Apple profiling-tool evidence."
+    },
+    "instruments": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "xcrun xctrace version",
+      "reason": "T52 owns Apple profiling-tool evidence."
+    }
+  },
+  "artifact_storage": {
+    "artifact_root_env": "SLM_LAB_ARTIFACT_ROOT",
+    "primary_machine_root": "/Volumes/T9/slm-deployment-lab",
+    "mount_point": "/Volumes/T9",
+    "volume_name": "T9",
+    "filesystem": "HFS+ local journaled",
+    "minimum_free_bytes": 107374182400
+  },
+  "privacy": {
+    "sanitized": true,
+    "excluded_fields": [
+      "account names",
+      "hardware serial numbers",
+      "volume UUIDs",
+      "credentials",
+      "private paths"
+    ]
+  }
+}
