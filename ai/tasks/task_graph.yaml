@@ -54,7 +54,7 @@
       "id": "T02",
       "title": "AI Hub, Device Cloud, and GPU access report with toy jobs",
       "definition": "ai/tasks/definitions/T02.yaml",
-      "status": "in_progress",
+      "status": "blocked",
       "depends_on": ["T00"],
       "resource_locks": ["qai_hub_submission", "device_cloud_x_elite"],
       "owner": "Codex T02 agent",

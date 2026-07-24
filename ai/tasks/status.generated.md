@@ -95,7 +95,7 @@ graph TD
 |---|---|---|---|---|
 | T00 — Scope and version ADR | completed | — | — | ai/worklogs/2026-07-24-T00-model-version-contract.md |
 | T01 — Repository, environments, artifact schemas, and T9 preflight | in_progress | T00 | t9_heavy_io | — |
-| T02 — AI Hub, Device Cloud, and GPU access report with toy jobs | in_progress | T00 | qai_hub_submission, device_cloud_x_elite | — |
+| T02 — AI Hub, Device Cloud, and GPU access report with toy jobs | blocked | T00 | qai_hub_submission, device_cloud_x_elite | — |
 | T03 — Task manifest, generated DAG, worktree, and GitHub conventions | in_progress | T00 | — | — |
 | T10 — Token, prompt, and evaluation fixtures | ready | T00 | — | — |
 | T11 — Deterministic PyTorch reference | blocked | T10 | — | — |
@@ -126,8 +126,8 @@ graph TD
 ## Summary
 
 - ready: 1
-- in_progress: 3
-- blocked: 24
+- in_progress: 2
+- blocked: 25
 - completed: 1
 
 ## Resource capacities

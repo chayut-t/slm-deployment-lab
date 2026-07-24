@@ -1,6 +1,6 @@
 # T02: AI Hub, Device Cloud, and GPU access report with toy jobs
 
-Status: active
+Status: active — blocked on Qualcomm authentication
 Owner: Codex T02 agent
 Updated: 2026-07-24
 
@@ -51,12 +51,13 @@ lifecycle when authentication permits it.
 ## Milestones
 
 - [ ] Record sanitized Workbench authentication, device, quota, and version
-  evidence.
+  evidence. Public versions and authentication boundary are recorded; account
+  device/quota evidence remains blocked.
 - [ ] Exercise and record one toy Workbench compile, inference, and profile
   lifecycle.
-- [ ] Confirm Device Cloud access or document the precise pending-access
+- [x] Confirm Device Cloud access or document the precise pending-access
   blocker and public target availability.
-- [ ] Record free NVIDIA options and a non-executed paid fallback.
+- [x] Record free NVIDIA options and a non-executed paid fallback.
 - [ ] Run repository gates and, only if every T02 acceptance criterion passes,
   complete the task graph entry and public worklog.
 
@@ -91,11 +92,20 @@ lifecycle when authentication permits it.
 - 2026-07-24: The base environment has no importable `qai_hub` package and no
   Qualcomm credential variable exposed to the shell. Browser-authenticated
   access and safe local installation remain to be tested.
+- 2026-07-24: The only available browser showed unauthenticated Workbench and
+  Device Cloud states. Public target/version/free-resource evidence is
+  committed without treating it as account or hardware proof.
+- 2026-07-24: Colab account UI access is available, but no GPU runtime was
+  allocated. Kaggle was not authenticated. The Runpod fallback remains an
+  unexecuted, approval-gated command template.
 
 ## Progress and restart instructions
 
-Read this plan, inspect `.ai-local/` for private observations, then test
-browser-authenticated Workbench and Device Cloud access. If Workbench access
-is usable, identify a minimal supported toy model and run exactly one free
+Read this plan and the public access/failure reports. Have the user sign in to
+Qualcomm in the retained Workbench and Device Cloud Chrome tabs, then configure
+an API token locally without placing it in chat or the repository. Verify
+`qai-hub list-devices` and `qai-hub list-frameworks`, keeping raw output under
+`.ai-local/`. Identify a minimal supported toy model and run exactly one free
 compile, inference, and profile lifecycle. Sanitize all durable evidence before
-placing it under the owned public paths.
+placing it under the owned public paths, rerun every repository gate, then move
+this plan to `ai/plans/completed/` only if all T02 acceptance criteria pass.
