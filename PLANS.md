@@ -51,5 +51,4 @@ override repository state.
 
 ## Active-plan index
 
-No task-specific execution plans are active yet. Update this section when the
-first implementation task begins.
+No task-specific execution plans are active.

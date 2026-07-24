@@ -30,13 +30,13 @@
       "id": "T00",
       "title": "Scope and version ADR",
       "definition": "ai/tasks/definitions/T00.yaml",
-      "status": "planned",
+      "status": "completed",
       "depends_on": [],
       "resource_locks": [],
-      "owner": null,
-      "branch": null,
+      "owner": "Codex",
+      "branch": "codex/T00-version-adr",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-24-T00-model-version-contract.md"
     },
     {
       "id": "T01",

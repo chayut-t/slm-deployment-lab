@@ -93,11 +93,11 @@ graph TD
 
 | Task | Status | Dependencies | Resource locks | Worklog |
 |---|---|---|---|---|
-| T00 — Scope and version ADR | ready | — | — | — |
-| T01 — Repository, environments, artifact schemas, and T9 preflight | blocked | T00 | t9_heavy_io | — |
-| T02 — AI Hub, Device Cloud, and GPU access report with toy jobs | blocked | T00 | qai_hub_submission, device_cloud_x_elite | — |
-| T03 — Task manifest, generated DAG, worktree, and GitHub conventions | blocked | T00 | — | — |
-| T10 — Token, prompt, and evaluation fixtures | blocked | T00 | — | — |
+| T00 — Scope and version ADR | completed | — | — | ai/worklogs/2026-07-24-T00-model-version-contract.md |
+| T01 — Repository, environments, artifact schemas, and T9 preflight | ready | T00 | t9_heavy_io | — |
+| T02 — AI Hub, Device Cloud, and GPU access report with toy jobs | ready | T00 | qai_hub_submission, device_cloud_x_elite | — |
+| T03 — Task manifest, generated DAG, worktree, and GitHub conventions | ready | T00 | — | — |
+| T10 — Token, prompt, and evaluation fixtures | ready | T00 | — | — |
 | T11 — Deterministic PyTorch reference | blocked | T10 | — | — |
 | T12 — Static cache and tensor contract | blocked | T11 | — | — |
 | T13 — Benchmark and evaluation protocol | blocked | T10 | — | — |
@@ -125,10 +125,10 @@ graph TD
 
 ## Summary
 
-- ready: 1
+- ready: 4
 - in_progress: 0
-- blocked: 28
-- completed: 0
+- blocked: 24
+- completed: 1
 
 ## Resource capacities
 

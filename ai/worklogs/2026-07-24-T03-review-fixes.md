@@ -5,6 +5,10 @@ Task: `T03`
 Visibility: `public`
 Status: draft
 
+> Historical snapshot: T00 was incomplete when this draft was written. T00 is
+> now complete; its completed record is
+> `ai/worklogs/2026-07-24-T00-model-version-contract.md`, and T03 is ready.
+
 ## Outcome
 
 Resolved every finding from the independent scaffold review while keeping T03

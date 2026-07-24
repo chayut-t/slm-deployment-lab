@@ -5,6 +5,11 @@ Task: `T00`
 Visibility: `public`
 Status: draft
 
+> Historical snapshot: this partial T00 record is superseded by
+> `ai/worklogs/2026-07-24-T00-model-version-contract.md`. T00 is now complete;
+> statements below about outstanding pins or blocked downstream tasks describe
+> the earlier state.
+
 ## Outcome
 
 The project scope, platform order, model priority, educational approach,

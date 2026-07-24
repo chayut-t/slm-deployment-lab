@@ -56,7 +56,7 @@ class TaskGraphValidationTests(unittest.TestCase):
 
     def test_completed_task_requires_completed_dependencies(self) -> None:
         graph = copy.deepcopy(self.graph)
-        task = next(item for item in graph["tasks"] if item["id"] == "T03")
+        task = next(item for item in graph["tasks"] if item["id"] == "T11")
         task["status"] = "completed"
         task["worklog"] = "ai/worklogs/example.md"
         with self.assertRaisesRegex(ValueError, "incomplete dependencies"):
@@ -186,6 +186,7 @@ class GitSnapshotTests(unittest.TestCase):
         graph_path = repository / "ai" / "tasks" / "task_graph.yaml"
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
         graph["tasks"][0]["status"] = "blocked"
+        graph["tasks"][0]["worklog"] = None
         graph_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
         self.run_git(repository, "add", "ai/tasks/task_graph.yaml")
 

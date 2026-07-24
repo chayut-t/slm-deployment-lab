@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "Qwen/Qwen3-0.6B",
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "repository_url": "https://huggingface.co/Qwen/Qwen3-0.6B",
+    "license": "Apache-2.0",
+    "weights_format": "safetensors",
+    "reference_dtype": "bfloat16",
+    "trust_remote_code": false,
+    "architecture": {
+      "class": "Qwen3ForCausalLM",
+      "model_type": "qwen3",
+      "num_hidden_layers": 28,
+      "hidden_size": 1024,
+      "intermediate_size": 3072,
+      "num_attention_heads": 16,
+      "num_key_value_heads": 8,
+      "head_dim": 128,
+      "vocab_size": 151936,
+      "max_position_embeddings": 40960,
+      "rope_theta": 1000000,
+      "rope_scaling": null,
+      "tie_word_embeddings": true
+    },
+    "special_token_ids_from_model_config": {
+      "bos": 151643,
+      "eos": 151645
+    }
+  },
+  "tokenizer": {
+    "id": "Qwen/Qwen3-0.6B",
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "class": "Qwen2Tokenizer",
+    "model_max_length": 131072,
+    "add_bos_token": false,
+    "tokens": {
+      "bos": null,
+      "eos": "<|im_end|>",
+      "eos_id": 151645,
+      "pad": "<|endoftext|>",
+      "pad_id": 151643
+    },
+    "chat_template": {
+      "sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+      "hash_input": "JSON-decoded chat_template string encoded as UTF-8 with no added newline",
+      "upstream_default_thinking": true,
+      "project_validation_enable_thinking": false
+    }
+  },
+  "source_metadata": {
+    "verified_at": "2026-07-24",
+    "config_json_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+    "tokenizer_config_json_sha256": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101",
+    "upstream_config_transformers_version": "4.51.0",
+    "minimum_transformers_version": "4.51.0",
+    "revision_resolution_command_at_verified_at": "git ls-remote https://huggingface.co/Qwen/Qwen3-0.6B refs/heads/main",
+    "pinned_metadata_verification_command": "SLM_LAB_VERIFY_UPSTREAM=1 python3 -m unittest tests.repo.test_model_contract.ModelContractTests.test_pinned_upstream_metadata"
+  },
+  "project_contract": {
+    "primary_model": true,
+    "canonical_validation_prompt_interface": "raw_completion",
+    "chat_validation_requires_enable_thinking_false": true,
+    "static_context_lengths": [
+      128,
+      512,
+      1024,
+      4096
+    ],
+    "platform_priority": [
+      "qualcomm_public_ai_hub_and_device_cloud",
+      "apple_m4_mlx",
+      "nvidia_onnx_runtime_cuda"
+    ],
+    "fallback_policy": "dynamic_after_reproducible_qwen_public_toolchain_boundary"
+  },
+  "toolchain_version_policy": {
+    "exact_package_versions_required": true,
+    "git_sources_require_full_commit_sha": true,
+    "floating_versions_forbidden_in_evidence": [
+      "latest",
+      "main",
+      "master",
+      "version_ranges"
+    ],
+    "unavailable_version_policy": "record null, source or command checked, and reason; never guess",
+    "required_fields": {
+      "artifact_manifest": [
+        "schema_version",
+        "model_id",
+        "model_revision",
+        "tokenizer_revision",
+        "chat_template_sha256",
+        "source_artifact_sha256",
+        "git_commit",
+        "task_id",
+        "exporter",
+        "exporter_version",
+        "opset",
+        "input_contract",
+        "cache_contract",
+        "context_length",
+        "precision",
+        "quantization",
+        "calibration_dataset_revision",
+        "runtime",
+        "runtime_version",
+        "qairt_version",
+        "target_device",
+        "device_type",
+        "compile_options",
+        "profile_options",
+        "provider_options",
+        "host_manifest_sha256",
+        "created_at"
+      ],
+      "common_environment_and_build": [
+        "python_version",
+        "transformers_version",
+        "torch_version",
+        "onnx_version",
+        "onnxruntime_version",
+        "exporter",
+        "exporter_version",
+        "opset",
+        "compiler",
+        "compiler_version",
+        "runtime",
+        "runtime_version",
+        "host_operating_system",
+        "host_operating_system_version",
+        "git_commit"
+      ],
+      "qualcomm": [
+        "qai_hub_version",
+        "aimet_version",
+        "qairt_version",
+        "qnn_compiler_version",
+        "qnn_runtime_version",
+        "target_device",
+        "device_type",
+        "target_operating_system",
+        "target_operating_system_build",
+        "compile_job_id",
+        "inference_job_id",
+        "profile_job_id"
+      ],
+      "apple": [
+        "mlx_version",
+        "mlx_lm_version",
+        "macos_version",
+        "macos_build",
+        "xcode_version",
+        "metal_version",
+        "instruments_version",
+        "target_product_name",
+        "target_model_identifier",
+        "target_chip",
+        "target_memory_bytes"
+      ],
+      "nvidia": [
+        "onnxruntime_gpu_version",
+        "cuda_version",
+        "cudnn_version",
+        "nvidia_driver_version",
+        "target_gpu_name",
+        "target_gpu_compute_capability",
+        "linux_distribution",
+        "linux_version",
+        "linux_kernel"
+      ]
+    }
+  }
+}
