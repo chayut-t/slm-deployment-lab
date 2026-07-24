@@ -76,7 +76,7 @@ def candidate_paths(staged: bool) -> list[str]:
             "diff",
             "--cached",
             "--name-only",
-            "--diff-filter=ACMR",
+            "--diff-filter=ACMRD",
             "-z",
         )
     else:
@@ -126,7 +126,7 @@ def main() -> int:
         print(f"error: cannot enumerate Git files: {exc}", file=sys.stderr)
         return 1
 
-    if staged and paths:
+    if staged:
         for required in sorted(REQUIRED_FILES):
             if not index_has(required):
                 errors.append(f"required file is missing from staged snapshot: {required}")
@@ -136,6 +136,11 @@ def main() -> int:
                 errors.append(f"required repository file is missing: {required}")
 
     for path in paths:
+        if staged and not index_has(path):
+            # Deletions must trigger whole-index validation, but there is no
+            # staged blob to scan for size or secret patterns.
+            continue
+
         normalized = path.replace(os.sep, "/")
         name = Path(normalized).name
         if (
@@ -176,7 +181,7 @@ def main() -> int:
 
     renderer_path = REPO_ROOT / "scripts" / "ai" / "render_task_status.py"
     if renderer_path.is_file():
-        if staged and paths:
+        if staged:
             graph_path = "ai/tasks/task_graph.yaml"
             status_path = "ai/tasks/status.generated.md"
             if index_has(graph_path) and index_has(status_path):
@@ -200,7 +205,12 @@ def main() -> int:
                             "staged ai/tasks/status.generated.md does not match "
                             "the staged task graph"
                         )
-                except (RuntimeError, UnicodeDecodeError, ValueError) as exc:
+                except (
+                    FileNotFoundError,
+                    RuntimeError,
+                    UnicodeDecodeError,
+                    ValueError,
+                ) as exc:
                     errors.append(f"staged task snapshot validation failed: {exc}")
         elif not staged:
             check = subprocess.run(

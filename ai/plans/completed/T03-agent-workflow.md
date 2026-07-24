@@ -88,6 +88,10 @@ data, and mechanically consistent at commit time.
 - 2026-07-24: Validate reconstruction through the documented hook installer in
   a real local clone, not only by invoking the bootstrap helper in a copied
   directory.
+- 2026-07-24: Independent review found that deletion-only staged snapshots were
+  excluded by the `ACMR` diff filter and skipped whole-index validation. Include
+  deletions, always validate required files and task state under `--staged`,
+  and cover generated-status and referenced-worklog deletion explicitly.
 
 ## Progress and restart instructions
 

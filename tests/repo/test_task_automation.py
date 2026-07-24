@@ -227,6 +227,37 @@ class GitSnapshotTests(unittest.TestCase):
             result.stderr,
         )
 
+    def test_staged_generated_status_deletion_is_rejected(self) -> None:
+        repository = self.make_repository()
+        self.run_git(repository, "rm", "ai/tasks/status.generated.md")
+
+        result = self.run_pre_commit(repository)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            "required file is missing from staged snapshot: "
+            "ai/tasks/status.generated.md",
+            result.stderr,
+        )
+
+    def test_staged_referenced_worklog_deletion_is_rejected(self) -> None:
+        repository = self.make_repository()
+        graph = json.loads(
+            (repository / "ai" / "tasks" / "task_graph.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        task = next(item for item in graph["tasks"] if item["id"] == "T03")
+        worklog = task["worklog"]
+        self.assertIsInstance(worklog, str)
+        self.run_git(repository, "rm", worklog)
+
+        result = self.run_pre_commit(repository)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            f"T03: worklog does not exist: {worklog}",
+            result.stderr,
+        )
+
     def test_force_added_artifact_symlink_is_rejected(self) -> None:
         repository = self.make_repository()
         external = Path(self.addCleanupDirectory()) / "external-artifacts"

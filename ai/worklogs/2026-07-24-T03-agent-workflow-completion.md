@@ -18,10 +18,10 @@ that can be reconstructed from a clean clone.
 - Preserved and validated the 29-node task graph, per-task definitions,
   plan/DAG/resource parity checks, generated status, public/private directory
   separation, reusable prompts, issue/PR templates, and coordinator handoff.
-- Kept staged-index validation in the versioned pre-commit hook and corrected
-  its drift regression to use a valid staged graph transition while restoring
-  the working-tree graph. This proves the check reads the index and rejects a
-  stale staged status file.
+- Kept staged-index validation in the versioned pre-commit hook, made it run
+  for every staged check, and included deletions in staged change detection.
+  Regressions prove the hook rejects graph/status drift, deletion of generated
+  status, and deletion of a completed task's referenced worklog.
 - Added explicit coverage that task completion rejects incomplete
   dependencies, private or absent worklogs, and mismatched public worklog
   metadata.
@@ -33,10 +33,10 @@ that can be reconstructed from a clean clone.
 ## Verification
 
 - Command: `python3 -m unittest tests.repo.test_task_automation -v`
-- Result: 11 workflow regression tests passed.
+- Result: 13 workflow regression tests passed.
 - Command: `python3 -m unittest discover -s tests -p 'test_*.py' -v`
-- Result: 19 tests passed except one intentional opt-in upstream-network test
-  skip.
+- Result: 20 tests passed and one intentional opt-in upstream-network test
+  skipped.
 - Command: `python3 scripts/ai/render_task_status.py --check`
 - Result: the graph, definitions, project-plan parity, worklog lifecycle, and
   generated status passed validation.
@@ -50,6 +50,9 @@ that can be reconstructed from a clean clone.
 
 - Repository state, rather than private task history, is the continuity
   boundary. Real task/thread IDs stay in the ignored local registry.
+- A staged snapshot is the validation unit even when its only changes are
+  deletions. Deleted paths have no blob to scan, but still trigger required-file
+  and task-snapshot validation against the complete index.
 - Installing the versioned hooks is the explicit first-clone action. The
   installer performs bootstrap immediately; the post-checkout hook keeps that
   local state present across later checkouts.
