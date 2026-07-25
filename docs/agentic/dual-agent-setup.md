@@ -30,10 +30,11 @@ The installer reconstructs ignored local state. New registries use schema v2.
 An existing schema-v1 registry remains readable and is never migrated
 automatically.
 
-For Claude Code, use `/memory` to confirm that `CLAUDE.md` and imported
-`AGENTS.md` loaded. For Codex, ask a read-only
-orientation question and confirm it identifies `AGENTS.md`, the project plan,
-the task graph, dependency checks, and completion gates.
+For Claude Code, use interactive `/memory` to inspect loaded project memory.
+For a non-interactive smoke check, `/context` also lists the Memory Files;
+confirm that `CLAUDE.md` and imported `AGENTS.md` both appear. For Codex, ask a
+read-only orientation question and confirm it identifies `AGENTS.md`, the
+project plan, the task graph, dependency checks, and completion gates.
 
 Keep these local:
 

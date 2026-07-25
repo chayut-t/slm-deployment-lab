@@ -17,8 +17,9 @@ agent session must be able to determine scope, dependencies, ownership,
 resource locks, verification requirements, and restart instructions from
 versioned files plus the ignored local registry.
 
-This plan deliberately does not assign an owner, start a task, change a task
-status, or reserve a resource.
+The plan was registered without an owner, then separately authorized and
+claimed as T04 before implementation began. It does not assign, reassign, or
+block any unrelated task and reserves no resource lock.
 
 ## Scope
 
@@ -403,19 +404,19 @@ registry unchanged and return a clear recovery instruction.
 
 ### 1. Register the compatibility task without assigning it
 
-- [ ] Run the non-disruption gate and stop if any hard condition remains.
-- [ ] Obtain owner/user reconciliation for every ambiguous active session and
+- [x] Run the non-disruption gate and stop if any hard condition remains.
+- [x] Obtain owner/user reconciliation for every ambiguous active session and
   overlapping dirty path; do not perform that reconciliation within this task.
-- [ ] Select an approved unused task ID.
-- [ ] In one coherent change, add the task definition, project-plan DAG node and
+- [x] Select an approved unused task ID.
+- [x] In one coherent change, add the task definition, project-plan DAG node and
   edge, project-plan task-table row, graph node, active execution plan, and
   generated status.
-- [ ] Set the graph node to `depends_on: ["T03"]`, `status: planned`,
+- [x] Set the graph node to `depends_on: ["T03"]`, `status: planned`,
   `owner: null`, `branch: null`, `github_issue: null`, and no resource locks.
-- [ ] Promote this draft into `ai/plans/active/TNN-dual-agent-compatibility.md`
+- [x] Promote this draft into `ai/plans/active/TNN-dual-agent-compatibility.md`
   after replacing the placeholder ID.
-- [ ] Regenerate and validate `ai/tasks/status.generated.md`.
-- [ ] Prove that every pre-existing task retains the same dependency edges,
+- [x] Regenerate and validate `ai/tasks/status.generated.md`.
+- [x] Prove that every pre-existing task retains the same dependency edges,
   status, owner, branch, resource locks, and ready/blocked result.
 
 Observable result: the work is dependency-aware and restartable, but no agent
@@ -423,17 +424,17 @@ has been assigned and no implementation has started.
 
 ### 2. Start implementation only after separate authorization
 
-- [ ] Confirm the user has authorized implementation, not only registration.
-- [ ] Rerun the non-disruption gate immediately before the public claim.
-- [ ] In the designated coordination/integration checkout, set
+- [x] Confirm the user has authorized implementation, not only registration.
+- [x] Rerun the non-disruption gate immediately before the public claim.
+- [x] In the designated coordination/integration checkout, set
   `status: in_progress`, the assigned `owner`, and intended task branch;
   regenerate status and commit the public claim.
-- [ ] Create the task-centered branch and manual Git worktree from that exact
+- [x] Create the task-centered branch and manual Git worktree from that exact
   claim commit.
-- [ ] Register the private writer session through the shared local-registry
+- [x] Register the private writer session through the shared local-registry
   helper.
-- [ ] Stop if authorization or any required lifecycle field is missing.
-- [ ] If worktree or registry setup fails, do not implement; repair the setup
+- [x] Stop if authorization or any required lifecycle field is missing.
+- [x] If worktree or registry setup fails, do not implement; repair the setup
   or restore a truthful planned/unassigned graph state in the coordination
   checkout.
 
@@ -442,31 +443,31 @@ dependency-complete graph state. This draft does not perform this milestone.
 
 ### 3. Establish one shared instruction source
 
-- [ ] Add root `CLAUDE.md` containing `@AGENTS.md`.
-- [ ] Keep Claude-only notes short and free of duplicated policy.
-- [ ] Require every tracked nested `AGENTS.md` to have a same-directory
+- [x] Add root `CLAUDE.md` containing `@AGENTS.md`.
+- [x] Keep Claude-only notes short and free of duplicated policy.
+- [x] Require every tracked nested `AGENTS.md` to have a same-directory
   `CLAUDE.md` import adapter.
-- [ ] Update hygiene requirements so a dual-agent repository cannot silently
+- [x] Update hygiene requirements so a dual-agent repository cannot silently
   lose `CLAUDE.md`.
-- [ ] Add regression tests that verify root and nested import mappings.
-- [ ] Document how to inspect loaded instructions in each tool.
+- [x] Add regression tests that verify root and nested import mappings.
+- [x] Document how to inspect loaded instructions in each tool.
 
 Observable result: both tools receive the same repository rules, and drift is
 mechanically detectable.
 
 ### 4. Neutralize only normative workflow language
 
-- [ ] Inventory exact Codex-specific occurrences and classify each as
+- [x] Inventory exact Codex-specific occurrences and classify each as
   normative policy, current operational state, historical provenance, or
   product-specific documentation.
-- [ ] Change `Codex task/thread` to `agent task/session` only in normative
+- [x] Change `Codex task/thread` to `agent task/session` only in normative
   future-facing policy, coordination READMEs, and generic prompts.
-- [ ] Update the multi-agent operating-model section of
+- [x] Update the multi-agent operating-model section of
   `docs/project/plan.md`.
-- [ ] Update the branch examples and explain the historical `codex/` prefix.
-- [ ] Update public/private-data rules to cover both tools' sessions,
+- [x] Update the branch examples and explain the historical `codex/` prefix.
+- [x] Update public/private-data rules to cover both tools' sessions,
   transcripts, auto-memory, and identifiers.
-- [ ] Leave historical worklogs, completed plans, branch references, and
+- [x] Leave historical worklogs, completed plans, branch references, and
   failure evidence unchanged.
 
 Observable result: future policy applies equally to Codex and Claude Code
@@ -474,25 +475,25 @@ without falsifying project history.
 
 ### 5. Harden shared local coordination and private configuration
 
-- [ ] Ignore `CLAUDE.local.md`, `.claude/worktrees/`, and
+- [x] Ignore `CLAUDE.local.md`, `.claude/worktrees/`, and
   `.claude/settings.local.json`.
-- [ ] Add staged-index rejection for those paths so `git add -f` cannot bypass
+- [x] Add staged-index rejection for those paths so `git add -f` cannot bypass
   privacy policy.
-- [ ] Inventory actual repository-local Codex private paths; enumerate and
+- [x] Inventory actual repository-local Codex private paths; enumerate and
   protect only paths that exist or are explicitly introduced.
-- [ ] Add force-add privacy regressions.
-- [ ] Add a shared local-registry helper that resolves the designated
+- [x] Add force-add privacy regressions.
+- [x] Add a shared local-registry helper that resolves the designated
   coordination checkout and uses locking plus atomic writes.
-- [ ] Update the local registry example to schema version 2.
-- [ ] Implement and test v1/v2 reading without mutation.
-- [ ] Implement explicit backup-backed v1-to-v2 migration with active-session
+- [x] Update the local registry example to schema version 2.
+- [x] Implement and test v1/v2 reading without mutation.
+- [x] Implement explicit backup-backed v1-to-v2 migration with active-session
   refusal, idempotence, entry preservation, malformed-input failure, and
   unknown-version failure.
-- [ ] Test rejection of duplicate writers, graph/registry branch mismatch,
+- [x] Test rejection of duplicate writers, graph/registry branch mismatch,
   stale checkpoints, invalid transfer/release, and implicit reviewer promotion.
-- [ ] Expand privacy/hygiene tests for both tools' private session material and
+- [x] Expand privacy/hygiene tests for both tools' private session material and
   verify two worktrees resolve the same registry.
-- [ ] Do not ignore all of `.claude/`, because future shared agents, skills, or
+- [x] Do not ignore all of `.claude/`, because future shared agents, skills, or
   project settings may legitimately be versioned.
 
 Observable result: shareable compatibility files can be committed while
@@ -501,19 +502,19 @@ worktrees.
 
 ### 6. Document parallel work and cross-tool handoffs
 
-- [ ] Add `docs/agentic/dual-agent-setup.md`.
-- [ ] Document fresh-clone setup for Codex and Claude Code.
-- [ ] Document task selection, dependency checking, owner assignment, branch
+- [x] Add `docs/agentic/dual-agent-setup.md`.
+- [x] Document fresh-clone setup for Codex and Claude Code.
+- [x] Document task selection, dependency checking, owner assignment, branch
   creation with manual `git worktree add`, and shared local registry updates.
-- [ ] Document both handoff paths: reuse the existing worktree, or cleanly
+- [x] Document both handoff paths: reuse the existing worktree, or cleanly
   detach/remove it before attaching the branch to a different worktree.
-- [ ] Require checkpoint SHA, clean status, manifests and hashes, environment
+- [x] Require checkpoint SHA, clean status, manifests and hashes, environment
   revisions, pending external jobs, and resource-lock state in handoffs.
-- [ ] Document resource-lock coordination and the prohibition on overlapping
+- [x] Document resource-lock coordination and the prohibition on overlapping
   writers.
-- [ ] Document recovery when a session disappears, a worktree is stale, or a
+- [x] Document recovery when a session disappears, a worktree is stale, or a
   handoff checkpoint fails verification.
-- [ ] Explain that browser connectors, MCP servers, plugins, and authenticated
+- [x] Explain that browser connectors, MCP servers, plugins, and authenticated
   sessions are optional tool adapters rather than repository dependencies.
 
 Observable result: a user can start either tool or transfer a task without
@@ -521,22 +522,26 @@ needing private conversation history.
 
 ### 7. Verify both tools reproducibly from clean state
 
-- [ ] Run the repository unit tests and hygiene checks.
-- [ ] Capture the exact Codex and Claude Code versions, product surfaces
+- [x] Run the repository unit tests and hygiene checks.
+- [x] Capture the exact Codex and Claude Code versions, product surfaces
   (desktop, CLI, or extension), launch modes, OS, and common base commit.
-- [ ] Create two isolated temporary clones from the same local commit.
-- [ ] Run the versioned setup installer and verify local state reconstruction.
-- [ ] In Codex, use a read-only orientation prompt and record a sanitized
-  checklist showing it identified the canonical instructions, project plan,
-  task graph, ready tasks, and required completion checks.
-- [ ] In Claude Code, use `/context` and its memory-files view to confirm
-  `CLAUDE.md` and imported
-  `AGENTS.md`, then run the same read-only orientation prompt and checklist.
-- [ ] Verify both tools identify the same repository source of truth and do
-  not assign an owner or begin a blocked task.
-- [ ] Exercise the documented manual Git worktree creation, tool launch, stop,
-  and cleanup path for each tool without modifying project files.
-- [ ] Confirm `git status --short --ignored` contains no unexpected tracked or
+- [x] Create two isolated temporary clones from the same local commit.
+- [x] Run the versioned setup installer and verify local state reconstruction.
+- [x] In the Codex desktop task and fresh read-only review subagent, record a
+  sanitized checklist showing they identified the canonical instructions,
+  project plan, task graph, ready tasks, and required completion checks. Record
+  that the isolated authenticated CLI prompt was not authorized to transmit
+  repository coordination content.
+- [x] In Claude Code, use `/context` and its Memory Files view to confirm
+  `CLAUDE.md` and imported `AGENTS.md`; attempt the same read-only orientation
+  prompt and record the exact local authentication blocker.
+- [x] Verify both tools resolve the same canonical repository policy. Confirm
+  through Codex orientation and graph tests that no owner is assigned and no
+  blocked task begins; do not claim an authenticated Claude semantic result.
+- [x] Exercise manual Git worktree lifecycle behavior in the real-Git
+  integration regression and exercise isolated tool launch/stop paths without
+  modifying project files.
+- [x] Confirm `git status --short --ignored` contains no unexpected tracked or
   unignored private tool state.
 
 Observable result: both tools can orient, isolate work, and recover from
@@ -718,42 +723,54 @@ external compiler jobs, or hosted profiles.
   shared-registry, worktree, privacy, nested-instruction, handoff, migration,
   reproducibility, and scope issues; all actionable findings were incorporated
   into this revision.
+- 2026-07-25: The user separately authorized implementation. T04 was registered
+  unassigned, then publicly claimed and implemented in its own manual worktree.
+- 2026-07-25: A fresh implementation review found registry invariant, Git
+  reality, initialization race, migration idempotence, reviewer lifecycle,
+  evidence, and adapter-enforcement gaps. Each implementation finding received
+  a regression and fix before final review.
+- 2026-07-25: Treat local instruction loading separately from authenticated
+  semantic smoke prompts. Claude `/context` proves the import chain without a
+  login; unauthenticated semantic prompting is recorded as an environmental
+  limitation, not reported as a pass.
 
 ## Progress and restart instructions
 
 Current state:
 
-- This draft plan exists only under `.ai-local/plans/`.
-- No task ID, owner, branch, worktree, resource lock, or task status has been
-  assigned.
-- No public repository file has been changed by this planning work.
-- Pre-existing changes are present in `AGENTS.md` and
-  `docs/project/learning-checkpoints.md`.
-- A separate active Codex task owns those changes in the main checkout.
-- T02 and T03 have ambiguous active local-registry claims that disagree with
-  public graph status.
-- Implementation readiness is `hold`; do not register or implement until a
-  fresh non-disruption gate passes.
+- T04 is registered and publicly claimed as `in_progress` on
+  `task/T04-dual-agent-compatibility`; it has no resource locks and remains
+  independent of all existing SLM tasks.
+- Implementation, safety hardening, focused/full tests, hygiene, two-clone
+  setup validation, and instruction-import validation are complete.
+- Codex CLI `0.146.0-alpha.3.1` and Claude Code `2.1.220` were inspected on
+  macOS 15.7.7. Claude `/context` listed both project instruction files.
+- Authenticated semantic smoke prompts were not used as completion evidence:
+  Claude Code was not logged in, and an isolated Codex CLI call was not
+  authorized to transmit repository coordination content. The active Codex
+  desktop task and fresh review subagent supplied the Codex orientation
+  evidence.
+- An independently owned task is still active and has changed overlapping task
+  automation/lifecycle files. T04 must remain isolated until that task commits
+  and releases its integration window.
+- No schema migration was run against the live primary registry.
+- Implementation readiness is complete; integration readiness remains on hold
+  pending the final independent review and non-disruptive reconciliation with
+  the active peer task.
 
 To restart:
 
-1. Read `AGENTS.md`, `docs/project/plan.md`, this draft, and the current
-   `ai/tasks/task_graph.yaml`.
-2. Inspect `git status --short --ignored` and preserve unrelated changes.
-3. Confirm `T03` is still completed.
-4. Run the non-disruption gate. Stop if dirty-path ownership, session liveness,
-   registry/graph disagreement, or shared-path availability is unresolved.
-5. Ask the user or owning sessions to reconcile blockers; do not clean or
-   override their state.
-6. Ask the user to approve implementation and an unused task ID if approval
-   has not already been given.
-7. As one coherent change, add the definition, project-plan DAG/table entries,
-   planned graph node with `owner: null` and `branch: null`, promoted active
-   plan, and generated status.
-8. Validate parity, then stop before assigning or starting the task unless the
-   user separately authorizes implementation.
-9. After implementation authorization, rerun the gate; commit the
-   `in_progress`, owner, and
-   intended-branch claim on the coordination/integration checkout; create the
-   manual task worktree from that claim commit; register the private session;
-   and only then edit implementation paths.
+1. Read `AGENTS.md`, `docs/project/plan.md`, this plan, the T04 definition and
+   worklog, and the current task graph.
+2. Inspect all worktrees and the primary ignored registry. Treat the peer task
+   as active until its owner records completion or the user reconciles it.
+3. After the overlapping task is integrated, merge the resulting coordination
+   commit into T04 and preserve both tasks' intentional task-automation edits.
+4. Rerun the full test suite, task-status check, hygiene, Ruff, diff check, and
+   ignored-status inventory.
+5. Send the resulting branch back to the fresh independent reviewer. Address
+   any actionable finding before completion.
+6. Only after a clean integration gate, mark T04 completed, finish the public
+   worklog, move this plan to `ai/plans/completed/`, regenerate status, commit,
+   integrate without rewriting the peer task, and release the private T04
+   writer record.
