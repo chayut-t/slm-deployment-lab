@@ -1,0 +1,107 @@
+# T10: Token, prompt, and evaluation fixtures
+
+Status: active
+Owner: Codex T10 agent
+Updated: 2026-07-25
+
+## Objective
+
+Freeze deterministic, inspectable inputs for Qwen3-0.6B so numerical,
+benchmark, export, quantization, and hardware tasks consume identical token
+sequences. The result must make tokenizer drift obvious, cover all four static
+contexts, and keep private or redistribution-restricted evaluation data out of
+Git.
+
+## Scope
+
+### In scope
+
+- Add an exact optional tokenizer dependency and lock it for reproducible
+  fixture generation and verification.
+- Define self-authored raw-completion canaries and one explicitly non-thinking
+  chat-template canary.
+- Generate exact 128, 512, 1,024, and 4,096-token workloads from the pinned
+  Qwen tokenizer revision.
+- Record prompt text, token IDs, generation settings, source revisions, tool
+  versions, and canonical content hashes.
+- Provide reusable loading, validation, hashing, generation, and upstream
+  verification logic under `src/slm_lab/evaluation/`.
+- Record quality-evaluation dataset references and selection policies without
+  committing restricted dataset rows.
+- Add tests for deterministic regeneration, hash drift, context coverage,
+  special-token behavior, and license/privacy boundaries.
+
+### Out of scope
+
+- Model-weight download or inference.
+- Golden logits and deterministic model outputs, which belong to T11.
+- Final benchmark statistics and academic task selection, which belong to T13.
+- Calibration corpus materialization, which belongs to T40.
+- Any private prompt, licensed dataset row, or Hugging Face credential.
+
+## Dependencies and resources
+
+- Required task dependencies: T00, completed on the branch base.
+- Resource locks: none.
+- External access: public pinned Qwen tokenizer files from Hugging Face.
+- Cost boundary: no paid resources and no cloud jobs.
+
+## Important paths
+
+- Inputs: `configs/models/qwen3-0.6b.yaml`,
+  `docs/decisions/0001-model-and-version-pins.md`,
+  `docs/project/plan.md`.
+- Outputs: `configs/workloads/`, `tests/fixtures/t10/`,
+  `src/slm_lab/evaluation/`.
+- Shared contracts: `pyproject.toml`, `uv.lock`,
+  `ai/tasks/task_graph.yaml`, `ai/tasks/status.generated.md`.
+
+## Milestones
+
+- [ ] Exact tokenizer environment is locked and can load the immutable revision.
+- [ ] Canary prompts and all four exact-length workload fixtures regenerate.
+- [ ] Fixture and dataset-reference manifests validate and detect drift.
+- [ ] Focused and full repository verification pass.
+- [ ] Public worklog, completed plan, and task graph record T10 completion.
+- [ ] Fresh independent reviewer reports no unresolved findings.
+
+## Verification and acceptance
+
+- Commands:
+  - `uv sync --extra dev --extra tokenizer --locked`
+  - `uv run --extra tokenizer python -m slm_lab.evaluation.fixtures verify`
+  - `uv run --extra dev --extra tokenizer pytest -q`
+  - `uv run --extra dev ruff check src tests`
+  - `python3 scripts/ai/render_task_status.py --check`
+  - `python3 scripts/repo/check_hygiene.py --all`
+- Numerical or behavioral criteria:
+  - Every stored token sequence exactly matches a fresh encoding from the
+    pinned tokenizer and immutable revision.
+  - Workload token counts are exactly 128, 512, 1,024, and 4,096.
+  - Canonical SHA-256 values fail validation after any covered-content change.
+  - Raw completion adds no implicit BOS token; the chat canary explicitly
+    disables thinking.
+- Hardware/profile evidence: not applicable.
+
+## Artifact and privacy handling
+
+- Committed evidence: authored prompt text, token IDs, manifests, hashes,
+  dataset identities/revisions, and test fixtures.
+- External artifacts: public tokenizer cache only; no model weights.
+- Private/local material: cache paths and any local Hugging Face state remain
+  ignored and are never printed or committed.
+
+## Decisions and discoveries
+
+- 2026-07-25: Start from published `origin/main` in an isolated worktree
+  because unrelated T04 coordination commits are present on local `main`.
+- 2026-07-25: Use raw completion as the canonical workload interface and keep
+  chat formatting limited to a dedicated non-thinking canary, matching ADR
+  0001.
+
+## Progress and restart instructions
+
+The task is claimed on `codex/T10-token-fixtures`. Next, lock the exact
+tokenizer dependency, implement the fixture module and authored sources,
+generate the committed manifests from the pinned tokenizer, and run focused
+tests before completing task metadata.
