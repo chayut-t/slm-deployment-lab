@@ -107,7 +107,7 @@ graph TD
 | T20 — Four-context ONNX export matrix | blocked | T12 | t9_heavy_io | — |
 | T21 — ONNX Runtime CPU parity and graph inspection | blocked | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
-| T30 — Workbench compile, inference, and profile adapters | in_progress | T01, T02 | qai_hub_submission | — |
+| T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | ready | T02 | device_cloud_x_elite | — |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
@@ -121,17 +121,17 @@ graph TD
 | T60 — ONNX Runtime CUDA context sweep | blocked | T02, T13, T20 | linux_nvidia_gpu, t9_heavy_io | — |
 | T70 — FastAPI backend contract | blocked | T33, T51, T60 | — | — |
 | T71 — React UI and local demo | blocked | T70 | — | — |
-| T72 — Manual GitHub Actions AI Hub workflow | blocked | T03, T30 | — | — |
+| T72 — Manual GitHub Actions AI Hub workflow | ready | T03, T30 | — | — |
 | T80 — Integrated guides, notebooks, and MkDocs | blocked | T03, T43, T52, T60, T72 | — | — |
 | T81 — Final evaluation and report | blocked | T13, T43, T52, T60 | t9_heavy_io | — |
 | T82 — Reproduction and release audit | blocked | T71, T72, T80, T81 | — | — |
 
 ## Summary
 
-- ready: 3
-- in_progress: 2
-- blocked: 18
-- completed: 7
+- ready: 4
+- in_progress: 1
+- blocked: 17
+- completed: 8
 
 ## Resource capacities
 

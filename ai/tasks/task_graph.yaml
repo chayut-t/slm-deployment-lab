@@ -174,13 +174,13 @@
       "id": "T30",
       "title": "Workbench compile, inference, and profile adapters",
       "definition": "ai/tasks/definitions/T30.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T01", "T02"],
       "resource_locks": ["qai_hub_submission"],
       "owner": "Codex T30 agent",
       "branch": "task/T30-ai-hub-adapters",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-25-T30-ai-hub-adapters.md"
     },
     {
       "id": "T31",
