@@ -43,12 +43,12 @@ or hardware access.
 - Command: `git diff --check`
 - Result: passed.
 - Command: `python3 -m unittest discover -s tests -p 'test_*.py' -v`
-- Result: 21 passed, 1 skipped, 1 failed. The failure is the pre-existing
+- Result: 22 passed, 1 skipped, 1 failed. The failure is the pre-existing
   T03-owned
   `test_staged_graph_requires_matching_staged_status`: its temporary T00
-  mutation now invalidates the coordinator's `in_progress` T01/T02/T03 state
-  before reaching the assertion under test. T02 did not change that shared
-  automation test.
+  mutation invalidates the coordinator's `in_progress` T01 and T03 states
+  before reaching the assertion under test. T02 is `blocked` and did not
+  change that shared automation test.
 
 ## Decisions and evidence
 
