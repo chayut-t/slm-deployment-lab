@@ -13,10 +13,11 @@ Updated: 2026-07-25
 - `T01` is completed on `codex/T01-environments-manifests`: the pinned common
   environment, portable artifact/host schemas, exact build lock, sanitized
   Apple host evidence, and hardened T9 preflight passed independent review.
-- `T02` is blocked on Qualcomm Workbench and Device Cloud authentication. Its
-  sanitized public-access evidence and executable restart procedure are
-  committed on `codex/T02-platform-access`; no compile, inference, or profile
-  job is claimed.
+- `T02` has completed one authenticated, free Workbench compile, inference,
+  and profile lifecycle on Snapdragon X Elite CRD. Sanitized evidence records
+  a QAIRT 2.45 QNN context binary, numerically correct output, 127-microsecond
+  toy latency, NPU placement, and zero paid-resource use. Final independent
+  review is pending.
 - `T03` is now completed on `codex/T03-agent-workflow`: regression tests
   demonstrate staged graph/status drift rejection, dependency and public
   worklog completion gates, and clean-clone reconstruction of ignored local
@@ -24,8 +25,9 @@ Updated: 2026-07-25
 
 ## Active work
 
-- `T02` is restartable from `codex/T02-platform-access` after the user signs
-  into Qualcomm Workbench and Device Cloud.
+- `T02` on `codex/T02-platform-access` is awaiting fresh final review and
+  lifecycle finalization. Device Cloud account minutes/session access remain a
+  bounded T32-owned boundary.
 
 T10 remains ready but unassigned. Respect the `t9_heavy_io`,
 `qai_hub_submission`, and `device_cloud_x_elite` resource locks.

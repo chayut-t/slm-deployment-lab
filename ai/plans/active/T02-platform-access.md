@@ -1,8 +1,8 @@
 # T02: AI Hub, Device Cloud, and GPU access report with toy jobs
 
-Status: active — blocked on Qualcomm authentication
+Status: active — implementation complete, final review pending
 Owner: Codex T02 agent
-Updated: 2026-07-24
+Updated: 2026-07-25
 
 ## Objective
 
@@ -50,16 +50,16 @@ lifecycle when authentication permits it.
 
 ## Milestones
 
-- [ ] Record sanitized Workbench authentication, device, quota, and version
-  evidence. Public versions and authentication boundary are recorded; account
-  device/quota evidence remains blocked.
-- [ ] Exercise and record one toy Workbench compile, inference, and profile
+- [x] Record sanitized Workbench authentication, device, quota, and version
+  evidence, preserving numeric quota as unknown because the client does not
+  expose it.
+- [x] Exercise and record one toy Workbench compile, inference, and profile
   lifecycle.
 - [x] Confirm Device Cloud access or document the precise pending-access
   blocker and public target availability.
 - [x] Record free NVIDIA options and a non-executed paid fallback.
-- [ ] Run repository gates and, only if every T02 acceptance criterion passes,
-  complete the task graph entry and public worklog.
+- [ ] Run repository gates and fresh independent review, then complete the task
+  graph entry and public worklog if every acceptance criterion passes.
 
 ## Verification and acceptance
 
@@ -98,33 +98,24 @@ lifecycle when authentication permits it.
 - 2026-07-24: Colab account UI access is available, but no GPU runtime was
   allocated. Kaggle was not authenticated. The Runpod fallback remains an
   unexecuted, approval-gated command template.
+- 2026-07-25: Exact `qai-hub==0.53.0` authenticated with a rotated local
+  credential and exposed Snapdragon X Elite CRD plus QAIRT 2.45 (`default`),
+  2.47, and 2.48 (`latest`).
+- 2026-07-25: One ONNX Add graph compiled to a QAIRT 2.45 QNN context binary,
+  ran numerically correct inference, and profiled successfully on Snapdragon X
+  Elite CRD. The profile reported 127 microseconds estimated inference time,
+  14,450,688 bytes estimated inference peak memory, and NPU placement.
+- 2026-07-25: `qai-hub configure` can print its generated configuration,
+  including the credential, and created `client.ini` with permissions broader
+  than desired. All future credential configuration must capture and discard
+  stdout/stderr and force both secret files to mode `600`.
 
 ## Progress and restart instructions
 
-Read this plan and the public access/failure reports. Have the user sign in to
-Qualcomm in the retained Workbench and Device Cloud Chrome tabs, then configure
-an API token locally without placing it in chat or the repository. The system
-Python 3.9.6 is unsupported by `qai-hub` 0.53.0, so first create and verify an
-ignored isolated client:
-
-```bash
-uv venv --python 3.11 .ai-local/envs/qai-hub-0.53.0
-uv pip install \
-  --python .ai-local/envs/qai-hub-0.53.0/bin/python \
-  "qai-hub==0.53.0"
-.ai-local/envs/qai-hub-0.53.0/bin/qai-hub --version
-read -r -s "T02_QAI_HUB_TOKEN?Qualcomm credential: "
-printf '\n'
-.ai-local/envs/qai-hub-0.53.0/bin/qai-hub configure \
-  --api_token "$T02_QAI_HUB_TOKEN"
-unset T02_QAI_HUB_TOKEN
-.ai-local/envs/qai-hub-0.53.0/bin/qai-hub list-devices
-.ai-local/envs/qai-hub-0.53.0/bin/qai-hub list-frameworks
-```
-
-Require the version check to report `0.53.0`. Keep the literal token and raw
-device/framework output under the local privacy boundary, never in chat or
-Git. Identify a minimal supported toy model and run exactly one free compile,
-inference, and profile lifecycle. Sanitize all durable evidence before placing
-it under the owned public paths, rerun every repository gate, then move this
-plan to `ai/plans/completed/` only if all T02 acceptance criteria pass.
+The single free Workbench lifecycle is complete and its raw state remains under
+`.ai-local/profiles/T02/`. Public evidence contains no job IDs, URLs, account
+identifiers, credential material, or raw service responses. The next
+coordinator must run all focused/full tests, task-status and hygiene checks,
+then obtain a fresh independent review. If it passes, set the worklog and task
+to `completed`, archive this plan, and regenerate task status. T30 and T32
+become ready when T02 completes; T60 still requires T13 and T20.

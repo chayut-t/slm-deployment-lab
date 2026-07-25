@@ -4,6 +4,11 @@ Task: `T02`
 Observed: 2026-07-24 18:27 UTC
 Status: blocked on Qualcomm authentication
 
+> Historical observation: the Workbench authentication blocker was resolved
+> on 2026-07-25. See the
+> [completed toy lifecycle](2026-07-25-workbench-toy-lifecycle.md). This file
+> preserves the earlier unauthenticated boundary as observed.
+
 ## Outcome
 
 The public service surfaces for Qualcomm AI Hub Workbench, Qualcomm Device

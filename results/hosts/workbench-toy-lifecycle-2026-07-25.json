@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "task_id": "T02",
+  "observed_at_utc": "2026-07-25T12:24:25Z",
+  "status": "completed",
+  "workbench": {
+    "public_surface": "reachable",
+    "account_access": "authenticated_api",
+    "cost_policy": "currently_free",
+    "local_client": {
+      "installed": true,
+      "python_version": "3.11.13",
+      "qai_hub_version": "0.53.0",
+      "onnx_version": "1.13.1",
+      "numpy_version": "2.4.6"
+    },
+    "hosted_frameworks": {
+      "qairt_available": [
+        "2.45.0.260326154327",
+        "2.47.0.260601114230",
+        "2.48.0.260626120635"
+      ],
+      "qairt_default": "2.45.0.260326154327",
+      "qairt_latest": "2.48.0.260626120635",
+      "evidence": "authenticated_qai_hub_get_frameworks"
+    },
+    "quota": {
+      "value": null,
+      "state": "not_exposed_by_qai_hub_client",
+      "boundary": "successful_jobs_prove_submission_access_not_numeric_quota"
+    },
+    "toy_lifecycle": {
+      "compile": "success",
+      "inference": "success",
+      "profile": "success",
+      "device": {
+        "name": "Snapdragon X Elite CRD",
+        "os": "Windows 11",
+        "chipset": "Qualcomm Snapdragon X Elite",
+        "hexagon_version": "v73"
+      },
+      "source_model": {
+        "format": "onnx",
+        "opset": 13,
+        "operation": "y = x + constant_bias",
+        "input_name": "x",
+        "input_shape": [
+          1,
+          4
+        ],
+        "input_dtype": "float32",
+        "sha256": "04992ab2a0ef479902430d6eb466927001c43d706e84aaf922aea9976559fca7"
+      },
+      "compile_evidence": {
+        "options": "--target_runtime qnn_context_binary",
+        "target_model_type": "QNN_CONTEXT_BINARY",
+        "qairt_sdk_version": "2.45.0.260326154327",
+        "qnn_sdk_variant": "default",
+        "backend": "HTP",
+        "hexagon_version": "v73",
+        "soc_model": 60,
+        "optimization_level": 3,
+        "observed_service_turnaround_seconds": 96
+      },
+      "inference_evidence": {
+        "input": [
+          [
+            1.0,
+            2.0,
+            3.0,
+            4.0
+          ]
+        ],
+        "expected_output": [
+          [
+            1.5,
+            1.0,
+            5.0,
+            3.75
+          ]
+        ],
+        "observed_output": [
+          [
+            1.5000001192092896,
+            1.0000001192092896,
+            5.000000476837158,
+            3.750000238418579
+          ]
+        ],
+        "max_abs_error": 4.76837158203125e-07,
+        "allclose": {
+          "result": true,
+          "rtol": 1e-05,
+          "atol": 1e-06
+        },
+        "observed_service_turnaround_seconds": 298
+      },
+      "profile_evidence": {
+        "estimated_inference_time_us": 127,
+        "estimated_inference_time_ms": 0.127,
+        "inference_sample_count": 100,
+        "observed_inference_time_range_us": [
+          127,
+          1087
+        ],
+        "estimated_inference_peak_memory_bytes": 14450688,
+        "first_load_time_us": 311671,
+        "first_load_peak_memory_bytes": 14786560,
+        "warm_load_time_us": 198597,
+        "warm_load_peak_memory_bytes": 14573568,
+        "compute_units": [
+          "NPU"
+        ],
+        "raw_private_profile_sha256": "0e4cc5dbe03d5481af5cba52cae0cf03f7f2adf5ab8ca0c24e103937cda0eb51",
+        "observed_service_turnaround_seconds": 364,
+        "units_source": "https://workbench.aihub.qualcomm.com/docs/hub/jobs.html"
+      },
+      "privacy": {
+        "job_ids_committed": false,
+        "job_urls_committed": false,
+        "account_identifiers_committed": false,
+        "raw_service_responses_committed": false
+      }
+    },
+    "evidence": [
+      "authenticated_device_query",
+      "authenticated_framework_query",
+      "successful_compile_status",
+      "numerically_validated_inference_output",
+      "successful_physical_device_profile"
+    ]
+  },
+  "device_cloud": {
+    "account_access": "not_reverified",
+    "account_minutes": null,
+    "x_elite_live_availability": null,
+    "bounded_blocker": "browser_authentication_and_account_minutes_not_reverified",
+    "boundary": "T02_completion_proves_workbench_lifecycle_not_device_cloud_session"
+  },
+  "free_nvidia": {
+    "colab_gpu_allocation": "not_tested",
+    "kaggle_gpu_allocation": "not_tested",
+    "boundary": "public_free_options_recorded_without_claiming_allocation"
+  },
+  "paid_fallback": {
+    "provider": "Runpod",
+    "creation_command_documented": true,
+    "creation_command_executed": false,
+    "approval_required": true
+  },
+  "cost": {
+    "workbench_cost_usd": 0,
+    "paid_resources_launched": false
+  }
+}
