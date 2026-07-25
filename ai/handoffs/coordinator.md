@@ -21,12 +21,19 @@ Updated: 2026-07-25
   demonstrate staged graph/status drift rejection, dependency and public
   worklog completion gates, and clean-clone reconstruction of ignored local
   coordination state. Independent review passed the deletion-snapshot fix.
+- `T10` is completed on `codex/T10-token-fixtures`: the exact Qwen tokenizer
+  reproduces committed raw/chat canaries and 128/512/1,024/4,096-token
+  workloads; greedy generation and stopping semantics, CC0 quality cases,
+  privacy/licensing boundaries, hashes, CLI validation, tests, and a learning
+  guide passed independent review and re-review.
 
 ## Active work
 
-T10, T30, and T32 are ready but unassigned. Device Cloud account
-minutes/session access remain a bounded T32-owned boundary. Respect the
-`t9_heavy_io`, `qai_hub_submission`, and `device_cloud_x_elite` resource locks.
+T11, T13, T30, and T32 are ready but unassigned. T11 and T13 must consume T10's
+fixture IDs and generation policy rather than create new prompts. Device Cloud
+account minutes/session access remain a bounded T32-owned boundary. Respect
+the `t9_heavy_io`, `qai_hub_submission`, and `device_cloud_x_elite` resource
+locks.
 
 ## Resume
 
@@ -34,7 +41,8 @@ minutes/session access remain a bounded T32-owned boundary. Respect the
 2. Validate `ai/tasks/task_graph.yaml` with
    `python3 scripts/ai/render_task_status.py --check`.
 3. Inspect `git status --short --ignored`.
-4. Start from the commit completing T00.
+4. Start T11 and T13 from the commit completing T10; other tasks start from
+   commits containing all of their completed dependencies.
 5. Integrate reviewed task branches in topological order, then assign one ready
    task per branch/worktree and record real task/thread
    identity only in `.ai-local/tasks/thread-registry.yaml`.

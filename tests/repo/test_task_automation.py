@@ -57,7 +57,15 @@ class TaskGraphValidationTests(unittest.TestCase):
 
     def test_completed_task_requires_completed_dependencies(self) -> None:
         graph = copy.deepcopy(self.graph)
-        task = next(item for item in graph["tasks"] if item["id"] == "T11")
+        tasks_by_id = {item["id"]: item for item in graph["tasks"]}
+        task = next(
+            item
+            for item in graph["tasks"]
+            if any(
+                tasks_by_id[dependency]["status"] != "completed"
+                for dependency in item["depends_on"]
+            )
+        )
         task["status"] = "completed"
         task["worklog"] = "ai/worklogs/example.md"
         with self.assertRaisesRegex(ValueError, "incomplete dependencies"):
@@ -205,10 +213,18 @@ class GitSnapshotTests(unittest.TestCase):
         repository = self.make_repository()
         graph_path = repository / "ai" / "tasks" / "task_graph.yaml"
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
-        task = next(item for item in graph["tasks"] if item["id"] == "T10")
+        completed = {
+            item["id"] for item in graph["tasks"] if item["status"] == "completed"
+        }
+        task = next(
+            item
+            for item in graph["tasks"]
+            if item["status"] == "planned"
+            and set(item["depends_on"]).issubset(completed)
+        )
         task["status"] = "in_progress"
         task["owner"] = "Repository Test"
-        task["branch"] = "codex/T10-test"
+        task["branch"] = f"codex/{task['id']}-test"
         graph_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
         self.run_git(repository, "add", "ai/tasks/task_graph.yaml")
 

@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "task_id": "T10",
+  "license": "CC0-1.0",
+  "provenance": {
+    "author": "SLM Deployment Lab",
+    "authored_for_repository": true,
+    "contains_private_data": false,
+    "contains_third_party_dataset_rows": false
+  },
+  "raw_canaries": [
+    {
+      "id": "raw_ascii",
+      "purpose": "Stable ASCII and punctuation tokenization",
+      "prompt": "Explain why fixed token IDs matter for reproducible model deployment in one sentence.\nAnswer:"
+    },
+    {
+      "id": "raw_whitespace",
+      "purpose": "Newlines, indentation, and repeated spaces",
+      "prompt": "Continue the sequence without commentary.\n  Input: 2, 4, 6, 8,\n  Answer:"
+    },
+    {
+      "id": "raw_unicode",
+      "purpose": "UTF-8 and multilingual byte-pair behavior",
+      "prompt": "Give the Thai translation of \"cache\" in this deployment context: แคช\nResponse:"
+    },
+    {
+      "id": "raw_structured",
+      "purpose": "JSON-like delimiters and quoted field names",
+      "prompt": "Return one JSON object with keys \"backend\" and \"context_tokens\" for backend MLX and 1024 tokens.\nJSON:"
+    }
+  ],
+  "chat_canary": {
+    "id": "chat_non_thinking",
+    "purpose": "Pinned chat template with thinking explicitly disabled",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Answer as a concise deployment engineer."
+      },
+      {
+        "role": "user",
+        "content": "What does a KV cache avoid recomputing?"
+      }
+    ],
+    "enable_thinking": false,
+    "add_generation_prompt": true
+  },
+  "context_seed": {
+    "id": "deployment_context_seed",
+    "purpose": "Authored material repeated and truncated by token ID",
+    "text": "A reproducible deployment experiment records the model revision, tokenizer revision, exact input token IDs, graph contract, runtime version, device identity, and measurement boundary. Prefill processes the prompt and creates key-value cache state. Decode consumes one new token with that cache. Static context variants expose compiler constraints, memory growth, and cache traffic without changing the underlying experimental contract. Hardware results remain system measurements: a hosted graph latency is not an end-to-end generation rate, and a GPU or NPU claim requires observed placement evidence."
+  },
+  "quality_subset": [
+    {
+      "id": "quality_arithmetic_sequence",
+      "category": "deterministic_reasoning",
+      "prompt": "Complete the sequence with one integer: 2, 4, 6, 8,",
+      "reference_answers": [
+        "10"
+      ],
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "quality_cache_definition",
+      "category": "deployment_concepts",
+      "prompt": "In one short sentence, state what transformer KV caching avoids recomputing during autoregressive decoding.",
+      "reference_answers": [
+        "It avoids recomputing prior-token key and value projections at every decode step."
+      ],
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "quality_timing_boundary",
+      "category": "measurement_integrity",
+      "prompt": "Is a hosted single-graph latency measurement sufficient evidence of end-to-end text-generation throughput? Answer yes or no.",
+      "reference_answers": [
+        "No."
+      ],
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "quality_json_contract",
+      "category": "structured_output",
+      "prompt": "Return compact JSON for a workload with id S128, context length 128, and 32 generated tokens.",
+      "reference_answers": [
+        "{\"id\":\"S128\",\"context_length\":128,\"generated_tokens\":32}"
+      ],
+      "license": "CC0-1.0"
+    }
+  ],
+  "external_quality_candidates": [
+    {
+      "id": "wikitext_2",
+      "purpose": "Perplexity or negative-log-likelihood candidate",
+      "selection_owner": "T13",
+      "data_committed": false
+    },
+    {
+      "id": "hellaswag",
+      "purpose": "Pilot commonsense completion candidate",
+      "selection_owner": "T13",
+      "data_committed": false
+    },
+    {
+      "id": "arc_easy",
+      "purpose": "Pilot grade-school science candidate",
+      "selection_owner": "T13",
+      "data_committed": false
+    },
+    {
+      "id": "piqa",
+      "purpose": "Pilot physical reasoning candidate",
+      "selection_owner": "T13",
+      "data_committed": false
+    }
+  ]
+}
