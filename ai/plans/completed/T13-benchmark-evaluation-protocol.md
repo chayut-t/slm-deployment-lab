@@ -112,6 +112,9 @@ measure the same workloads without erasing system differences.
   methods to backends/platforms, throughput to actual token counts, cold
   evidence to fresh process identities, and quality records to the exact
   academic task definition.
+- 2026-07-25: Idle-baseline subtraction is evidence, not a boolean
+  presentation option; subtraction now requires a finite, non-negative
+  measured watt value.
 
 ## Progress and restart instructions
 

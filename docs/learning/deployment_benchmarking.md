@@ -147,6 +147,10 @@ policy, start/end temperature, thermal state, and ambient notes. An estimate is
 allowed only with `evidence_level=estimated`; it cannot be styled as an
 observation.
 
+If idle power is subtracted, `idle_baseline_watts` must be an actual finite,
+non-negative number. A missing, negative, NaN, or infinite baseline makes the
+record invalid; `null` is allowed only when `baseline_subtracted=false`.
+
 ## Statistics policy
 
 Store unrounded base-unit samples. For valid samples report:

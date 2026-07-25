@@ -616,6 +616,28 @@
     "powerThermalMethod": {
       "type": "object",
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "baseline_subtracted": {
+                "const": true
+              }
+            },
+            "required": [
+              "baseline_subtracted"
+            ]
+          },
+          "then": {
+            "properties": {
+              "idle_baseline_watts": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      ],
       "required": [
         "instrument",
         "sample_rate_hz",

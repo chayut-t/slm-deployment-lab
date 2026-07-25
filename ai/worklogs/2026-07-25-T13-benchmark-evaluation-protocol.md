@@ -40,6 +40,9 @@ hardware measurements were created.
   mislabeling, false synchronization, warm-as-cold evidence, missing or
   incorrect token denominators, and quality dataset/revision/split/selection
   drift.
+- Final re-review hardening made idle-baseline subtraction conditional on a
+  finite, non-negative `idle_baseline_watts` value in both schema and semantic
+  validation, with NaN/infinity adversarial coverage.
 
 ## Verification
 
@@ -47,7 +50,7 @@ hardware measurements were created.
   - Passed protocol digest/semantics, T10 linkage, JSON Schema, academic
     subset, statistics, valid-result, and inconsistent-summary rejection.
 - `uv run --extra dev pytest -q`
-  - `88 passed, 2 skipped` after review corrections.
+  - `89 passed, 2 skipped` after final review corrections.
 - `uv run --extra dev ruff check src tests`
   - Passed.
 - `python3 scripts/ai/render_task_status.py --check`

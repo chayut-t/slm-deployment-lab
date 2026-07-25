@@ -137,6 +137,28 @@ class T13BenchmarkProtocolTests(unittest.TestCase):
         validate_repository_contracts(REPO_ROOT)
         validate_result(self._result(), root=REPO_ROOT)
 
+    def _energy_result(self) -> dict[str, Any]:
+        result = self._result(
+            timing_class=None,
+            metric="energy_per_output_token",
+            kind="power_thermal",
+            unit="joules_per_token",
+        )
+        result["measurement"]["actual_generated_tokens"] = 1
+        result["measurement"]["power_thermal_method"] = {
+            "instrument": "synthetic",
+            "sample_rate_hz": 1,
+            "duration_seconds": 600,
+            "measurement_domain": "synthetic",
+            "idle_baseline_watts": None,
+            "baseline_subtracted": False,
+            "start_temperature": None,
+            "end_temperature": None,
+            "thermal_state": "synthetic",
+            "ambient_notes": "synthetic",
+        }
+        return result
+
     def test_cold_start_load_metrics_are_defined_and_valid(self) -> None:
         definitions = self.protocol["metric_definitions"]
         for metric in ("artifact_load_latency", "model_load_latency"):
@@ -272,24 +294,8 @@ class T13BenchmarkProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(BenchmarkProtocolError, "frozen workload"):
             validate_result(wrong_prompt_count, root=REPO_ROOT)
 
-        energy = self._result(
-            timing_class=None,
-            metric="energy_per_output_token",
-            kind="power_thermal",
-            unit="joules_per_token",
-        )
-        energy["measurement"]["power_thermal_method"] = {
-            "instrument": "synthetic",
-            "sample_rate_hz": 1,
-            "duration_seconds": 600,
-            "measurement_domain": "synthetic",
-            "idle_baseline_watts": None,
-            "baseline_subtracted": False,
-            "start_temperature": None,
-            "end_temperature": None,
-            "thermal_state": "synthetic",
-            "ambient_notes": "synthetic",
-        }
+        energy = self._energy_result()
+        energy["measurement"].pop("actual_generated_tokens")
         with self.assertRaisesRegex(
             BenchmarkProtocolError,
             "actual_generated_tokens",
@@ -297,6 +303,25 @@ class T13BenchmarkProtocolTests(unittest.TestCase):
             validate_result(energy, root=REPO_ROOT)
         energy["measurement"]["actual_generated_tokens"] = 1
         validate_result(energy, root=REPO_ROOT)
+
+    def test_subtracted_power_requires_finite_non_negative_baseline(self) -> None:
+        invalid_baselines = (None, -0.1, float("nan"), float("inf"))
+        for baseline in invalid_baselines:
+            with self.subTest(baseline=baseline):
+                result = self._energy_result()
+                method = result["measurement"]["power_thermal_method"]
+                method["baseline_subtracted"] = True
+                method["idle_baseline_watts"] = baseline
+                with self.assertRaises(BenchmarkProtocolError):
+                    validate_result(result, root=REPO_ROOT)
+
+        for baseline in (0.0, 1.5):
+            with self.subTest(valid_baseline=baseline):
+                result = self._energy_result()
+                method = result["measurement"]["power_thermal_method"]
+                method["baseline_subtracted"] = True
+                method["idle_baseline_watts"] = baseline
+                validate_result(result, root=REPO_ROOT)
 
     def _quality_result(self) -> dict[str, Any]:
         task = next(

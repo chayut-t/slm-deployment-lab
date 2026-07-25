@@ -2,7 +2,7 @@
   "schema_version": 1,
   "protocol_id": "slm-lab-benchmark-v1",
   "task_id": "T13",
-  "contract_sha256": "e90c5b27ba22d5b9c398d90682fe4890936fba27ce7587e885839785f35a4258",
+  "contract_sha256": "156aa6d452478b01f8ed312546591a9e4445936ebca2b5c4c3001cb32e48c8dc",
   "model_contract": "configs/models/qwen3-0.6b.yaml",
   "token_fixture_contract": "configs/workloads/t10-token-fixtures.json",
   "result_schema": "configs/workloads/benchmark-result-v1.schema.json",
@@ -262,6 +262,7 @@
   "power_thermal_policy": {
     "minimum_steady_state_seconds": 600,
     "steady_state_repetitions": 3,
+    "idle_baseline_rule": "When baseline_subtracted is true, idle_baseline_watts must be a finite non-negative measured number; null is allowed only when no subtraction is performed.",
     "required_fields": [
       "instrument",
       "sample_rate_hz",
