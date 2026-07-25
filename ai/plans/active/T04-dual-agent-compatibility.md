@@ -1,9 +1,9 @@
 # T04: Codex and Claude Code Repository Compatibility
 
-Status: planned
-Owner: unassigned
+Status: in_progress
+Owner: Codex T04 agent
 Updated: 2026-07-25
-Implementation readiness: registration gate passed
+Implementation readiness: active after public claim
 
 ## Objective
 
