@@ -59,6 +59,9 @@ runtime tasks can consume.
 - [x] Stepwise parity metrics and frozen tolerances detect numerical or token
   drift.
 - [x] Deterministic tests and available golden-Qwen verification pass.
+- [x] Independent review corrections preserve actual attention provenance,
+  same-prefix diagnostics after token mismatch, and cache-state validation at
+  every decode boundary.
 - [x] Public worklog, completed plan, and task graph record T11 completion.
 
 ## Verification and acceptance
@@ -94,10 +97,18 @@ runtime tasks can consume.
 - 2026-07-25: Store compact numerical fingerprints and comparison metrics
   instead of complete vocabulary logits; exact regeneration remains the
   authority.
+- 2026-07-25: Independent review established that evidence must distinguish
+  requested from model-reported attention implementations, so the reference
+  now requires and verifies eager attention.
+- 2026-07-25: Teacher-force the full-forward token into cached decode after
+  retaining a mismatch in the current step. This keeps later error metrics on
+  a common prefix.
+- 2026-07-25: Treat missing cache on any cached decode result as a deterministic
+  execution error rather than allowing a later, ambiguous model failure.
 
 ## Progress and restart instructions
 
-T11 is complete. The implementation, deterministic PyTorch fixture, pinned
-Qwen fixture, tests, public worklog, and task metadata are ready for an
-independent review. T12 and T50 may consume the committed reference after this
-branch is integrated.
+T11 is complete after independent review corrections. The implementation,
+deterministic PyTorch fixture, pinned Qwen fixture, regression tests, public
+worklog, and task metadata are ready for integration. T12 and T50 may consume
+the committed reference after this branch is integrated.

@@ -334,6 +334,10 @@ def generate_cached(
                     return_dict=True,
                 )
             )
+            if past_key_values is None:
+                raise ReferenceExecutionError(
+                    f"cached decode step {step + 1} returned no past_key_values"
+                )
     return tuple(generated)
 
 
@@ -421,16 +425,25 @@ def compare_full_and_cached(
                 ),
                 dim=1,
             )
+            # Teacher-force the reference token into both branches. If cached
+            # logits select a different token, the current step retains that
+            # mismatch in its metrics while every later comparison remains on
+            # the same prefix and diagnoses cache execution rather than
+            # compounding autoregressive divergence.
             cached_logits, past_key_values = _last_logits(
                 _model_call(
                     model,
-                    input_ids=cached_token.to(device=input_ids.device),
+                    input_ids=full_token.to(device=input_ids.device),
                     attention_mask=cached_attention_mask,
                     past_key_values=past_key_values,
                     use_cache=True,
                     return_dict=True,
                 )
             )
+            if past_key_values is None:
+                raise ReferenceExecutionError(
+                    f"cached decode step {step + 1} returned no past_key_values"
+                )
 
     digest_payload = {
         "prompt_token_ids": [int(value) for value in input_ids[0].tolist()],

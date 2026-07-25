@@ -50,6 +50,8 @@ class ReferenceRuntime:
     safetensors_version: str
     device: str
     dtype: str
+    requested_attention_implementation: str
+    actual_attention_implementation: str
     deterministic_algorithms: bool
     seed: int
 
@@ -61,6 +63,10 @@ class ReferenceRuntime:
             "safetensors_version": self.safetensors_version,
             "device": self.device,
             "dtype": self.dtype,
+            "requested_attention_implementation": (
+                self.requested_attention_implementation
+            ),
+            "actual_attention_implementation": self.actual_attention_implementation,
             "deterministic_algorithms": self.deterministic_algorithms,
             "seed": self.seed,
         }
@@ -181,6 +187,12 @@ def load_reference_model(
     public weights, but never changes the revision or enables remote code.
     """
 
+    if attn_implementation != "eager":
+        raise ReferenceConfigurationError(
+            "T11 numerical evidence requires attn_implementation='eager'; "
+            f"found {attn_implementation!r}"
+        )
+
     try:
         import torch
         from transformers import AutoModelForCausalLM
@@ -206,6 +218,18 @@ def load_reference_model(
     model.eval()
     model.requires_grad_(False)
     model.to(device)
+    actual_attn_implementation = getattr(
+        getattr(model, "config", None), "_attn_implementation", None
+    )
+    if not isinstance(actual_attn_implementation, str):
+        raise ReferenceConfigurationError(
+            "loaded model does not report its actual attention implementation"
+        )
+    if actual_attn_implementation != attn_implementation:
+        raise ReferenceConfigurationError(
+            "loaded model attention implementation mismatch: requested "
+            f"{attn_implementation!r}, actual {actual_attn_implementation!r}"
+        )
 
     runtime = ReferenceRuntime(
         python_version=platform.python_version(),
@@ -214,6 +238,8 @@ def load_reference_model(
         safetensors_version=_package_version("safetensors"),
         device=str(device),
         dtype=selected_dtype,
+        requested_attention_implementation=attn_implementation,
+        actual_attention_implementation=actual_attn_implementation,
         deterministic_algorithms=torch.are_deterministic_algorithms_enabled(),
         seed=seed,
     )

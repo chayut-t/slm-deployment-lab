@@ -86,6 +86,8 @@ def test_qwen_golden_fixture_is_bound_to_t10_and_exact_runtime() -> None:
         "safetensors_version": "0.8.0",
         "device": "cpu",
         "dtype": "bfloat16",
+        "requested_attention_implementation": "eager",
+        "actual_attention_implementation": "eager",
         "deterministic_algorithms": True,
         "seed": 0,
     }

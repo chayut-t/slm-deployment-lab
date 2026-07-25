@@ -24,7 +24,8 @@ immediate reproduction returned the same compact evidence digest
   token validation.
 - Added an opt-in pinned Transformers loader that freezes eval mode, gradients,
   dtype, eager attention, seed, and deterministic PyTorch algorithms while
-  recording exact runtime versions.
+  recording exact runtime versions and both requested and model-reported
+  attention implementations.
 - Added reusable full-forward and cached greedy loops that preserve T10's
   no-sampling, lowest-token-ID tie break, EOS inclusion, and output limit.
 - Added stepwise numerical metrics: maximum/mean absolute error, protected
@@ -38,6 +39,15 @@ immediate reproduction returned the same compact evidence digest
 - Added a real pinned-Qwen fixture for the authored T10 `raw_ascii` canary and
   a gated test that reproduces its tokens, metrics, runtime, and digest from
   external weights.
+- Addressed all independent review findings:
+  - eager attention is now required and verified instead of merely requested;
+  - a cached-token mismatch is recorded, then the full-forward token is
+    teacher-forced into both branches so later metrics retain a common prefix;
+  - every cached decode output must contain cache state and reports its exact
+    failing step otherwise.
+- Added regressions that distinguish attention provenance, demonstrate return
+  to exact parity after an intentionally wrong cached token, and reject a
+  model that drops cache state on its first decode.
 
 ## Verification
 
@@ -47,13 +57,13 @@ immediate reproduction returned the same compact evidence digest
   - Installed an ignored, isolated verification environment. The resolved
     reference runtime also recorded `safetensors==0.8.0`.
 - `PYTHONPATH=src .venv/bin/python -m pytest -q tests/reference`
-  - 13 passed and the explicit real-Qwen weight-gated test skipped.
+  - 15 passed and the explicit real-Qwen weight-gated test skipped.
 - `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
   SLM_LAB_RUN_QWEN_REFERENCE=1 PYTHONPATH=src .venv/bin/python -m pytest -q
   tests/reference`
-  - 14 passed, including the real Qwen golden reproduction.
+  - 16 passed, including the real Qwen golden reproduction after review fixes.
 - `PYTHONPATH=src .venv/bin/python -m pytest -q`
-  - 94 passed, 3 intentional external/upstream-gated skips.
+  - 96 passed, 3 intentional external/upstream-gated skips.
 - `.venv/bin/ruff check src tests`
   - Passed.
 - `python3 scripts/ai/render_task_status.py --check`
@@ -68,6 +78,12 @@ immediate reproduction returned the same compact evidence digest
   attention on CPU. The same-model tolerance allows bounded BF16
   accumulation-order noise but requires allclose, protected-relative, cosine,
   top-5, and exact top-1 criteria simultaneously.
+- Requested and model-reported attention implementations must both be
+  `eager`. The loader rejects unsupported requests or a model-reported
+  fallback, and the golden fixture records both fields.
+- Token disagreement fails the affected step and remains visible through
+  reference/candidate top-1 evidence. Only the reference token advances both
+  branches, preserving the interpretability of later cache-parity metrics.
 - The observed Qwen run was stronger than the tolerance: all three full/cache
   logit pairs had zero absolute error and identical float32 fingerprints.
 - The real reference command downloads only the immutable public revision when

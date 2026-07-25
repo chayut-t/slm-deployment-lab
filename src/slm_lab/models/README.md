@@ -4,7 +4,8 @@
 that exact revision for deterministic PyTorch inference. Network access is
 opt-in; model weights remain external artifacts and are never committed.
 
-The loader freezes eval mode, disables gradients, selects an explicit dtype
-and attention implementation, enables deterministic algorithms, and records
-the exact Python, PyTorch, Transformers, and Safetensors versions beside
-reference evidence.
+The loader freezes eval mode, disables gradients, selects an explicit dtype,
+requires eager attention, and enables deterministic algorithms. Evidence
+records both the requested and model-reported attention implementation along
+with the exact Python, PyTorch, Transformers, and Safetensors versions; a
+fallback to another attention implementation is rejected.
