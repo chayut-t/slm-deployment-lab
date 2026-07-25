@@ -32,6 +32,14 @@ hardware measurements were created.
   splits, selection, scoring, license handling, and no-row-commit policy are
   explicit.
 - Added the deployment-benchmarking guide and its learner debrief checklist.
+- Independent review hardening added the missing cold artifact/model load
+  metric definitions, timing-class/metric allowlists, structured
+  backend-specific synchronization, fresh-process identity evidence,
+  mandatory token denominators, and exact academic-task cross-checks.
+- Added adversarial regression tests that attempt graph/request/cold
+  mislabeling, false synchronization, warm-as-cold evidence, missing or
+  incorrect token denominators, and quality dataset/revision/split/selection
+  drift.
 
 ## Verification
 
@@ -39,7 +47,7 @@ hardware measurements were created.
   - Passed protocol digest/semantics, T10 linkage, JSON Schema, academic
     subset, statistics, valid-result, and inconsistent-summary rejection.
 - `uv run --extra dev pytest -q`
-  - `81 passed, 2 skipped`.
+  - `88 passed, 2 skipped` after review corrections.
 - `uv run --extra dev ruff check src tests`
   - Passed.
 - `python3 scripts/ai/render_task_status.py --check`
@@ -64,6 +72,9 @@ hardware measurements were created.
   2026-07-25. Read-only Git queries confirmed the full pinned HEAD revisions
   for WikiText, HellaSwag, and AI2 ARC. PIQA was excluded because its rendered
   license metadata and licensing discussion were inconsistent.
+- A metric record must be a member of its timing class's frozen metric set;
+  a valid metric name alone is insufficient. Cold component records also
+  declare artifact/model-load inclusion separately.
 
 ## Risks and limitations
 

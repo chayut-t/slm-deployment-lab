@@ -107,6 +107,11 @@ measure the same workloads without erasing system differences.
 - 2026-07-25: Keep non-timing quality, numerical, and power/thermal evidence
   explicit in the same result contract without forcing it into a graph or
   request timing class.
+- 2026-07-25: Independent review showed that a strict outer schema was not
+  enough: semantic validation must bind metrics to timing classes, sync
+  methods to backends/platforms, throughput to actual token counts, cold
+  evidence to fresh process identities, and quality records to the exact
+  academic task definition.
 
 ## Progress and restart instructions
 

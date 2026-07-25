@@ -2,7 +2,7 @@
   "schema_version": 1,
   "protocol_id": "slm-lab-benchmark-v1",
   "task_id": "T13",
-  "contract_sha256": "bf6821bc0253e40b820a5b269035403072c7501233e66908e32cd57571f07d80",
+  "contract_sha256": "e90c5b27ba22d5b9c398d90682fe4890936fba27ce7587e885839785f35a4258",
   "model_contract": "configs/models/qwen3-0.6b.yaml",
   "token_fixture_contract": "configs/workloads/t10-token-fixtures.json",
   "result_schema": "configs/workloads/benchmark-result-v1.schema.json",
@@ -134,13 +134,48 @@
   "synchronization": {
     "policy": "Synchronize immediately before starting and immediately before stopping a host timer whenever the backend can enqueue asynchronous work.",
     "methods": {
-      "pytorch_cpu": "The model call is synchronous; record 'call_return' and do not add an unrelated barrier.",
-      "onnxruntime_cpu": "InferenceSession.run return is the boundary; record 'session_run_return'.",
-      "onnxruntime_cuda": "Synchronize the active CUDA stream/device before timer start and after the final requested output is materialized; record the exact API.",
-      "mlx": "Materialize all timed outputs with mx.eval before timer stop and materialize setup state before timer start; record the exact arrays.",
-      "qualcomm_workbench": "Use service-reported on-device graph/profile timing only for graph scope; service submission, queue, and artifact transfer wall time are separate service metrics.",
-      "qualcomm_device_cloud": "Use a runtime completion/fence or documented blocking API before stopping the timer; record the API and separate tokenization, loading, prefill, decode, and detokenization.",
-      "generic_accelerator": "Record the backend-specific fence or blocking materialization method; 'none' is invalid for an asynchronous backend."
+      "pytorch_cpu": {
+        "method_id": "call_return",
+        "asynchronous": false,
+        "requires_pre_timer_action": false,
+        "requires_post_timer_action": true
+      },
+      "onnxruntime_cpu": {
+        "method_id": "session_run_return",
+        "asynchronous": false,
+        "requires_pre_timer_action": false,
+        "requires_post_timer_action": true
+      },
+      "onnxruntime_cuda": {
+        "method_id": "cuda_stream_or_device_fence",
+        "asynchronous": true,
+        "requires_pre_timer_action": true,
+        "requires_post_timer_action": true
+      },
+      "mlx": {
+        "method_id": "mx_eval_materialization",
+        "asynchronous": true,
+        "requires_pre_timer_action": true,
+        "requires_post_timer_action": true
+      },
+      "qualcomm_workbench": {
+        "method_id": "service_reported_device_profile",
+        "asynchronous": false,
+        "requires_pre_timer_action": false,
+        "requires_post_timer_action": false
+      },
+      "qualcomm_device_cloud": {
+        "method_id": "runtime_completion_fence",
+        "asynchronous": true,
+        "requires_pre_timer_action": true,
+        "requires_post_timer_action": true
+      },
+      "generic_accelerator": {
+        "method_id": "explicit_accelerator_fence",
+        "asynchronous": true,
+        "requires_pre_timer_action": true,
+        "requires_post_timer_action": true
+      }
     }
   },
   "metric_definitions": {
@@ -156,6 +191,8 @@
     "generation_throughput_including_prefill": "actual_generated_tokens divided by synchronized prefill-plus-decode generation-loop time.",
     "generation_throughput_excluding_prefill": "actual_generated_tokens divided by summed synchronized decode time.",
     "request_total_latency": "From receipt of a complete request through completion of the response at the measured API boundary.",
+    "artifact_load_latency": "Fresh-process elapsed time to open, map, deserialize, or otherwise make the deployed artifact available to the runtime, excluding model/runtime initialization that is reported separately.",
+    "model_load_latency": "Fresh-process elapsed time for runtime/model initialization after artifact availability and before the first inference call, excluding compilation.",
     "peak_memory": "Peak observed bytes within an explicitly named memory domain and collection interval; process RSS, unified memory, accelerator allocation, and service estimates are distinct domains.",
     "average_power": "Average observed watts over the declared sampling interval and measurement domain after recording whether idle baseline is subtracted.",
     "energy_per_output_token": "Measured joules attributable to the declared interval divided by actual_generated_tokens; baseline policy is mandatory.",

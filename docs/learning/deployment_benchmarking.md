@@ -79,8 +79,11 @@ The protocol therefore requires:
 - Device Cloud: record the blocking runtime API/fence and separately expose
   loading, tokenization, prefill, decode, and detokenization.
 
-The result stores the exact synchronization method, not merely `synchronized:
-true`.
+The result stores a structured backend, method ID, pre-timer action,
+post-timer action, and evidence—not merely `synchronized: true`. Validation
+rejects a CUDA fence labeled as CPU execution, a blocking-call method labeled
+as CUDA/MLX, missing accelerator fences/materialization, and Workbench service
+timing outside graph scope.
 
 ## Metric boundaries
 
@@ -99,6 +102,17 @@ and detokenization/transfer are separately named components. If a platform
 cannot expose one component, record it as unavailable rather than silently
 assigning it to another.
 
+Cold-start evidence contains three required metric identities:
+
+- `artifact_load_latency`: artifact open/map/deserialization only.
+- `model_load_latency`: runtime/model initialization after artifact
+  availability.
+- `cold_ttft`: artifact load plus model load through first token.
+
+All five measured cold-start samples must use fresh processes. The result
+records the reset/launch method and per-repetition process-identity evidence.
+A warm process relabeled as cold is rejected.
+
 ### Prefill and decode
 
 Prefill throughput is exact prompt tokens divided by synchronized prefill
@@ -109,6 +123,11 @@ synchronized decode seconds. Also report:
 - Generation throughput including prefill.
 - Generation throughput excluding prefill.
 - Actual generated count when EOS stops early.
+
+The raw denominator is mandatory: prefill throughput records
+`actual_prompt_tokens`; decode, generation, time-per-token, and energy/token
+records `actual_generated_tokens`. Counts are checked against the frozen
+workload prompt length and output limit.
 
 AI Hub graph latency is useful compiler/device evidence, but it provides none
 of these persistent-loop rates by itself.
@@ -184,6 +203,11 @@ scores are not broad capability claims. PIQA is excluded from v1 because its
 currently rendered dataset-card license metadata and merged licensing
 discussion are inconsistent.
 
+Quality-result validation resolves the task ID through the frozen suite and
+rejects drift in dataset ID/revision/config, split, first-N/full-split
+selection, harness release/commit, prompt interface, chat-template flag,
+few-shot count, metric name, or unit.
+
 Primary references:
 
 - [lm-evaluation-harness releases](https://github.com/EleutherAI/lm-evaluation-harness/releases)
@@ -217,6 +241,7 @@ Validate the contracts and statistics implementation:
 
 ```bash
 uv run python -m slm_lab.benchmark.protocol check --root .
+uv run --extra dev pytest -q tests/repo/test_t13_benchmark_protocol.py
 ```
 
 Inspect the timing classes:

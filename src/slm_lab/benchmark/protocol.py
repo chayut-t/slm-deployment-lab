@@ -22,7 +22,7 @@ T10_PATH = Path("configs/workloads/t10-token-fixtures.json")
 # Intentional changes to the frozen protocol must update both the JSON contract
 # and this independently reviewed digest.
 EXPECTED_PROTOCOL_SHA256 = (
-    "bf6821bc0253e40b820a5b269035403072c7501233e66908e32cd57571f07d80"
+    "e90c5b27ba22d5b9c398d90682fe4890936fba27ce7587e885839785f35a4258"
 )
 
 EXPECTED_TIMING_CLASSES = {
@@ -73,6 +73,8 @@ EXPECTED_UNITS = {
     "generation_throughput_including_prefill": "tokens_per_second",
     "generation_throughput_excluding_prefill": "tokens_per_second",
     "request_total_latency": "seconds",
+    "artifact_load_latency": "seconds",
+    "model_load_latency": "seconds",
     "peak_memory": "bytes",
     "average_power": "watts",
     "energy_per_output_token": "joules_per_token",
@@ -394,9 +396,144 @@ def _assert_close(field: str, actual: Any, expected: float) -> None:
         )
 
 
+def _nonempty_action(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _validate_synchronization(
+    result: Mapping[str, Any],
+    protocol: Mapping[str, Any],
+) -> None:
+    measurement = result["measurement"]
+    evidence = measurement["synchronization"]
+    backend = evidence["backend"]
+    method_policy = protocol["synchronization"]["methods"][backend]
+    if evidence["method_id"] != method_policy["method_id"]:
+        raise BenchmarkProtocolError(
+            f"{backend} must use synchronization method "
+            f"{method_policy['method_id']!r}"
+        )
+    if (
+        method_policy["requires_pre_timer_action"]
+        and not _nonempty_action(evidence["pre_timer_action"])
+    ):
+        raise BenchmarkProtocolError(
+            f"{backend} requires an explicit pre-timer synchronization action"
+        )
+    if (
+        method_policy["requires_post_timer_action"]
+        and not _nonempty_action(evidence["post_timer_action"])
+    ):
+        raise BenchmarkProtocolError(
+            f"{backend} requires an explicit post-timer synchronization action"
+        )
+    if backend == "qualcomm_workbench" and measurement["scope"] != "graph":
+        raise BenchmarkProtocolError(
+            "Qualcomm Workbench service-reported timing is graph scope only"
+        )
+    allowed_by_platform = {
+        "cpu_reference": {"pytorch_cpu", "onnxruntime_cpu"},
+        "apple": {"mlx", "pytorch_cpu", "onnxruntime_cpu"},
+        "nvidia": {
+            "onnxruntime_cuda",
+            "generic_accelerator",
+            "pytorch_cpu",
+            "onnxruntime_cpu",
+        },
+        "qualcomm": {
+            "qualcomm_workbench",
+            "qualcomm_device_cloud",
+            "generic_accelerator",
+        },
+    }
+    platform = result["system"]["platform"]
+    allowed = allowed_by_platform.get(platform)
+    if allowed is not None and backend not in allowed:
+        raise BenchmarkProtocolError(
+            f"synchronization backend {backend!r} is incompatible with "
+            f"system platform {platform!r}"
+        )
+
+
+def _validate_process_isolation(
+    measurement: Mapping[str, Any],
+    class_policy: Mapping[str, Any] | None,
+) -> None:
+    evidence = measurement["process_isolation"]
+    expected_fresh = bool(
+        class_policy and class_policy["fresh_process_each_repetition"]
+    )
+    if evidence["fresh_process_each_repetition"] is not expected_fresh:
+        raise BenchmarkProtocolError(
+            "fresh_process_each_repetition differs from the timing-class policy"
+        )
+    if expected_fresh:
+        if not _nonempty_action(evidence["reset_method"]):
+            raise BenchmarkProtocolError(
+                "cold-start evidence requires an explicit process reset method"
+            )
+        if not _nonempty_action(evidence["process_identity_evidence"]):
+            raise BenchmarkProtocolError(
+                "cold-start evidence requires per-repetition process identity evidence"
+            )
+
+
+def _validate_quality_method(
+    result: Mapping[str, Any],
+    academic: Mapping[str, Any],
+) -> None:
+    if result["source"]["workload_id"] != "academic_evaluation":
+        raise BenchmarkProtocolError(
+            "quality_metric requires source.workload_id='academic_evaluation'"
+        )
+    method = result["measurement"]["quality_method"]
+    tasks = {task["id"]: task for task in academic["tasks"]}
+    task = tasks.get(method["task_id"])
+    if task is None:
+        raise BenchmarkProtocolError(
+            f"quality task {method['task_id']!r} is absent from the frozen suite"
+        )
+    expected = {
+        "suite_id": academic["suite_id"],
+        "dataset_id": task["dataset_id"],
+        "dataset_revision": task["dataset_revision"],
+        "dataset_config": task["dataset_config"],
+        "harness_release": academic["harness"]["release"],
+        "harness_commit": academic["harness"]["release_commit"],
+        "split": task["split"],
+        "selection": task["selection"],
+        "prompt_interface": academic["prompt_interface"],
+        "apply_chat_template": academic["apply_chat_template"],
+        "fewshot": academic["fewshot"],
+    }
+    for field, expected_value in expected.items():
+        if method[field] != expected_value:
+            raise BenchmarkProtocolError(
+                f"quality_method.{field} differs from the frozen academic task"
+            )
+    if method["metric_name"] not in task["metrics"]:
+        raise BenchmarkProtocolError(
+            f"quality metric {method['metric_name']!r} is not frozen for "
+            f"{method['task_id']}"
+        )
+    unit_by_metric = {
+        "acc": "ratio",
+        "acc_norm": "ratio",
+        "word_perplexity": "perplexity",
+        "byte_perplexity": "perplexity",
+        "bits_per_byte": "bits_per_byte",
+    }
+    expected_unit = unit_by_metric[method["metric_name"]]
+    if result["measurement"]["unit"] != expected_unit:
+        raise BenchmarkProtocolError(
+            f"{method['metric_name']} must use unit {expected_unit!r}"
+        )
+
+
 def _validate_result_semantics(
     result: Mapping[str, Any],
     protocol: Mapping[str, Any],
+    academic: Mapping[str, Any],
 ) -> None:
     if result["protocol_sha256"] != protocol["contract_sha256"]:
         raise BenchmarkProtocolError("result references a different protocol digest")
@@ -415,10 +552,6 @@ def _validate_result_semantics(
                 raise BenchmarkProtocolError(
                     f"{field} differs from the {timing_class} policy"
                 )
-        expected_inclusion = {
-            "model_load": class_policy["model_load_included"],
-            "compile": class_policy["compile_included"],
-        }
     else:
         if timing_class is not None:
             raise BenchmarkProtocolError(
@@ -441,11 +574,40 @@ def _validate_result_semantics(
             raise BenchmarkProtocolError(
                 f"{kind} measured_repetitions differs from the policy"
             )
-        expected_inclusion = {"model_load": False, "compile": False}
+        class_policy = None
+
+    metric = measurement["metric"]
+    if metric not in protocol["metric_definitions"]:
+        raise BenchmarkProtocolError(f"metric {metric!r} is not defined by protocol")
+    if kind == "performance" and metric not in class_policy["required_metrics"]:
+        raise BenchmarkProtocolError(
+            f"{metric} is not allowed for timing class {timing_class}"
+        )
+
     includes = set(measurement["includes"])
     excludes = set(measurement["excludes"])
     if includes & excludes:
         raise BenchmarkProtocolError("measurement includes and excludes overlap")
+    expected_inclusion = {
+        "compile": False,
+        "model_load": bool(class_policy and class_policy["model_load_included"]),
+    }
+    if timing_class == "cold_start":
+        cold_components = {
+            "artifact_load_latency": {
+                "artifact_load": True,
+                "model_load": False,
+            },
+            "model_load_latency": {
+                "artifact_load": False,
+                "model_load": True,
+            },
+            "cold_ttft": {
+                "artifact_load": True,
+                "model_load": True,
+            },
+        }
+        expected_inclusion.update(cold_components[metric])
     for component, expected_included in expected_inclusion.items():
         collection = includes if expected_included else excludes
         if component not in collection:
@@ -454,9 +616,6 @@ def _validate_result_semantics(
                 f"{kind} must list {component!r} in {destination}"
             )
 
-    metric = measurement["metric"]
-    if metric not in protocol["metric_definitions"]:
-        raise BenchmarkProtocolError(f"metric {metric!r} is not defined by protocol")
     expected_unit = EXPECTED_UNITS.get(metric)
     if expected_unit is not None and measurement["unit"] != expected_unit:
         raise BenchmarkProtocolError(
@@ -486,6 +645,58 @@ def _validate_result_semantics(
         raise BenchmarkProtocolError(
             f"{metric} must use measurement kind {expected_kind!r}"
         )
+    _validate_synchronization(result, protocol)
+    _validate_process_isolation(measurement, class_policy)
+
+    prompt_denominator_metrics = {"prefill_throughput"}
+    generated_denominator_metrics = {
+        "decode_time_per_output_token",
+        "decode_throughput",
+        "generation_throughput_including_prefill",
+        "generation_throughput_excluding_prefill",
+        "energy_per_output_token",
+    }
+    if (
+        metric in prompt_denominator_metrics
+        and measurement.get("actual_prompt_tokens", 0) < 1
+    ):
+        raise BenchmarkProtocolError(
+            f"{metric} requires positive actual_prompt_tokens"
+        )
+    if (
+        metric in generated_denominator_metrics
+        and measurement.get("actual_generated_tokens", 0) < 1
+    ):
+        raise BenchmarkProtocolError(
+            f"{metric} requires positive actual_generated_tokens"
+        )
+    workload = next(
+        (
+            item
+            for item in protocol["workloads"]
+            if item["id"] == result["source"]["workload_id"]
+        ),
+        None,
+    )
+    if workload is not None:
+        actual_prompt = measurement.get("actual_prompt_tokens")
+        if (
+            actual_prompt is not None
+            and actual_prompt != workload["prompt_tokens"]
+        ):
+            raise BenchmarkProtocolError(
+                "actual_prompt_tokens differs from the frozen workload"
+            )
+        actual_generated = measurement.get("actual_generated_tokens")
+        if (
+            actual_generated is not None
+            and actual_generated > workload["generated_tokens"]
+        ):
+            raise BenchmarkProtocolError(
+                "actual_generated_tokens exceeds the frozen output limit"
+            )
+    if metric == "quality_metric":
+        _validate_quality_method(result, academic)
 
     samples = result["samples"]
     if len(samples) != measurement["measured_repetitions"]:
@@ -564,6 +775,8 @@ def validate_result(
 
     root_path = Path(root).resolve()
     protocol = load_protocol(root_path)
+    academic = _load_json(root_path / ACADEMIC_PATH)
+    _validate_academic_contract(academic)
     schema = load_result_schema(root_path)
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
     errors = sorted(validator.iter_errors(result), key=lambda error: list(error.path))
@@ -573,7 +786,7 @@ def validate_result(
         raise BenchmarkProtocolError(
             f"result schema violation at {location}: {first.message}"
         )
-    _validate_result_semantics(result, protocol)
+    _validate_result_semantics(result, protocol, academic)
 
 
 def _self_check_result_validation(root: Path | str) -> None:
@@ -629,7 +842,18 @@ def _self_check_result_validation(root: Path | str) -> None:
             "metric": "graph_latency",
             "unit": "seconds",
             "timing_boundary": "synthetic schema exercise only",
-            "synchronization_method": "synthetic schema exercise only",
+            "synchronization": {
+                "backend": "pytorch_cpu",
+                "method_id": "call_return",
+                "pre_timer_action": None,
+                "post_timer_action": "blocking model call returned",
+                "evidence": "synthetic schema exercise only",
+            },
+            "process_isolation": {
+                "fresh_process_each_repetition": False,
+                "reset_method": None,
+                "process_identity_evidence": None,
+            },
             "warmup_repetitions": 5,
             "measured_repetitions": 30,
             "includes": [],

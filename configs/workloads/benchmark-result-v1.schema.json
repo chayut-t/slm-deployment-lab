@@ -193,7 +193,8 @@
         "metric",
         "unit",
         "timing_boundary",
-        "synchronization_method",
+        "synchronization",
+        "process_isolation",
         "warmup_repetitions",
         "measured_repetitions",
         "includes",
@@ -258,9 +259,11 @@
           "type": "string",
           "minLength": 1
         },
-        "synchronization_method": {
-          "type": "string",
-          "minLength": 1
+        "synchronization": {
+          "$ref": "#/$defs/synchronizationEvidence"
+        },
+        "process_isolation": {
+          "$ref": "#/$defs/processIsolation"
         },
         "warmup_repetitions": {
           "type": "integer",
@@ -286,11 +289,11 @@
         },
         "actual_prompt_tokens": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1
         },
         "actual_generated_tokens": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1
         },
         "memory_method": {
           "$ref": "#/$defs/memoryMethod"
@@ -501,6 +504,76 @@
       "type": "string",
       "pattern": "^[0-9a-f]{40}$"
     },
+    "synchronizationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "backend",
+        "method_id",
+        "pre_timer_action",
+        "post_timer_action",
+        "evidence"
+      ],
+      "properties": {
+        "backend": {
+          "enum": [
+            "pytorch_cpu",
+            "onnxruntime_cpu",
+            "onnxruntime_cuda",
+            "mlx",
+            "qualcomm_workbench",
+            "qualcomm_device_cloud",
+            "generic_accelerator"
+          ]
+        },
+        "method_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pre_timer_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "post_timer_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "processIsolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fresh_process_each_repetition",
+        "reset_method",
+        "process_identity_evidence"
+      ],
+      "properties": {
+        "fresh_process_each_repetition": {
+          "type": "boolean"
+        },
+        "reset_method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "process_identity_evidence": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
     "memoryMethod": {
       "type": "object",
       "additionalProperties": false,
@@ -609,11 +682,18 @@
       "required": [
         "suite_id",
         "task_id",
+        "metric_name",
+        "dataset_id",
         "dataset_revision",
+        "dataset_config",
         "harness_release",
+        "harness_commit",
         "resolved_task_sha256",
         "split",
-        "selection_policy"
+        "selection",
+        "prompt_interface",
+        "apply_chat_template",
+        "fewshot"
       ],
       "properties": {
         "suite_id": {
@@ -623,12 +703,27 @@
           "type": "string",
           "minLength": 1
         },
+        "metric_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "dataset_revision": {
           "type": "string",
           "minLength": 7
         },
+        "dataset_config": {
+          "type": "string",
+          "minLength": 1
+        },
         "harness_release": {
           "const": "v0.4.12"
+        },
+        "harness_commit": {
+          "$ref": "#/$defs/gitSha"
         },
         "resolved_task_sha256": {
           "$ref": "#/$defs/sha256"
@@ -637,9 +732,48 @@
           "type": "string",
           "minLength": 1
         },
-        "selection_policy": {
+        "selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy",
+            "limit",
+            "shuffle",
+            "seed"
+          ],
+          "properties": {
+            "policy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "shuffle": {
+              "type": "boolean"
+            },
+            "seed": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "prompt_interface": {
           "type": "string",
           "minLength": 1
+        },
+        "apply_chat_template": {
+          "type": "boolean"
+        },
+        "fewshot": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
