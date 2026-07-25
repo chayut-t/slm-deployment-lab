@@ -126,13 +126,13 @@
       "id": "T13",
       "title": "Benchmark and evaluation protocol",
       "definition": "ai/tasks/definitions/T13.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T10"],
       "resource_locks": [],
       "owner": "Codex T13 agent",
       "branch": "task/T13-benchmark-protocol",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md"
     },
     {
       "id": "T20",

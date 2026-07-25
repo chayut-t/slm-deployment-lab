@@ -103,7 +103,7 @@ graph TD
 | T10 — Token, prompt, and evaluation fixtures | completed | T00 | — | ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md |
 | T11 — Deterministic PyTorch reference | completed | T10 | — | ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md |
 | T12 — Static cache and tensor contract | ready | T11 | — | — |
-| T13 — Benchmark and evaluation protocol | in_progress | T10 | — | — |
+| T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
 | T20 — Four-context ONNX export matrix | blocked | T12 | t9_heavy_io | — |
 | T21 — ONNX Runtime CPU parity and graph inspection | blocked | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
@@ -129,9 +129,9 @@ graph TD
 ## Summary
 
 - ready: 4
-- in_progress: 1
+- in_progress: 0
 - blocked: 17
-- completed: 8
+- completed: 9
 
 ## Resource capacities
 

@@ -42,3 +42,21 @@ git diff --exit-code -- configs/workloads/ tests/fixtures/t10/
 ```
 
 No model weights are needed for these commands.
+
+## T13 benchmark and evaluation contract
+
+`benchmark-protocol-v1.json` freezes the shared context matrix, decode probes,
+timing classes, synchronization rules, statistics, memory/power methods,
+numerical metrics, and claim boundaries. `benchmark-result-v1.schema.json`
+defines one raw-sample-backed metric record. A graph-latency record and an
+end-to-end generation record therefore cannot be silently combined.
+
+`academic-evaluation-v1.json` pins the small WikiText-2 raw, HellaSwag, and ARC
+Easy regression subset. It commits metadata, not third-party rows or scores.
+Dataset caches and sample logs remain external or ignored.
+
+Validate all three contracts offline:
+
+```bash
+uv run python -m slm_lab.benchmark.protocol check --root .
+```
