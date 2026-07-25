@@ -3,7 +3,7 @@
   "tasks": {
     "TNN": {
       "branch": "task/TNN-short-slug",
-      "checkpoint_sha": "full-git-sha",
+      "checkpoint_sha": "0000000000000000000000000000000000000000",
       "active_writer": null,
       "sessions": {
         "private-session-placeholder": {

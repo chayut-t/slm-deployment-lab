@@ -160,10 +160,15 @@ def validate_instruction_adapters(staged: bool, errors: list[str]) -> None:
         except (FileNotFoundError, OSError, UnicodeDecodeError) as exc:
             errors.append(f"cannot inspect Claude adapter {claude_path}: {exc}")
             continue
-        if not re.search(r"^@AGENTS\.md\s*$", content, flags=re.MULTILINE):
+        meaningful_lines = [
+            line.strip()
+            for line in content.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        if meaningful_lines != ["@AGENTS.md"]:
             errors.append(
-                f"{claude_path}: must import its same-directory AGENTS.md "
-                "with @AGENTS.md"
+                f"{claude_path}: must be a thin adapter whose only "
+                "non-comment content is @AGENTS.md"
             )
 
 

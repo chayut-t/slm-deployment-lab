@@ -30,8 +30,8 @@ The installer reconstructs ignored local state. New registries use schema v2.
 An existing schema-v1 registry remains readable and is never migrated
 automatically.
 
-For Claude Code, use `/context` and inspect its memory-files section to confirm
-that `CLAUDE.md` and imported `AGENTS.md` loaded. For Codex, ask a read-only
+For Claude Code, use `/memory` to confirm that `CLAUDE.md` and imported
+`AGENTS.md` loaded. For Codex, ask a read-only
 orientation question and confirm it identifies `AGENTS.md`, the project plan,
 the task graph, dependency checks, and completion gates.
 
@@ -79,7 +79,7 @@ python3 scripts/ai/session_registry.py show
 
 The helper resolves the primary checkout from `git worktree list --porcelain`.
 Set `SLM_LAB_COORDINATION_ROOT` only when an explicit primary checkout is
-needed; it must belong to the same Git repository.
+needed; it must resolve to that repository's primary checkout exactly.
 
 Schema-v2 writer changes are locked, atomic, and compare-and-swap guarded.
 Examples:
@@ -99,6 +99,10 @@ python3 scripts/ai/session_registry.py checkpoint TNN \
 python3 scripts/ai/session_registry.py release TNN \
   --expected-writer PRIVATE_SESSION \
   --expected-checkpoint FINAL_SHA
+
+python3 scripts/ai/session_registry.py release-reviewer TNN \
+  --reviewer PRIVATE_REVIEW_SESSION \
+  --expected-state active
 ```
 
 Never place real session values in commands copied to public logs or worklogs.

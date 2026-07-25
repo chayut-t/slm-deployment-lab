@@ -46,20 +46,24 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def shared_registry_path() -> Path:
+def run_registry_helper(*arguments: str) -> subprocess.CompletedProcess[str]:
     helper = REPO_ROOT / "scripts" / "ai" / "session_registry.py"
-    result = subprocess.run(
+    return subprocess.run(
         (
             sys.executable,
             str(helper),
             "--start",
             str(REPO_ROOT),
-            "path",
+            *arguments,
         ),
         text=True,
         capture_output=True,
         check=False,
     )
+
+
+def shared_registry_path() -> Path:
+    result = run_registry_helper("path")
     if result.returncode:
         detail = (result.stderr or result.stdout).strip()
         raise RuntimeError(f"cannot resolve shared agent registry: {detail}")
@@ -76,23 +80,27 @@ def main() -> int:
         local_readme.write_text(LOCAL_README, encoding="utf-8")
 
     try:
-        registry = shared_registry_path()
+        shared_registry_path()
     except RuntimeError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     registry_example = REPO_ROOT / "ai" / "tasks" / "thread_registry.example.yaml"
-    if not registry.exists():
-        registry.parent.mkdir(parents=True, exist_ok=True)
-        if registry_example.is_file():
-            registry.write_text(
-                registry_example.read_text(encoding="utf-8"),
-                encoding="utf-8",
-            )
-        else:
-            registry.write_text(
-                '{\n  "schema_version": 2,\n  "tasks": {}\n}\n',
-                encoding="utf-8",
-            )
+    if not registry_example.is_file():
+        print(
+            f"error: registry template is missing: {registry_example}", file=sys.stderr
+        )
+        return 1
+    initialization = run_registry_helper(
+        "initialize",
+        "--template",
+        str(registry_example),
+    )
+    if initialization.returncode:
+        detail = (initialization.stderr or initialization.stdout).strip()
+        print(
+            f"error: cannot initialize shared agent registry: {detail}", file=sys.stderr
+        )
+        return 1
 
     artifact_root = Path(args.artifact_root).expanduser()
     link = REPO_ROOT / "artifacts"

@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+SHA_A = "a" * 40
+SHA_B = "b" * 40
+SHA_C = "c" * 40
 
 
 def load_module(name: str, path: Path):
@@ -69,8 +74,21 @@ class SessionRegistryTests(unittest.TestCase):
         )
 
     @staticmethod
-    def graph(branch: str = "task/T04-dual-agent-compatibility") -> dict:
-        return {"tasks": [{"id": "T04", "branch": branch}]}
+    def graph(
+        branch: str = "task/T04-dual-agent-compatibility",
+        *,
+        status: str = "in_progress",
+    ) -> dict:
+        return {
+            "tasks": [
+                {
+                    "id": "T04",
+                    "status": status,
+                    "owner": "Registry Test",
+                    "branch": branch,
+                }
+            ]
+        }
 
     @staticmethod
     def empty_v2() -> dict:
@@ -90,6 +108,8 @@ class SessionRegistryTests(unittest.TestCase):
             REGISTRY.resolve_coordination_root(linked, explicit_root=root),
             root.resolve(),
         )
+        with self.assertRaisesRegex(REGISTRY.RegistryError, "primary checkout"):
+            REGISTRY.resolve_coordination_root(linked, explicit_root=linked)
 
     def test_schema_v1_is_read_without_mutation(self) -> None:
         text = self.v1_text()
@@ -97,6 +117,13 @@ class SessionRegistryTests(unittest.TestCase):
         self.assertEqual(parsed["schema_version"], 1)
         self.assertEqual(parsed["tasks"]["T03"]["state"], "completed")
         self.assertEqual(text, self.v1_text())
+
+    def test_schema_v1_inline_empty_tasks_is_read(self) -> None:
+        text = "schema_version: 1\ntasks: {}\n"
+        self.assertEqual(
+            REGISTRY.load_registry_text(text),
+            {"schema_version": 1, "tasks": {}},
+        )
 
     def test_migration_refuses_active_registry_without_mutation(self) -> None:
         root, _ = self.make_repository()
@@ -131,6 +158,39 @@ class SessionRegistryTests(unittest.TestCase):
             "/private/tmp/slm-lab-T03",
         )
 
+    def test_migration_refuses_missing_or_unknown_state_without_mutation(self) -> None:
+        for state_line in ("", "    state: stale\n"):
+            with self.subTest(state_line=state_line):
+                root, _ = self.make_repository()
+                path = root / ".ai-local" / "tasks" / "thread-registry.yaml"
+                path.parent.mkdir(parents=True)
+                original = (
+                    "schema_version: 1\n"
+                    "tasks:\n"
+                    "  T03:\n"
+                    "    branch: codex/T03-agent-workflow\n"
+                    f"{state_line}"
+                )
+                path.write_text(original, encoding="utf-8")
+
+                with self.assertRaisesRegex(REGISTRY.RegistryError, "ambiguous"):
+                    REGISTRY.migrate_registry(path)
+
+                self.assertEqual(path.read_text(encoding="utf-8"), original)
+                self.assertEqual(list(path.parent.glob("*.bak")), [])
+
+    def test_schema_v2_migration_is_idempotent(self) -> None:
+        root, _ = self.make_repository()
+        path = root / ".ai-local" / "tasks" / "thread-registry.yaml"
+        path.parent.mkdir(parents=True)
+        original = json.dumps(self.empty_v2(), indent=2) + "\n"
+        path.write_text(original, encoding="utf-8")
+
+        self.assertIsNone(REGISTRY.migrate_registry(path))
+
+        self.assertEqual(path.read_text(encoding="utf-8"), original)
+        self.assertEqual(list(path.parent.glob("*.bak")), [])
+
     def test_unknown_schema_is_rejected_without_mutation(self) -> None:
         root, _ = self.make_repository()
         path = root / ".ai-local" / "tasks" / "thread-registry.yaml"
@@ -152,7 +212,7 @@ class SessionRegistryTests(unittest.TestCase):
             session_id="writer-a",
             tool="codex",
             worktree="/tmp/a",
-            checkpoint_sha="claim",
+            checkpoint_sha=SHA_A,
             now="now",
         )
         snapshot = copy.deepcopy(claimed)
@@ -165,7 +225,7 @@ class SessionRegistryTests(unittest.TestCase):
                 session_id="writer-b",
                 tool="claude-code",
                 worktree="/tmp/b",
-                checkpoint_sha="claim",
+                checkpoint_sha=SHA_A,
                 now="later",
             )
 
@@ -189,9 +249,46 @@ class SessionRegistryTests(unittest.TestCase):
                 session_id="writer-a",
                 tool="codex",
                 worktree="/tmp/a",
-                checkpoint_sha="claim",
+                checkpoint_sha=SHA_A,
                 now="now",
             )
+
+    def test_claim_requires_public_in_progress_task_and_exact_values(self) -> None:
+        for graph, worktree, checkpoint, message in (
+            (self.graph(status="planned"), "/tmp/a", SHA_A, "in_progress"),
+            (self.graph(), "relative", SHA_A, "absolute"),
+            (self.graph(), "/tmp/a", "not-a-sha", "40-character"),
+        ):
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(REGISTRY.RegistryError, message):
+                    REGISTRY.claim_writer(
+                        self.empty_v2(),
+                        graph,
+                        task_id="T04",
+                        session_id="writer-a",
+                        tool="codex",
+                        worktree=worktree,
+                        checkpoint_sha=checkpoint,
+                        now="now",
+                    )
+
+    def test_orphan_active_writer_session_is_invalid(self) -> None:
+        data = self.empty_v2()
+        data["tasks"]["T04"] = {
+            "branch": "task/T04-dual-agent-compatibility",
+            "checkpoint_sha": SHA_A,
+            "active_writer": None,
+            "sessions": {
+                "writer-a": {
+                    "tool": "codex",
+                    "role": "writer",
+                    "state": "active",
+                    "worktree": "/tmp/a",
+                }
+            },
+        }
+        with self.assertRaisesRegex(REGISTRY.RegistryError, "active writer sessions"):
+            REGISTRY.validate_registry(data)
 
     def test_stale_checkpoint_operations_are_rejected(self) -> None:
         claimed = REGISTRY.claim_writer(
@@ -201,7 +298,7 @@ class SessionRegistryTests(unittest.TestCase):
             session_id="writer-a",
             tool="codex",
             worktree="/tmp/a",
-            checkpoint_sha="claim",
+            checkpoint_sha=SHA_A,
             now="now",
         )
         snapshot = copy.deepcopy(claimed)
@@ -212,8 +309,8 @@ class SessionRegistryTests(unittest.TestCase):
                 self.graph(),
                 task_id="T04",
                 writer="writer-a",
-                expected_checkpoint="old",
-                new_checkpoint="new",
+                expected_checkpoint=SHA_B,
+                new_checkpoint=SHA_C,
                 now="later",
             )
         with self.assertRaisesRegex(REGISTRY.RegistryError, "stale checkpoint"):
@@ -222,7 +319,7 @@ class SessionRegistryTests(unittest.TestCase):
                 self.graph(),
                 task_id="T04",
                 expected_writer="writer-a",
-                expected_checkpoint="old",
+                expected_checkpoint=SHA_B,
                 now="later",
             )
         self.assertEqual(claimed, snapshot)
@@ -235,7 +332,7 @@ class SessionRegistryTests(unittest.TestCase):
             session_id="writer-a",
             tool="codex",
             worktree="/tmp/a",
-            checkpoint_sha="claim",
+            checkpoint_sha=SHA_A,
             now="now",
         )
         reviewed = REGISTRY.add_reviewer(
@@ -255,7 +352,7 @@ class SessionRegistryTests(unittest.TestCase):
                 self.graph(),
                 task_id="T04",
                 expected_writer="writer-a",
-                expected_checkpoint="claim",
+                expected_checkpoint=SHA_A,
                 new_session_id="reviewer-a",
                 new_tool="claude-code",
                 new_worktree="/tmp/review",
@@ -263,6 +360,224 @@ class SessionRegistryTests(unittest.TestCase):
             )
 
         self.assertEqual(reviewed, snapshot)
+
+    def test_reviewer_release_is_cas_safe_and_preserves_writer(self) -> None:
+        claimed = REGISTRY.claim_writer(
+            self.empty_v2(),
+            self.graph(),
+            task_id="T04",
+            session_id="writer-a",
+            tool="codex",
+            worktree="/tmp/a",
+            checkpoint_sha=SHA_A,
+            now="now",
+        )
+        reviewed = REGISTRY.add_reviewer(
+            claimed,
+            self.graph(),
+            task_id="T04",
+            session_id="reviewer-a",
+            tool="claude-code",
+            worktree="/tmp/a",
+            now="now",
+        )
+        released = REGISTRY.release_reviewer(
+            reviewed,
+            self.graph(),
+            task_id="T04",
+            reviewer="reviewer-a",
+            expected_state="active",
+            now="later",
+        )
+        task = released["tasks"]["T04"]
+        self.assertEqual(task["active_writer"], "writer-a")
+        self.assertEqual(task["sessions"]["writer-a"]["state"], "active")
+        self.assertEqual(task["sessions"]["reviewer-a"]["state"], "completed")
+        with self.assertRaisesRegex(REGISTRY.RegistryError, "stale state"):
+            REGISTRY.release_reviewer(
+                released,
+                self.graph(),
+                task_id="T04",
+                reviewer="reviewer-a",
+                expected_state="active",
+                now="latest",
+            )
+
+    def test_initialize_is_parallel_and_preserves_existing_registry(self) -> None:
+        root, _ = self.make_repository()
+        (root / "ai" / "tasks").mkdir(parents=True)
+        template = root / "ai" / "tasks" / "registry.json"
+        template.write_text(
+            json.dumps(self.empty_v2(), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        helper = REPO_ROOT / "scripts" / "ai" / "session_registry.py"
+        command = (
+            sys.executable,
+            str(helper),
+            "--start",
+            str(root),
+            "initialize",
+            "--template",
+            str(template),
+        )
+        processes = [
+            subprocess.Popen(
+                command,
+                cwd=root,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            for _ in range(4)
+        ]
+        results = [process.communicate(timeout=10) for process in processes]
+        self.assertTrue(all(process.returncode == 0 for process in processes), results)
+        path = root / ".ai-local" / "tasks" / "thread-registry.yaml"
+        self.assertEqual(REGISTRY.load_registry(path), self.empty_v2())
+        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+        populated = {
+            "schema_version": 2,
+            "tasks": {
+                "T04": {
+                    "branch": "task/T04-dual-agent-compatibility",
+                    "checkpoint_sha": None,
+                    "active_writer": None,
+                    "sessions": {},
+                }
+            },
+        }
+        path.write_text(json.dumps(populated), encoding="utf-8")
+        self.assertFalse(
+            REGISTRY.initialize_registry(path, template.read_text(encoding="utf-8"))
+        )
+        self.assertEqual(REGISTRY.load_registry(path), populated)
+
+    def test_cli_claim_checkpoint_transfer_and_release_verify_git_state(
+        self,
+    ) -> None:
+        root, linked = self.make_repository()
+        graph_path = root / "ai" / "tasks" / "task_graph.yaml"
+        graph_path.parent.mkdir(parents=True)
+        graph_path.write_text(
+            json.dumps(self.graph(branch="task/test")),
+            encoding="utf-8",
+        )
+        registry = root / ".ai-local" / "tasks" / "thread-registry.yaml"
+        registry.parent.mkdir(parents=True)
+        registry.write_text(json.dumps(self.empty_v2()), encoding="utf-8")
+        helper = REPO_ROOT / "scripts" / "ai" / "session_registry.py"
+        first_checkpoint = self.run_git(linked, "rev-parse", "HEAD")
+
+        def run_helper(*arguments: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                (
+                    sys.executable,
+                    str(helper),
+                    "--start",
+                    str(linked),
+                    *arguments,
+                ),
+                cwd=linked,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+        invalid = run_helper(
+            "claim",
+            "T04",
+            "--session",
+            "writer-a",
+            "--tool",
+            "codex",
+            "--worktree",
+            str(linked),
+            "--checkpoint",
+            SHA_A,
+        )
+        self.assertEqual(invalid.returncode, 2)
+        self.assertIn("is at", invalid.stderr)
+        self.assertEqual(REGISTRY.load_registry(registry), self.empty_v2())
+
+        dirty_path = linked / "dirty"
+        dirty_path.write_text("dirty\n", encoding="utf-8")
+        dirty = run_helper(
+            "claim",
+            "T04",
+            "--session",
+            "writer-a",
+            "--tool",
+            "codex",
+            "--worktree",
+            str(linked),
+            "--checkpoint",
+            first_checkpoint,
+        )
+        self.assertEqual(dirty.returncode, 2)
+        self.assertIn("uncommitted changes", dirty.stderr)
+        self.assertEqual(REGISTRY.load_registry(registry), self.empty_v2())
+        dirty_path.unlink()
+
+        claimed = run_helper(
+            "claim",
+            "T04",
+            "--session",
+            "writer-a",
+            "--tool",
+            "codex",
+            "--worktree",
+            str(linked),
+            "--checkpoint",
+            first_checkpoint,
+        )
+        self.assertEqual(claimed.returncode, 0, claimed.stderr)
+
+        (linked / "next").write_text("next\n", encoding="utf-8")
+        self.run_git(linked, "add", "next")
+        self.run_git(linked, "commit", "-qm", "next")
+        second_checkpoint = self.run_git(linked, "rev-parse", "HEAD")
+        checkpointed = run_helper(
+            "checkpoint",
+            "T04",
+            "--writer",
+            "writer-a",
+            "--expected-checkpoint",
+            first_checkpoint,
+            "--new-checkpoint",
+            second_checkpoint,
+        )
+        self.assertEqual(checkpointed.returncode, 0, checkpointed.stderr)
+
+        transferred = run_helper(
+            "transfer",
+            "T04",
+            "--expected-writer",
+            "writer-a",
+            "--expected-checkpoint",
+            second_checkpoint,
+            "--new-session",
+            "writer-b",
+            "--new-tool",
+            "claude-code",
+            "--new-worktree",
+            str(linked),
+        )
+        self.assertEqual(transferred.returncode, 0, transferred.stderr)
+        released = run_helper(
+            "release",
+            "T04",
+            "--expected-writer",
+            "writer-b",
+            "--expected-checkpoint",
+            second_checkpoint,
+        )
+        self.assertEqual(released.returncode, 0, released.stderr)
+        task = REGISTRY.load_registry(registry)["tasks"]["T04"]
+        self.assertIsNone(task["active_writer"])
+        self.assertEqual(task["sessions"]["writer-a"]["state"], "transferred")
+        self.assertEqual(task["sessions"]["writer-b"]["state"], "completed")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import copy
 import fcntl
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -21,6 +22,8 @@ from typing import Callable, Iterator
 REGISTRY_RELATIVE_PATH = Path(".ai-local/tasks/thread-registry.yaml")
 GRAPH_RELATIVE_PATH = Path("ai/tasks/task_graph.yaml")
 ACTIVE_STATES = {"active", "in_progress"}
+V2_SESSION_STATES = {"active", "completed", "transferred"}
+FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 
 class RegistryError(ValueError):
@@ -54,22 +57,21 @@ def resolve_coordination_root(
     """Resolve one primary checkout shared by every linked worktree."""
 
     start_path = Path(start).resolve()
+    listing = _git_output(start_path, "worktree", "list", "--porcelain")
+    first = next(
+        (
+            line.removeprefix("worktree ")
+            for line in listing.splitlines()
+            if line.startswith("worktree ")
+        ),
+        None,
+    )
+    if not first:
+        raise RegistryError("git worktree list returned no primary checkout")
+    primary = Path(first).resolve()
+
     override = explicit_root or os.environ.get("SLM_LAB_COORDINATION_ROOT")
-    if override:
-        root = Path(override).expanduser().resolve()
-    else:
-        listing = _git_output(start_path, "worktree", "list", "--porcelain")
-        first = next(
-            (
-                line.removeprefix("worktree ")
-                for line in listing.splitlines()
-                if line.startswith("worktree ")
-            ),
-            None,
-        )
-        if not first:
-            raise RegistryError("git worktree list returned no primary checkout")
-        root = Path(first).resolve()
+    root = Path(override).expanduser().resolve() if override else primary
 
     if not root.is_dir():
         raise RegistryError(f"coordination root does not exist: {root}")
@@ -77,6 +79,10 @@ def resolve_coordination_root(
         raise RegistryError(
             "coordination root belongs to a different Git repository; "
             "set SLM_LAB_COORDINATION_ROOT to this repository's primary checkout"
+        )
+    if root != primary:
+        raise RegistryError(
+            f"coordination root must be the primary checkout {primary}, not {root}"
         )
     return root
 
@@ -120,6 +126,10 @@ def parse_v1_registry(text: str) -> dict:
         if indent == 0:
             current_task = None
             if stripped == "tasks:":
+                data["tasks"] = tasks
+                saw_tasks = True
+                continue
+            if stripped == "tasks: {}":
                 data["tasks"] = tasks
                 saw_tasks = True
                 continue
@@ -186,14 +196,22 @@ def validate_registry(data: object) -> None:
         if not isinstance(task, dict):
             raise RegistryError(f"{task_id}: registry entry must be a mapping")
         if schema == 2:
+            branch = task.get("branch")
+            if not isinstance(branch, str) or not branch:
+                raise RegistryError(f"{task_id}: branch must be a nonempty string")
+            checkpoint = task.get("checkpoint_sha")
+            if checkpoint is not None and (
+                not isinstance(checkpoint, str)
+                or not FULL_SHA_PATTERN.fullmatch(checkpoint)
+            ):
+                raise RegistryError(
+                    f"{task_id}: checkpoint_sha must be null or a full Git SHA"
+                )
             sessions = task.get("sessions", {})
             if not isinstance(sessions, dict):
                 raise RegistryError(f"{task_id}: sessions must be a mapping")
             active_writer = task.get("active_writer")
-            if active_writer is not None and active_writer not in sessions:
-                raise RegistryError(
-                    f"{task_id}: active_writer {active_writer!r} is not a session"
-                )
+            active_writer_sessions: list[str] = []
             for session_id, session in sessions.items():
                 if not isinstance(session_id, str) or not isinstance(session, dict):
                     raise RegistryError(f"{task_id}: invalid session entry")
@@ -201,6 +219,51 @@ def validate_registry(data: object) -> None:
                     raise RegistryError(
                         f"{task_id}/{session_id}: role must be writer or reviewer"
                     )
+                state = session.get("state")
+                if state not in V2_SESSION_STATES:
+                    raise RegistryError(
+                        f"{task_id}/{session_id}: invalid session state {state!r}"
+                    )
+                if session.get("role") == "reviewer" and state == "transferred":
+                    raise RegistryError(
+                        f"{task_id}/{session_id}: reviewer cannot be transferred"
+                    )
+                worktree = session.get("worktree")
+                if state == "active" and (
+                    not isinstance(worktree, str) or not Path(worktree).is_absolute()
+                ):
+                    raise RegistryError(
+                        f"{task_id}/{session_id}: active worktree must be "
+                        "an absolute path"
+                    )
+                if worktree is not None and (
+                    not isinstance(worktree, str) or not Path(worktree).is_absolute()
+                ):
+                    raise RegistryError(
+                        f"{task_id}/{session_id}: worktree must be null or "
+                        "an absolute path"
+                    )
+                if session.get("role") == "writer" and state == "active":
+                    active_writer_sessions.append(session_id)
+            if active_writer is None:
+                if active_writer_sessions:
+                    raise RegistryError(
+                        f"{task_id}: active writer sessions exist while "
+                        "active_writer is null"
+                    )
+            elif (
+                active_writer not in sessions
+                or sessions[active_writer].get("role") != "writer"
+                or sessions[active_writer].get("state") != "active"
+            ):
+                raise RegistryError(
+                    f"{task_id}: active_writer {active_writer!r} must identify "
+                    "an active writer session"
+                )
+            if active_writer_sessions != ([active_writer] if active_writer else []):
+                raise RegistryError(
+                    f"{task_id}: active_writer must be the only active writer session"
+                )
 
 
 def has_active_or_ambiguous_sessions(data: dict) -> list[str]:
@@ -208,7 +271,7 @@ def has_active_or_ambiguous_sessions(data: dict) -> list[str]:
     schema = data["schema_version"]
     for task_id, task in data["tasks"].items():
         if schema == 1:
-            if task.get("state") in ACTIVE_STATES:
+            if task.get("state") != "completed":
                 active.append(task_id)
         else:
             if task.get("active_writer"):
@@ -246,7 +309,7 @@ def migrate_v1_data(data: dict) -> dict:
             if legacy.get("thread_id") or legacy.get("agent")
             else "unknown",
             "role": "writer",
-            "state": legacy.get("state", "completed"),
+            "state": legacy["state"],
             "worktree": legacy.get("worktree"),
             "started_at": started_at,
             "updated_at": completed_at or started_at,
@@ -301,10 +364,12 @@ def locked_registry(path: Path | str) -> Iterator[Path]:
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
-def migrate_registry(path: Path | str) -> Path:
+def migrate_registry(path: Path | str) -> Path | None:
     registry = Path(path)
     with locked_registry(registry):
         source = load_registry(registry)
+        if source["schema_version"] == 2:
+            return None
         migrated = migrate_v1_data(source)
         backup = registry.with_name(f"{registry.name}.v1.{_timestamp()}.bak")
         try:
@@ -314,6 +379,21 @@ def migrate_registry(path: Path | str) -> Path:
         except OSError as exc:
             raise RegistryError(f"registry migration failed: {exc}") from exc
         return backup
+
+
+def initialize_registry(path: Path | str, template_text: str) -> bool:
+    """Create a new registry atomically without replacing an existing one."""
+
+    registry = Path(path)
+    template = load_registry_text(template_text)
+    if template["schema_version"] != 2:
+        raise RegistryError("new registry template must use schema v2")
+    with locked_registry(registry):
+        if registry.exists():
+            load_registry(registry)
+            return False
+        _write_atomic(registry, template)
+        return True
 
 
 def load_task_graph(coordination_root: Path | str) -> dict:
@@ -327,14 +407,32 @@ def load_task_graph(coordination_root: Path | str) -> dict:
     return graph
 
 
-def _graph_branch(graph: dict, task_id: str) -> str:
+def _graph_task(graph: dict, task_id: str) -> dict:
     task = next((item for item in graph["tasks"] if item.get("id") == task_id), None)
     if task is None:
         raise RegistryError(f"{task_id}: task is absent from the public graph")
+    if task.get("status") != "in_progress":
+        raise RegistryError(
+            f"{task_id}: public graph status must be in_progress, "
+            f"not {task.get('status')!r}"
+        )
+    owner = task.get("owner")
+    if not isinstance(owner, str) or not owner:
+        raise RegistryError(f"{task_id}: public graph has no active owner")
     branch = task.get("branch")
     if not isinstance(branch, str) or not branch:
         raise RegistryError(f"{task_id}: public graph has no claimed branch")
-    return branch
+    return task
+
+
+def _require_full_sha(value: str, field: str) -> None:
+    if not FULL_SHA_PATTERN.fullmatch(value):
+        raise RegistryError(f"{field} must be a full 40-character Git SHA")
+
+
+def _require_absolute_worktree(value: str, field: str = "worktree") -> None:
+    if not Path(value).is_absolute():
+        raise RegistryError(f"{field} must be an absolute path")
 
 
 def _v2_copy(data: dict) -> dict:
@@ -348,7 +446,7 @@ def _v2_copy(data: dict) -> dict:
 
 
 def _task_for_branch(data: dict, graph: dict, task_id: str) -> dict:
-    branch = _graph_branch(graph, task_id)
+    branch = _graph_task(graph, task_id)["branch"]
     task = data["tasks"].setdefault(
         task_id,
         {
@@ -378,6 +476,8 @@ def claim_writer(
     checkpoint_sha: str,
     now: str,
 ) -> dict:
+    _require_absolute_worktree(worktree)
+    _require_full_sha(checkpoint_sha, "checkpoint")
     updated = _v2_copy(data)
     task = _task_for_branch(updated, graph, task_id)
     current = task.get("active_writer")
@@ -385,6 +485,16 @@ def claim_writer(
         raise RegistryError(
             f"{task_id}: active writer {current!r} already exists; "
             "release or transfer it explicitly"
+        )
+    active_writer_sessions = [
+        identifier
+        for identifier, session in task["sessions"].items()
+        if session.get("role") == "writer" and session.get("state") == "active"
+    ]
+    if active_writer_sessions:
+        raise RegistryError(
+            f"{task_id}: active writer sessions already exist: "
+            + ", ".join(active_writer_sessions)
         )
     if session_id in task["sessions"]:
         raise RegistryError(f"{task_id}: session {session_id!r} already exists")
@@ -413,6 +523,7 @@ def add_reviewer(
     worktree: str,
     now: str,
 ) -> dict:
+    _require_absolute_worktree(worktree)
     updated = _v2_copy(data)
     task = _task_for_branch(updated, graph, task_id)
     if session_id in task["sessions"]:
@@ -440,6 +551,8 @@ def update_checkpoint(
     new_checkpoint: str,
     now: str,
 ) -> dict:
+    _require_full_sha(expected_checkpoint, "expected checkpoint")
+    _require_full_sha(new_checkpoint, "new checkpoint")
     updated = _v2_copy(data)
     task = _task_for_branch(updated, graph, task_id)
     if task.get("active_writer") != writer:
@@ -468,6 +581,7 @@ def release_writer(
     expected_checkpoint: str,
     now: str,
 ) -> dict:
+    _require_full_sha(expected_checkpoint, "expected checkpoint")
     updated = _v2_copy(data)
     task = _task_for_branch(updated, graph, task_id)
     if task.get("active_writer") != expected_writer:
@@ -489,6 +603,36 @@ def release_writer(
     return updated
 
 
+def release_reviewer(
+    data: dict,
+    graph: dict,
+    *,
+    task_id: str,
+    reviewer: str,
+    expected_state: str,
+    now: str,
+) -> dict:
+    updated = _v2_copy(data)
+    task = _task_for_branch(updated, graph, task_id)
+    session = task["sessions"].get(reviewer)
+    if not session or session.get("role") != "reviewer":
+        raise RegistryError(
+            f"{task_id}: reviewer release refused; {reviewer!r} is not a reviewer"
+        )
+    if session.get("state") != expected_state:
+        raise RegistryError(
+            f"{task_id}: reviewer release refused for stale state "
+            f"{expected_state!r}; current state is {session.get('state')!r}"
+        )
+    if expected_state != "active":
+        raise RegistryError("reviewer release requires expected state active")
+    session["state"] = "completed"
+    session["updated_at"] = now
+    task["updated_at"] = now
+    validate_registry(updated)
+    return updated
+
+
 def transfer_writer(
     data: dict,
     graph: dict,
@@ -501,6 +645,8 @@ def transfer_writer(
     new_worktree: str,
     now: str,
 ) -> dict:
+    _require_full_sha(expected_checkpoint, "expected checkpoint")
+    _require_absolute_worktree(new_worktree, "new worktree")
     updated = _v2_copy(data)
     task = _task_for_branch(updated, graph, task_id)
     if task.get("active_writer") != expected_writer:
@@ -537,6 +683,61 @@ def transfer_writer(
     return updated
 
 
+def validate_task_worktree(
+    worktree: str,
+    *,
+    branch: str,
+    checkpoint_sha: str,
+) -> None:
+    """Verify that an exact task checkpoint is checked out on its public branch."""
+
+    _require_absolute_worktree(worktree)
+    _require_full_sha(checkpoint_sha, "checkpoint")
+    path = Path(worktree).resolve()
+    if not path.is_dir():
+        raise RegistryError(f"worktree does not exist: {path}")
+    top_level = Path(_git_output(path, "rev-parse", "--show-toplevel")).resolve()
+    if top_level != path:
+        raise RegistryError(f"worktree path must be its Git root: {path}")
+    actual_branch = _git_output(path, "branch", "--show-current")
+    if actual_branch != branch:
+        raise RegistryError(
+            f"worktree {path} is on branch {actual_branch!r}, not {branch!r}"
+        )
+    actual_checkpoint = _git_output(path, "rev-parse", "HEAD")
+    if actual_checkpoint != checkpoint_sha:
+        raise RegistryError(
+            f"worktree {path} is at {actual_checkpoint}, not {checkpoint_sha}"
+        )
+    if _git_output(path, "status", "--porcelain"):
+        raise RegistryError(
+            f"worktree {path} has uncommitted changes; commit or reconcile them "
+            "before changing registry state"
+        )
+
+
+def validate_writer_worktree(
+    data: dict,
+    graph: dict,
+    *,
+    task_id: str,
+    writer: str,
+    checkpoint_sha: str,
+) -> None:
+    task = data["tasks"].get(task_id)
+    if not isinstance(task, dict) or task.get("active_writer") != writer:
+        raise RegistryError(f"{task_id}: {writer!r} is not the active writer")
+    session = task.get("sessions", {}).get(writer)
+    if not isinstance(session, dict):
+        raise RegistryError(f"{task_id}: active writer session is missing")
+    graph_task = _graph_task(graph, task_id)
+    validate_task_worktree(
+        str(session.get("worktree")),
+        branch=graph_task["branch"],
+        checkpoint_sha=checkpoint_sha,
+    )
+
+
 def mutate_registry(
     path: Path | str,
     operation: Callable[[dict], dict],
@@ -562,6 +763,11 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("show", help="Print the validated registry as JSON")
     subparsers.add_parser("validate", help="Validate the registry")
     subparsers.add_parser("migrate", help="Explicitly migrate schema v1 to v2")
+    initialize = subparsers.add_parser(
+        "initialize",
+        help="Atomically create a missing schema-v2 registry",
+    )
+    initialize.add_argument("--template", required=True)
 
     claim = subparsers.add_parser("claim", help="Claim one active writer")
     claim.add_argument("task_id")
@@ -586,6 +792,14 @@ def build_parser() -> argparse.ArgumentParser:
     release.add_argument("task_id")
     release.add_argument("--expected-writer", required=True)
     release.add_argument("--expected-checkpoint", required=True)
+
+    release_reviewer_parser = subparsers.add_parser(
+        "release-reviewer",
+        help="Complete an active reviewer session",
+    )
+    release_reviewer_parser.add_argument("task_id")
+    release_reviewer_parser.add_argument("--reviewer", required=True)
+    release_reviewer_parser.add_argument("--expected-state", default="active")
 
     transfer = subparsers.add_parser("transfer", help="Transfer writer ownership")
     transfer.add_argument("task_id")
@@ -617,15 +831,35 @@ def main() -> int:
             return 0
         if args.command == "migrate":
             backup = migrate_registry(path)
-            print(f"registry migrated to schema v2; backup: {backup}")
+            if backup is None:
+                print(f"registry already uses schema v2; no change: {path}")
+            else:
+                print(f"registry migrated to schema v2; backup: {backup}")
+            return 0
+        if args.command == "initialize":
+            try:
+                template = Path(args.template).read_text(encoding="utf-8")
+            except OSError as exc:
+                raise RegistryError(
+                    f"cannot read registry template {args.template}: {exc}"
+                ) from exc
+            created = initialize_registry(path, template)
+            action = "created" if created else "preserved existing"
+            print(f"{action} registry: {path}")
             return 0
 
         graph = load_task_graph(root)
         now = _utc_now()
         if args.command == "claim":
-            mutate_registry(
-                path,
-                lambda data: claim_writer(
+            graph_task = _graph_task(graph, args.task_id)
+
+            def claim_operation(data: dict) -> dict:
+                validate_task_worktree(
+                    args.worktree,
+                    branch=graph_task["branch"],
+                    checkpoint_sha=args.checkpoint,
+                )
+                return claim_writer(
                     data,
                     graph,
                     task_id=args.task_id,
@@ -634,12 +868,28 @@ def main() -> int:
                     worktree=args.worktree,
                     checkpoint_sha=args.checkpoint,
                     now=now,
-                ),
-            )
-        elif args.command == "add-reviewer":
+                )
+
             mutate_registry(
                 path,
-                lambda data: add_reviewer(
+                claim_operation,
+            )
+        elif args.command == "add-reviewer":
+            graph_task = _graph_task(graph, args.task_id)
+
+            def reviewer_operation(data: dict) -> dict:
+                task = data.get("tasks", {}).get(args.task_id, {})
+                checkpoint = task.get("checkpoint_sha")
+                if not isinstance(checkpoint, str):
+                    raise RegistryError(
+                        f"{args.task_id}: no writer checkpoint exists for review"
+                    )
+                validate_task_worktree(
+                    args.worktree,
+                    branch=graph_task["branch"],
+                    checkpoint_sha=checkpoint,
+                )
+                return add_reviewer(
                     data,
                     graph,
                     task_id=args.task_id,
@@ -647,12 +897,23 @@ def main() -> int:
                     tool=args.tool,
                     worktree=args.worktree,
                     now=now,
-                ),
-            )
-        elif args.command == "checkpoint":
+                )
+
             mutate_registry(
                 path,
-                lambda data: update_checkpoint(
+                reviewer_operation,
+            )
+        elif args.command == "checkpoint":
+
+            def checkpoint_operation(data: dict) -> dict:
+                validate_writer_worktree(
+                    data,
+                    graph,
+                    task_id=args.task_id,
+                    writer=args.writer,
+                    checkpoint_sha=args.new_checkpoint,
+                )
+                return update_checkpoint(
                     data,
                     graph,
                     task_id=args.task_id,
@@ -660,24 +921,64 @@ def main() -> int:
                     expected_checkpoint=args.expected_checkpoint,
                     new_checkpoint=args.new_checkpoint,
                     now=now,
-                ),
-            )
-        elif args.command == "release":
+                )
+
             mutate_registry(
                 path,
-                lambda data: release_writer(
+                checkpoint_operation,
+            )
+        elif args.command == "release":
+
+            def release_operation(data: dict) -> dict:
+                validate_writer_worktree(
+                    data,
+                    graph,
+                    task_id=args.task_id,
+                    writer=args.expected_writer,
+                    checkpoint_sha=args.expected_checkpoint,
+                )
+                return release_writer(
                     data,
                     graph,
                     task_id=args.task_id,
                     expected_writer=args.expected_writer,
                     expected_checkpoint=args.expected_checkpoint,
                     now=now,
+                )
+
+            mutate_registry(
+                path,
+                release_operation,
+            )
+        elif args.command == "release-reviewer":
+            mutate_registry(
+                path,
+                lambda data: release_reviewer(
+                    data,
+                    graph,
+                    task_id=args.task_id,
+                    reviewer=args.reviewer,
+                    expected_state=args.expected_state,
+                    now=now,
                 ),
             )
         elif args.command == "transfer":
-            mutate_registry(
-                path,
-                lambda data: transfer_writer(
+            graph_task = _graph_task(graph, args.task_id)
+
+            def transfer_operation(data: dict) -> dict:
+                validate_writer_worktree(
+                    data,
+                    graph,
+                    task_id=args.task_id,
+                    writer=args.expected_writer,
+                    checkpoint_sha=args.expected_checkpoint,
+                )
+                validate_task_worktree(
+                    args.new_worktree,
+                    branch=graph_task["branch"],
+                    checkpoint_sha=args.expected_checkpoint,
+                )
+                return transfer_writer(
                     data,
                     graph,
                     task_id=args.task_id,
@@ -687,7 +988,11 @@ def main() -> int:
                     new_tool=args.new_tool,
                     new_worktree=args.new_worktree,
                     now=now,
-                ),
+                )
+
+            mutate_registry(
+                path,
+                transfer_operation,
             )
         else:
             raise RegistryError(f"unknown command: {args.command}")

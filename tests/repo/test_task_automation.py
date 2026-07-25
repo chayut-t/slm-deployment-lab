@@ -315,6 +315,21 @@ class GitSnapshotTests(unittest.TestCase):
         result = self.run_hygiene(repository)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_nested_agents_rejects_duplicated_claude_policy(self) -> None:
+        repository = self.make_repository()
+        nested = repository / "src" / "example"
+        nested.mkdir(parents=True)
+        (nested / "AGENTS.md").write_text("# Nested policy\n", encoding="utf-8")
+        (nested / "CLAUDE.md").write_text(
+            "@AGENTS.md\n\nDo all of the policy again.\n",
+            encoding="utf-8",
+        )
+        self.run_git(repository, "add", "src/example")
+
+        result = self.run_hygiene(repository)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("must be a thin adapter", result.stderr)
+
     def test_fresh_clone_installer_reconstructs_local_coordination_state(
         self,
     ) -> None:
@@ -343,9 +358,11 @@ class GitSnapshotTests(unittest.TestCase):
         registry = clone / ".ai-local" / "tasks" / "thread-registry.yaml"
         self.assertTrue((clone / ".ai-local" / "README.md").is_file())
         self.assertEqual(
-            registry.read_text(encoding="utf-8"),
-            (clone / "ai" / "tasks" / "thread_registry.example.yaml").read_text(
-                encoding="utf-8"
+            json.loads(registry.read_text(encoding="utf-8")),
+            json.loads(
+                (clone / "ai" / "tasks" / "thread_registry.example.yaml").read_text(
+                    encoding="utf-8"
+                )
             ),
         )
         self.assertEqual(
