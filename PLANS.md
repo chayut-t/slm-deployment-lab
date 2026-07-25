@@ -1,7 +1,7 @@
 # Execution plans
 
-Execution plans make substantial work resumable across Codex tasks, worktrees,
-and context boundaries.
+Execution plans make substantial work resumable across agent sessions,
+worktrees, tools, and context boundaries.
 
 ## When a plan is required
 

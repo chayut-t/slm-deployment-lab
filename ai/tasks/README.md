@@ -7,7 +7,7 @@ a bootstrapped Python environment.
 
 Every graph node references `definitions/TNN.yaml`, which owns the task's
 objective, file boundaries, outputs, and acceptance criteria. Public
-owner/branch/issue fields support coordination; real Codex thread identifiers
+owner/branch/issue fields support coordination; real agent session identifiers
 remain in the ignored local registry.
 
 After editing the graph, run:
@@ -16,8 +16,8 @@ After editing the graph, run:
 python3 scripts/ai/render_task_status.py
 ```
 
-Never edit `status.generated.md` by hand. Real Codex task/thread identifiers
-belong only in `.ai-local/tasks/thread-registry.yaml`.
+Never edit `status.generated.md` by hand. Access real task/session identifiers
+through `scripts/ai/session_registry.py`; the resolved registry remains ignored.
 
 Validation rejects plan/DAG drift, dependency cycles, unknown resources,
 in-progress tasks with unfinished dependencies, and completed tasks without a

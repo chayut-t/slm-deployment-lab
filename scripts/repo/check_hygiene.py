@@ -15,9 +15,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MAX_COMMITTED_BYTES = 10 * 1024 * 1024
 FORBIDDEN_ROOTS = {".ai-local", "artifacts"}
-FORBIDDEN_PREFIXES = (".ai-local/", "artifacts/")
+FORBIDDEN_PREFIXES = (".ai-local/", "artifacts/", ".claude/worktrees/")
+FORBIDDEN_PATHS = {".claude/settings.local.json"}
 FORBIDDEN_NAMES = {
     ".env",
+    "CLAUDE.local.md",
     "slm_deployment_lab_project_plan_feedback.md",
     "thread_registry.local.yaml",
 }
@@ -27,13 +29,16 @@ REQUIRED_FILES = {
     ".githooks/pre-commit",
     "README.md",
     "AGENTS.md",
+    "CLAUDE.md",
     "PLANS.md",
     "mkdocs.yml",
     "pyproject.toml",
     "docs/project/plan.md",
+    "docs/agentic/dual-agent-setup.md",
     "ai/tasks/task_graph.yaml",
     "ai/tasks/status.generated.md",
     "scripts/ai/render_task_status.py",
+    "scripts/ai/session_registry.py",
     "scripts/repo/check_hygiene.py",
 }
 SECRET_PATTERNS = (
@@ -61,7 +66,9 @@ def load_task_renderer():
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument("--all", action="store_true", help="Check tracked and untracked files")
+    mode.add_argument(
+        "--all", action="store_true", help="Check tracked and untracked files"
+    )
     mode.add_argument("--staged", action="store_true", help="Check the staged snapshot")
     return parser.parse_args()
 
@@ -79,6 +86,20 @@ def candidate_paths(staged: bool) -> list[str]:
             "--diff-filter=ACMRD",
             "-z",
         )
+    else:
+        output = git_output(
+            "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+            "-z",
+        )
+    return sorted(path for path in output.decode().split("\0") if path)
+
+
+def snapshot_paths(staged: bool) -> list[str]:
+    if staged:
+        output = git_output("ls-files", "-z")
     else:
         output = git_output(
             "ls-files",
@@ -115,6 +136,37 @@ def working_content(path: str) -> bytes:
     return (REPO_ROOT / path).read_bytes()
 
 
+def validate_instruction_adapters(staged: bool, errors: list[str]) -> None:
+    try:
+        paths = set(snapshot_paths(staged))
+    except subprocess.CalledProcessError as exc:
+        errors.append(f"cannot enumerate instruction files: {exc}")
+        return
+
+    for agents_path in sorted(path for path in paths if Path(path).name == "AGENTS.md"):
+        parent = Path(agents_path).parent
+        claude_path = (parent / "CLAUDE.md").as_posix()
+        if claude_path not in paths:
+            errors.append(
+                f"{agents_path}: missing same-directory Claude adapter {claude_path}"
+            )
+            continue
+        try:
+            content = (
+                index_text(claude_path)
+                if staged
+                else (REPO_ROOT / claude_path).read_text(encoding="utf-8")
+            )
+        except (FileNotFoundError, OSError, UnicodeDecodeError) as exc:
+            errors.append(f"cannot inspect Claude adapter {claude_path}: {exc}")
+            continue
+        if not re.search(r"^@AGENTS\.md\s*$", content, flags=re.MULTILINE):
+            errors.append(
+                f"{claude_path}: must import its same-directory AGENTS.md "
+                "with @AGENTS.md"
+            )
+
+
 def main() -> int:
     args = parse_args()
     staged = args.staged
@@ -129,11 +181,15 @@ def main() -> int:
     if staged:
         for required in sorted(REQUIRED_FILES):
             if not index_has(required):
-                errors.append(f"required file is missing from staged snapshot: {required}")
+                errors.append(
+                    f"required file is missing from staged snapshot: {required}"
+                )
     elif not staged:
         for required in sorted(REQUIRED_FILES):
             if not (REPO_ROOT / required).is_file():
                 errors.append(f"required repository file is missing: {required}")
+
+    validate_instruction_adapters(staged, errors)
 
     for path in paths:
         if staged and not index_has(path):
@@ -145,6 +201,7 @@ def main() -> int:
         name = Path(normalized).name
         if (
             normalized in FORBIDDEN_ROOTS
+            or normalized in FORBIDDEN_PATHS
             or normalized.startswith(FORBIDDEN_PREFIXES)
         ):
             errors.append(f"private or external path cannot be committed: {normalized}")
@@ -159,7 +216,9 @@ def main() -> int:
             continue
 
         filesystem_path = REPO_ROOT / path
-        if not staged and (filesystem_path.is_symlink() or not filesystem_path.is_file()):
+        if not staged and (
+            filesystem_path.is_symlink() or not filesystem_path.is_file()
+        ):
             continue
 
         try:

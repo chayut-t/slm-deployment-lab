@@ -24,7 +24,8 @@ The project is not a transformer-fundamentals course. It assumes familiarity wit
 - Calibration, W8 and W4 quantization, LiteMP, LPBQ, and sensitivity analysis.
 - GQA-efficient execution on Apple unified memory.
 - ONNX Runtime CUDA provider placement and I/O binding.
-- Reproducible multi-agent work with Codex tasks, Git worktrees, GitHub Issues/Projects, and later GitHub Actions.
+- Reproducible multi-agent work with Codex and Claude Code, Git worktrees,
+  GitHub Issues/Projects, and later GitHub Actions.
 
 The intended public claim is:
 
@@ -123,7 +124,8 @@ For speculative decoding, evaluate a smaller draft model, prompt-lookup decoding
 - Claims of Apple Neural Engine execution from MLX measurements.
 - Treating AI Hub job turnaround as inference latency.
 - Comparing complete systems as though the experiment isolated runtime software alone.
-- Publishing credentials, raw private Codex transcripts, private task identifiers, or the private plan-feedback file.
+- Publishing credentials, raw private agent transcripts, private session
+  identifiers, or the private plan-feedback file.
 
 ## 3. Public Qualcomm environment
 
@@ -506,7 +508,10 @@ Advanced quantization is core. If a Qwen candidate cannot traverse the public pi
 
 ### 8.1 Principle
 
-Learning artifacts support the implementation without imposing mandatory learner checkpoints. Codex agents may implement, test, benchmark, document, and commit autonomously in their assigned worktrees. The user decides when to inspect, intervene, reproduce, or go deeper.
+Learning artifacts support the implementation without imposing mandatory
+learner checkpoints. Codex and Claude Code agents may implement, test,
+benchmark, document, and commit autonomously in their assigned worktrees. The
+user decides when to inspect, intervene, reproduce, or go deeper.
 
 Avoid requirements such as:
 
@@ -575,7 +580,8 @@ External-job cells default to dry-run or explicit opt-in.
 | E09 | `agentic_delivery.md` | Markdown lab | DAGs, task boundaries, worktrees, handoffs, review, resumable coordination |
 | E10 | `github_actions_for_ai_hub.md` | Markdown workflow lab | CI concepts, secrets, manual dispatch, artifacts, AI Hub API orchestration |
 
-Jupyter is appropriate for numerical and runtime experiments. Git/Codex/GitHub Actions operations use Markdown labs and real repository workflows.
+Jupyter is appropriate for numerical and runtime experiments. Git, agent-tool,
+and GitHub Actions operations use Markdown labs and real repository workflows.
 
 ## 9. Phase plan
 
@@ -972,11 +978,11 @@ resources:
 
 Code and documentation can progress concurrently while heavy hardware work is serialized.
 
-## 11. Multi-agent Codex and Git operating model
+## 11. Multi-agent and Git operating model
 
 ### 11.1 Autonomy
 
-Within an assigned task/worktree, Codex agents may:
+Within an assigned task/worktree, Codex and Claude Code agents may:
 
 - Read relevant repository and primary documentation.
 - Implement and refactor in scope.
@@ -1002,7 +1008,9 @@ Use a hybrid:
 - Isolated worktrees/branches for parallel, high-conflict, or independently reviewable work packages.
 - Bounded subagents for research, log analysis, or read-only review when a separate branch is unnecessary.
 
-The “main” Codex task is replaceable. A new coordinator task must be able to resume from repository state rather than private conversation history.
+The coordinating agent session is replaceable. A new Codex or Claude Code
+session must be able to resume from repository state rather than private
+conversation history.
 
 Required resumability files:
 
@@ -1012,20 +1020,22 @@ Required resumability files:
 - `docs/decisions/`
 - merged manifests and test evidence
 
-Do not make a thread ID part of a public dependency.
+Do not make a private session ID part of a public dependency.
 
 ### 11.3 Branch/worktree convention
 
 ```text
-codex/T31-qwen-workbench
-codex/T42-low-bit-quantization
-codex/T51-mlx-runtime
-codex/T60-ort-cuda
+task/T31-qwen-workbench
+task/T42-low-bit-quantization
+task/T51-mlx-runtime
+task/T60-ort-cuda
 ```
 
 Rules:
 
 - Start from the integration commit containing all dependencies.
+- Create the task branch and worktree explicitly with Git from the committed
+  public ownership claim. Historical `codex/TNN-*` branches remain valid.
 - One active writer per file set.
 - Prefer a task-scoped commit history.
 - Integrate in topological order.
@@ -1090,8 +1100,8 @@ Publish curated, reusable material:
 Do not publish:
 
 - Private planning inputs or feedback.
-- Raw Codex transcripts.
-- Private thread/task IDs.
+- Raw agent transcripts.
+- Private agent session IDs.
 - Local registries.
 - Credentials, private paths beyond documented project paths, or unsanitized cloud logs.
 
@@ -1343,6 +1353,7 @@ slm-deployment-lab/
 ├── README.md
 ├── LICENSE
 ├── AGENTS.md
+├── CLAUDE.md
 ├── PLANS.md
 ├── mkdocs.yml
 ├── pyproject.toml
@@ -1478,7 +1489,7 @@ work is complete.
 - Everything under `.ai-local/inputs/`.
 - `.env` and tokens.
 - Raw agent transcripts.
-- Real Codex thread registry.
+- Real agent session registry.
 - Unsanitized Device Cloud or Workbench account information.
 
 ### 17.4 Artifact manifest
@@ -1530,7 +1541,7 @@ created_at:
 | NVIDIA provider falls back to CPU | Medium | High | Validate provider assignment and fail the benchmark |
 | Free GPU is unavailable | High | Low | Approved rental within US$100 total ceiling |
 | Parallel tasks collide on contracts/files | Medium | High | One writer, task ownership, ADRs, topological integration |
-| Main Codex task is abandoned/replaced | Medium | Medium | Repo-based handoff/status; no private-thread dependency |
+| Coordinator agent session is abandoned/replaced | Medium | Medium | Repo-based handoff/status; no private-session dependency |
 | Task manifest and GitHub status drift | Medium | Medium | Manifest source of truth; drift-detecting sync |
 | Credentials leak through notebook/workflow logs | Low | High | Secrets, sanitized artifacts, fork-safe workflows, audit |
 | Educational scope crowds out deployment | Medium | High | Deployment guides/notebooks attach to implementation; Qualcomm remains protected |
@@ -1565,7 +1576,8 @@ created_at:
 - Manual GitHub Actions Qualcomm workflow exists after the local path is stable.
 - MkDocs site builds and is ready for GitHub Pages.
 - Small results/manifests are committed; large artifacts are checksummed on T9.
-- Private feedback, transcripts, thread IDs, credentials, weights, and proprietary artifacts are absent.
+- Private feedback, transcripts, agent session IDs, credentials, weights, and
+  proprietary artifacts are absent.
 - Claims in README, report, and resume bullets are no stronger than evidence.
 
 ## 20. Five-minute portfolio experience
@@ -1582,7 +1594,7 @@ The repository front page should show:
 
 Example resume bullet, used only after evidence exists:
 
-> Built a reproducible Qwen3-0.6B deployment lab across Qualcomm Snapdragon/Dragonwing NPUs, Apple M4/MLX, and NVIDIA/ONNX Runtime CUDA; implemented static prefill/decode graphs with explicit KV caches, evaluated W8/W4 mixed-precision quantization, profiled quality/latency/memory across 128–4,096-token contexts, and coordinated dependency-gated delivery across isolated Codex worktrees.
+> Built a reproducible Qwen3-0.6B deployment lab across Qualcomm Snapdragon/Dragonwing NPUs, Apple M4/MLX, and NVIDIA/ONNX Runtime CUDA; implemented static prefill/decode graphs with explicit KV caches, evaluated W8/W4 mixed-precision quantization, profiled quality/latency/memory across 128–4,096-token contexts, and coordinated dependency-gated delivery across isolated task worktrees.
 
 ## 21. Primary references
 
@@ -1644,6 +1656,9 @@ Example resume bullet, used only after evidence exists:
 - [Codex subagents](https://developers.openai.com/codex/agent-configuration/subagents)
 - [AGENTS.md guidance](https://developers.openai.com/codex/guides/agents-md)
 - [Codex execution plans](https://developers.openai.com/cookbook/articles/codex_exec_plans)
+- [Claude Code project instructions](https://code.claude.com/docs/en/memory)
+- [Claude Code worktrees](https://code.claude.com/docs/en/worktrees)
+- [Claude Code subagents](https://code.claude.com/docs/en/sub-agents)
 
 ## 22. Final recommendation
 

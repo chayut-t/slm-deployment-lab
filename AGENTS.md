@@ -36,16 +36,24 @@ Before substantial work:
    `ai/plans/templates/execution-plan.md`.
 6. When parallel work is useful, use one task-scoped branch and worktree per
    active writer. Do not rely on another worktree's uncommitted files.
-7. Record private task/thread ownership in
-   `.ai-local/tasks/thread-registry.yaml`, never in public files.
+7. Record private task/session ownership through
+   `scripts/ai/session_registry.py`, which resolves the primary checkout's
+   `.ai-local/tasks/thread-registry.yaml`. Never put real session IDs in public
+   files.
 
-The main Codex task is replaceable. Repository state must be sufficient for a
-new coordinator task to resume without private conversation history.
+The coordinating agent session is replaceable. Repository state must be
+sufficient for a new Codex or Claude Code session to resume without private
+conversation history.
 
 Task definitions live at `ai/tasks/definitions/TNN.yaml` and specify objective,
 owned paths, outputs, and acceptance criteria. The task graph records status,
 dependencies, resource locks, public owner/branch coordination, and optional
-GitHub issue linkage. Real Codex thread IDs remain local.
+GitHub issue linkage. Real agent session IDs remain local.
+
+`AGENTS.md` is the canonical cross-tool policy. Every tracked `AGENTS.md`,
+including a subtree-specific file, must have a same-directory `CLAUDE.md` that
+imports it with `@AGENTS.md`. Claude-specific adapters must not duplicate
+repository policy.
 
 ## Where files belong
 
@@ -64,7 +72,7 @@ GitHub issue linkage. Real Codex thread IDs remain local.
 | Curated engineering worklogs | `ai/worklogs/` | Commit |
 | Draft plans and brainstorming | `.ai-local/plans/` | Never commit |
 | Raw transcripts and worklogs | `.ai-local/worklogs/` | Never commit |
-| Real Codex task/thread identifiers | `.ai-local/tasks/` | Never commit |
+| Real agent task/session identifiers | `.ai-local/tasks/` | Never commit |
 | Private inputs and feedback | `.ai-local/inputs/` | Never commit |
 | Unsanitized cloud/profile output | `.ai-local/profiles/` | Never commit |
 | Temporary experiments | `.ai-local/scratch/` | Never commit |
@@ -133,9 +141,12 @@ under `ai/worklogs/`. Draft or merely local work is not completed.
 
 ## Git and multi-agent rules
 
-- Use task-prefixed branches such as `codex/T31-qwen-workbench`.
+- Use tool-neutral task branches such as `task/T31-qwen-workbench`. Historical
+  `codex/TNN-*` branches remain valid and must not be renamed.
 - Use one active writer per file set. Coordinate ownership before editing
   shared contracts, dependency manifests, or release documents.
+- Create project task worktrees explicitly with Git from the committed public
+  claim; do not rely on tool-specific implicit branch or worktree naming.
 - Start downstream work from a commit containing its completed dependencies.
 - Keep commits task-scoped and do not mix unrelated cleanup.
 - Never stage, commit, discard, or rewrite another agent's changes.

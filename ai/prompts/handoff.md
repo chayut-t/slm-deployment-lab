@@ -10,5 +10,5 @@ Prepare a sanitized handoff for task `TNN` containing:
 - downstream tasks newly unblocked;
 - restart commands and required artifact hashes.
 
-Exclude raw transcripts, private Codex task IDs, credentials, account details,
+Exclude raw transcripts, private agent session IDs, credentials, account details,
 and unsanitized cloud URLs.

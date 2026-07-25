@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create ignored local AI directories and an optional artifact-root symlink."""
+"""Create ignored local agent directories and an optional artifact-root symlink."""
 
 from __future__ import annotations
 
@@ -22,8 +22,9 @@ LOCAL_DIRS = (
 LOCAL_README = """# Local AI workspace
 
 This directory is intentionally ignored by Git. It holds private inputs, draft
-plans, raw worklogs, real Codex task/thread identifiers, unsanitized profiles,
-and scratch experiments.
+plans, raw worklogs, real agent task/session identifiers, unsanitized profiles,
+and scratch experiments. Codex and Claude Code session identifiers remain
+private here.
 
 Move only sanitized, durable material into the corresponding public `ai/` or
 `docs/` directory.
@@ -63,7 +64,7 @@ def main() -> int:
             )
         else:
             registry.write_text(
-                "schema_version: 1\ntasks: {}\n",
+                '{\n  "schema_version": 2,\n  "tasks": {}\n}\n',
                 encoding="utf-8",
             )
 

@@ -19,7 +19,7 @@ auditable and reproducible without publishing private conversations.
 
 Approved plans, reusable prompts, sanitized handoffs, task dependencies, and
 curated engineering logs belong here. Draft thinking, raw transcripts, real
-Codex task IDs, and unsanitized outputs belong under `.ai-local/`, which is
+agent session IDs, and unsanitized outputs belong under `.ai-local/`, which is
 ignored by Git.
 
 ## Fresh-clone setup
@@ -36,3 +36,8 @@ the ignored `artifacts` symlink when `SLM_LAB_ARTIFACT_ROOT` points to an
 available directory. The post-checkout hook repeats the local bootstrap
 idempotently, so later branch and worktree checkouts retain the required local
 coordination structure.
+
+Codex reads `AGENTS.md` directly. Claude Code reads the thin `CLAUDE.md`
+adapter, which imports the same canonical policy. See
+`docs/agentic/dual-agent-setup.md` for worktree, registry, and handoff
+procedures.

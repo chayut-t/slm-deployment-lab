@@ -222,8 +222,7 @@ class GitSnapshotTests(unittest.TestCase):
         result = self.run_pre_commit(repository)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(
-            "staged ai/tasks/status.generated.md does not match "
-            "the staged task graph",
+            "staged ai/tasks/status.generated.md does not match the staged task graph",
             result.stderr,
         )
 
@@ -271,6 +270,50 @@ class GitSnapshotTests(unittest.TestCase):
             "private or external path cannot be committed: artifacts",
             result.stderr,
         )
+
+    def test_force_added_claude_private_state_is_rejected(self) -> None:
+        for relative in (
+            "CLAUDE.local.md",
+            ".claude/settings.local.json",
+            ".claude/worktrees/private/file.txt",
+        ):
+            with self.subTest(relative=relative):
+                repository = self.make_repository()
+                path = repository / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("private\n", encoding="utf-8")
+                self.run_git(repository, "add", "-f", relative)
+
+                result = self.run_hygiene(repository)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(
+                    f"private or external path cannot be committed: {relative}"
+                    if relative != "CLAUDE.local.md"
+                    else "private filename cannot be committed: CLAUDE.local.md",
+                    result.stderr,
+                )
+
+    def test_nested_agents_requires_claude_adapter(self) -> None:
+        repository = self.make_repository()
+        agents = repository / "src" / "example" / "AGENTS.md"
+        agents.parent.mkdir(parents=True)
+        agents.write_text("# Nested policy\n", encoding="utf-8")
+        self.run_git(repository, "add", str(agents.relative_to(repository)))
+
+        result = self.run_hygiene(repository)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing same-directory Claude adapter", result.stderr)
+
+    def test_nested_agents_accepts_thin_claude_adapter(self) -> None:
+        repository = self.make_repository()
+        nested = repository / "src" / "example"
+        nested.mkdir(parents=True)
+        (nested / "AGENTS.md").write_text("# Nested policy\n", encoding="utf-8")
+        (nested / "CLAUDE.md").write_text("@AGENTS.md\n", encoding="utf-8")
+        self.run_git(repository, "add", "src/example")
+
+        result = self.run_hygiene(repository)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_fresh_clone_installer_reconstructs_local_coordination_state(
         self,

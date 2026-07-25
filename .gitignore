@@ -7,6 +7,9 @@
 !.env.example
 *.pem
 *.key
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
 
 # macOS and editor state
 .DS_Store

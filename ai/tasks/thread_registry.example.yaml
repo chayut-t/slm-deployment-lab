@@ -1,5 +1,21 @@
-schema_version: 1
-tasks: {}
-
-# The local registry may add entries containing branch, worktree, private Codex
-# thread ID, state, and timestamps. Never put real values in this example.
+{
+  "schema_version": 2,
+  "tasks": {
+    "TNN": {
+      "branch": "task/TNN-short-slug",
+      "checkpoint_sha": "full-git-sha",
+      "active_writer": null,
+      "sessions": {
+        "private-session-placeholder": {
+          "tool": "codex-or-claude-code",
+          "role": "reviewer",
+          "state": "completed",
+          "worktree": "/private/local/path",
+          "started_at": "YYYY-MM-DDTHH:MM:SSZ",
+          "updated_at": "YYYY-MM-DDTHH:MM:SSZ"
+        }
+      },
+      "updated_at": "YYYY-MM-DDTHH:MM:SSZ"
+    }
+  }
+}
