@@ -78,13 +78,13 @@
       "id": "T04",
       "title": "Codex and Claude Code repository compatibility",
       "definition": "ai/tasks/definitions/T04.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T03"],
       "resource_locks": [],
       "owner": "Codex T04 agent",
       "branch": "task/T04-dual-agent-compatibility",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-25-T04-dual-agent-compatibility.md"
     },
     {
       "id": "T10",

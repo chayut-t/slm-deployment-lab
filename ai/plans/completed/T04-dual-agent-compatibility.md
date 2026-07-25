@@ -1,6 +1,6 @@
 # T04: Codex and Claude Code Repository Compatibility
 
-Status: in_progress
+Status: completed
 Owner: Codex T04 agent
 Updated: 2026-07-25
 Implementation readiness: active after public claim
@@ -549,17 +549,17 @@ the same versioned state while producing equivalent coordination decisions.
 
 ### 8. Complete the repository task
 
-- [ ] Rerun the non-disruption inventory and compare it with the preflight
+- [x] Rerun the non-disruption inventory and compare it with the preflight
   record before integration.
-- [ ] Record exact commands and results in a sanitized worklog.
-- [ ] Mark the task `completed` only after every acceptance criterion passes,
+- [x] Record exact commands and results in a sanitized worklog.
+- [x] Mark the task `completed` only after every acceptance criterion passes,
   all outputs are integrated, and the matching public worklog exists.
-- [ ] Regenerate task status.
-- [ ] Move the approved execution plan to `ai/plans/completed/`.
-- [ ] Update the coordinator handoff if future tasks need new startup
+- [x] Regenerate task status.
+- [x] Move the approved execution plan to `ai/plans/completed/`.
+- [x] Update the coordinator handoff if future tasks need new startup
   instructions.
-- [ ] Preserve `owner: null` for unrelated tasks.
-- [ ] Confirm every pre-existing worktree, dirty-file hash, branch, task claim,
+- [x] Preserve `owner: null` for unrelated tasks.
+- [x] Confirm every pre-existing worktree, dirty-file hash, branch, task claim,
   ready/blocked result, and resource lock is unchanged except for changes
   separately made by its owner during the task.
 
@@ -738,9 +738,8 @@ external compiler jobs, or hosted profiles.
 
 Current state:
 
-- T04 is registered and publicly claimed as `in_progress` on
-  `task/T04-dual-agent-compatibility`; it has no resource locks and remains
-  independent of all existing SLM tasks.
+- T04 is completed on `task/T04-dual-agent-compatibility`; it has no resource
+  locks and remains independent of all existing SLM tasks.
 - Implementation, safety hardening, focused/full tests, hygiene, two-clone
   setup validation, and instruction-import validation are complete.
 - Codex CLI `0.146.0-alpha.3.1` and Claude Code `2.1.220` were inspected on
@@ -750,27 +749,22 @@ Current state:
   authorized to transmit repository coordination content. The active Codex
   desktop task and fresh review subagent supplied the Codex orientation
   evidence.
-- An independently owned task is still active and has changed overlapping task
-  automation/lifecycle files. T04 must remain isolated until that task commits
-  and releases its integration window.
+- The independently owned overlapping task completed and was integrated first.
+  Its changes were merged into T04 without rewriting either task.
 - No schema migration was run against the live primary registry.
-- Implementation readiness is complete; integration readiness remains on hold
-  pending the final independent review and non-disruptive reconciliation with
-  the active peer task.
+- Final independent review reported no actionable findings after reproducing
+  the committed-graph, linked-worktree, and path-changing-transfer regressions.
+- The final non-disruption gate found every worktree clean, the peer task
+  completed, no resource-lock changes, and only T04 active in the private
+  registry before its lifecycle transition.
 
-To restart:
+For future use:
 
 1. Read `AGENTS.md`, `docs/project/plan.md`, this plan, the T04 definition and
    worklog, and the current task graph.
-2. Inspect all worktrees and the primary ignored registry. Treat the peer task
-   as active until its owner records completion or the user reconciles it.
-3. After the overlapping task is integrated, merge the resulting coordination
-   commit into T04 and preserve both tasks' intentional task-automation edits.
-4. Rerun the full test suite, task-status check, hygiene, Ruff, diff check, and
-   ignored-status inventory.
-5. Send the resulting branch back to the fresh independent reviewer. Address
-   any actionable finding before completion.
-6. Only after a clean integration gate, mark T04 completed, finish the public
-   worklog, move this plan to `ai/plans/completed/`, regenerate status, commit,
-   integrate without rewriting the peer task, and release the private T04
-   writer record.
+2. Follow `docs/agentic/dual-agent-setup.md` for task claims, manual
+   worktrees, registry operations, review sessions, and cross-tool transfer.
+3. Treat the committed graph as authoritative and the primary checkout's
+   ignored registry as private supplemental state.
+4. Run task status, hygiene, relevant tests, and ignored-status inspection at
+   each lifecycle boundary.

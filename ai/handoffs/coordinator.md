@@ -26,6 +26,12 @@ Updated: 2026-07-25
   workloads; greedy generation and stopping semantics, CC0 quality cases,
   privacy/licensing boundaries, hashes, CLI validation, tests, and a learning
   guide passed independent review and re-review.
+- `T04` is completed on `task/T04-dual-agent-compatibility`: Codex and Claude
+  Code now share canonical `AGENTS.md` policy through a thin `CLAUDE.md`
+  adapter, private state is protected, and linked worktrees coordinate through
+  a locked registry with committed-graph and exact-checkpoint validation.
+  Independent review and re-review passed the final unsafe-claim and
+  path-changing-transfer regressions.
 
 ## Active work
 
@@ -37,12 +43,13 @@ locks.
 
 ## Resume
 
-1. Read `AGENTS.md` and `docs/project/plan.md`.
+1. Read `AGENTS.md`, `docs/project/plan.md`, and
+   `docs/agentic/dual-agent-setup.md`.
 2. Validate `ai/tasks/task_graph.yaml` with
    `python3 scripts/ai/render_task_status.py --check`.
 3. Inspect `git status --short --ignored`.
 4. Start T11 and T13 from the commit completing T10; other tasks start from
    commits containing all of their completed dependencies.
 5. Integrate reviewed task branches in topological order, then assign one ready
-   task per branch/worktree and record real task/thread
-   identity only in `.ai-local/tasks/thread-registry.yaml`.
+   task per branch/worktree and record real session identity through
+   `scripts/ai/session_registry.py`; the resolved registry remains private.

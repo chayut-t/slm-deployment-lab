@@ -3,7 +3,7 @@
 Date: 2026-07-25
 Task: `T04`
 Visibility: `public`
-Status: in_progress
+Status: completed
 
 ## Outcome
 
@@ -34,11 +34,11 @@ compare-and-swap checks.
   tests/repo/test_task_automation.py -q`
   - 36 passed.
 - Project Python 3.11: `python -m pytest -q`
-  - 69 passed, 1 hardware-dependent test skipped.
+  - Final merged branch: 81 passed, 2 hardware-dependent tests skipped.
 - `python scripts/ai/render_task_status.py --check`
   - Task graph valid; 30 tasks; generated status current.
 - `python scripts/repo/check_hygiene.py --all`
-  - Passed for 159 tracked and untracked public files.
+  - Final merged branch: passed for 169 tracked and untracked public files.
 - `ruff check --no-cache .` and targeted `ruff format --check`
   - Passed for all code; all T04 Python files formatted.
 - Two isolated temporary clones at
@@ -66,6 +66,15 @@ compare-and-swap checks.
   evidence gaps. The implementation added the missing invariants, Git checks,
   atomic initialization, reviewer release, regressions, and corrected
   instruction-inspection guidance before final review.
+- Follow-up review found and reproduced two remaining issues: uncommitted graph
+  or unrelated-clone claims, and an impossible different-path transfer. Claims
+  now read clean committed graph state, verify the claim inside the checkpoint,
+  and require a registered linked worktree. Transfer now validates a clean
+  detached outgoing worktree before attaching the branch at the same commit in
+  the incoming worktree.
+- The final independent review reported no actionable findings. Its focused
+  registry suite, merged full suite, task-status, hygiene, Ruff, formatting,
+  diff, and clean-status checks all passed.
 
 ## Risks and limitations
 
@@ -76,14 +85,13 @@ compare-and-swap checks.
   transmit repository coordination content to a remotely authenticated
   service. Equivalent Codex orientation was demonstrated by this desktop task
   and its fresh read-only review subagent.
-- The compatibility branch must not integrate through the shared coordination
-  checkout while an independently owned task is still editing overlapping task
-  automation and lifecycle metadata.
+- Authenticated semantic prompts remain optional evidence; the repository
+  contract and local instruction-loading evidence do not depend on tool login.
 
 ## Follow-up
 
 - Newly unblocked tasks: none; T04 is intentionally not a dependency of
   existing SLM tasks.
-- Recommended next action: obtain a clean integration window after the
-  overlapping task completes, reconcile its task-graph/test changes, rerun the
-  final safety gate, and integrate T04 without rewriting the peer task.
+- Recommended next action: use
+  `docs/agentic/dual-agent-setup.md` when assigning the next ready task, and
+  record its private writer through the shared registry helper.
