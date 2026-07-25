@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "task_id": "T02",
+  "observed_at_utc": "2026-07-24T18:27:24Z",
+  "status": "blocked",
+  "blocker_code": "qualcomm_authentication_required",
+  "workbench": {
+    "public_surface": "reachable",
+    "account_access": "authentication_required",
+    "cost_policy": "currently_free",
+    "local_client": {
+      "installed": false,
+      "latest_public_version": "0.53.0",
+      "latest_public_version_observed_from": "https://pypi.org/project/qai-hub/"
+    },
+    "hosted_versions": {
+      "qairt_available": [
+        "2.45.0",
+        "2.46.0",
+        "2.47.0"
+      ],
+      "qairt_default": null,
+      "qairt_latest_listed": "2.47.0",
+      "onnxruntime": "1.26.0",
+      "onnxruntime_qnn_ep": "2.2.0",
+      "quantize_job_aimet": "2.34",
+      "observed_from": "https://workbench.aihub.qualcomm.com/docs/hub/release_notes.html",
+      "boundary": "public_release_notes_not_account_or_job_evidence"
+    },
+    "public_qwen_targets": [
+      "Dragonwing IQ-9075 EVK",
+      "Snapdragon 8 Elite QRD",
+      "Snapdragon X Elite CRD"
+    ],
+    "public_qwen_targets_observed_from": "https://aihub.qualcomm.com/models/qwen3_0_6b",
+    "quota": {
+      "value": null,
+      "state": "not_observable_without_authentication"
+    },
+    "toy_lifecycle": {
+      "compile": "not_run",
+      "inference": "not_run",
+      "profile": "not_run",
+      "reason": "qualcomm_authentication_required",
+      "job_evidence": null
+    },
+    "evidence": [
+      "public_documentation",
+      "public_model_catalog",
+      "browser_sign_in_boundary",
+      "local_client_presence_check"
+    ]
+  },
+  "device_cloud": {
+    "public_surface": "reachable",
+    "account_access": "authentication_required",
+    "cost_policy": "free_minutes_subject_to_account_and_availability",
+    "public_catalog_is_partial": true,
+    "public_catalog_targets": [
+      {
+        "name": "Snapdragon X Elite",
+        "device": "CRD8380X",
+        "os": "Windows",
+        "catalog_label": "Unlock Free Minutes"
+      },
+      {
+        "name": "Snapdragon 8 Elite",
+        "device": "QRD8750",
+        "os": "Android",
+        "catalog_label": "Unlock Free Minutes"
+      }
+    ],
+    "account_minutes": null,
+    "x_elite_live_availability": null,
+    "iq_9075_account_visibility": null,
+    "evidence": [
+      "public_faq",
+      "unauthenticated_public_catalog",
+      "browser_login_boundary"
+    ]
+  },
+  "free_nvidia": {
+    "colab": {
+      "account_ui_access": "authenticated",
+      "gpu_allocation": "not_tested",
+      "gpu_type": null,
+      "remaining_quota": null,
+      "policy": "free_gpu_access_dynamic_not_guaranteed_or_published",
+      "evidence": [
+        "authenticated_browser_ui_identity_omitted",
+        "official_public_faq"
+      ]
+    },
+    "kaggle": {
+      "account_ui_access": "not_authenticated",
+      "gpu_allocation": "not_tested",
+      "public_gpu": "NVIDIA Tesla P100",
+      "public_weekly_quota_hours": 30,
+      "quota_boundary": "sometimes_higher_and_subject_to_demand_and_resources",
+      "evidence": [
+        "browser_sign_in_boundary",
+        "official_public_documentation"
+      ]
+    }
+  },
+  "paid_fallback": {
+    "provider": "Runpod",
+    "inventory_command": "runpodctl gpu list",
+    "creation_command_documented": true,
+    "creation_command_executed": false,
+    "approval_required": true,
+    "max_project_cloud_spend_usd": 100,
+    "source": "https://docs.runpod.io/runpodctl/reference/runpodctl-pod"
+  }
+}

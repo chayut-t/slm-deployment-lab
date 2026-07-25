@@ -51,4 +51,4 @@ override repository state.
 
 ## Active-plan index
 
-No task-specific execution plans are active.
+- `T02`: `ai/plans/active/T02-platform-access.md`
