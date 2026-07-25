@@ -102,13 +102,13 @@
       "id": "T11",
       "title": "Deterministic PyTorch reference",
       "definition": "ai/tasks/definitions/T11.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T10"],
       "resource_locks": [],
       "owner": "Codex T11 agent",
       "branch": "task/T11-deterministic-reference",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md"
     },
     {
       "id": "T12",

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "T11",
+  "fixture_kind": "deterministic_pytorch_causal_model",
+  "license": "CC0-1.0",
+  "model": {
+    "vocabulary_size": 17,
+    "rule": "target_at_position=(cumulative_token_sum+3*one_based_position)%17"
+  },
+  "prompt_token_ids": [2, 5, 1],
+  "max_new_tokens": 6,
+  "eos_token_id": null,
+  "expected_generated_token_ids": [0, 3, 9, 4, 11, 8],
+  "expected_evidence_sha256": "fe4219661f062e263d66ccc2bfd113d7be7133c140d5af740353f3e2f5428086",
+  "purpose": "Exercise full-forward, cached prefill/decode, greedy selection, per-step parity, and repeated-run determinism without distributing Qwen weights."
+}
