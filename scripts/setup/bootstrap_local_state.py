@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -45,6 +46,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def shared_registry_path() -> Path:
+    helper = REPO_ROOT / "scripts" / "ai" / "session_registry.py"
+    result = subprocess.run(
+        (
+            sys.executable,
+            str(helper),
+            "--start",
+            str(REPO_ROOT),
+            "path",
+        ),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"cannot resolve shared agent registry: {detail}")
+    return Path(result.stdout.strip())
+
+
 def main() -> int:
     args = parse_args()
     for relative in LOCAL_DIRS:
@@ -54,9 +75,14 @@ def main() -> int:
     if not local_readme.exists():
         local_readme.write_text(LOCAL_README, encoding="utf-8")
 
-    registry = REPO_ROOT / ".ai-local" / "tasks" / "thread-registry.yaml"
+    try:
+        registry = shared_registry_path()
+    except RuntimeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     registry_example = REPO_ROOT / "ai" / "tasks" / "thread_registry.example.yaml"
     if not registry.exists():
+        registry.parent.mkdir(parents=True, exist_ok=True)
         if registry_example.is_file():
             registry.write_text(
                 registry_example.read_text(encoding="utf-8"),

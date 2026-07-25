@@ -363,6 +363,36 @@ class GitSnapshotTests(unittest.TestCase):
         )
         self.assertEqual(self.run_git(clone, "status", "--porcelain").stdout, "")
 
+    def test_linked_worktree_bootstrap_uses_primary_registry(self) -> None:
+        repository = self.make_repository()
+        linked = Path(self.addCleanupDirectory()) / "linked"
+        self.run_git(
+            repository,
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            "task/bootstrap-test",
+            str(linked),
+        )
+        missing_artifact_root = Path(self.addCleanupDirectory()) / "unmounted"
+        result = subprocess.run(
+            (sys.executable, "scripts/setup/bootstrap_local_state.py", "--quiet"),
+            cwd=linked,
+            env={
+                **os.environ,
+                "SLM_LAB_ARTIFACT_ROOT": str(missing_artifact_root),
+            },
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        shared = repository / ".ai-local" / "tasks" / "thread-registry.yaml"
+        duplicate = linked / ".ai-local" / "tasks" / "thread-registry.yaml"
+        self.assertTrue(shared.is_file())
+        self.assertFalse(duplicate.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
