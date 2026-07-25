@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "host_id": "qualcomm-hosted-fixture",
+  "captured_at": "2026-07-25T00:00:00Z",
+  "platform": "qualcomm_hosted",
+  "operating_system": {
+    "name": "Qualcomm hosted runtime fixture",
+    "version": "1.0-fixture",
+    "build": null,
+    "kernel": null,
+    "architecture": "arm64"
+  },
+  "hardware": {
+    "product": "Snapdragon X Elite fixture",
+    "model_identifier": null,
+    "chip": "Snapdragon X Elite",
+    "cpu": null,
+    "gpu": null,
+    "memory_bytes": null
+  },
+  "platform_details": {
+    "qualcomm": {
+      "qai_hub_version": "0.0.0-fixture",
+      "qairt_version": "0.0.0-fixture",
+      "target_device": "Snapdragon X Elite fixture",
+      "device_type": "hosted fixture",
+      "target_operating_system": "fixture-os",
+      "target_operating_system_build": "1.0-fixture"
+    }
+  },
+  "project_environment": {
+    "python_version": "3.11.13",
+    "package_lock": "uv.lock",
+    "package_lock_sha256": "5af1e4924cad5460e8440d29ed8ec3641be62bafb45ebbbe53991bfaac72f03a",
+    "build_constraints": "environments/build-requirements.lock",
+    "build_constraints_sha256": "1ef5d81f189b606ad1246cde4a59c996825360a15e50a564197dc4f9af83bcaa",
+    "build_command": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"
+  },
+  "tools": {
+    "qai_hub": {
+      "version": "0.0.0-fixture",
+      "status": "verified",
+      "capture_command": "python -c 'import qai_hub; print(qai_hub.__version__)'",
+      "reason": null
+    }
+  },
+  "artifact_storage": {
+    "storage_kind": "hosted_service",
+    "artifact_root_env": null,
+    "root": null,
+    "mount_point": null,
+    "volume_name": null,
+    "filesystem": null,
+    "minimum_free_bytes": null,
+    "reason": "The fixture represents hosted storage with no exposed filesystem."
+  },
+  "privacy": {
+    "sanitized": true,
+    "excluded_fields": [
+      "hosted job identifiers",
+      "account identifiers",
+      "credentials"
+    ]
+  }
+}

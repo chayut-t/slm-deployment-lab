@@ -1,14 +1,38 @@
 # Reproducible environments
 
 The repository foundation uses CPython 3.11.13 and uv 0.11.32, recorded in
-`common-toolchain.json`. Exact direct dependency pins live in
-`pyproject.toml`; `uv.lock` freezes the full transitive solution. A clean setup
-is:
+`common-toolchain.json`. Exact runtime and development dependency pins live in
+`pyproject.toml`; `uv.lock` freezes that full transitive solution. The PEP 517
+build backend is independently hash-locked by
+`build-requirements.lock` because build-system requirements are not members of
+the project lock. A clean setup is:
 
 ```bash
 uv python install 3.11.13
 uv sync --extra dev --locked
 uv run python -m unittest discover -s tests -p 'test_*.py'
+```
+
+Build the package with the committed build constraint and mandatory hash
+verification:
+
+```bash
+uv build \
+  --python 3.11.13 \
+  --build-constraints environments/build-requirements.lock \
+  --require-hashes \
+  --out-dir /tmp/slm-lab-dist
+```
+
+Regenerate the build lock only after intentionally changing the matching
+`build-system.requires` pin:
+
+```bash
+uv pip compile environments/build-requirements.in \
+  --no-deps \
+  --generate-hashes \
+  --custom-compile-command "uv pip compile environments/build-requirements.in --no-deps --generate-hashes --output-file environments/build-requirements.lock" \
+  --output-file environments/build-requirements.lock
 ```
 
 `uv` keeps the environment in the ignored `.venv/` directory. Do not install

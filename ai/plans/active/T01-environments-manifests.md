@@ -2,7 +2,7 @@
 
 Status: active
 Owner: Codex T01 agent
-Updated: 2026-07-24
+Updated: 2026-07-25
 
 ## Objective
 
@@ -21,7 +21,7 @@ root is unsuitable.
 - Add versioned JSON Schemas and reusable validation for artifact and host
   manifests.
 - Add representative valid and invalid fixtures and offline tests.
-- Add a read-only-by-default T9 preflight that verifies mount containment,
+- Add a safe T9 preflight that verifies mount and resolved-directory containment,
   writability with a temporary probe, expected layout, and free-space reserve.
 - Capture a sanitized primary-machine host manifest.
 
@@ -72,16 +72,20 @@ root is unsuitable.
 - Commands:
   - `uv lock --check`
   - `uv sync --extra dev --locked`
+  - `uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist`
   - `uv run --extra dev python -m unittest discover -s tests -p 'test_*.py'`
   - `uv run slm-lab-validate-manifest artifact tests/fixtures/manifests/artifact.valid.json`
   - `uv run slm-lab-validate-manifest host results/hosts/apple-m4-primary.json`
+  - `uv run slm-lab-validate-manifest host tests/fixtures/manifests/host.linux-nvidia.valid.json`
+  - `uv run slm-lab-validate-manifest host tests/fixtures/manifests/host.qualcomm-hosted.valid.json`
   - `uv run slm-lab-storage-preflight --json`
   - `python3 scripts/ai/render_task_status.py --check`
   - `python3 scripts/repo/check_hygiene.py --all`
 - Behavioral criteria:
   - A clean locked sync succeeds on Python 3.11.
-  - Schemas accept representative valid fixtures and reject missing or
-    malformed provenance.
+  - Schemas accept representative Apple, NVIDIA/Linux, and Qualcomm-hosted
+    fixtures and reject missing, floating, inconsistent, or malformed
+    provenance.
   - The primary storage preflight proves the configured root is on T9,
     writable, has the expected layout, and exceeds the configured reserve.
 - Hardware/profile evidence: host facts and current storage capacity only; no
@@ -107,10 +111,20 @@ root is unsuitable.
 - 2026-07-24: Heavy platform stacks remain separately owned. T01 pins the
   common repository tooling and records explicit handoff boundaries instead
   of inventing compatibility claims.
+- 2026-07-25: Fresh review found that the first host schema encoded Apple and
+  T9 facts as universal. The corrected schema has a portable base, a required
+  Apple/NVIDIA/Qualcomm discriminator, mutually exclusive platform details,
+  and separate local-external versus hosted-service storage shapes.
+- 2026-07-25: `uv.lock` covers project runtime and development dependencies,
+  not PEP 517 build requirements. Setuptools is now separately constrained by
+  an exact, hash-bearing build lock consumed by the documented `uv build`
+  command.
+- 2026-07-25: Every exact-version field rejects comparison, compatible-release,
+  comma-range, caret, and wildcard syntax. Storage validation resolves every
+  expected directory and rejects symlink targets outside the artifact root.
 
 ## Progress and restart instructions
 
-Implementation and T01-focused verification are complete. The coordinator
-must integrate the independently owned T03 automation-test correction, run a
-fresh independent T01 review and full shared suite, then archive this plan and
-mark T01 completed.
+Implementation, review-finding fixes, current-main integration, and the full
+shared suite are complete. The coordinator must run the fresh independent
+final review, then archive this plan and mark T01 completed if it passes.

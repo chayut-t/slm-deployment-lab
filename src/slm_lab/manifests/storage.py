@@ -38,7 +38,13 @@ def artifact_root(config: Mapping[str, Any], override: Path | None) -> Path:
         raise StoragePreflightError(
             f"{configured_env} is empty; provide a concrete artifact root"
         )
-    return Path(raw).expanduser().resolve()
+    requested = Path(raw).expanduser()
+    try:
+        return requested.resolve(strict=True)
+    except OSError as exc:
+        raise StoragePreflightError(
+            f"artifact root cannot be resolved: {requested}: {exc}"
+        ) from exc
 
 
 def find_mount(path: Path) -> Path:
@@ -66,7 +72,13 @@ def run_preflight(
     write_probe: bool = True,
 ) -> dict[str, Any]:
     root = artifact_root(config, root_override)
-    required_mount = Path(config["required_mount"]).expanduser().resolve()
+    requested_mount = Path(config["required_mount"]).expanduser()
+    try:
+        required_mount = requested_mount.resolve(strict=True)
+    except OSError as exc:
+        raise StoragePreflightError(
+            f"required external mount cannot be resolved: {requested_mount}: {exc}"
+        ) from exc
 
     if root == Path("/"):
         raise StoragePreflightError("artifact root may not be the filesystem root")
@@ -98,11 +110,28 @@ def run_preflight(
         raise StoragePreflightError(
             "artifact layout contains unsafe paths: " + ", ".join(unsafe)
         )
-    missing = [
-        relative
-        for relative in expected_directories
-        if not (root / relative).is_dir()
-    ]
+    missing: list[str] = []
+    escaped: list[str] = []
+    for relative in expected_directories:
+        candidate = root / relative
+        try:
+            resolved = candidate.resolve(strict=True)
+        except OSError:
+            missing.append(relative)
+            continue
+        if not _is_within(resolved, root) or not _is_within(
+            resolved,
+            required_mount,
+        ):
+            escaped.append(f"{relative} -> {resolved}")
+            continue
+        if not resolved.is_dir():
+            missing.append(relative)
+    if escaped:
+        raise StoragePreflightError(
+            "artifact layout resolves outside the artifact root or mount: "
+            + ", ".join(escaped)
+        )
     if missing:
         raise StoragePreflightError(
             "artifact layout is incomplete; missing: " + ", ".join(missing)

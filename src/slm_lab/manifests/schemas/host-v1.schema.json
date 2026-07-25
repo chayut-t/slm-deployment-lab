@@ -7,8 +7,10 @@
     "schema_version",
     "host_id",
     "captured_at",
+    "platform",
     "operating_system",
     "hardware",
+    "platform_details",
     "project_environment",
     "tools",
     "artifact_storage",
@@ -27,6 +29,13 @@
       "format": "date-time",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
     },
+    "platform": {
+      "enum": [
+        "apple_macos",
+        "linux_nvidia",
+        "qualcomm_hosted"
+      ]
+    },
     "operating_system": {
       "type": "object",
       "required": [
@@ -42,13 +51,13 @@
           "minLength": 1
         },
         "version": {
-          "$ref": "#/$defs/exact_value"
+          "$ref": "#/$defs/exact_version"
         },
         "build": {
-          "$ref": "#/$defs/exact_value"
+          "$ref": "#/$defs/nullable_exact_version"
         },
         "kernel": {
-          "$ref": "#/$defs/exact_value"
+          "$ref": "#/$defs/nullable_exact_version"
         },
         "architecture": {
           "type": "string",
@@ -65,9 +74,7 @@
         "chip",
         "cpu",
         "gpu",
-        "neural_engine",
-        "unified_memory_bytes",
-        "memory_bandwidth_bytes_per_second"
+        "memory_bytes"
       ],
       "properties": {
         "product": {
@@ -75,49 +82,64 @@
           "minLength": 1
         },
         "model_identifier": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/nullable_nonempty_string"
         },
         "chip": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/nullable_nonempty_string"
         },
         "cpu": {
-          "type": "object"
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "gpu": {
-          "type": "object"
+          "type": [
+            "object",
+            "null"
+          ]
         },
-        "neural_engine": {
-          "type": "object"
-        },
-        "unified_memory_bytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "memory_bandwidth_bytes_per_second": {
-          "type": "integer",
+        "memory_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 1
         }
       },
       "additionalProperties": false
+    },
+    "platform_details": {
+      "type": "object"
     },
     "project_environment": {
       "type": "object",
       "required": [
         "python_version",
         "package_lock",
-        "package_lock_sha256"
+        "package_lock_sha256",
+        "build_constraints",
+        "build_constraints_sha256",
+        "build_command"
       ],
       "properties": {
         "python_version": {
-          "$ref": "#/$defs/exact_value"
+          "$ref": "#/$defs/exact_version"
         },
         "package_lock": {
           "const": "uv.lock"
         },
         "package_lock_sha256": {
           "$ref": "#/$defs/sha256"
+        },
+        "build_constraints": {
+          "const": "environments/build-requirements.lock"
+        },
+        "build_constraints_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "build_command": {
+          "const": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"
         }
       },
       "additionalProperties": false
@@ -130,39 +152,14 @@
       }
     },
     "artifact_storage": {
-      "type": "object",
-      "required": [
-        "artifact_root_env",
-        "primary_machine_root",
-        "mount_point",
-        "volume_name",
-        "filesystem",
-        "minimum_free_bytes"
-      ],
-      "properties": {
-        "artifact_root_env": {
-          "const": "SLM_LAB_ARTIFACT_ROOT"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/local_artifact_storage"
         },
-        "primary_machine_root": {
-          "type": "string",
-          "pattern": "^/Volumes/T9/"
-        },
-        "mount_point": {
-          "const": "/Volumes/T9"
-        },
-        "volume_name": {
-          "const": "T9"
-        },
-        "filesystem": {
-          "type": "string",
-          "minLength": 1
-        },
-        "minimum_free_bytes": {
-          "type": "integer",
-          "minimum": 1
+        {
+          "$ref": "#/$defs/hosted_artifact_storage"
         }
-      },
-      "additionalProperties": false
+      ]
     },
     "privacy": {
       "type": "object",
@@ -187,15 +184,66 @@
       "additionalProperties": false
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "platform": {
+            "const": "apple_macos"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "platform_details": {
+            "$ref": "#/$defs/apple_platform_details"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platform": {
+            "const": "linux_nvidia"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "platform_details": {
+            "$ref": "#/$defs/nvidia_platform_details"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platform": {
+            "const": "qualcomm_hosted"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "platform_details": {
+            "$ref": "#/$defs/qualcomm_platform_details"
+          }
+        }
+      }
+    }
+  ],
   "additionalProperties": false,
   "$defs": {
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
-    "exact_value": {
+    "exact_version": {
       "type": "string",
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$",
       "not": {
         "enum": [
           "latest",
@@ -203,6 +251,23 @@
           "master"
         ]
       }
+    },
+    "nullable_exact_version": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/exact_version"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullable_nonempty_string": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
     },
     "tool_record": {
       "type": "object",
@@ -214,18 +279,7 @@
       ],
       "properties": {
         "version": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "not": {
-            "enum": [
-              "latest",
-              "main",
-              "master"
-            ]
-          }
+          "$ref": "#/$defs/nullable_exact_version"
         },
         "status": {
           "enum": [
@@ -258,7 +312,7 @@
           "then": {
             "properties": {
               "version": {
-                "type": "string"
+                "$ref": "#/$defs/exact_version"
               },
               "reason": {
                 "type": "null"
@@ -271,12 +325,229 @@
                 "type": "null"
               },
               "reason": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               }
             }
           }
         }
       ],
+      "additionalProperties": false
+    },
+    "local_artifact_storage": {
+      "type": "object",
+      "required": [
+        "storage_kind",
+        "artifact_root_env",
+        "root",
+        "mount_point",
+        "volume_name",
+        "filesystem",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "storage_kind": {
+          "const": "local_external"
+        },
+        "artifact_root_env": {
+          "type": "string",
+          "minLength": 1
+        },
+        "root": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "mount_point": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "volume_name": {
+          "$ref": "#/$defs/nullable_nonempty_string"
+        },
+        "filesystem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "hosted_artifact_storage": {
+      "type": "object",
+      "required": [
+        "storage_kind",
+        "artifact_root_env",
+        "root",
+        "mount_point",
+        "volume_name",
+        "filesystem",
+        "minimum_free_bytes",
+        "reason"
+      ],
+      "properties": {
+        "storage_kind": {
+          "const": "hosted_service"
+        },
+        "artifact_root_env": {
+          "type": "null"
+        },
+        "root": {
+          "type": "null"
+        },
+        "mount_point": {
+          "type": "null"
+        },
+        "volume_name": {
+          "type": "null"
+        },
+        "filesystem": {
+          "type": "null"
+        },
+        "minimum_free_bytes": {
+          "type": "null"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "apple_platform_details": {
+      "type": "object",
+      "required": [
+        "apple"
+      ],
+      "properties": {
+        "apple": {
+          "type": "object",
+          "required": [
+            "cpu_core_count",
+            "performance_core_count",
+            "efficiency_core_count",
+            "gpu_core_count",
+            "neural_engine_core_count",
+            "unified_memory_bytes",
+            "memory_bandwidth_bytes_per_second"
+          ],
+          "properties": {
+            "cpu_core_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "performance_core_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "efficiency_core_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "gpu_core_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "neural_engine_core_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unified_memory_bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "memory_bandwidth_bytes_per_second": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "nvidia_platform_details": {
+      "type": "object",
+      "required": [
+        "nvidia"
+      ],
+      "properties": {
+        "nvidia": {
+          "type": "object",
+          "required": [
+            "gpu_name",
+            "compute_capability",
+            "driver_version",
+            "cuda_version",
+            "cudnn_version"
+          ],
+          "properties": {
+            "gpu_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "compute_capability": {
+              "$ref": "#/$defs/exact_version"
+            },
+            "driver_version": {
+              "$ref": "#/$defs/exact_version"
+            },
+            "cuda_version": {
+              "$ref": "#/$defs/exact_version"
+            },
+            "cudnn_version": {
+              "$ref": "#/$defs/exact_version"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "qualcomm_platform_details": {
+      "type": "object",
+      "required": [
+        "qualcomm"
+      ],
+      "properties": {
+        "qualcomm": {
+          "type": "object",
+          "required": [
+            "qai_hub_version",
+            "qairt_version",
+            "target_device",
+            "device_type",
+            "target_operating_system",
+            "target_operating_system_build"
+          ],
+          "properties": {
+            "qai_hub_version": {
+              "$ref": "#/$defs/exact_version"
+            },
+            "qairt_version": {
+              "$ref": "#/$defs/exact_version"
+            },
+            "target_device": {
+              "type": "string",
+              "minLength": 1
+            },
+            "device_type": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target_operating_system": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target_operating_system_build": {
+              "$ref": "#/$defs/exact_version"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
       "additionalProperties": false
     }
   }

@@ -29,12 +29,18 @@ TOOLCHAIN_CONFIG = REPO_ROOT / "environments" / "common-toolchain.json"
 
 
 class ManifestTests(unittest.TestCase):
-    def test_representative_artifact_and_host_validate(self) -> None:
+    def test_representative_artifact_and_all_host_platforms_validate(self) -> None:
         validate_manifest(
             "artifact",
             load_document(FIXTURES / "artifact.valid.json"),
         )
-        validate_manifest("host", load_document(HOST_MANIFEST))
+        for path in (
+            HOST_MANIFEST,
+            FIXTURES / "host.linux-nvidia.valid.json",
+            FIXTURES / "host.qualcomm-hosted.valid.json",
+        ):
+            with self.subTest(path=path):
+                validate_manifest("host", load_document(path))
 
     def test_invalid_artifact_reports_provenance_failures(self) -> None:
         with self.assertRaises(ManifestValidationError) as context:
@@ -48,6 +54,59 @@ class ManifestTests(unittest.TestCase):
         self.assertIn("context_length", message)
         self.assertIn("created_at", message)
 
+    def test_artifact_exact_versions_reject_ranges_and_wildcards(self) -> None:
+        cases = (
+            ("exporter_version", ">=2.7"),
+            ("runtime_version", "2.*"),
+            ("qairt_version", "~=2.31"),
+            ("qairt_version", "2.31,2.32"),
+            ("exporter_version", "^2.7"),
+        )
+        for field, invalid_version in cases:
+            with self.subTest(field=field, invalid_version=invalid_version):
+                document = load_document(FIXTURES / "artifact.valid.json")
+                document[field] = invalid_version
+                with self.assertRaisesRegex(
+                    ManifestValidationError,
+                    field,
+                ):
+                    validate_manifest("artifact", document)
+
+    def test_invalid_host_versions_status_and_privacy_are_rejected(self) -> None:
+        with self.assertRaises(ManifestValidationError) as context:
+            validate_manifest(
+                "host",
+                load_document(FIXTURES / "host.invalid-contracts.json"),
+            )
+        message = str(context.exception)
+        for path in (
+            "operating_system.version",
+            "operating_system.kernel",
+            "platform_details.nvidia.compute_capability",
+            "platform_details.nvidia.driver_version",
+            "platform_details.nvidia.cuda_version",
+            "platform_details.nvidia.cudnn_version",
+            "project_environment.python_version",
+            "tools.floating.version",
+            "tools.deferred_with_version.version",
+            "tools.verified_without_version.version",
+            "tools.verified_without_version.reason",
+            "privacy.sanitized",
+            "privacy.excluded_fields",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(path, message)
+
+    def test_host_platform_discriminator_rejects_wrong_extension(self) -> None:
+        with self.assertRaisesRegex(
+            ManifestValidationError,
+            "platform_details",
+        ):
+            validate_manifest(
+                "host",
+                load_document(FIXTURES / "host.invalid-platform-shape.json"),
+            )
+
     def test_artifact_schema_required_fields_match_t00_contract(self) -> None:
         contract = json.loads(MODEL_CONTRACT.read_text(encoding="utf-8"))
         expected = contract["toolchain_version_policy"]["required_fields"][
@@ -58,9 +117,16 @@ class ManifestTests(unittest.TestCase):
     def test_host_manifest_references_current_lock(self) -> None:
         host = load_document(HOST_MANIFEST)
         lock_digest = hashlib.sha256((REPO_ROOT / "uv.lock").read_bytes()).hexdigest()
+        build_lock_digest = hashlib.sha256(
+            (REPO_ROOT / "environments" / "build-requirements.lock").read_bytes()
+        ).hexdigest()
         self.assertEqual(
             host["project_environment"]["package_lock_sha256"],
             lock_digest,
+        )
+        self.assertEqual(
+            host["project_environment"]["build_constraints_sha256"],
+            build_lock_digest,
         )
 
 
@@ -71,6 +137,10 @@ class EnvironmentContractTests(unittest.TestCase):
             (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
         )
         python_version = toolchain["python"]["version"]
+        exact_version = r"^[A-Za-z0-9][A-Za-z0-9._+-]*$"
+        self.assertRegex(python_version, exact_version)
+        self.assertRegex(toolchain["package_manager"]["version"], exact_version)
+        self.assertRegex(toolchain["build_backend"]["version"], exact_version)
         self.assertEqual(
             (REPO_ROOT / ".python-version").read_text(encoding="utf-8").strip(),
             python_version,
@@ -97,6 +167,39 @@ class EnvironmentContractTests(unittest.TestCase):
         self.assertEqual(extensions["qualcomm_hosted"]["owner_task"], "T30")
         for extension in extensions.values():
             self.assertTrue(extension["status"].startswith("deferred_"))
+
+    def test_build_backend_is_exact_hash_locked_and_consumed(self) -> None:
+        toolchain = json.loads(TOOLCHAIN_CONFIG.read_text(encoding="utf-8"))
+        project = tomllib.loads(
+            (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        )
+        build = toolchain["build_backend"]
+        exact_requirement = f"{build['name']}=={build['version']}"
+        self.assertEqual(project["build-system"]["requires"], [exact_requirement])
+
+        requirement_input = REPO_ROOT / build["requirement_input"]
+        requirements = [
+            line
+            for line in requirement_input.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertEqual(requirements, [exact_requirement])
+
+        constraint = REPO_ROOT / build["constraint_file"]
+        constraint_text = constraint.read_text(encoding="utf-8")
+        self.assertIn(exact_requirement, constraint_text)
+        self.assertGreaterEqual(constraint_text.count("--hash=sha256:"), 2)
+        self.assertEqual(
+            hashlib.sha256(constraint.read_bytes()).hexdigest(),
+            build["constraint_sha256"],
+        )
+        command = build["build_command"]
+        self.assertIn(
+            f"--build-constraints {build['constraint_file']}",
+            command,
+        )
+        self.assertIn("--require-hashes", command)
+        self.assertIn("--python 3.11.13", command)
 
 
 class StoragePreflightTests(unittest.TestCase):
@@ -141,6 +244,21 @@ class StoragePreflightTests(unittest.TestCase):
                 "unsafe paths",
             ):
                 run_preflight(config, write_probe=False)
+
+    def test_preflight_rejects_expected_directory_symlink_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            root = base / "artifact-root"
+            outside = base / "outside"
+            (root / "models").mkdir(parents=True)
+            (outside / "reference").mkdir(parents=True)
+            (root / "onnx").symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                StoragePreflightError,
+                "resolves outside",
+            ):
+                run_preflight(self.make_config(root), write_probe=False)
 
     def test_primary_storage_config_is_internally_consistent(self) -> None:
         config = json.loads(STORAGE_CONFIG.read_text(encoding="utf-8"))

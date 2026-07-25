@@ -8,7 +8,16 @@
   "package_manager": {
     "name": "uv",
     "version": "0.11.32",
-    "lock_file": "uv.lock"
+    "lock_file": "uv.lock",
+    "lock_scope": "project runtime and development dependencies"
+  },
+  "build_backend": {
+    "name": "setuptools",
+    "version": "80.9.0",
+    "requirement_input": "environments/build-requirements.in",
+    "constraint_file": "environments/build-requirements.lock",
+    "constraint_sha256": "1ef5d81f189b606ad1246cde4a59c996825360a15e50a564197dc4f9af83bcaa",
+    "build_command": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"
   },
   "sync_command": "uv sync --extra dev --locked",
   "large_artifacts_in_environment": false,

@@ -1,0 +1,2 @@
+# PEP 517 build dependency declared by pyproject.toml.
+setuptools==80.9.0

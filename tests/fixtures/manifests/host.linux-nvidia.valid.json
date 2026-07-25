@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "host_id": "linux-nvidia-fixture",
+  "captured_at": "2026-07-25T00:00:00Z",
+  "platform": "linux_nvidia",
+  "operating_system": {
+    "name": "Ubuntu",
+    "version": "22.04",
+    "build": null,
+    "kernel": "6.8.0-1030-gcp",
+    "architecture": "x86_64"
+  },
+  "hardware": {
+    "product": "Synthetic hosted NVIDIA fixture",
+    "model_identifier": null,
+    "chip": null,
+    "cpu": {},
+    "gpu": {
+      "name": "NVIDIA T4"
+    },
+    "memory_bytes": null
+  },
+  "platform_details": {
+    "nvidia": {
+      "gpu_name": "NVIDIA T4",
+      "compute_capability": "7.5",
+      "driver_version": "550.54.15",
+      "cuda_version": "12.4",
+      "cudnn_version": "9.1.0"
+    }
+  },
+  "project_environment": {
+    "python_version": "3.11.13",
+    "package_lock": "uv.lock",
+    "package_lock_sha256": "5af1e4924cad5460e8440d29ed8ec3641be62bafb45ebbbe53991bfaac72f03a",
+    "build_constraints": "environments/build-requirements.lock",
+    "build_constraints_sha256": "1ef5d81f189b606ad1246cde4a59c996825360a15e50a564197dc4f9af83bcaa",
+    "build_command": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"
+  },
+  "tools": {
+    "onnxruntime_gpu": {
+      "version": "1.22.0",
+      "status": "verified",
+      "capture_command": "python -c 'import onnxruntime; print(onnxruntime.__version__)'",
+      "reason": null
+    }
+  },
+  "artifact_storage": {
+    "storage_kind": "local_external",
+    "artifact_root_env": "SLM_LAB_ARTIFACT_ROOT",
+    "root": "/mnt/slm-lab",
+    "mount_point": "/mnt",
+    "volume_name": null,
+    "filesystem": "ext4",
+    "minimum_free_bytes": 107374182400
+  },
+  "privacy": {
+    "sanitized": true,
+    "excluded_fields": [
+      "cloud account identifiers",
+      "credentials"
+    ]
+  }
+}

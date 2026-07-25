@@ -2,6 +2,7 @@
   "schema_version": 1,
   "host_id": "apple-m4-primary",
   "captured_at": "2026-07-24T18:30:00Z",
+  "platform": "apple_macos",
   "operating_system": {
     "name": "macOS",
     "version": "15.7.7",
@@ -14,23 +15,31 @@
     "model_identifier": "Mac16,10",
     "chip": "Apple M4",
     "cpu": {
-      "cores": 10,
-      "performance_cores": 4,
-      "efficiency_cores": 6
+      "cores": 10
     },
     "gpu": {
       "integrated_cores": 10
     },
-    "neural_engine": {
-      "cores": 16
-    },
-    "unified_memory_bytes": 17179869184,
-    "memory_bandwidth_bytes_per_second": 120000000000
+    "memory_bytes": 17179869184
+  },
+  "platform_details": {
+    "apple": {
+      "cpu_core_count": 10,
+      "performance_core_count": 4,
+      "efficiency_core_count": 6,
+      "gpu_core_count": 10,
+      "neural_engine_core_count": 16,
+      "unified_memory_bytes": 17179869184,
+      "memory_bandwidth_bytes_per_second": 120000000000
+    }
   },
   "project_environment": {
     "python_version": "3.11.13",
     "package_lock": "uv.lock",
-    "package_lock_sha256": "5af1e4924cad5460e8440d29ed8ec3641be62bafb45ebbbe53991bfaac72f03a"
+    "package_lock_sha256": "5af1e4924cad5460e8440d29ed8ec3641be62bafb45ebbbe53991bfaac72f03a",
+    "build_constraints": "environments/build-requirements.lock",
+    "build_constraints_sha256": "1ef5d81f189b606ad1246cde4a59c996825360a15e50a564197dc4f9af83bcaa",
+    "build_command": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"
   },
   "tools": {
     "uv": {
@@ -71,8 +80,9 @@
     }
   },
   "artifact_storage": {
+    "storage_kind": "local_external",
     "artifact_root_env": "SLM_LAB_ARTIFACT_ROOT",
-    "primary_machine_root": "/Volumes/T9/slm-deployment-lab",
+    "root": "/Volumes/T9/slm-deployment-lab",
     "mount_point": "/Volumes/T9",
     "volume_name": "T9",
     "filesystem": "HFS+ local journaled",
