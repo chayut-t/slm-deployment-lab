@@ -822,6 +822,7 @@ flowchart TD
     T01["T01 Repo, storage, manifests"]
     T02["T02 Public access and device smoke tests"]
     T03["T03 Task graph, worktrees, GitHub sync"]
+    T04["T04 Codex and Claude Code compatibility"]
 
     T10["T10 Prompt, quality, and tokenizer fixtures"]
     T11["T11 PyTorch reference"]
@@ -858,6 +859,7 @@ flowchart TD
     T00 --> T01
     T00 --> T02
     T00 --> T03
+    T03 --> T04
     T00 --> T10
 
     T10 --> T11
@@ -922,6 +924,7 @@ flowchart TD
 | T01 | Repo, environment, artifact schemas, T9 preflight | T00 | T02, T03, T10 |
 | T02 | AI Hub/QDC/GPU access report and toy jobs | T00 | T01, T03, T10 |
 | T03 | Task manifest, generated DAG, worktree and GitHub sync conventions | T00 | T01, T02, T10 |
+| T04 | Codex and Claude Code repository compatibility | T03 | All non-overlapping tasks |
 | T10 | Token/prompt/evaluation fixtures | T00 | T01–T03 |
 | T11 | Deterministic PyTorch reference | T10 | T13, T30 |
 | T12 | Static cache/tensor contract | T11 | T13, T30, T50 |

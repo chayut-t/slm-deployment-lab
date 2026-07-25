@@ -75,6 +75,18 @@
       "worklog": "ai/worklogs/2026-07-24-T03-agent-workflow-completion.md"
     },
     {
+      "id": "T04",
+      "title": "Codex and Claude Code repository compatibility",
+      "definition": "ai/tasks/definitions/T04.yaml",
+      "status": "planned",
+      "depends_on": ["T03"],
+      "resource_locks": [],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
       "id": "T10",
       "title": "Token, prompt, and evaluation fixtures",
       "definition": "ai/tasks/definitions/T10.yaml",

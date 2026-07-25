@@ -12,6 +12,7 @@ graph TD
     T01["T01: Repository, environments, artifact schemas, and T9 preflight"]
     T02["T02: AI Hub, Device Cloud, and GPU access report with toy jobs"]
     T03["T03: Task manifest, generated DAG, worktree, and GitHub conventions"]
+    T04["T04: Codex and Claude Code repository compatibility"]
     T10["T10: Token, prompt, and evaluation fixtures"]
     T11["T11: Deterministic PyTorch reference"]
     T12["T12: Static cache and tensor contract"]
@@ -40,6 +41,7 @@ graph TD
     T00 --> T01
     T00 --> T02
     T00 --> T03
+    T03 --> T04
     T00 --> T10
     T10 --> T11
     T11 --> T12
@@ -97,6 +99,7 @@ graph TD
 | T01 — Repository, environments, artifact schemas, and T9 preflight | completed | T00 | t9_heavy_io | ai/worklogs/2026-07-24-T01-environments-manifests-storage.md |
 | T02 — AI Hub, Device Cloud, and GPU access report with toy jobs | completed | T00 | qai_hub_submission, device_cloud_x_elite | ai/worklogs/2026-07-25-T02-platform-access-completion.md |
 | T03 — Task manifest, generated DAG, worktree, and GitHub conventions | completed | T00 | — | ai/worklogs/2026-07-24-T03-agent-workflow-completion.md |
+| T04 — Codex and Claude Code repository compatibility | ready | T03 | — | — |
 | T10 — Token, prompt, and evaluation fixtures | ready | T00 | — | — |
 | T11 — Deterministic PyTorch reference | blocked | T10 | — | — |
 | T12 — Static cache and tensor contract | blocked | T11 | — | — |
@@ -125,7 +128,7 @@ graph TD
 
 ## Summary
 
-- ready: 3
+- ready: 4
 - in_progress: 0
 - blocked: 22
 - completed: 4

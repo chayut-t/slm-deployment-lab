@@ -1,0 +1,10 @@
+{
+  "id": "T04",
+  "title": "Codex and Claude Code repository compatibility",
+  "depends_on": ["T03"],
+  "resource_locks": [],
+  "objective": "Make the repository safely usable by Codex and Claude Code through one canonical policy, shared private coordination, deterministic worktrees, and cross-tool verification.",
+  "owned_paths": ["AGENTS.md", "CLAUDE.md", "PLANS.md", ".gitignore", "docs/project/plan.md", "docs/agentic/dual-agent-setup.md", "ai/", "scripts/ai/", "scripts/setup/", "scripts/repo/", "tests/repo/"],
+  "outputs": ["Thin Claude instruction adapters backed by AGENTS.md", "Dual-schema shared local session registry and explicit migration tooling", "Documented task worktree and cross-tool handoff workflow", "Regression-tested privacy, lifecycle, and non-disruption controls"],
+  "acceptance": ["Existing task dependencies, statuses, owners, branches, resource locks, and readiness remain unchanged", "Codex and Claude Code load equivalent root and nested repository policy", "Private Claude and agent-session state is ignored and rejected from staged snapshots", "All worktrees resolve one locked registry and unsafe writer or migration operations fail without mutation", "Fresh-clone, task-status, hygiene, and focused workflow tests pass"]
+}
