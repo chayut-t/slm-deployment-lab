@@ -305,7 +305,13 @@ class T13BenchmarkProtocolTests(unittest.TestCase):
         validate_result(energy, root=REPO_ROOT)
 
     def test_subtracted_power_requires_finite_non_negative_baseline(self) -> None:
-        invalid_baselines = (None, -0.1, float("nan"), float("inf"))
+        invalid_baselines = (
+            None,
+            -0.1,
+            float("nan"),
+            float("inf"),
+            float("-inf"),
+        )
         for baseline in invalid_baselines:
             with self.subTest(baseline=baseline):
                 result = self._energy_result()
@@ -320,6 +326,26 @@ class T13BenchmarkProtocolTests(unittest.TestCase):
                 result = self._energy_result()
                 method = result["measurement"]["power_thermal_method"]
                 method["baseline_subtracted"] = True
+                method["idle_baseline_watts"] = baseline
+                validate_result(result, root=REPO_ROOT)
+
+    def test_non_subtracted_idle_baseline_is_null_or_finite_non_negative(
+        self,
+    ) -> None:
+        for baseline in (-0.1, float("nan"), float("inf"), float("-inf")):
+            with self.subTest(invalid_baseline=baseline):
+                result = self._energy_result()
+                method = result["measurement"]["power_thermal_method"]
+                self.assertFalse(method["baseline_subtracted"])
+                method["idle_baseline_watts"] = baseline
+                with self.assertRaises(BenchmarkProtocolError):
+                    validate_result(result, root=REPO_ROOT)
+
+        for baseline in (None, 0.0, 1.5):
+            with self.subTest(valid_baseline=baseline):
+                result = self._energy_result()
+                method = result["measurement"]["power_thermal_method"]
+                self.assertFalse(method["baseline_subtracted"])
                 method["idle_baseline_watts"] = baseline
                 validate_result(result, root=REPO_ROOT)
 

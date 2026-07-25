@@ -149,7 +149,8 @@ observation.
 
 If idle power is subtracted, `idle_baseline_watts` must be an actual finite,
 non-negative number. A missing, negative, NaN, or infinite baseline makes the
-record invalid; `null` is allowed only when `baseline_subtracted=false`.
+record invalid. Without subtraction, `null`, zero, or a positive finite
+measurement is valid, but a supplied NaN or infinity is still invalid.
 
 ## Statistics policy
 

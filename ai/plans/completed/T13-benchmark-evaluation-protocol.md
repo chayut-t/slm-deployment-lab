@@ -115,6 +115,8 @@ measure the same workloads without erasing system differences.
 - 2026-07-25: Idle-baseline subtraction is evidence, not a boolean
   presentation option; subtraction now requires a finite, non-negative
   measured watt value.
+- 2026-07-25: A baseline that is present remains evidence even when it is not
+  subtracted, so all non-null baseline values must be finite and non-negative.
 
 ## Progress and restart instructions
 

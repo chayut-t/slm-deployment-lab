@@ -22,7 +22,7 @@ T10_PATH = Path("configs/workloads/t10-token-fixtures.json")
 # Intentional changes to the frozen protocol must update both the JSON contract
 # and this independently reviewed digest.
 EXPECTED_PROTOCOL_SHA256 = (
-    "156aa6d452478b01f8ed312546591a9e4445936ebca2b5c4c3001cb32e48c8dc"
+    "2541fa76fb088de3ebb559aeb300aed5cd62e215994b8db0faa2fbc6273f947e"
 )
 
 EXPECTED_TIMING_CLASSES = {
@@ -648,15 +648,18 @@ def _validate_result_semantics(
     if kind == "power_thermal":
         power_method = measurement["power_thermal_method"]
         idle_baseline = power_method["idle_baseline_watts"]
-        if power_method["baseline_subtracted"] and (
+        if idle_baseline is not None and (
             isinstance(idle_baseline, bool)
             or not isinstance(idle_baseline, (int, float))
             or not math.isfinite(float(idle_baseline))
             or idle_baseline < 0
         ):
             raise BenchmarkProtocolError(
-                "baseline_subtracted=true requires finite non-negative "
-                "idle_baseline_watts"
+                "non-null idle_baseline_watts must be finite and non-negative"
+            )
+        if power_method["baseline_subtracted"] and idle_baseline is None:
+            raise BenchmarkProtocolError(
+                "baseline_subtracted=true requires non-null idle_baseline_watts"
             )
     _validate_synchronization(result, protocol)
     _validate_process_isolation(measurement, class_policy)

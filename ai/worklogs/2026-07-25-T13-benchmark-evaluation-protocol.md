@@ -43,6 +43,9 @@ hardware measurements were created.
 - Final re-review hardening made idle-baseline subtraction conditional on a
   finite, non-negative `idle_baseline_watts` value in both schema and semantic
   validation, with NaN/infinity adversarial coverage.
+- Follow-up review clarified the false branch: every supplied idle baseline is
+  finite and non-negative even without subtraction; only the non-subtracted
+  case may use `null`.
 
 ## Verification
 
@@ -50,7 +53,7 @@ hardware measurements were created.
   - Passed protocol digest/semantics, T10 linkage, JSON Schema, academic
     subset, statistics, valid-result, and inconsistent-summary rejection.
 - `uv run --extra dev pytest -q`
-  - `89 passed, 2 skipped` after final review corrections.
+  - `90 passed, 2 skipped` after final review corrections.
 - `uv run --extra dev ruff check src tests`
   - Passed.
 - `python3 scripts/ai/render_task_status.py --check`
