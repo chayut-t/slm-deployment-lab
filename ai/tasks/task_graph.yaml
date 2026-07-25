@@ -66,13 +66,13 @@
       "id": "T03",
       "title": "Task manifest, generated DAG, worktree, and GitHub conventions",
       "definition": "ai/tasks/definitions/T03.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T00"],
       "resource_locks": [],
       "owner": "Codex T03 agent",
       "branch": "codex/T03-agent-workflow",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-24-T03-agent-workflow-completion.md"
     },
     {
       "id": "T10",
