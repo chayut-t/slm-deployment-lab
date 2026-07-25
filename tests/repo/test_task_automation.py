@@ -205,10 +205,18 @@ class GitSnapshotTests(unittest.TestCase):
         repository = self.make_repository()
         graph_path = repository / "ai" / "tasks" / "task_graph.yaml"
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
-        task = next(item for item in graph["tasks"] if item["id"] == "T10")
+        completed = {
+            item["id"] for item in graph["tasks"] if item["status"] == "completed"
+        }
+        task = next(
+            item
+            for item in graph["tasks"]
+            if item["status"] == "planned"
+            and set(item["depends_on"]).issubset(completed)
+        )
         task["status"] = "in_progress"
         task["owner"] = "Repository Test"
-        task["branch"] = "codex/T10-test"
+        task["branch"] = f"codex/{task['id']}-test"
         graph_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
         self.run_git(repository, "add", "ai/tasks/task_graph.yaml")
 

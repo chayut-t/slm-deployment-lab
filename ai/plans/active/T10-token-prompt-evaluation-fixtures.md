@@ -52,16 +52,16 @@ Git.
   `docs/decisions/0001-model-and-version-pins.md`,
   `docs/project/plan.md`.
 - Outputs: `configs/workloads/`, `tests/fixtures/t10/`,
-  `src/slm_lab/evaluation/`.
+  `src/slm_lab/evaluation/`, `docs/learning/token_prompt_fixtures.md`.
 - Shared contracts: `pyproject.toml`, `uv.lock`,
   `ai/tasks/task_graph.yaml`, `ai/tasks/status.generated.md`.
 
 ## Milestones
 
-- [ ] Exact tokenizer environment is locked and can load the immutable revision.
-- [ ] Canary prompts and all four exact-length workload fixtures regenerate.
-- [ ] Fixture and dataset-reference manifests validate and detect drift.
-- [ ] Focused and full repository verification pass.
+- [x] Exact tokenizer environment is locked and can load the immutable revision.
+- [x] Canary prompts and all four exact-length workload fixtures regenerate.
+- [x] Fixture and dataset-reference manifests validate and detect drift.
+- [x] Focused and full repository verification pass.
 - [ ] Public worklog, completed plan, and task graph record T10 completion.
 - [ ] Fresh independent reviewer reports no unresolved findings.
 
@@ -98,10 +98,15 @@ Git.
 - 2026-07-25: Use raw completion as the canonical workload interface and keep
   chat formatting limited to a dedicated non-thinking canary, matching ADR
   0001.
+- 2026-07-25: Add a task-local learning guide because tokenization is a deep
+  study checkpoint and the related notebook is intentionally deferred to T80.
+- 2026-07-25: Qwen's pinned template renders an empty `<think>…</think>` block
+  even with thinking disabled. Preserve those control tokens instead of
+  treating non-thinking mode as template-marker removal.
 
 ## Progress and restart instructions
 
-The task is claimed on `codex/T10-token-fixtures`. Next, lock the exact
-tokenizer dependency, implement the fixture module and authored sources,
-generate the committed manifests from the pinned tokenizer, and run focused
-tests before completing task metadata.
+The implementation and focused/full tests pass on
+`codex/T10-token-fixtures`. Next, commit the implementation, request the
+required fresh independent review, address any findings, then publish the
+worklog and completion metadata.
