@@ -1,0 +1,1 @@
+"""Deployment adapter tests."""

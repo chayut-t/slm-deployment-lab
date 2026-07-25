@@ -1,0 +1,1 @@
+"""Qualcomm deployment adapter tests."""
