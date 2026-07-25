@@ -45,11 +45,18 @@ ID.
   digest mismatches, SDK output capture, service-error suppression, and
   malicious request text.
 - Independent review fixes quiet-wrap lazy target I/O and metadata properties,
-  reject whitespace/equality forms of credential, account, identity, and
-  path-like options, submit the full SDK device selector, and bind public
+  replace the initial exact-name denylist with stage-specific fail-closed
+  option allowlists, submit the full SDK device selector, and bind public
   device/runtime records to successful job options, service-reported device
-  fields, and target-model metadata. Requested and observed device identities
-  may differ for compatible or successor-device reuse.
+  fields, and target-model metadata. Unknown and prefixed credential, account,
+  identity, and path/model flags are rejected without copying their values.
+  Requested and observed device identities may differ for compatible or
+  successor-device reuse.
+- Bumped the request and manifest contract to schema v2. The pinned
+  `qai-hub==0.53.0` contract binds `runtime.name: QAIRT` and the exact version
+  through compile `--qairt_version` or inference/profile
+  `--qairt_framework`, while keeping execution runtime explicitly unobserved.
+  Schema-v1 requests and predecessor manifests must be regenerated.
 - Removed the unnecessary parent `tests/deployment/__init__.py`; all T30 test
   changes now remain under the declared `tests/deployment/qualcomm/` subtree.
 
@@ -57,15 +64,15 @@ ID.
 
 - Command:
   `PYTHONPATH=src python3 -m unittest tests.deployment.qualcomm.test_ai_hub -v`
-- Result: 19 focused mocked adapter tests passed.
+- Result: 21 focused mocked adapter tests passed.
 - Command:
   `PYTHONPATH=src <primary-checkout>/.venv/bin/pytest -q`
-- Result: full recursive suite passed with 100 tests passing and two
+- Result: full recursive suite passed with 102 tests passing and two
   intentional opt-in upstream/tokenizer checks skipped.
 - Command:
   `PYTHONPATH=src <primary-checkout>/.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`
 - Result: the repository's package-based unittest discovery passed 81 tests
-  with the same two skips. The 19 T30 tests are run by the focused command and
+  with the same two skips. The 21 T30 tests are run by the focused command and
   by full recursive pytest without requiring an out-of-scope parent package
   marker.
 - Command:
@@ -102,10 +109,17 @@ ID.
   back from the successful service job. Exact selector/observation equality is
   intentionally not required because family resolution and compatible
   successor-device execution are legitimate.
-- The exact requested QAIRT version must occur once in validated options and
-  those options must match the successful service job. Target-model metadata
-  records the artifact runtime when exposed. Execution runtime remains
-  explicitly unobserved unless a later result surface supplies evidence.
+- The exact requested QAIRT identity is `QAIRT` plus an exact version. The
+  version must occur once through the pinned stage-specific option, and the
+  validated options must match the successful service job. Target-model
+  metadata records the artifact runtime when exposed. Execution runtime
+  remains explicitly unobserved unless a later result surface supplies
+  evidence.
+- The published `qai-hub==0.53.0` wheel (SHA-256
+  `2c7148ba65c5f422c96a28e0b717234779cb548b1a4c870b2bac5c867e725e26`)
+  was inspected without installing or authenticating it. Its CLI examples
+  distinguish compile `--qairt_version` from profile/inference
+  `--qairt_framework`; schema v2 encodes that pinned distinction.
 - No Workbench or paid job was submitted. T30 validates the adapter contract
   and mocked behavior; it does not publish hardware measurements.
 

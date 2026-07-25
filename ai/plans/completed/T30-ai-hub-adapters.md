@@ -39,7 +39,8 @@ of committed or console-visible output.
 
 - Required task dependencies: T01 and T02 are completed.
 - Resource locks: `qai_hub_submission`; no external submission will be made.
-- External access: none for implementation or verification.
+- External access: public Qualcomm documentation and the published pinned
+  client wheel may be inspected; no authenticated service access.
 - Cost boundary: zero; external and paid actions are prohibited for this task.
 
 ## Important paths
@@ -104,6 +105,11 @@ of committed or console-visible output.
   independently submitted compile/inference/profile jobs. The client is
   explicitly set non-verbose and every SDK call is additionally captured so
   its automatic job URL output cannot reach task logs.
+- 2026-07-25: Independent review hardened the contract to schema v2 with
+  stage-specific fail-closed option allowlists. Inspection of the published
+  `qai-hub==0.53.0` wheel confirmed compile `--qairt_version` and
+  profile/inference `--qairt_framework`; requested/submitted identities remain
+  distinct from unobserved execution identity.
 
 ## Progress and restart instructions
 

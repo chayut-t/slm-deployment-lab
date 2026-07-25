@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Protocol, TypeVar
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MANIFEST_TYPE = "slm_lab.qualcomm.ai_hub.stage"
 STAGES = {"compile", "inference", "profile"}
 SAFE_STATES = {"SUCCESS", "FAILED"}
@@ -55,40 +55,32 @@ PRIVATE_TEXT_PATTERNS = (
     re.compile(r"/jobs/[A-Za-z0-9_-]+", re.IGNORECASE),
     re.compile(r"\bj[a-z0-9]{7,}\b", re.IGNORECASE),
 )
-SENSITIVE_OPTION_NAMES = {
-    "access-key",
-    "account",
-    "account-id",
-    "api-key",
-    "api-token",
-    "auth",
-    "authorization",
-    "bearer",
-    "client-id",
-    "credential",
-    "credentials",
-    "email",
-    "organization",
-    "owner",
-    "password",
-    "project",
-    "project-id",
-    "secret",
-    "token",
-    "user",
-    "user-id",
+STAGE_OPTION_ALLOWLISTS = {
+    "compile": frozenset({"qairt-version", "qnn-options", "target-runtime"}),
+    "inference": frozenset({"compute-unit", "qairt-framework", "qnn-options"}),
+    "profile": frozenset({"compute-unit", "qairt-framework", "qnn-options"}),
 }
-QAIRT_OPTION_NAMES = {"qairt-version"}
-PATH_OPTION_NAMES = {
-    "cache-dir",
-    "config",
-    "config-file",
-    "input-file",
-    "model-file",
-    "output-dir",
-    "path",
+STAGE_RUNTIME_OPTIONS = {
+    "compile": "qairt-version",
+    "inference": "qairt-framework",
+    "profile": "qairt-framework",
 }
-PATH_OPTION_SUFFIXES = ("-directory", "-file", "-path")
+SDK_OPTION_SPELLINGS = {
+    "compute-unit": "--compute_unit",
+    "qairt-framework": "--qairt_framework",
+    "qairt-version": "--qairt_version",
+    "qnn-options": "--qnn_options",
+    "target-runtime": "--target_runtime",
+}
+SAFE_TARGET_RUNTIMES = {
+    "onnx",
+    "precompiled_qnn_onnx",
+    "qnn_context_binary",
+    "qnn_dlc",
+    "tflite",
+}
+SAFE_COMPUTE_UNIT_OPTIONS = {"all", "cpu", "gpu", "npu"}
+SAFE_QNN_SUBOPTIONS = {"context-enable-graphs"}
 
 T = TypeVar("T")
 
@@ -363,7 +355,7 @@ def load_request(path: Path, expected_stage: str) -> Mapping[str, Any]:
     if expected_stage not in STAGES:
         raise AiHubAdapterError("unsupported stage")
     if request.get("schema_version") != SCHEMA_VERSION:
-        raise AiHubAdapterError("request schema_version must be 1")
+        raise AiHubAdapterError(f"request schema_version must be {SCHEMA_VERSION}")
     if request.get("stage") != expected_stage:
         raise AiHubAdapterError("request stage does not match command")
     _assert_public_safe(
@@ -458,18 +450,20 @@ def _device(value: Any) -> dict[str, Any]:
 def _runtime(value: Any) -> dict[str, str]:
     runtime = _require_mapping(value, "runtime")
     _require_exact_keys(runtime, required={"name", "version"}, field="runtime")
-    return {
+    normalized = {
         "name": _safe_text(runtime["name"], "runtime.name"),
         "version": _safe_exact_version(runtime["version"], "runtime.version"),
     }
+    if normalized["name"] != "QAIRT":
+        raise AiHubAdapterError("runtime.name must be exactly QAIRT")
+    return normalized
 
 
 def _option_name(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lstrip("-").lower()).strip("-")
 
 
-def _path_like_option_token(value: str) -> bool:
-    candidate = value.partition("=")[2] if "=" in value else value
+def _path_like_option_value(candidate: str) -> bool:
     return (
         "/" in candidate
         or "\\" in candidate
@@ -479,7 +473,45 @@ def _path_like_option_token(value: str) -> bool:
     )
 
 
-def _validate_options(value: Any, runtime: Mapping[str, str]) -> str:
+def _qnn_suboptions(value: str) -> None:
+    for raw_suboption in value.split(";"):
+        key, separator, raw_value = raw_suboption.partition("=")
+        if separator != "=" or _option_name(key) not in SAFE_QNN_SUBOPTIONS:
+            raise AiHubAdapterError("options contain an unsupported QNN sub-option")
+        _safe_logical_name(raw_value, "QNN graph selection")
+
+
+def _compute_units(value: str) -> None:
+    units = value.split(",")
+    if not units or any(
+        unit.lower() not in SAFE_COMPUTE_UNIT_OPTIONS for unit in units
+    ):
+        raise AiHubAdapterError("options contain an unsupported compute unit")
+
+
+def _validate_option_value(name: str, value: str, runtime: Mapping[str, str]) -> None:
+    if not value or _path_like_option_value(value):
+        raise AiHubAdapterError("options contain path-like or empty material")
+    _assert_safe_string(value, "option value")
+    if name in {"qairt-version", "qairt-framework"}:
+        if _safe_exact_version(value, "options QAIRT version") != runtime["version"]:
+            raise AiHubAdapterError(
+                "options must submit exactly the requested QAIRT version"
+            )
+    elif name == "target-runtime":
+        if value not in SAFE_TARGET_RUNTIMES:
+            raise AiHubAdapterError("options contain an unsupported target runtime")
+    elif name == "compute-unit":
+        _compute_units(value)
+    elif name == "qnn-options":
+        _qnn_suboptions(value)
+
+
+def _validate_options(
+    value: Any,
+    runtime: Mapping[str, str],
+    stage: str,
+) -> str:
     if not isinstance(value, str):
         raise AiHubAdapterError("options must be a string")
     _assert_safe_string(value, "options")
@@ -488,34 +520,39 @@ def _validate_options(value: Any, runtime: Mapping[str, str]) -> str:
     except ValueError:
         raise AiHubAdapterError("options could not be parsed safely") from None
 
-    qairt_versions: list[str] = []
+    allowed = STAGE_OPTION_ALLOWLISTS[stage]
+    runtime_option = STAGE_RUNTIME_OPTIONS[stage]
+    runtime_option_count = 0
     index = 0
     while index < len(tokens):
         token = tokens[index]
         flag, separator, inline_value = token.partition("=")
-        name = _option_name(flag) if flag.startswith("-") else ""
-        if name in SENSITIVE_OPTION_NAMES:
+        if not flag.startswith("--"):
+            raise AiHubAdapterError("options contain a positional or short-form token")
+        name = _option_name(flag)
+        if name not in allowed:
             raise AiHubAdapterError(
-                "options contain credential, account, or identity material"
+                f"options contain a flag unsupported for the {stage} stage"
             )
-        if name in PATH_OPTION_NAMES or name.endswith(PATH_OPTION_SUFFIXES):
-            raise AiHubAdapterError("options contain path-bearing fields")
-        if _path_like_option_token(token):
-            raise AiHubAdapterError("options contain path-like material")
-        if name in QAIRT_OPTION_NAMES:
-            if separator:
-                version = inline_value
-            else:
-                index += 1
-                if index >= len(tokens):
-                    raise AiHubAdapterError("options omit the QAIRT version value")
-                version = tokens[index]
-            qairt_versions.append(_safe_exact_version(version, "options QAIRT version"))
+        if flag != SDK_OPTION_SPELLINGS[name]:
+            raise AiHubAdapterError(
+                f"options must use the pinned SDK spelling {SDK_OPTION_SPELLINGS[name]}"
+            )
+        if separator:
+            option_value = inline_value
+        else:
+            index += 1
+            if index >= len(tokens) or tokens[index].startswith("--"):
+                raise AiHubAdapterError("options omit a required flag value")
+            option_value = tokens[index]
+        _validate_option_value(name, option_value, runtime)
+        if name == runtime_option:
+            runtime_option_count += 1
         index += 1
 
-    if qairt_versions != [runtime["version"]]:
+    if runtime_option_count != 1:
         raise AiHubAdapterError(
-            "options must submit exactly the requested QAIRT version"
+            f"options must submit exactly one {SDK_OPTION_SPELLINGS[runtime_option]}"
         )
     return value
 
@@ -563,7 +600,8 @@ def _common_request(request: Mapping[str, Any], stage: str) -> dict[str, Any]:
         ),
         "device": _device(request.get("device")),
         "runtime": runtime,
-        "options": _validate_options(request.get("options", ""), runtime),
+        "options": _validate_options(request.get("options", ""), runtime, stage),
+        "runtime_option": SDK_OPTION_SPELLINGS[STAGE_RUNTIME_OPTIONS[stage]],
         "job_name": _safe_text(request.get("job_name"), "job_name"),
         "timeout_seconds": _positive_int(
             request.get("timeout_seconds"), "timeout_seconds"
@@ -754,12 +792,13 @@ def _artifact_runtime(model: Any) -> dict[str, str] | None:
 def _read_service_evidence(
     job: Any,
     *,
+    job_stage: str,
     expected_options: str,
     runtime: Mapping[str, str],
     target_model: Any | None,
 ) -> dict[str, Any]:
     actual_options = getattr(job, "options", None)
-    validated_options = _validate_options(actual_options, runtime)
+    validated_options = _validate_options(actual_options, runtime, job_stage)
     if validated_options != expected_options:
         raise AiHubAdapterError("service job options differ from submitted options")
     observed_device = _observed_device(getattr(job, "device", None))
@@ -782,6 +821,7 @@ def _service_evidence(
         stage,
         _read_service_evidence,
         job,
+        job_stage=stage,
         expected_options=common["options"],
         runtime=common["runtime"],
         target_model=target_model,
@@ -864,7 +904,12 @@ def _base_manifest(
         },
         "runtime": {
             "requested": common["runtime"],
-            "request_evidence": "successful_service_job_options",
+            "submitted": {
+                "name": common["runtime"]["name"],
+                "version": common["runtime"]["version"],
+                "option": common["runtime_option"],
+            },
+            "submission_evidence": "successful_service_job_options",
             "artifact": artifact_runtime,
             "artifact_evidence": (
                 "target_model_metadata"
@@ -1346,6 +1391,9 @@ def execute_request(
     backend: AiHubBackend | None = None,
 ) -> dict[str, Any]:
     request = load_request(request_path, stage)
+    # Re-run inside the stage runner for defense in depth, but validate every
+    # free-form option before the optional SDK is imported or initialized.
+    _common_request(request, stage)
     selected_backend = backend if backend is not None else QaiHubBackend()
     runners = {
         "compile": run_compile,

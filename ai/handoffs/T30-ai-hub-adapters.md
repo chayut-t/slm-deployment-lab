@@ -23,6 +23,12 @@ They never require an AI Hub job ID, URL, or live compile-job object. The
 request contract and commands are documented in
 `scripts/qualcomm/README.md`.
 
+The current contract is schema v2. It is intentionally incompatible with
+schema-v1 request and manifest files, so downstream work must regenerate all
+three requests and rerun compile before inference or profile. Runtime evidence
+now separates requested identity, submitted identity/SDK option, artifact
+metadata, and unobserved execution identity.
+
 ## Private artifact layout
 
 Keep requests, raw profiles, and unsanitized service material under
@@ -39,9 +45,13 @@ job identity, job URLs, or raw warning text.
 - Use an exact installed `qai-hub` version and exact QAIRT version in the
   request. T30 mocked `qai-hub==0.53.0` and QAIRT
   `2.45.0.260326154327`, matching T02 evidence.
-- Put the exact QAIRT version in `options` once. Keep credentials, accounts,
-  identity values, URLs, emails, and paths out of free-form options; the
-  adapter rejects both equality and whitespace forms.
+- Use `runtime.name: "QAIRT"` and put the exact QAIRT version in `options`
+  once. With pinned `qai-hub==0.53.0`, compile uses `--qairt_version`;
+  inference and profile use `--qairt_framework`.
+- Use only the documented stage allowlists in the request guide. Credential,
+  account, identity, model/path, unknown, and misspelled flags fail closed,
+  including prefixed and underscore variants. Add a reviewed regression before
+  extending an allowlist.
 - Coordinate the `qai_hub_submission` resource lock and use a free bounded
   submission only.
 - Set `retry` to false and a positive `timeout_seconds`.

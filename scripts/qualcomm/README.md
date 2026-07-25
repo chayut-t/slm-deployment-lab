@@ -24,19 +24,38 @@ record and deliberately update the request if they validate another version.
 
 ## Request contract
 
-All requests use `schema_version: 1`, name the exact client, provide a QAIRT
-version that must also appear exactly once in submitted `options`, set
-`retry: false`, and provide a bounded `timeout_seconds`. `device` is an SDK
-selector with `name` and optional `os`/`attributes`; it is not published as an
-observed physical-device identity. Every input artifact has a private `path`,
-a path-free `logical_name`, and its lowercase SHA-256. Output artifacts and
-raw profiles must be external or below ignored `.ai-local/` or `artifacts/`
-storage.
+All requests use `schema_version: 2`, name the exact client, set
+`runtime.name` to `QAIRT`, provide an exact runtime version, set `retry: false`,
+and provide a bounded `timeout_seconds`. Schema-v1 requests and predecessor
+manifests are intentionally incompatible and must be regenerated. `device` is
+an SDK selector with `name` and optional `os`/`attributes`; it is not published
+as an observed physical-device identity. Every input artifact has a private
+`path`, a path-free `logical_name`, and its lowercase SHA-256. Output artifacts
+and raw profiles must be external or below ignored `.ai-local/` or
+`artifacts/` storage.
 
-Options are parsed before backend initialization. Credential, account,
-identity, URL, email, and path-like material is rejected in both `--key=value`
-and `--key value` forms. Filesystem paths belong only in the private,
+Options are parsed before backend initialization using small, stage-specific
+allowlists. Unknown, positional, short-form, misspelled, valueless, URL-like,
+email-like, path-like, or private-looking options fail closed. This includes
+credential/account/identity prefixes such as `--access-token`,
+`--access_token`, `--billing-account`, and path-bearing `--model`. Values are
+never copied to an error. Filesystem paths belong only in the private,
 purpose-specific request fields.
+
+For the pinned `qai-hub==0.53.0` interface, compile must bind the requested
+runtime version exactly once with `--qairt_version`. Inference and profile must
+bind it exactly once with `--qairt_framework`. The manifest records the
+submitted framework name, version, and option separately from target-model
+runtime metadata and leaves execution runtime unobserved. Supported option
+flags are deliberately narrow:
+
+- compile: `--target_runtime`, `--qairt_version`, and `--qnn_options`
+- inference/profile: `--qairt_framework`, `--compute_unit`, and
+  `--qnn_options`
+
+At schema v2, `--qnn_options` accepts only the reviewed
+`context_enable_graphs=<logical-name>` sub-option. Extend an allowlist only
+with a documented use case and an adversarial regression.
 
 Compile additionally provides:
 
@@ -69,9 +88,10 @@ normalized to microseconds and memory to bytes per the AI Hub profile
 contract. Each manifest separates the requested device selector from the
 service job's reported device, and it does not require them to match. This
 preserves legitimate compatible/successor-device reuse. Runtime fields
-separate the successful job-option request, target-model metadata when
-exposed, and the unobserved execution-runtime boundary; an exact execution
-runtime is never inferred from request text alone.
+separate the requested identity, submitted name/version/SDK option,
+target-model metadata when exposed, and the unobserved execution-runtime
+boundary; an exact execution runtime is never inferred from request text
+alone.
 
 Do not commit request files: they contain machine-local paths. Do not redirect
 raw SDK output into public files, run `qai-hub configure` in task logs, or use
