@@ -12,6 +12,7 @@
     "class": "Qwen2Tokenizer",
     "transformers_version": "4.51.3",
     "tokenizers_version": "0.21.4",
+    "jinja2_version": "3.1.6",
     "trust_remote_code": false,
     "add_bos_token": false,
     "pad_id": 151643,

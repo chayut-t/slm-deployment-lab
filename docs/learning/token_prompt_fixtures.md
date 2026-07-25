@@ -66,6 +66,12 @@ The workload manifest maps each exact prompt to its future generation contract:
 Later backends must consume these IDs rather than inventing platform-specific
 prompts.
 
+The manifest also freezes generation semantics. Context workloads, canaries,
+and quality cases use greedy decoding with no sampling, one beam, lowest-token
+ID tie-breaking, no stochastic seed, explicit EOS/PAD IDs, and fixed output
+limits. Identical input IDs are not sufficient for comparison if one backend
+samples while another uses argmax or if their stopping rules differ.
+
 ## Why both text and IDs are committed
 
 Text makes a fixture understandable; IDs make it executable and exact.
@@ -134,7 +140,8 @@ jq '.context_workloads[] |
 2. Why does T10 use raw completion for canonical validation but retain one chat
    canary?
 3. How does the generator prove a prompt contains exactly 4,096 tokens?
-4. Why are external benchmark names committed while their dataset rows are
+4. Why must generation and stopping rules be frozen in addition to input IDs?
+5. Why are external benchmark names committed while their dataset rows are
    not?
-5. Which later tasks depend on these fixtures, and what kind of drift would
+6. Which later tasks depend on these fixtures, and what kind of drift would
    each detect?

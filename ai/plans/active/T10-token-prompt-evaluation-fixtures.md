@@ -69,7 +69,7 @@ Git.
 
 - Commands:
   - `uv sync --extra dev --extra tokenizer --locked`
-  - `uv run --extra tokenizer python -m slm_lab.evaluation.fixtures verify`
+  - `uv run --extra tokenizer slm-lab-fixtures verify`
   - `uv run --extra dev --extra tokenizer pytest -q`
   - `uv run --extra dev ruff check src tests`
   - `python3 scripts/ai/render_task_status.py --check`
@@ -103,6 +103,10 @@ Git.
 - 2026-07-25: Qwen's pinned template renders an empty `<think>…</think>` block
   even with thinking disabled. Preserve those control tokens instead of
   treating non-thinking mode as template-marker removal.
+- 2026-07-25: Independent review required whole-config provenance checks and
+  an explicit deterministic generation contract. Offline validation now
+  derives and compares the full manifest, while upstream verification remains
+  the authority for token-array reproduction.
 
 ## Progress and restart instructions
 

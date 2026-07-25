@@ -12,6 +12,7 @@ from pathlib import Path
 from slm_lab.evaluation.fixtures import (
     EXPECTED_CONTEXTS,
     FixtureValidationError,
+    canonical_json_sha256,
     load_pinned_tokenizer,
     validate_documents,
     validate_repository,
@@ -108,6 +109,76 @@ class T10FixtureTests(unittest.TestCase):
         with self.assertRaisesRegex(
             FixtureValidationError,
             "workload config differs from token bundle",
+        ):
+            validate_documents(
+                source=self.source,
+                bundle=self.bundle,
+                config=tampered,
+                model_contract=self.model_contract,
+            )
+
+    def test_authoritative_config_rejects_coherent_metadata_tampering(self) -> None:
+        mutations = (
+            ("prompt_interface", "chat_template"),
+            ("model_contract", "configs/models/another-model.json"),
+            ("generation_command", "python unpinned_generator.py"),
+        )
+        for field, value in mutations:
+            with self.subTest(field=field):
+                tampered = copy.deepcopy(self.config)
+                tampered[field] = value
+                with self.assertRaisesRegex(
+                    FixtureValidationError,
+                    "authoritative workload config differs",
+                ):
+                    validate_documents(
+                        source=self.source,
+                        bundle=self.bundle,
+                        config=tampered,
+                        model_contract=self.model_contract,
+                    )
+
+    def test_bundle_rejects_coherent_tokenizer_metadata_tampering(self) -> None:
+        tampered_bundle = copy.deepcopy(self.bundle)
+        tampered_bundle["tokenizer"]["trust_remote_code"] = True
+        tampered_config = copy.deepcopy(self.config)
+        tampered_config["tokenizer"]["trust_remote_code"] = True
+        tampered_config["token_fixture_bundle"]["canonical_json_sha256"] = (
+            canonical_json_sha256(tampered_bundle)
+        )
+        with self.assertRaisesRegex(
+            FixtureValidationError,
+            "tokenizer metadata differs",
+        ):
+            validate_documents(
+                source=self.source,
+                bundle=tampered_bundle,
+                config=tampered_config,
+                model_contract=self.model_contract,
+            )
+
+    def test_generation_policy_is_deterministic_and_explicit(self) -> None:
+        policy = self.config["generation_policy"]
+        self.assertEqual(policy["decoding"]["strategy"], "greedy")
+        self.assertFalse(policy["decoding"]["do_sample"])
+        self.assertEqual(policy["decoding"]["argmax_tie_break"], "lowest_token_id")
+        self.assertIsNone(policy["seed"]["value"])
+        self.assertTrue(policy["stopping"]["stop_on_eos"])
+        self.assertEqual(
+            policy["stopping"]["eos_token_ids"],
+            [self.model_contract["tokenizer"]["tokens"]["eos_id"]],
+        )
+        self.assertEqual(
+            policy["stopping"]["pad_token_id"],
+            self.model_contract["tokenizer"]["tokens"]["pad_id"],
+        )
+
+    def test_generation_policy_drift_is_rejected(self) -> None:
+        tampered = copy.deepcopy(self.config)
+        tampered["generation_policy"]["decoding"]["do_sample"] = True
+        with self.assertRaisesRegex(
+            FixtureValidationError,
+            "authoritative workload config differs",
         ):
             validate_documents(
                 source=self.source,

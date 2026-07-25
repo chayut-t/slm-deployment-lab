@@ -16,6 +16,8 @@ DEFAULT_SOURCE = Path("tests/fixtures/t10/source-prompts-v1.json")
 DEFAULT_BUNDLE = Path("tests/fixtures/t10/token-fixtures-v1.json")
 DEFAULT_WORKLOAD_CONFIG = Path("configs/workloads/t10-token-fixtures.json")
 TRANSFORMERS_VERSION = "4.51.3"
+TOKENIZERS_VERSION = "0.21.4"
+JINJA2_VERSION = "3.1.6"
 EXPECTED_CONTEXTS = (128, 512, 1024, 4096)
 GENERATED_TOKENS = {128: 32, 512: 64, 1024: 128, 4096: 128}
 
@@ -70,6 +72,51 @@ def canonical_json_sha256(document: Any) -> str:
     """Return the SHA-256 of a stable canonical JSON representation."""
 
     return hashlib.sha256(_canonical_json_bytes(document)).hexdigest()
+
+
+def build_generation_policy(
+    model_contract: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return the deterministic generation contract shared by later backends."""
+
+    tokenizer_contract = model_contract["tokenizer"]
+    return {
+        "schema_version": 1,
+        "applies_to": [
+            "context_workloads",
+            "raw_canaries",
+            "chat_canary",
+            "quality_subset",
+        ],
+        "decoding": {
+            "strategy": "greedy",
+            "do_sample": False,
+            "num_beams": 1,
+            "argmax_tie_break": "lowest_token_id",
+            "temperature": None,
+            "top_k": None,
+            "top_p": None,
+            "repetition_penalty": 1.0,
+            "length_penalty": 1.0,
+        },
+        "seed": {
+            "value": None,
+            "policy": "not_applicable_when_do_sample_is_false",
+        },
+        "stopping": {
+            "stop_on_eos": True,
+            "eos_token_ids": [tokenizer_contract["tokens"]["eos_id"]],
+            "pad_token_id": tokenizer_contract["tokens"]["pad_id"],
+            "include_eos_in_output": True,
+        },
+        "output_limits": {
+            "context_workloads": "use each record's generated_tokens",
+            "raw_canaries_max_new_tokens": 32,
+            "chat_canary_max_new_tokens": 32,
+            "quality_subset_max_new_tokens": 64,
+            "min_new_tokens": 0,
+        },
+    }
 
 
 def _text_sha256(text: str) -> str:
@@ -266,6 +313,7 @@ def build_bundle(
             "class": tokenizer.__class__.__name__,
             "transformers_version": importlib.metadata.version("transformers"),
             "tokenizers_version": importlib.metadata.version("tokenizers"),
+            "jinja2_version": importlib.metadata.version("jinja2"),
             "trust_remote_code": False,
             "add_bos_token": tokenizer_contract["add_bos_token"],
             "pad_id": tokenizer_contract["tokens"]["pad_id"],
@@ -305,6 +353,7 @@ def build_workload_config(
         "model_contract": DEFAULT_MODEL_CONTRACT.as_posix(),
         "prompt_interface": "raw_completion",
         "tokenizer": bundle["tokenizer"],
+        "generation_policy": build_generation_policy(model_contract),
         "source_fixture": {
             "path": DEFAULT_SOURCE.as_posix(),
             "canonical_json_sha256": canonical_json_sha256(source),
@@ -345,6 +394,78 @@ def _validate_encoded_record(record: Mapping[str, Any], label: str) -> None:
         raise FixtureValidationError(f"{label}: token ID hash drift")
 
 
+def _validate_source_alignment(
+    source: Mapping[str, Any],
+    bundle: Mapping[str, Any],
+) -> None:
+    raw_source = source["raw_canaries"]
+    raw_bundle = bundle["raw_canaries"]
+    if len(raw_source) != len(raw_bundle):
+        raise FixtureValidationError("raw canary count differs from source")
+    for source_record, bundle_record in zip(raw_source, raw_bundle, strict=True):
+        expected = {
+            "id": source_record["id"],
+            "purpose": source_record["purpose"],
+            "interface": "raw_completion",
+            "add_special_tokens": False,
+            "prompt": source_record["prompt"],
+        }
+        if any(bundle_record.get(key) != value for key, value in expected.items()):
+            raise FixtureValidationError(
+                f"{source_record['id']}: metadata differs from authored source"
+            )
+
+    source_chat = source["chat_canary"]
+    bundle_chat = bundle["chat_canary"]
+    expected_chat = {
+        "id": source_chat["id"],
+        "purpose": source_chat["purpose"],
+        "interface": "chat_template",
+        "messages": source_chat["messages"],
+        "enable_thinking": False,
+        "add_generation_prompt": source_chat["add_generation_prompt"],
+    }
+    if any(bundle_chat.get(key) != value for key, value in expected_chat.items()):
+        raise FixtureValidationError("chat metadata differs from authored source")
+
+    quality_source = source["quality_subset"]
+    quality_bundle = bundle["quality_subset"]
+    if len(quality_source) != len(quality_bundle):
+        raise FixtureValidationError("quality case count differs from source")
+    for source_record, bundle_record in zip(
+        quality_source,
+        quality_bundle,
+        strict=True,
+    ):
+        expected = {
+            "id": source_record["id"],
+            "purpose": source_record["category"],
+            "interface": "raw_completion",
+            "add_special_tokens": False,
+            "prompt": source_record["prompt"],
+            "category": source_record["category"],
+            "license": source_record["license"],
+        }
+        if any(bundle_record.get(key) != value for key, value in expected.items()):
+            raise FixtureValidationError(
+                f"{source_record['id']}: metadata differs from authored source"
+            )
+        reference_texts = [
+            reference["text"] for reference in bundle_record["reference_answers"]
+        ]
+        if reference_texts != source_record["reference_answers"]:
+            raise FixtureValidationError(
+                f"{source_record['id']}: references differ from authored source"
+            )
+
+    if bundle["external_quality_candidates"] != (
+        source["external_quality_candidates"]
+    ):
+        raise FixtureValidationError(
+            "external candidate metadata differs from authored source"
+        )
+
+
 def validate_documents(
     *,
     source: Mapping[str, Any],
@@ -366,6 +487,8 @@ def validate_documents(
             raise FixtureValidationError(f"{label}: unexpected task ID")
     if source.get("license") != "CC0-1.0":
         raise FixtureValidationError("authored source fixtures must remain CC0-1.0")
+    if bundle.get("license") != source["license"]:
+        raise FixtureValidationError("bundle license differs from authored source")
     provenance = source.get("provenance", {})
     if provenance.get("contains_private_data") is not False:
         raise FixtureValidationError("source fixture privacy boundary is not explicit")
@@ -378,6 +501,8 @@ def validate_documents(
             )
 
     source_hash = canonical_json_sha256(source)
+    if bundle["source_fixture"]["path"] != DEFAULT_SOURCE.as_posix():
+        raise FixtureValidationError("bundle source path drift")
     if bundle["source_fixture"]["canonical_json_sha256"] != source_hash:
         raise FixtureValidationError("bundle source hash drift")
     if config["source_fixture"]["canonical_json_sha256"] != source_hash:
@@ -389,18 +514,23 @@ def validate_documents(
 
     expected_tokenizer = model_contract["tokenizer"]
     actual_tokenizer = bundle["tokenizer"]
-    for field in ("id", "revision"):
-        if actual_tokenizer[field] != expected_tokenizer[field]:
-            raise FixtureValidationError(f"tokenizer {field} differs from T00")
-    if actual_tokenizer["class"] != expected_tokenizer["class"]:
-        raise FixtureValidationError("tokenizer class differs from T00")
-    if actual_tokenizer["transformers_version"] != TRANSFORMERS_VERSION:
-        raise FixtureValidationError("unexpected Transformers version")
-    if actual_tokenizer["chat_template_sha256"] != (
-        expected_tokenizer["chat_template"]["sha256"]
-    ):
-        raise FixtureValidationError("chat template hash differs from T00")
+    expected_tokenizer_metadata = {
+        "id": expected_tokenizer["id"],
+        "revision": expected_tokenizer["revision"],
+        "class": expected_tokenizer["class"],
+        "transformers_version": TRANSFORMERS_VERSION,
+        "tokenizers_version": TOKENIZERS_VERSION,
+        "jinja2_version": JINJA2_VERSION,
+        "trust_remote_code": False,
+        "add_bos_token": expected_tokenizer["add_bos_token"],
+        "pad_id": expected_tokenizer["tokens"]["pad_id"],
+        "eos_id": expected_tokenizer["tokens"]["eos_id"],
+        "chat_template_sha256": expected_tokenizer["chat_template"]["sha256"],
+    }
+    if actual_tokenizer != expected_tokenizer_metadata:
+        raise FixtureValidationError("tokenizer metadata differs from T00 or lock")
 
+    _validate_source_alignment(source, bundle)
     encoded_records = [
         *bundle["raw_canaries"],
         bundle["chat_canary"],
@@ -475,6 +605,11 @@ def validate_documents(
     expected_quality_ids = [record["id"] for record in bundle["quality_subset"]]
     if config["quality_subset_ids"] != expected_quality_ids:
         raise FixtureValidationError("quality IDs differ from token bundle")
+    expected_config = build_workload_config(source, bundle, model_contract)
+    if config != expected_config:
+        raise FixtureValidationError(
+            "authoritative workload config differs from derived contract"
+        )
 
     if bundle["chat_canary"].get("enable_thinking") is not False:
         raise FixtureValidationError("chat canary must disable thinking")
@@ -517,6 +652,10 @@ def load_pinned_tokenizer(
         raise FixtureValidationError(
             f"expected transformers {TRANSFORMERS_VERSION}"
         )
+    if importlib.metadata.version("tokenizers") != TOKENIZERS_VERSION:
+        raise FixtureValidationError(f"expected tokenizers {TOKENIZERS_VERSION}")
+    if importlib.metadata.version("jinja2") != JINJA2_VERSION:
+        raise FixtureValidationError(f"expected jinja2 {JINJA2_VERSION}")
     try:
         from transformers import AutoTokenizer
     except ImportError as exc:

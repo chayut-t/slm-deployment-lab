@@ -11,6 +11,8 @@ inputs. It records:
 - The immutable tokenizer revision and chat-template hash inherited from T00.
 - Exact static contexts `128`, `512`, `1024`, and `4096`.
 - Generated-token counts `32`, `64`, `128`, and `128`.
+- Greedy/no-sampling generation, tie-breaking, seed, EOS/PAD, and output-limit
+  semantics shared by later backends.
 - Canonical SHA-256 values for authored source prompts and generated token
   fixtures.
 - IDs for raw-completion, non-thinking chat, and CC0 quality canaries.
