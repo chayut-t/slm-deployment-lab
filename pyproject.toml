@@ -21,8 +21,13 @@ dev = [
   "pytest==8.3.5",
   "ruff==0.11.0",
 ]
+tokenizer = [
+    "jinja2==3.1.6",
+    "transformers==4.51.3",
+]
 
 [project.scripts]
+slm-lab-fixtures = "slm_lab.evaluation.fixtures:main"
 slm-lab-storage-preflight = "slm_lab.manifests.storage:main"
 slm-lab-validate-manifest = "slm_lab.manifests.cli:main"
 
