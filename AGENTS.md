@@ -23,14 +23,20 @@ platform priorities, model choice, benchmark contracts, or acceptance criteria.
 Before substantial work:
 
 1. Read this file, `docs/project/plan.md`, and the relevant task definition.
-2. Inspect `git status` and preserve unrelated user or agent changes.
-3. Check dependencies in `ai/tasks/task_graph.yaml`. Do not start a blocked
+2. Read `docs/project/learning-checkpoints.md`. If the assigned task appears
+   there, give the user a concise learning reminder at task start, call out
+   concrete study or hands-on checkpoints during the work, and provide a
+   linked study/debrief checklist at completion. Do not block implementation
+   unless the checkpoint requires user authentication, hardware interaction,
+   spending approval, or a subjective/public decision.
+3. Inspect `git status` and preserve unrelated user or agent changes.
+4. Check dependencies in `ai/tasks/task_graph.yaml`. Do not start a blocked
    task unless the work is explicitly a dependency-breaking investigation.
-4. For a substantial or multi-session task, create an execution plan from
+5. For a substantial or multi-session task, create an execution plan from
    `ai/plans/templates/execution-plan.md`.
-5. When parallel work is useful, use one task-scoped branch and worktree per
+6. When parallel work is useful, use one task-scoped branch and worktree per
    active writer. Do not rely on another worktree's uncommitted files.
-6. Record private task/thread ownership in
+7. Record private task/thread ownership in
    `.ai-local/tasks/thread-registry.yaml`, never in public files.
 
 The main Codex task is replaceable. Repository state must be sufficient for a
