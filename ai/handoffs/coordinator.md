@@ -10,7 +10,9 @@ Updated: 2026-07-25
 - An independent review reproduced the public metadata hashes, identified an
   artifact-field mismatch, and passed the corrected contract and provenance
   tests on follow-up.
-- `T01` remains in progress on its isolated task branch.
+- `T01` is completed on `codex/T01-environments-manifests`: the pinned common
+  environment, portable artifact/host schemas, exact build lock, sanitized
+  Apple host evidence, and hardened T9 preflight passed independent review.
 - `T02` is blocked on Qualcomm Workbench and Device Cloud authentication. Its
   sanitized public-access evidence and executable restart procedure are
   committed on `codex/T02-platform-access`; no compile, inference, or profile
@@ -22,7 +24,6 @@ Updated: 2026-07-25
 
 ## Active work
 
-- `T01` on `codex/T01-environments-manifests`.
 - `T02` is restartable from `codex/T02-platform-access` after the user signs
   into Qualcomm Workbench and Device Cloud.
 

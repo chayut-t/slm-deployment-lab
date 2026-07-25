@@ -1,6 +1,6 @@
 # T01: Environments, manifests, and storage preflight
 
-Status: active
+Status: completed
 Owner: Codex T01 agent
 Updated: 2026-07-25
 
@@ -65,7 +65,7 @@ root is unsuitable.
 - [x] Validate representative fixtures, including negative cases.
 - [x] Pass the T9 preflight on the primary machine without material artifact
       I/O.
-- [ ] Complete task records and all repository gates.
+- [x] Complete task records and all repository gates.
 
 ## Verification and acceptance
 
@@ -122,9 +122,11 @@ root is unsuitable.
 - 2026-07-25: Every exact-version field rejects comparison, compatible-release,
   comma-range, caret, and wildcard syntax. Storage validation resolves every
   expected directory and rejects symlink targets outside the artifact root.
+- 2026-07-25: Fresh independent review reproduced all acceptance checks and
+  returned a final pass with no remaining findings.
 
 ## Progress and restart instructions
 
-Implementation, review-finding fixes, current-main integration, and the full
-shared suite are complete. The coordinator must run the fresh independent
-final review, then archive this plan and mark T01 completed if it passes.
+T01 is complete. The reviewed implementation, completed worklog, archived
+plan, task graph, and generated status are integrated. T30 remains gated by
+blocked T02; T10 is the next ready model-path task.

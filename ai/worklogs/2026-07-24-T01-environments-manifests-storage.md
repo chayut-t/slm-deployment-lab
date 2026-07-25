@@ -1,9 +1,10 @@
 # T01: Environments, manifests, and storage
 
 Date: 2026-07-24
+Completed: 2026-07-25
 Task: `T01`
 Visibility: `public`
-Status: in_progress
+Status: completed
 
 ## Outcome
 
@@ -104,6 +105,9 @@ that escapes the approved root.
 - The storage command rejects the filesystem root, requires the artifact root
   and each resolved expected directory to remain beneath the configured mount,
   and never creates layout directories implicitly.
+- Fresh independent review reproduced the schema, exact-version, symlink,
+  build-lock, fixture, package, and live T9 checks and returned a final pass
+  with no remaining findings.
 
 ## Risks and limitations
 
@@ -115,11 +119,11 @@ that escapes the approved root.
   performed.
 - The synthetic artifact fixture proves the schema, not the existence of its
   dummy artifact digest or a successful model export.
-- Independent final review remains pending; task status intentionally remains
-  `in_progress` until the coordinator completes that review.
+- Cross-platform runtime compatibility remains deferred to the owning platform
+  tasks; T01 validates evidence shapes and local setup, not hardware execution.
 
 ## Follow-up
 
-- Newly unblocked tasks: none until T01 is finalized; T30 also requires T02.
-- Recommended next action: run the fresh independent T01 review, then archive
-  the plan and mark the task/worklog completed if the reviewer passes it.
+- Newly unblocked tasks: none; T30 also requires completion of blocked T02.
+- Recommended next action: begin ready T10 or resume T02 after Qualcomm
+  authentication becomes available.

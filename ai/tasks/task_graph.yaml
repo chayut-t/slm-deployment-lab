@@ -42,13 +42,13 @@
       "id": "T01",
       "title": "Repository, environments, artifact schemas, and T9 preflight",
       "definition": "ai/tasks/definitions/T01.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T00"],
       "resource_locks": ["t9_heavy_io"],
       "owner": "Codex T01 agent",
       "branch": "codex/T01-environments-manifests",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-24-T01-environments-manifests-storage.md"
     },
     {
       "id": "T02",
