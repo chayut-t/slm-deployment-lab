@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "task_id": "T11",
+  "fixture_kind": "pinned_qwen_pytorch_reference",
+  "license": "Apache-2.0",
+  "model": {
+    "id": "Qwen/Qwen3-0.6B",
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "weights_format": "safetensors",
+    "trust_remote_code": false,
+    "attention_implementation": "eager"
+  },
+  "source_fixture": {
+    "id": "raw_ascii",
+    "bundle": "tests/fixtures/t10/token-fixtures-v1.json",
+    "token_ids_sha256": "81b597522a946de54faac98150566348e7167fb7f862e0726eed93501a587093"
+  },
+  "runtime": {
+    "python_version": "3.11.13",
+    "torch_version": "2.7.1",
+    "transformers_version": "4.51.3",
+    "safetensors_version": "0.8.0",
+    "device": "cpu",
+    "dtype": "bfloat16",
+    "deterministic_algorithms": true,
+    "seed": 0
+  },
+  "host": {
+    "product": "Mac mini (2024)",
+    "model_identifier": "Mac16,10",
+    "chip": "Apple M4",
+    "execution_claim": "PyTorch CPU numerical reference; not a benchmark"
+  },
+  "command": "HF_HOME=${SLM_LAB_ARTIFACT_ROOT}/hf-cache PYTHONPATH=src python -m slm_lab.generation.reference --fixture raw_ascii --max-new-tokens 3 --device cpu --dtype bfloat16",
+  "tolerance": {
+    "atol": 0.25,
+    "rtol": 0.02,
+    "protected_relative_max": 0.1,
+    "relative_floor": 1.0,
+    "cosine_min": 0.999,
+    "top5_overlap_min": 0.8,
+    "require_top1": true
+  },
+  "prompt_token_ids": [
+    840,
+    20772,
+    3170,
+    8356,
+    3950,
+    28360,
+    4925,
+    369,
+    52723,
+    78285,
+    1614,
+    23172,
+    304,
+    825,
+    11652,
+    624,
+    16141,
+    25
+  ],
+  "generated_token_ids": [576, 8356, 3950],
+  "stopped_on_eos": false,
+  "steps": [
+    {
+      "step": 0,
+      "prefix_length": 18,
+      "selected_token_id": 576,
+      "full_logits_sha256": "31a71dd05ca84c878331aeb9f97f505d84dceb5056efd617ef1090fa7f0c78ac",
+      "cached_logits_sha256": "31a71dd05ca84c878331aeb9f97f505d84dceb5056efd617ef1090fa7f0c78ac",
+      "max_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "max_protected_relative_error": 0.0,
+      "cosine_similarity": 1.0,
+      "top1_agreement": true,
+      "top5_overlap": 1.0,
+      "reference_top1_top2_margin": 0.125,
+      "passed": true
+    },
+    {
+      "step": 1,
+      "prefix_length": 19,
+      "selected_token_id": 8356,
+      "full_logits_sha256": "a29a8a1a9380b5e8c1070124e01ff953667cfd92881c161fb5282153c2deea85",
+      "cached_logits_sha256": "a29a8a1a9380b5e8c1070124e01ff953667cfd92881c161fb5282153c2deea85",
+      "max_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "max_protected_relative_error": 0.0,
+      "cosine_similarity": 1.0,
+      "top1_agreement": true,
+      "top5_overlap": 1.0,
+      "reference_top1_top2_margin": 0.375,
+      "passed": true
+    },
+    {
+      "step": 2,
+      "prefix_length": 20,
+      "selected_token_id": 3950,
+      "full_logits_sha256": "a2c7a8d42943934fe1a6261d6def22eaf587775189ec9829567d1ee321ed96d4",
+      "cached_logits_sha256": "a2c7a8d42943934fe1a6261d6def22eaf587775189ec9829567d1ee321ed96d4",
+      "max_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "max_protected_relative_error": 0.0,
+      "cosine_similarity": 1.0,
+      "top1_agreement": true,
+      "top5_overlap": 1.0,
+      "reference_top1_top2_margin": 5.875,
+      "passed": true
+    }
+  ],
+  "evidence_sha256": "f5a37682c216120f0c10748a98a7fb44885081e699ea077a46d2caedb39a840b"
+}
