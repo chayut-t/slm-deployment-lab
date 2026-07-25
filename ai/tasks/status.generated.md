@@ -101,13 +101,13 @@ graph TD
 | T03 — Task manifest, generated DAG, worktree, and GitHub conventions | completed | T00 | — | ai/worklogs/2026-07-24-T03-agent-workflow-completion.md |
 | T04 — Codex and Claude Code repository compatibility | completed | T03 | — | ai/worklogs/2026-07-25-T04-dual-agent-compatibility.md |
 | T10 — Token, prompt, and evaluation fixtures | completed | T00 | — | ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md |
-| T11 — Deterministic PyTorch reference | ready | T10 | — | — |
+| T11 — Deterministic PyTorch reference | in_progress | T10 | — | — |
 | T12 — Static cache and tensor contract | blocked | T11 | — | — |
-| T13 — Benchmark and evaluation protocol | ready | T10 | — | — |
+| T13 — Benchmark and evaluation protocol | in_progress | T10 | — | — |
 | T20 — Four-context ONNX export matrix | blocked | T12 | t9_heavy_io | — |
 | T21 — ONNX Runtime CPU parity and graph inspection | blocked | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
-| T30 — Workbench compile, inference, and profile adapters | ready | T01, T02 | qai_hub_submission | — |
+| T30 — Workbench compile, inference, and profile adapters | in_progress | T01, T02 | qai_hub_submission | — |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | ready | T02 | device_cloud_x_elite | — |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
@@ -128,8 +128,8 @@ graph TD
 
 ## Summary
 
-- ready: 4
-- in_progress: 0
+- ready: 1
+- in_progress: 3
 - blocked: 20
 - completed: 6
 
