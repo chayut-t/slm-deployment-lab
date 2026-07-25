@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "protocol_id": "slm-lab-benchmark-v1",
+  "task_id": "T13",
+  "contract_sha256": "bf6821bc0253e40b820a5b269035403072c7501233e66908e32cd57571f07d80",
+  "model_contract": "configs/models/qwen3-0.6b.yaml",
+  "token_fixture_contract": "configs/workloads/t10-token-fixtures.json",
+  "result_schema": "configs/workloads/benchmark-result-v1.schema.json",
+  "academic_evaluation_contract": "configs/workloads/academic-evaluation-v1.json",
+  "workloads": [
+    {
+      "id": "S128",
+      "prompt_tokens": 128,
+      "generated_tokens": 32,
+      "batch_size": 1,
+      "prompt_fixture_id": "S128"
+    },
+    {
+      "id": "S512",
+      "prompt_tokens": 512,
+      "generated_tokens": 64,
+      "batch_size": 1,
+      "prompt_fixture_id": "S512"
+    },
+    {
+      "id": "S1024",
+      "prompt_tokens": 1024,
+      "generated_tokens": 128,
+      "batch_size": 1,
+      "prompt_fixture_id": "S1024"
+    },
+    {
+      "id": "S4096",
+      "prompt_tokens": 4096,
+      "generated_tokens": 128,
+      "batch_size": 1,
+      "prompt_fixture_id": "S4096"
+    }
+  ],
+  "decode_probes": {
+    "cache_lengths": [
+      128,
+      512,
+      1024,
+      4096
+    ],
+    "tokens_per_repetition": 1,
+    "state_policy": "Each measured token starts from an equivalent preloaded cache state; cache growth across repetitions is forbidden."
+  },
+  "timing_classes": {
+    "single_graph": {
+      "scope": "graph",
+      "warmup_repetitions": 5,
+      "measured_repetitions": 30,
+      "fresh_process_each_repetition": false,
+      "model_load_included": false,
+      "compile_included": false,
+      "required_metrics": [
+        "graph_latency"
+      ]
+    },
+    "runtime_stage": {
+      "scope": "runtime_stage",
+      "warmup_repetitions": 5,
+      "measured_repetitions": 30,
+      "fresh_process_each_repetition": false,
+      "model_load_included": false,
+      "compile_included": false,
+      "required_metrics": [
+        "prefill_latency",
+        "decode_latency"
+      ]
+    },
+    "generation_loop": {
+      "scope": "generation_loop",
+      "warmup_repetitions": 2,
+      "measured_repetitions": 10,
+      "fresh_process_each_repetition": false,
+      "model_load_included": false,
+      "compile_included": false,
+      "required_metrics": [
+        "ttft_warm",
+        "prefill_throughput",
+        "decode_time_per_output_token",
+        "decode_throughput",
+        "generation_throughput_including_prefill",
+        "generation_throughput_excluding_prefill"
+      ]
+    },
+    "end_to_end_request": {
+      "scope": "end_to_end_request",
+      "warmup_repetitions": 2,
+      "measured_repetitions": 10,
+      "fresh_process_each_repetition": false,
+      "model_load_included": false,
+      "compile_included": false,
+      "required_metrics": [
+        "request_ttft",
+        "request_total_latency"
+      ]
+    },
+    "cold_start": {
+      "scope": "cold_start",
+      "warmup_repetitions": 0,
+      "measured_repetitions": 5,
+      "fresh_process_each_repetition": true,
+      "model_load_included": true,
+      "compile_included": false,
+      "required_metrics": [
+        "artifact_load_latency",
+        "model_load_latency",
+        "cold_ttft"
+      ]
+    }
+  },
+  "non_timing_measurements": {
+    "quality": {
+      "scope": "evaluation",
+      "warmup_repetitions": 0,
+      "sample_basis": "Declare whether samples are item scores, document/window losses, or complete suite repetitions."
+    },
+    "numerical": {
+      "scope": "numerical_validation",
+      "warmup_repetitions": 0,
+      "sample_basis": "Declare the tensor, decode step, reduction, and whether values are element-, layer-, fixture-, or run-level."
+    },
+    "power_thermal": {
+      "scope": "resource_observation",
+      "warmup_repetitions": 0,
+      "measured_repetitions": 3,
+      "sample_basis": "One value per complete steady-state interval of at least 600 seconds."
+    }
+  },
+  "synchronization": {
+    "policy": "Synchronize immediately before starting and immediately before stopping a host timer whenever the backend can enqueue asynchronous work.",
+    "methods": {
+      "pytorch_cpu": "The model call is synchronous; record 'call_return' and do not add an unrelated barrier.",
+      "onnxruntime_cpu": "InferenceSession.run return is the boundary; record 'session_run_return'.",
+      "onnxruntime_cuda": "Synchronize the active CUDA stream/device before timer start and after the final requested output is materialized; record the exact API.",
+      "mlx": "Materialize all timed outputs with mx.eval before timer stop and materialize setup state before timer start; record the exact arrays.",
+      "qualcomm_workbench": "Use service-reported on-device graph/profile timing only for graph scope; service submission, queue, and artifact transfer wall time are separate service metrics.",
+      "qualcomm_device_cloud": "Use a runtime completion/fence or documented blocking API before stopping the timer; record the API and separate tokenization, loading, prefill, decode, and detokenization.",
+      "generic_accelerator": "Record the backend-specific fence or blocking materialization method; 'none' is invalid for an asynchronous backend."
+    }
+  },
+  "metric_definitions": {
+    "graph_latency": "One deployed graph invocation measured by the device/runtime profiler. It is not generation throughput.",
+    "ttft_warm": "From synchronized warm generation-loop entry with token IDs already available and model/artifact loaded through materialization of the first output token.",
+    "request_ttft": "From receipt of a complete request at the measured API boundary through availability of the first output token at that same boundary.",
+    "cold_ttft": "From fresh-process entry before artifact/model load through availability of the first output token; report load components separately.",
+    "prefill_latency": "Synchronized prompt-processor execution for exactly prompt_tokens input IDs, excluding tokenization and model load.",
+    "prefill_throughput": "prompt_tokens divided by synchronized prefill_latency_seconds.",
+    "decode_latency": "One synchronized one-token decode step from an equivalent preloaded cache state.",
+    "decode_time_per_output_token": "Arithmetic mean of per-token decode durations for generated tokens after prefill, with EOS-shortened token count recorded.",
+    "decode_throughput": "actual_generated_tokens divided by summed synchronized decode time.",
+    "generation_throughput_including_prefill": "actual_generated_tokens divided by synchronized prefill-plus-decode generation-loop time.",
+    "generation_throughput_excluding_prefill": "actual_generated_tokens divided by summed synchronized decode time.",
+    "request_total_latency": "From receipt of a complete request through completion of the response at the measured API boundary.",
+    "peak_memory": "Peak observed bytes within an explicitly named memory domain and collection interval; process RSS, unified memory, accelerator allocation, and service estimates are distinct domains.",
+    "average_power": "Average observed watts over the declared sampling interval and measurement domain after recording whether idle baseline is subtracted.",
+    "energy_per_output_token": "Measured joules attributable to the declared interval divided by actual_generated_tokens; baseline policy is mandatory.",
+    "quality_metric": "A score from the pinned academic or authored evaluation contract; task, split, limit, harness, prompt interface, and scoring method are part of the metric identity.",
+    "numerical_error": "A comparison against a named reference level with tensor, reduction, dtype, tolerance policy, and decode step recorded."
+  },
+  "ttft_components": [
+    "queue_or_dispatch",
+    "artifact_load",
+    "model_load",
+    "tokenization",
+    "prefill",
+    "first_decode",
+    "detokenization_or_transfer"
+  ],
+  "statistics": {
+    "retain_raw_samples": true,
+    "quantile_method": "hf_type_7_linear",
+    "reported_quantiles": [
+      0.5,
+      0.9,
+      0.95
+    ],
+    "dispersion": [
+      "sample_standard_deviation",
+      "median_absolute_deviation",
+      "interquartile_range"
+    ],
+    "rounding_policy": "Compute from unrounded base-unit samples; round only presentation copies.",
+    "outlier_policy": "Retain every valid sample. Never remove a sample solely because it is slow, fast, or statistically distant.",
+    "invalid_sample_reasons": [
+      "timer_failure",
+      "runtime_error",
+      "integrity_failure",
+      "wrong_device_or_provider",
+      "environmental_threshold_breach",
+      "external_interruption"
+    ],
+    "invalid_series_policy": "If any measured sample is invalid, preserve it with a reason, mark the series incomplete, and rerun the complete series for headline comparison. Incomplete series may be diagnostic evidence only.",
+    "confidence_interval": {
+      "required_for_headline_comparisons": true,
+      "method": "percentile_bootstrap",
+      "resamples": 10000,
+      "confidence_level": 0.95,
+      "seed": 20260725,
+      "statistic": "median"
+    }
+  },
+  "memory_policy": {
+    "required_fields": [
+      "domain",
+      "method",
+      "sampling_interval",
+      "measurement_interval",
+      "baseline_policy"
+    ],
+    "domains_must_not_be_merged": [
+      "process_rss",
+      "system_memory",
+      "unified_memory",
+      "accelerator_allocation",
+      "runtime_reported",
+      "service_estimate"
+    ],
+    "peak_definition": "Maximum observed bytes in one named domain during one declared interval."
+  },
+  "power_thermal_policy": {
+    "minimum_steady_state_seconds": 600,
+    "steady_state_repetitions": 3,
+    "required_fields": [
+      "instrument",
+      "sample_rate_hz",
+      "measurement_domain",
+      "idle_baseline_watts",
+      "baseline_subtracted",
+      "start_temperature",
+      "end_temperature",
+      "thermal_state",
+      "ambient_notes"
+    ],
+    "claim_boundary": "Omit power or thermal claims when the method cannot identify the measurement domain or sampling interval; never substitute an estimate without labeling evidence_level=estimated."
+  },
+  "numerical_policy": {
+    "reference_levels": [
+      "golden_reference",
+      "deployment_floating_baseline",
+      "quantized_candidate"
+    ],
+    "required_metrics": [
+      "max_absolute_error",
+      "mean_absolute_error",
+      "protected_relative_error",
+      "cosine_similarity",
+      "kl_divergence_or_documented_top_k_approximation",
+      "top_1_agreement",
+      "top_5_overlap",
+      "reference_top_1_top_2_margin",
+      "per_layer_cache_error",
+      "cached_vs_full_forward_error_by_decode_step",
+      "deterministic_canary_token_agreement"
+    ],
+    "relative_error_denominator": "max(abs(reference), 0.000001)",
+    "tolerance_policy": "Record a named, versioned tolerance policy separately for dtype conversion, export parity, backend parity, and quantized quality. Token equality is a canary, not the sole criterion."
+  },
+  "reporting_policy": {
+    "evidence_levels": [
+      "observed_real_device",
+      "observed_hosted_device",
+      "simulated",
+      "estimated"
+    ],
+    "claim_scope": "Every hardware number is a system result for the complete recorded device, OS, runtime, compiler, provider, artifact, precision, workload, and timing boundary.",
+    "forbidden_equivalences": [
+      "Workbench graph latency equals end-to-end generation throughput",
+      "service turnaround equals device inference latency",
+      "hosted family or proxy evidence equals the named physical product",
+      "MLX execution implies Apple Neural Engine placement",
+      "simulated precision equals deployed precision",
+      "cross-platform differences isolate runtime software"
+    ],
+    "comparison_requirements": [
+      "Retain exact system identity for every series.",
+      "Compare only the same workload, metric definition, timing scope, units, generation policy, and statistical policy.",
+      "List hardware, software, precision, graph, cache, provider, and measurement-method differences as non-comparable dimensions.",
+      "Present context scaling and uncertainty, not one unqualified headline token rate."
+    ]
+  }
+}
