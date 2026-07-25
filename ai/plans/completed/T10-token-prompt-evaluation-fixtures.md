@@ -1,6 +1,6 @@
 # T10: Token, prompt, and evaluation fixtures
 
-Status: active
+Status: completed
 Owner: Codex T10 agent
 Updated: 2026-07-25
 
@@ -62,8 +62,8 @@ Git.
 - [x] Canary prompts and all four exact-length workload fixtures regenerate.
 - [x] Fixture and dataset-reference manifests validate and detect drift.
 - [x] Focused and full repository verification pass.
-- [ ] Public worklog, completed plan, and task graph record T10 completion.
-- [ ] Fresh independent reviewer reports no unresolved findings.
+- [x] Public worklog, completed plan, and task graph record T10 completion.
+- [x] Fresh independent reviewer reports no unresolved findings.
 
 ## Verification and acceptance
 
@@ -110,7 +110,7 @@ Git.
 
 ## Progress and restart instructions
 
-The implementation and focused/full tests pass on
-`codex/T10-token-fixtures`. Next, commit the implementation, request the
-required fresh independent review, address any findings, then publish the
-worklog and completion metadata.
+T10 is complete on `codex/T10-token-fixtures`. The implementation, independent
+review corrections, public worklog, completed plan, and task metadata are
+ready for integration. T11 and T13 should start from the integrated T10
+commit and consume the committed fixture IDs and generation policy unchanged.

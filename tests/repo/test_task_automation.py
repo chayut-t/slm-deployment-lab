@@ -57,7 +57,15 @@ class TaskGraphValidationTests(unittest.TestCase):
 
     def test_completed_task_requires_completed_dependencies(self) -> None:
         graph = copy.deepcopy(self.graph)
-        task = next(item for item in graph["tasks"] if item["id"] == "T11")
+        tasks_by_id = {item["id"]: item for item in graph["tasks"]}
+        task = next(
+            item
+            for item in graph["tasks"]
+            if any(
+                tasks_by_id[dependency]["status"] != "completed"
+                for dependency in item["depends_on"]
+            )
+        )
         task["status"] = "completed"
         task["worklog"] = "ai/worklogs/example.md"
         with self.assertRaisesRegex(ValueError, "incomplete dependencies"):

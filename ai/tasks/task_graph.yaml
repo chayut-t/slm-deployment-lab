@@ -78,13 +78,13 @@
       "id": "T10",
       "title": "Token, prompt, and evaluation fixtures",
       "definition": "ai/tasks/definitions/T10.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T00"],
       "resource_locks": [],
       "owner": "Codex T10 agent",
       "branch": "codex/T10-token-fixtures",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md"
     },
     {
       "id": "T11",
