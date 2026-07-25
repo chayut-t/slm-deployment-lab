@@ -397,11 +397,30 @@ def initialize_registry(path: Path | str, template_text: str) -> bool:
 
 
 def load_task_graph(coordination_root: Path | str) -> dict:
-    path = Path(coordination_root) / GRAPH_RELATIVE_PATH
+    root = Path(coordination_root)
+    dirty = _git_output(
+        root,
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+        "--",
+        GRAPH_RELATIVE_PATH.as_posix(),
+    )
+    if dirty:
+        raise RegistryError(
+            f"public task graph has uncommitted changes: {dirty}; "
+            "commit or reconcile them before changing registry state"
+        )
     try:
-        graph = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RegistryError(f"cannot read task graph {path}: {exc}") from exc
+        graph = json.loads(
+            _git_output(
+                root,
+                "show",
+                f"HEAD:{GRAPH_RELATIVE_PATH.as_posix()}",
+            )
+        )
+    except (RegistryError, json.JSONDecodeError) as exc:
+        raise RegistryError(f"cannot read committed task graph at HEAD: {exc}") from exc
     if not isinstance(graph.get("tasks"), list):
         raise RegistryError("task graph has no tasks list")
     return graph
@@ -686,8 +705,10 @@ def transfer_writer(
 def validate_task_worktree(
     worktree: str,
     *,
+    coordination_root: Path | str,
     branch: str,
     checkpoint_sha: str,
+    allow_detached: bool = False,
 ) -> None:
     """Verify that an exact task checkpoint is checked out on its public branch."""
 
@@ -699,8 +720,22 @@ def validate_task_worktree(
     top_level = Path(_git_output(path, "rev-parse", "--show-toplevel")).resolve()
     if top_level != path:
         raise RegistryError(f"worktree path must be its Git root: {path}")
+    root = Path(coordination_root).resolve()
+    if _git_common_dir(path) != _git_common_dir(root):
+        raise RegistryError(
+            f"worktree {path} is not linked to coordination repository {root}"
+        )
+    registered_paths = {
+        Path(line.removeprefix("worktree ")).resolve()
+        for line in _git_output(root, "worktree", "list", "--porcelain").splitlines()
+        if line.startswith("worktree ")
+    }
+    if path not in registered_paths:
+        raise RegistryError(
+            f"worktree {path} is not registered with coordination repository {root}"
+        )
     actual_branch = _git_output(path, "branch", "--show-current")
-    if actual_branch != branch:
+    if actual_branch != branch and not (allow_detached and not actual_branch):
         raise RegistryError(
             f"worktree {path} is on branch {actual_branch!r}, not {branch!r}"
         )
@@ -723,6 +758,8 @@ def validate_writer_worktree(
     task_id: str,
     writer: str,
     checkpoint_sha: str,
+    coordination_root: Path | str,
+    allow_detached: bool = False,
 ) -> None:
     task = data["tasks"].get(task_id)
     if not isinstance(task, dict) or task.get("active_writer") != writer:
@@ -733,9 +770,45 @@ def validate_writer_worktree(
     graph_task = _graph_task(graph, task_id)
     validate_task_worktree(
         str(session.get("worktree")),
+        coordination_root=coordination_root,
         branch=graph_task["branch"],
         checkpoint_sha=checkpoint_sha,
+        allow_detached=allow_detached,
     )
+
+
+def validate_checkpoint_graph(
+    worktree: str,
+    *,
+    task_id: str,
+    checkpoint_sha: str,
+    graph_task: dict,
+) -> None:
+    """Require the task checkpoint itself to contain the public task claim."""
+
+    try:
+        checkpoint_graph = json.loads(
+            _git_output(
+                Path(worktree),
+                "show",
+                f"{checkpoint_sha}:{GRAPH_RELATIVE_PATH.as_posix()}",
+            )
+        )
+    except (RegistryError, json.JSONDecodeError) as exc:
+        raise RegistryError(
+            f"{task_id}: checkpoint does not contain a valid committed task graph: "
+            f"{exc}"
+        ) from exc
+    if not isinstance(checkpoint_graph.get("tasks"), list):
+        raise RegistryError(f"{task_id}: checkpoint task graph has no tasks list")
+    checkpoint_task = _graph_task(checkpoint_graph, task_id)
+    for field in ("status", "owner", "branch"):
+        if checkpoint_task.get(field) != graph_task.get(field):
+            raise RegistryError(
+                f"{task_id}: checkpoint graph {field} "
+                f"{checkpoint_task.get(field)!r} disagrees with committed public "
+                f"graph {graph_task.get(field)!r}"
+            )
 
 
 def mutate_registry(
@@ -856,8 +929,15 @@ def main() -> int:
             def claim_operation(data: dict) -> dict:
                 validate_task_worktree(
                     args.worktree,
+                    coordination_root=root,
                     branch=graph_task["branch"],
                     checkpoint_sha=args.checkpoint,
+                )
+                validate_checkpoint_graph(
+                    args.worktree,
+                    task_id=args.task_id,
+                    checkpoint_sha=args.checkpoint,
+                    graph_task=graph_task,
                 )
                 return claim_writer(
                     data,
@@ -886,8 +966,15 @@ def main() -> int:
                     )
                 validate_task_worktree(
                     args.worktree,
+                    coordination_root=root,
                     branch=graph_task["branch"],
                     checkpoint_sha=checkpoint,
+                )
+                validate_checkpoint_graph(
+                    args.worktree,
+                    task_id=args.task_id,
+                    checkpoint_sha=checkpoint,
+                    graph_task=graph_task,
                 )
                 return add_reviewer(
                     data,
@@ -912,6 +999,13 @@ def main() -> int:
                     task_id=args.task_id,
                     writer=args.writer,
                     checkpoint_sha=args.new_checkpoint,
+                    coordination_root=root,
+                )
+                validate_checkpoint_graph(
+                    data["tasks"][args.task_id]["sessions"][args.writer]["worktree"],
+                    task_id=args.task_id,
+                    checkpoint_sha=args.new_checkpoint,
+                    graph_task=_graph_task(graph, args.task_id),
                 )
                 return update_checkpoint(
                     data,
@@ -936,6 +1030,7 @@ def main() -> int:
                     task_id=args.task_id,
                     writer=args.expected_writer,
                     checkpoint_sha=args.expected_checkpoint,
+                    coordination_root=root,
                 )
                 return release_writer(
                     data,
@@ -972,11 +1067,20 @@ def main() -> int:
                     task_id=args.task_id,
                     writer=args.expected_writer,
                     checkpoint_sha=args.expected_checkpoint,
+                    coordination_root=root,
+                    allow_detached=True,
                 )
                 validate_task_worktree(
                     args.new_worktree,
+                    coordination_root=root,
                     branch=graph_task["branch"],
                     checkpoint_sha=args.expected_checkpoint,
+                )
+                validate_checkpoint_graph(
+                    args.new_worktree,
+                    task_id=args.task_id,
+                    checkpoint_sha=args.expected_checkpoint,
+                    graph_task=graph_task,
                 )
                 return transfer_writer(
                     data,

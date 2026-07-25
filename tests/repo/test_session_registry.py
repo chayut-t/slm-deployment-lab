@@ -464,6 +464,10 @@ class SessionRegistryTests(unittest.TestCase):
             json.dumps(self.graph(branch="task/test")),
             encoding="utf-8",
         )
+        self.run_git(root, "add", "ai/tasks/task_graph.yaml")
+        self.run_git(root, "commit", "-qm", "claim task")
+        primary_branch = self.run_git(root, "branch", "--show-current")
+        self.run_git(linked, "merge", "-q", primary_branch)
         registry = root / ".ai-local" / "tasks" / "thread-registry.yaml"
         registry.parent.mkdir(parents=True)
         registry.write_text(json.dumps(self.empty_v2()), encoding="utf-8")
@@ -484,6 +488,28 @@ class SessionRegistryTests(unittest.TestCase):
                 capture_output=True,
                 check=False,
             )
+
+        committed_graph = graph_path.read_text(encoding="utf-8")
+        graph_path.write_text(
+            json.dumps(self.graph(branch="task/test", status="planned")),
+            encoding="utf-8",
+        )
+        uncommitted_graph = run_helper(
+            "claim",
+            "T04",
+            "--session",
+            "writer-a",
+            "--tool",
+            "codex",
+            "--worktree",
+            str(linked),
+            "--checkpoint",
+            first_checkpoint,
+        )
+        self.assertEqual(uncommitted_graph.returncode, 2)
+        self.assertIn("uncommitted changes", uncommitted_graph.stderr)
+        self.assertEqual(REGISTRY.load_registry(registry), self.empty_v2())
+        graph_path.write_text(committed_graph, encoding="utf-8")
 
         invalid = run_helper(
             "claim",
@@ -520,6 +546,34 @@ class SessionRegistryTests(unittest.TestCase):
         self.assertEqual(REGISTRY.load_registry(registry), self.empty_v2())
         dirty_path.unlink()
 
+        independent = root.parent / "independent"
+        subprocess.check_call(
+            (
+                "git",
+                "clone",
+                "-q",
+                "--branch",
+                "task/test",
+                str(root),
+                str(independent),
+            )
+        )
+        unrelated = run_helper(
+            "claim",
+            "T04",
+            "--session",
+            "writer-a",
+            "--tool",
+            "codex",
+            "--worktree",
+            str(independent),
+            "--checkpoint",
+            first_checkpoint,
+        )
+        self.assertEqual(unrelated.returncode, 2)
+        self.assertIn("not linked", unrelated.stderr)
+        self.assertEqual(REGISTRY.load_registry(registry), self.empty_v2())
+
         claimed = run_helper(
             "claim",
             "T04",
@@ -550,6 +604,9 @@ class SessionRegistryTests(unittest.TestCase):
         )
         self.assertEqual(checkpointed.returncode, 0, checkpointed.stderr)
 
+        self.run_git(linked, "switch", "--detach")
+        incoming = root.parent / "incoming"
+        self.run_git(root, "worktree", "add", "-q", str(incoming), "task/test")
         transferred = run_helper(
             "transfer",
             "T04",
@@ -562,16 +619,26 @@ class SessionRegistryTests(unittest.TestCase):
             "--new-tool",
             "claude-code",
             "--new-worktree",
-            str(linked),
+            str(incoming),
         )
         self.assertEqual(transferred.returncode, 0, transferred.stderr)
-        released = run_helper(
-            "release",
-            "T04",
-            "--expected-writer",
-            "writer-b",
-            "--expected-checkpoint",
-            second_checkpoint,
+        released = subprocess.run(
+            (
+                sys.executable,
+                str(helper),
+                "--start",
+                str(incoming),
+                "release",
+                "T04",
+                "--expected-writer",
+                "writer-b",
+                "--expected-checkpoint",
+                second_checkpoint,
+            ),
+            cwd=incoming,
+            text=True,
+            capture_output=True,
+            check=False,
         )
         self.assertEqual(released.returncode, 0, released.stderr)
         task = REGISTRY.load_registry(registry)["tasks"]["T04"]

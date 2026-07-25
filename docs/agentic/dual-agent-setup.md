@@ -133,9 +133,11 @@ Only its owner or the user may reconcile it.
 ## Cross-tool handoff
 
 Prefer stopping the outgoing tool and launching the incoming tool in the same
-task worktree. If the path must change, verify a clean checkpoint, detach or
-remove the old worktree without discarding changes, and only then attach the
-branch elsewhere. One branch cannot be checked out in two worktrees.
+task worktree. If the path must change, verify a clean checkpoint, detach the
+old worktree at that exact commit, attach the branch to the new registered
+worktree, perform the registry transfer, and only then remove the detached old
+worktree. The transfer validates both paths and never requires one branch to be
+checked out twice.
 
 A handoff records:
 
