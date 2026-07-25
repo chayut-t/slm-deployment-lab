@@ -13,11 +13,10 @@ Updated: 2026-07-25
 - `T01` is completed on `codex/T01-environments-manifests`: the pinned common
   environment, portable artifact/host schemas, exact build lock, sanitized
   Apple host evidence, and hardened T9 preflight passed independent review.
-- `T02` has completed one authenticated, free Workbench compile, inference,
-  and profile lifecycle on Snapdragon X Elite CRD. Sanitized evidence records
-  a QAIRT 2.45 QNN context binary, numerically correct output, 127-microsecond
-  toy latency, NPU placement, and zero paid-resource use. Final independent
-  review is pending.
+- `T02` is completed after fresh independent review. One authenticated, free
+  Workbench compile, inference, and profile lifecycle on Snapdragon X Elite
+  CRD produced a QAIRT 2.45 QNN context binary, numerically correct output,
+  127-microsecond toy latency, NPU placement, and zero paid-resource use.
 - `T03` is now completed on `codex/T03-agent-workflow`: regression tests
   demonstrate staged graph/status drift rejection, dependency and public
   worklog completion gates, and clean-clone reconstruction of ignored local
@@ -25,12 +24,9 @@ Updated: 2026-07-25
 
 ## Active work
 
-- `T02` on `codex/T02-platform-access` is awaiting fresh final review and
-  lifecycle finalization. Device Cloud account minutes/session access remain a
-  bounded T32-owned boundary.
-
-T10 remains ready but unassigned. Respect the `t9_heavy_io`,
-`qai_hub_submission`, and `device_cloud_x_elite` resource locks.
+T10, T30, and T32 are ready but unassigned. Device Cloud account
+minutes/session access remain a bounded T32-owned boundary. Respect the
+`t9_heavy_io`, `qai_hub_submission`, and `device_cloud_x_elite` resource locks.
 
 ## Resume
 

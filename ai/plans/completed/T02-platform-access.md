@@ -1,6 +1,6 @@
 # T02: AI Hub, Device Cloud, and GPU access report with toy jobs
 
-Status: active — implementation complete, final review pending
+Status: completed
 Owner: Codex T02 agent
 Updated: 2026-07-25
 
@@ -58,7 +58,7 @@ lifecycle when authentication permits it.
 - [x] Confirm Device Cloud access or document the precise pending-access
   blocker and public target availability.
 - [x] Record free NVIDIA options and a non-executed paid fallback.
-- [ ] Run repository gates and fresh independent review, then complete the task
+- [x] Run repository gates and fresh independent review, then complete the task
   graph entry and public worklog if every acceptance criterion passes.
 
 ## Verification and acceptance
@@ -112,10 +112,8 @@ lifecycle when authentication permits it.
 
 ## Progress and restart instructions
 
-The single free Workbench lifecycle is complete and its raw state remains under
-`.ai-local/profiles/T02/`. Public evidence contains no job IDs, URLs, account
-identifiers, credential material, or raw service responses. The next
-coordinator must run all focused/full tests, task-status and hygiene checks,
-then obtain a fresh independent review. If it passes, set the worklog and task
-to `completed`, archive this plan, and regenerate task status. T30 and T32
-become ready when T02 completes; T60 still requires T13 and T20.
+The single free Workbench lifecycle, sanitized evidence, repository gates, and
+fresh independent review are complete. Raw state remains under
+`.ai-local/profiles/T02/`; public evidence contains no job IDs, URLs, account
+identifiers, credential material, or raw service responses. T30 and T32 are
+ready; T60 still requires T13 and T20.

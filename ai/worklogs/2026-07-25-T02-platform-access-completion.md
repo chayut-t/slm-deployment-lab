@@ -3,7 +3,7 @@
 Date: 2026-07-25
 Task: `T02`
 Visibility: `public`
-Status: in_progress
+Status: completed
 
 ## Outcome
 
@@ -33,7 +33,16 @@ credentials, or account identifiers.
 
 ## Verification
 
-- Pending the implementation verification and fresh independent review.
+- `python -m unittest tests.repo.test_access_evidence -v`: 11 tests passed.
+- `python -m unittest discover -s tests -p 'test_*.py'`: 47 tests passed
+  with one expected opt-in upstream-network test skipped.
+- `ruff check src tests`: passed.
+- `python3 scripts/ai/render_task_status.py --check`: passed for 29 tasks.
+- `python3 scripts/repo/check_hygiene.py --all`: passed for 152 public files.
+- `git diff --check` and the commit-range diff check: passed.
+- Fresh independent review reproduced the public/private evidence cross-check,
+  every numeric/profile assertion, all repository gates, and privacy
+  boundaries and returned PASS with no findings.
 
 ## Decisions and evidence
 
@@ -54,6 +63,10 @@ credentials, or account identifiers.
   2.48 as `latest`. The client exposed no numeric quota; successful jobs prove
   submission access but not an unlimited allowance.
 - Workbench cost was zero and no paid fallback was launched.
+- Independent review confirmed the source/profile hashes, exact client and
+  framework versions, 100 profile samples, NPU placement for every reported
+  entry, numeric tolerance result, and 96/298/364-second turnaround values
+  without opening credential files or changing external state.
 
 ## Risks and limitations
 
@@ -68,6 +81,6 @@ credentials, or account identifiers.
 
 ## Follow-up
 
-- Newly unblocked tasks after final review and graph completion: T30 and T32.
-- Recommended next action: run all gates, obtain fresh independent review,
-  then archive the plan and complete T02.
+- Newly unblocked tasks: T30 and T32.
+- Recommended next action: start T30's Workbench adapter or T32's Device Cloud
+  access/runtime path in an isolated task worktree.

@@ -37,7 +37,7 @@ FAILURE_PATH = (
     / "access"
     / "2026-07-24-t02-qualcomm-authentication.md"
 )
-PLAN_PATH = REPO_ROOT / "ai" / "plans" / "active" / "T02-platform-access.md"
+PLAN_PATH = REPO_ROOT / "ai" / "plans" / "completed" / "T02-platform-access.md"
 
 
 class PublicPlatformAccessEvidenceTests(unittest.TestCase):
