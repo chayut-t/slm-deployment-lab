@@ -64,7 +64,7 @@ of committed or console-visible output.
 
 - Commands:
   - `PYTHONPATH=src python3 -m unittest tests.deployment.qualcomm.test_ai_hub -v`
-  - `PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py'`
+  - `PYTHONPATH=src pytest -q`
   - `ruff check src tests`
   - `python3 scripts/ai/render_task_status.py --check`
   - `python3 scripts/repo/check_hygiene.py --all`

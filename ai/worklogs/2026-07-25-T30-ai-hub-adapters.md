@@ -25,9 +25,11 @@ ID.
   with stable sanitized errors so job URLs, IDs, tokens, accounts, or raw
   service details cannot reach console output.
 - Added versioned stage manifests containing public request IDs, exact target
-  and runtime identity, options, service-turnaround boundaries, predecessor
-  and artifact SHA-256 lineage, byte sizes, and explicit privacy assertions.
-  Local filesystem paths and service job identities are excluded.
+  selectors, service-reported target evidence, requested and artifact runtime
+  evidence, service-turnaround boundaries, predecessor and artifact SHA-256
+  lineage, byte sizes, and explicit privacy assertions. Unobserved execution
+  runtime is null rather than inferred. Local filesystem paths and service job
+  identities are excluded.
 - Added compile normalization for source/input contracts and target tensor
   specs; inference normalization for output-artifact traceability; and profile
   normalization for latency, memory, load, sample ranges, compute-unit
@@ -42,16 +44,30 @@ ID.
   private raw/public normalized evidence, path policy, malformed results,
   digest mismatches, SDK output capture, service-error suppression, and
   malicious request text.
+- Independent review fixes quiet-wrap lazy target I/O and metadata properties,
+  reject whitespace/equality forms of credential, account, identity, and
+  path-like options, submit the full SDK device selector, and bind public
+  device/runtime records to successful job options, service-reported device
+  fields, and target-model metadata. Requested and observed device identities
+  may differ for compatible or successor-device reuse.
+- Removed the unnecessary parent `tests/deployment/__init__.py`; all T30 test
+  changes now remain under the declared `tests/deployment/qualcomm/` subtree.
 
 ## Verification
 
 - Command:
   `PYTHONPATH=src python3 -m unittest tests.deployment.qualcomm.test_ai_hub -v`
-- Result: 13 focused mocked adapter tests passed.
+- Result: 19 focused mocked adapter tests passed.
 - Command:
-  `PYTHONPATH=src <primary-checkout>/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v`
-- Result: 96 tests passed with two intentional opt-in upstream/tokenizer
-  checks skipped.
+  `PYTHONPATH=src <primary-checkout>/.venv/bin/pytest -q`
+- Result: full recursive suite passed with 100 tests passing and two
+  intentional opt-in upstream/tokenizer checks skipped.
+- Command:
+  `PYTHONPATH=src <primary-checkout>/.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`
+- Result: the repository's package-based unittest discovery passed 81 tests
+  with the same two skips. The 19 T30 tests are run by the focused command and
+  by full recursive pytest without requiring an out-of-scope parent package
+  marker.
 - Command:
   `<primary-checkout>/.venv/bin/ruff check src tests scripts/qualcomm`
 - Result: passed.
@@ -82,6 +98,14 @@ ID.
 - SDK retry is required to be false and each wait has a positive timeout. This
   gives every stage one bounded submission attempt rather than an indefinite
   retry loop.
+- The device request is an SDK selector, while the observed record is read
+  back from the successful service job. Exact selector/observation equality is
+  intentionally not required because family resolution and compatible
+  successor-device execution are legitimate.
+- The exact requested QAIRT version must occur once in validated options and
+  those options must match the successful service job. Target-model metadata
+  records the artifact runtime when exposed. Execution runtime remains
+  explicitly unobserved unless a later result surface supplies evidence.
 - No Workbench or paid job was submitted. T30 validates the adapter contract
   and mocked behavior; it does not publish hardware measurements.
 

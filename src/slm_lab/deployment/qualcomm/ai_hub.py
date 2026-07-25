@@ -17,6 +17,7 @@ import io
 import json
 import os
 import re
+import shlex
 import sys
 import time
 from collections.abc import Callable, Mapping, Sequence
@@ -54,6 +55,40 @@ PRIVATE_TEXT_PATTERNS = (
     re.compile(r"/jobs/[A-Za-z0-9_-]+", re.IGNORECASE),
     re.compile(r"\bj[a-z0-9]{7,}\b", re.IGNORECASE),
 )
+SENSITIVE_OPTION_NAMES = {
+    "access-key",
+    "account",
+    "account-id",
+    "api-key",
+    "api-token",
+    "auth",
+    "authorization",
+    "bearer",
+    "client-id",
+    "credential",
+    "credentials",
+    "email",
+    "organization",
+    "owner",
+    "password",
+    "project",
+    "project-id",
+    "secret",
+    "token",
+    "user",
+    "user-id",
+}
+QAIRT_OPTION_NAMES = {"qairt-version"}
+PATH_OPTION_NAMES = {
+    "cache-dir",
+    "config",
+    "config-file",
+    "input-file",
+    "model-file",
+    "output-dir",
+    "path",
+}
+PATH_OPTION_SUFFIXES = ("-directory", "-file", "-path")
 
 T = TypeVar("T")
 
@@ -73,7 +108,7 @@ class AiHubBackend(Protocol):
         self,
         *,
         model: Path,
-        device_name: str,
+        device: Mapping[str, Any],
         input_specs: Mapping[str, tuple[tuple[int, ...], str]],
         options: str,
         name: str,
@@ -85,7 +120,7 @@ class AiHubBackend(Protocol):
         self,
         *,
         model: Path,
-        device_name: str,
+        device: Mapping[str, Any],
         inputs: Path,
         options: str,
         name: str,
@@ -97,7 +132,7 @@ class AiHubBackend(Protocol):
         self,
         *,
         model: Path,
-        device_name: str,
+        device: Mapping[str, Any],
         options: str,
         name: str,
         retry: bool,
@@ -129,14 +164,18 @@ class QaiHubBackend:
     def client_version(self) -> str:
         return self._client_version
 
-    def _device(self, name: str) -> Any:
-        return self._hub.Device(name)
+    def _device(self, selector: Mapping[str, Any]) -> Any:
+        return self._hub.Device(
+            name=selector["name"],
+            os=selector["os"],
+            attributes=selector["attributes"],
+        )
 
     def submit_compile(
         self,
         *,
         model: Path,
-        device_name: str,
+        device: Mapping[str, Any],
         input_specs: Mapping[str, tuple[tuple[int, ...], str]],
         options: str,
         name: str,
@@ -144,7 +183,7 @@ class QaiHubBackend:
     ) -> Any:
         return self._client.submit_compile_job(
             model=str(model),
-            device=self._device(device_name),
+            device=self._device(device),
             input_specs=input_specs,
             options=options,
             name=name,
@@ -156,7 +195,7 @@ class QaiHubBackend:
         self,
         *,
         model: Path,
-        device_name: str,
+        device: Mapping[str, Any],
         inputs: Path,
         options: str,
         name: str,
@@ -164,7 +203,7 @@ class QaiHubBackend:
     ) -> Any:
         return self._client.submit_inference_job(
             model=str(model),
-            device=self._device(device_name),
+            device=self._device(device),
             inputs=str(inputs),
             options=options,
             name=name,
@@ -175,14 +214,14 @@ class QaiHubBackend:
         self,
         *,
         model: Path,
-        device_name: str,
+        device: Mapping[str, Any],
         options: str,
         name: str,
         retry: bool,
     ) -> Any:
         return self._client.submit_profile_job(
             model=str(model),
-            device=self._device(device_name),
+            device=self._device(device),
             options=options,
             name=name,
             retry=retry,
@@ -245,6 +284,12 @@ def _safe_text(value: Any, field: str) -> str:
         raise AiHubAdapterError(f"{field} contains unsupported text")
     _assert_safe_string(value, field)
     return value
+
+
+def _safe_optional_text(value: Any, field: str) -> str:
+    if value == "":
+        return ""
+    return _safe_text(value, field)
 
 
 def _safe_logical_name(value: Any, field: str) -> str:
@@ -389,23 +434,21 @@ def _device(value: Any) -> dict[str, Any]:
     device = _require_mapping(value, "device")
     _require_exact_keys(
         device,
-        required={"name", "os", "chipset"},
-        optional={"attributes"},
+        required={"name"},
+        optional={"os", "attributes"},
         field="device",
     )
     normalized = {
         "name": _safe_text(device["name"], "device.name"),
-        "os": _safe_text(device["os"], "device.os"),
-        "chipset": _safe_text(device["chipset"], "device.chipset"),
+        "os": _safe_optional_text(device.get("os", ""), "device.os"),
+        "attributes": [],
     }
     if "attributes" in device:
         attributes = device["attributes"]
-        if (
-            not isinstance(attributes, list)
-            or not attributes
-            or any(not isinstance(item, str) for item in attributes)
+        if not isinstance(attributes, list) or any(
+            not isinstance(item, str) for item in attributes
         ):
-            raise AiHubAdapterError("device.attributes must be nonempty strings")
+            raise AiHubAdapterError("device.attributes must be a list of strings")
         normalized["attributes"] = [
             _safe_text(item, "device.attributes") for item in attributes
         ]
@@ -419,6 +462,62 @@ def _runtime(value: Any) -> dict[str, str]:
         "name": _safe_text(runtime["name"], "runtime.name"),
         "version": _safe_exact_version(runtime["version"], "runtime.version"),
     }
+
+
+def _option_name(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lstrip("-").lower()).strip("-")
+
+
+def _path_like_option_token(value: str) -> bool:
+    candidate = value.partition("=")[2] if "=" in value else value
+    return (
+        "/" in candidate
+        or "\\" in candidate
+        or candidate == "~"
+        or candidate.startswith(("~/", "~\\", "./", ".\\", "../", "..\\"))
+        or bool(re.match(r"^[A-Za-z]:", candidate))
+    )
+
+
+def _validate_options(value: Any, runtime: Mapping[str, str]) -> str:
+    if not isinstance(value, str):
+        raise AiHubAdapterError("options must be a string")
+    _assert_safe_string(value, "options")
+    try:
+        tokens = shlex.split(value, posix=True)
+    except ValueError:
+        raise AiHubAdapterError("options could not be parsed safely") from None
+
+    qairt_versions: list[str] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        flag, separator, inline_value = token.partition("=")
+        name = _option_name(flag) if flag.startswith("-") else ""
+        if name in SENSITIVE_OPTION_NAMES:
+            raise AiHubAdapterError(
+                "options contain credential, account, or identity material"
+            )
+        if name in PATH_OPTION_NAMES or name.endswith(PATH_OPTION_SUFFIXES):
+            raise AiHubAdapterError("options contain path-bearing fields")
+        if _path_like_option_token(token):
+            raise AiHubAdapterError("options contain path-like material")
+        if name in QAIRT_OPTION_NAMES:
+            if separator:
+                version = inline_value
+            else:
+                index += 1
+                if index >= len(tokens):
+                    raise AiHubAdapterError("options omit the QAIRT version value")
+                version = tokens[index]
+            qairt_versions.append(_safe_exact_version(version, "options QAIRT version"))
+        index += 1
+
+    if qairt_versions != [runtime["version"]]:
+        raise AiHubAdapterError(
+            "options must submit exactly the requested QAIRT version"
+        )
+    return value
 
 
 def _input_specs(value: Any) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -457,22 +556,20 @@ def _input_specs(value: Any) -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def _common_request(request: Mapping[str, Any], stage: str) -> dict[str, Any]:
+    runtime = _runtime(request.get("runtime"))
     common = {
         "client_version": _safe_exact_version(
             request.get("client_version"), "client_version"
         ),
         "device": _device(request.get("device")),
-        "runtime": _runtime(request.get("runtime")),
-        "options": request.get("options", ""),
+        "runtime": runtime,
+        "options": _validate_options(request.get("options", ""), runtime),
         "job_name": _safe_text(request.get("job_name"), "job_name"),
         "timeout_seconds": _positive_int(
             request.get("timeout_seconds"), "timeout_seconds"
         ),
         "retry": request.get("retry", False),
     }
-    if not isinstance(common["options"], str):
-        raise AiHubAdapterError("options must be a string")
-    _assert_safe_string(common["options"], "options")
     if not isinstance(common["retry"], bool):
         raise AiHubAdapterError("retry must be boolean")
     if common["retry"]:
@@ -537,7 +634,7 @@ def _status_success(status: Any) -> bool:
 
 def _wait_success(stage: str, job: Any, timeout_seconds: int) -> None:
     status = _quiet_call(stage, job.wait, timeout=timeout_seconds)
-    if not _status_success(status):
+    if not _quiet_call(stage, _status_success, status):
         raise AiHubAdapterError(
             f"{stage} stage did not succeed; private service details suppressed"
         )
@@ -591,14 +688,104 @@ def _safe_tensor_specs(specs: Any) -> list[dict[str, Any]]:
     return normalized
 
 
-def _target_io(stage: str, job: Any) -> dict[str, Any]:
+def _target_model(stage: str, job: Any) -> Any:
     target = _quiet_call(stage, job.get_target_model)
     if target is None:
         raise AiHubAdapterError("compile stage returned no target model")
+    return target
+
+
+def _read_target_io(target: Any) -> dict[str, Any]:
     return {
         "inputs": _safe_tensor_specs(getattr(target, "input_spec", None)),
         "outputs": _safe_tensor_specs(getattr(target, "output_spec", None)),
     }
+
+
+def _target_io(stage: str, target: Any) -> dict[str, Any]:
+    return _quiet_call(stage, _read_target_io, target)
+
+
+def _observed_device(device: Any) -> dict[str, Any]:
+    name = _safe_text(getattr(device, "name", None), "observed device.name")
+    os_value = getattr(device, "os", "")
+    os_text = _safe_optional_text(os_value, "observed device.os")
+    raw_attributes = getattr(device, "attributes", [])
+    if isinstance(raw_attributes, str):
+        raw_attributes = [raw_attributes]
+    if not isinstance(raw_attributes, list) or any(
+        not isinstance(item, str) for item in raw_attributes
+    ):
+        raise AiHubAdapterError("service exposed malformed device attributes")
+    attributes = [
+        _safe_text(item, "observed device.attributes") for item in raw_attributes
+    ]
+    return {
+        "name": name,
+        "os": os_text or None,
+        "attributes": attributes,
+    }
+
+
+def _metadata_key_name(value: Any) -> str:
+    name = getattr(value, "name", None)
+    if isinstance(name, str):
+        return name.upper()
+    if isinstance(value, str):
+        return value.rsplit(".", 1)[-1].upper()
+    return ""
+
+
+def _artifact_runtime(model: Any) -> dict[str, str] | None:
+    if model is None:
+        return None
+    metadata = getattr(model, "metadata", None)
+    if not isinstance(metadata, Mapping):
+        return None
+    for key, value in metadata.items():
+        if _metadata_key_name(key) in {"QAIRT_SDK_VERSION", "QNN_SDK_VERSION"}:
+            return {
+                "name": "QAIRT",
+                "version": _safe_exact_version(value, "target model runtime metadata"),
+            }
+    return None
+
+
+def _read_service_evidence(
+    job: Any,
+    *,
+    expected_options: str,
+    runtime: Mapping[str, str],
+    target_model: Any | None,
+) -> dict[str, Any]:
+    actual_options = getattr(job, "options", None)
+    validated_options = _validate_options(actual_options, runtime)
+    if validated_options != expected_options:
+        raise AiHubAdapterError("service job options differ from submitted options")
+    observed_device = _observed_device(getattr(job, "device", None))
+    model = target_model if target_model is not None else getattr(job, "model", None)
+    artifact_runtime = _artifact_runtime(model)
+    return {
+        "device": observed_device,
+        "artifact_runtime": artifact_runtime,
+    }
+
+
+def _service_evidence(
+    stage: str,
+    job: Any,
+    *,
+    common: Mapping[str, Any],
+    target_model: Any | None = None,
+) -> dict[str, Any]:
+    return _quiet_call(
+        stage,
+        _read_service_evidence,
+        job,
+        expected_options=common["options"],
+        runtime=common["runtime"],
+        target_model=target_model,
+    )
 
 
 def _download_compile_target(stage: str, job: Any, output: Path) -> Path:
@@ -658,7 +845,9 @@ def _base_manifest(
     source_artifacts: list[dict[str, Any]],
     predecessor_sha: str | None,
     service_turnaround_seconds: float,
+    service_evidence: Mapping[str, Any],
 ) -> dict[str, Any]:
+    artifact_runtime = service_evidence["artifact_runtime"]
     return {
         "schema_version": SCHEMA_VERSION,
         "manifest_type": MANIFEST_TYPE,
@@ -667,8 +856,24 @@ def _base_manifest(
         "observed_at_utc": _observed_at(),
         "status": "success",
         "client": {"name": "qai-hub", "version": common["client_version"]},
-        "target": common["device"],
-        "runtime": common["runtime"],
+        "target": {
+            "requested": common["device"],
+            "observed": service_evidence["device"],
+            "observed_evidence": "successful_service_job_device",
+            "exact_request_observation_match_required": False,
+        },
+        "runtime": {
+            "requested": common["runtime"],
+            "request_evidence": "successful_service_job_options",
+            "artifact": artifact_runtime,
+            "artifact_evidence": (
+                "target_model_metadata"
+                if artifact_runtime is not None
+                else "not_exposed_by_target_model_metadata"
+            ),
+            "observed_execution": None,
+            "observed_execution_evidence": "not_exposed_by_stage_adapter",
+        },
         "submission": {
             "options": common["options"],
             "retry": common["retry"],
@@ -749,19 +954,29 @@ def run_compile(
         "compile",
         backend.submit_compile,
         model=source_path,
-        device_name=common["device"]["name"],
+        device=common["device"],
         input_specs=sdk_specs,
         options=common["options"],
         name=common["job_name"],
         retry=common["retry"],
     )
     _wait_success("compile", job, common["timeout_seconds"])
-    graph_io = _target_io("compile", job)
+    target_model = _target_model("compile", job)
+    graph_io = _target_io("compile", target_model)
+    service_evidence = _service_evidence(
+        "compile", job, common=common, target_model=target_model
+    )
     downloaded = _download_compile_target("compile", job, output)
     turnaround = time.monotonic() - started
 
     manifest = _base_manifest(
-        "compile", common, public_request, [source], None, turnaround
+        "compile",
+        common,
+        public_request,
+        [source],
+        None,
+        turnaround,
+        service_evidence,
     )
     manifest["graph_contract"] = {"input_specs": public_specs, "target_io": graph_io}
     manifest["result"] = {
@@ -876,13 +1091,14 @@ def run_inference(
         "inference",
         backend.submit_inference,
         model=model_path,
-        device_name=common["device"]["name"],
+        device=common["device"],
         inputs=dataset_path,
         options=common["options"],
         name=common["job_name"],
         retry=common["retry"],
     )
     _wait_success("inference", job, common["timeout_seconds"])
+    service_evidence = _service_evidence("inference", job, common=common)
     downloaded = _download_inference_output("inference", job, output)
     turnaround = time.monotonic() - started
 
@@ -893,6 +1109,7 @@ def run_inference(
         [compiled, dataset],
         predecessor_sha,
         turnaround,
+        service_evidence,
     )
     manifest["result"] = {
         "output_artifact": _artifact_result(
@@ -1077,12 +1294,13 @@ def run_profile(
         "profile",
         backend.submit_profile,
         model=model_path,
-        device_name=common["device"]["name"],
+        device=common["device"],
         options=common["options"],
         name=common["job_name"],
         retry=common["retry"],
     )
     _wait_success("profile", job, common["timeout_seconds"])
+    service_evidence = _service_evidence("profile", job, common=common)
     profile = _quiet_call("profile", job.download_profile)
     if not isinstance(profile, Mapping):
         raise AiHubAdapterError("profile stage returned a malformed result")
@@ -1097,6 +1315,7 @@ def run_profile(
         [compiled],
         predecessor_sha,
         turnaround,
+        service_evidence,
     )
     manifest["result"] = {
         "raw_profile_artifact": _artifact_result(

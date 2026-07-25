@@ -26,6 +26,8 @@ from slm_lab.deployment.qualcomm.ai_hub import (
 
 CLIENT_VERSION = "0.53.0"
 QAIRT_VERSION = "2.45.0.260326154327"
+SUCCESSOR_QAIRT_VERSION = "2.47.0.260601114230"
+DEFAULT_OPTIONS = f"--target_runtime qnn_context_binary --qairt_version {QAIRT_VERSION}"
 PRIVATE_MARKERS = (
     "https://private.invalid/jobs/jsynthetic000",
     "api_token=synthetic-secret-not-a-credential",
@@ -49,7 +51,22 @@ class MockTensor:
     zero_point: int | None = None
 
 
+@dataclass
+class MockDevice:
+    name: str = "Snapdragon X Elite CRD"
+    os: str = "Windows 11"
+    attributes: list[str] | None = None
+
+    def __post_init__(self) -> None:
+        if self.attributes is None:
+            self.attributes = [
+                "chipset:qualcomm-snapdragon-x-elite",
+                "hexagon:v73",
+            ]
+
+
 class MockTarget:
+    metadata = {"QAIRT_SDK_VERSION": QAIRT_VERSION}
     input_spec = {
         None: [
             MockTensor("input_ids", (1, 128), "int32"),
@@ -59,9 +76,50 @@ class MockTarget:
     output_spec = {None: [MockTensor("logits", (1, 128, 151936), "float16")]}
 
 
+class LazyTarget:
+    metadata = {"QAIRT_SDK_VERSION": QAIRT_VERSION}
+
+    def __init__(self, failing_property: str) -> None:
+        self.failing_property = failing_property
+
+    @property
+    def input_spec(self) -> Any:
+        print(PRIVATE_MARKERS[0])
+        if self.failing_property == "input_spec":
+            raise RuntimeError(PRIVATE_MARKERS[1])
+        return MockTarget.input_spec
+
+    @property
+    def output_spec(self) -> Any:
+        print(PRIVATE_MARKERS[2])
+        if self.failing_property == "output_spec":
+            raise RuntimeError(PRIVATE_MARKERS[3])
+        return MockTarget.output_spec
+
+
+class LazyMetadataTarget:
+    input_spec = MockTarget.input_spec
+    output_spec = MockTarget.output_spec
+
+    @property
+    def metadata(self) -> Any:
+        print(PRIVATE_MARKERS[0])
+        raise RuntimeError(PRIVATE_MARKERS[1])
+
+
 class MockCompileJob:
-    def __init__(self, payload: bytes = b"compiled-qnn-context") -> None:
+    def __init__(
+        self,
+        payload: bytes = b"compiled-qnn-context",
+        *,
+        target: Any | None = None,
+        device: MockDevice | None = None,
+        options: str = DEFAULT_OPTIONS,
+    ) -> None:
         self.payload = payload
+        self.target = target if target is not None else MockTarget()
+        self.device = device if device is not None else MockDevice()
+        self.options = options
         self.wait_timeout: int | None = None
 
     def wait(self, timeout: int | None = None) -> MockStatus:
@@ -71,7 +129,7 @@ class MockCompileJob:
 
     def get_target_model(self) -> MockTarget:
         print(PRIVATE_MARKERS[1])
-        return MockTarget()
+        return self.target
 
     def download_target_model(self, filename: str) -> str:
         print(PRIVATE_MARKERS[2])
@@ -80,8 +138,18 @@ class MockCompileJob:
 
 
 class MockInferenceJob:
-    def __init__(self, payload: bytes = b"mock-hdf5-output") -> None:
+    def __init__(
+        self,
+        payload: bytes = b"mock-hdf5-output",
+        *,
+        device: MockDevice | None = None,
+        model: Any | None = None,
+        options: str = DEFAULT_OPTIONS,
+    ) -> None:
         self.payload = payload
+        self.device = device if device is not None else MockDevice()
+        self.model = model if model is not None else MockTarget()
+        self.options = options
 
     def wait(self, timeout: int | None = None) -> MockStatus:
         print(PRIVATE_MARKERS[0])
@@ -94,8 +162,18 @@ class MockInferenceJob:
 
 
 class MockProfileJob:
-    def __init__(self, profile: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        profile: dict[str, Any],
+        *,
+        device: MockDevice | None = None,
+        model: Any | None = None,
+        options: str = DEFAULT_OPTIONS,
+    ) -> None:
         self.profile = profile
+        self.device = device if device is not None else MockDevice()
+        self.model = model if model is not None else MockTarget()
+        self.options = options
 
     def wait(self, timeout: int | None = None) -> MockStatus:
         print(PRIVATE_MARKERS[0])
@@ -162,15 +240,12 @@ def common(stage: str) -> dict[str, Any]:
         "stage": stage,
         "client_version": CLIENT_VERSION,
         "device": {
-            "name": "Snapdragon X Elite CRD",
+            "name": "Snapdragon X Elite (Family)",
             "os": "Windows 11",
-            "chipset": "Qualcomm Snapdragon X Elite",
             "attributes": ["chipset:qualcomm-snapdragon-x-elite", "hexagon:v73"],
         },
         "runtime": {"name": "QAIRT", "version": QAIRT_VERSION},
-        "options": (
-            f"--target_runtime qnn_context_binary --qairt_version {QAIRT_VERSION}"
-        ),
+        "options": DEFAULT_OPTIONS,
         "job_name": f"slm-lab-t30-{stage}",
         "timeout_seconds": 3600,
         "retry": False,
@@ -258,6 +333,17 @@ class AiHubAdapterTests(unittest.TestCase):
         self.assertEqual(manifest["stage"], "compile")
         self.assertEqual(manifest["status"], "success")
         self.assertEqual(manifest["client"]["version"], CLIENT_VERSION)
+        self.assertEqual(
+            manifest["target"]["requested"]["name"],
+            "Snapdragon X Elite (Family)",
+        )
+        self.assertEqual(
+            manifest["target"]["observed"]["name"], "Snapdragon X Elite CRD"
+        )
+        self.assertFalse(manifest["target"]["exact_request_observation_match_required"])
+        self.assertEqual(manifest["runtime"]["requested"]["version"], QAIRT_VERSION)
+        self.assertEqual(manifest["runtime"]["artifact"]["version"], QAIRT_VERSION)
+        self.assertIsNone(manifest["runtime"]["observed_execution"])
         self.assertFalse(manifest["submission"]["service_turnaround_is_device_latency"])
         self.assertEqual(
             manifest["lineage"]["source_artifacts"][0]["sha256"],
@@ -281,6 +367,17 @@ class AiHubAdapterTests(unittest.TestCase):
             backend.calls[0][1]["input_specs"]["input_ids"],
             ((1, 128), "int32"),
         )
+        self.assertEqual(
+            backend.calls[0][1]["device"],
+            {
+                "name": "Snapdragon X Elite (Family)",
+                "os": "Windows 11",
+                "attributes": [
+                    "chipset:qualcomm-snapdragon-x-elite",
+                    "hexagon:v73",
+                ],
+            },
+        )
 
     def test_inference_restarts_from_compile_manifest_and_local_artifacts(self) -> None:
         compile_manifest, _ = self.run_compile()
@@ -303,6 +400,66 @@ class AiHubAdapterTests(unittest.TestCase):
         self.assertEqual(call[0], "inference")
         self.assertEqual(call[1]["model"], self.compiled)
         self.assertEqual(call[1]["inputs"], self.root / "inputs.h5")
+
+    def test_successor_device_reuse_records_current_service_device_independently(
+        self,
+    ) -> None:
+        compile_manifest, _ = self.run_compile()
+        request = self.inference_request()
+        request["device"] = {
+            "name": "Snapdragon X2 Elite (Family)",
+            "os": "",
+            "attributes": ["chipset:qualcomm-snapdragon-x2-elite"],
+        }
+        request["runtime"]["version"] = SUCCESSOR_QAIRT_VERSION
+        request["options"] = (
+            "--target_runtime qnn_context_binary "
+            f"--qairt_version {SUCCESSOR_QAIRT_VERSION}"
+        )
+        observed = MockDevice(
+            name="Snapdragon X2 Elite CRD",
+            os="Windows 12",
+            attributes=["chipset:qualcomm-snapdragon-x2-elite", "hexagon:v79"],
+        )
+
+        manifest = run_inference(
+            request,
+            backend=MockBackend(
+                inference_job=MockInferenceJob(
+                    device=observed,
+                    options=request["options"],
+                ),
+            ),
+        )
+
+        self.assertEqual(
+            compile_manifest["target"]["observed"]["name"],
+            "Snapdragon X Elite CRD",
+        )
+        self.assertEqual(
+            manifest["target"]["requested"]["name"],
+            "Snapdragon X2 Elite (Family)",
+        )
+        self.assertEqual(
+            manifest["target"]["observed"],
+            {
+                "name": "Snapdragon X2 Elite CRD",
+                "os": "Windows 12",
+                "attributes": [
+                    "chipset:qualcomm-snapdragon-x2-elite",
+                    "hexagon:v79",
+                ],
+            },
+        )
+        self.assertFalse(manifest["target"]["exact_request_observation_match_required"])
+        self.assertEqual(
+            manifest["runtime"]["requested"]["version"],
+            SUCCESSOR_QAIRT_VERSION,
+        )
+        self.assertEqual(
+            manifest["runtime"]["artifact"]["version"],
+            QAIRT_VERSION,
+        )
 
     def test_profile_restarts_independently_and_normalizes_documented_units(
         self,
@@ -366,6 +523,46 @@ class AiHubAdapterTests(unittest.TestCase):
             self.assertNotIn(marker, message)
         self.assertIn("private service details suppressed", message)
 
+    def test_lazy_target_specs_are_quiet_and_fail_with_sanitized_errors(self) -> None:
+        for property_name in ("input_spec", "output_spec"):
+            with self.subTest(property_name=property_name):
+                captured_out = io.StringIO()
+                captured_err = io.StringIO()
+                backend = MockBackend(
+                    compile_job=MockCompileJob(
+                        target=LazyTarget(property_name),
+                    )
+                )
+                with (
+                    contextlib.redirect_stdout(captured_out),
+                    contextlib.redirect_stderr(captured_err),
+                ):
+                    with self.assertRaises(AiHubAdapterError) as context:
+                        run_compile(self.compile_request(), backend=backend)
+                self.assertEqual(captured_out.getvalue(), "")
+                self.assertEqual(captured_err.getvalue(), "")
+                self.assertIn(
+                    "private service details suppressed", str(context.exception)
+                )
+                for marker in PRIVATE_MARKERS:
+                    self.assertNotIn(marker, str(context.exception))
+
+    def test_lazy_runtime_metadata_is_quiet_and_sanitized(self) -> None:
+        captured_out = io.StringIO()
+        captured_err = io.StringIO()
+        backend = MockBackend(compile_job=MockCompileJob(target=LazyMetadataTarget()))
+        with (
+            contextlib.redirect_stdout(captured_out),
+            contextlib.redirect_stderr(captured_err),
+        ):
+            with self.assertRaises(AiHubAdapterError) as context:
+                run_compile(self.compile_request(), backend=backend)
+        self.assertEqual(captured_out.getvalue(), "")
+        self.assertEqual(captured_err.getvalue(), "")
+        self.assertIn("private service details suppressed", str(context.exception))
+        for marker in PRIVATE_MARKERS:
+            self.assertNotIn(marker, str(context.exception))
+
     def test_private_request_text_is_rejected_without_echoing_it(self) -> None:
         request = self.compile_request()
         request["options"] += f" --api_token={PRIVATE_MARKERS[3]}"
@@ -375,6 +572,59 @@ class AiHubAdapterTests(unittest.TestCase):
         self.assertIn("private or URL-like text", message)
         for marker in PRIVATE_MARKERS:
             self.assertNotIn(marker, message)
+
+    def test_options_reject_whitespace_credentials_accounts_and_paths(self) -> None:
+        unsafe_options = (
+            f"{DEFAULT_OPTIONS} --api-token synthetic-value",
+            f"{DEFAULT_OPTIONS} --account-id synthetic-account",
+            f"{DEFAULT_OPTIONS} --user learner",
+            f"{DEFAULT_OPTIONS} --cache-dir /private/synthetic-cache",
+            f"{DEFAULT_OPTIONS} --config synthetic-private.ini",
+            f"{DEFAULT_OPTIONS} --config=../synthetic-private.ini",
+        )
+        for options in unsafe_options:
+            with self.subTest(kind=options.rsplit(" ", 1)[-1]):
+                request = self.compile_request()
+                request["options"] = options
+                with self.assertRaises(AiHubAdapterError) as context:
+                    run_compile(
+                        request,
+                        backend=MockBackend(compile_job=MockCompileJob()),
+                    )
+                self.assertNotIn("synthetic-value", str(context.exception))
+                self.assertFalse(self.compiled.exists())
+
+    def test_options_require_runtime_identity_in_actual_submission(self) -> None:
+        request = self.compile_request()
+        request["options"] = "--target_runtime qnn_context_binary"
+        with self.assertRaisesRegex(AiHubAdapterError, "requested QAIRT"):
+            run_compile(request, backend=MockBackend(compile_job=MockCompileJob()))
+
+        job = MockCompileJob(
+            options=(
+                "--target_runtime qnn_context_binary "
+                "--qairt_version 2.47.0.260601114230"
+            )
+        )
+        captured_out = io.StringIO()
+        with contextlib.redirect_stdout(captured_out):
+            with self.assertRaises(AiHubAdapterError) as context:
+                run_compile(
+                    self.compile_request(),
+                    backend=MockBackend(compile_job=job),
+                )
+        self.assertEqual(captured_out.getvalue(), "")
+        self.assertIn("private service details suppressed", str(context.exception))
+
+    def test_safe_nonpath_runtime_options_remain_supported(self) -> None:
+        options = f"{DEFAULT_OPTIONS} --qnn_options context_enable_graphs=prefill"
+        request = self.compile_request()
+        request["options"] = options
+        manifest = run_compile(
+            request,
+            backend=MockBackend(compile_job=MockCompileJob(options=options)),
+        )
+        self.assertEqual(manifest["submission"]["options"], options)
 
     def test_client_version_is_exact_and_must_match_backend(self) -> None:
         with self.assertRaisesRegex(AiHubAdapterError, "does not match"):

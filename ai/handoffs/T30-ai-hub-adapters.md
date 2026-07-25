@@ -39,14 +39,23 @@ job identity, job URLs, or raw warning text.
 - Use an exact installed `qai-hub` version and exact QAIRT version in the
   request. T30 mocked `qai-hub==0.53.0` and QAIRT
   `2.45.0.260326154327`, matching T02 evidence.
+- Put the exact QAIRT version in `options` once. Keep credentials, accounts,
+  identity values, URLs, emails, and paths out of free-form options; the
+  adapter rejects both equality and whitespace forms.
 - Coordinate the `qai_hub_submission` resource lock and use a free bounded
   submission only.
 - Set `retry` to false and a positive `timeout_seconds`.
 - Verify every input SHA-256 before running the command.
 - Capture request and raw paths privately. Do not capture client output through
   a separate wrapper.
-- Inspect the public manifest for device/runtime identity, service-turnaround
-  boundary, hashes, units, placement, and privacy flags.
+- Inspect the public manifest's requested device selector separately from the
+  service-reported job device. Do not require equality when a compatible
+  family or successor device is intentional.
+- Inspect requested runtime options, artifact runtime metadata, and observed
+  execution runtime as separate evidence. A null observed execution runtime
+  must not be promoted to the requested or artifact version.
+- Inspect service-turnaround boundaries, hashes, units, placement, and privacy
+  flags.
 - Treat service turnaround as queue/provisioning time, never graph latency.
 - If the exact client returns a different documented profile shape, preserve
   the private raw hash and add a focused mocked normalizer regression before
