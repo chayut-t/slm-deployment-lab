@@ -381,7 +381,7 @@
               "const": "raw_ascii"
             },
             "prompt_token_ids_sha256": {
-              "$ref": "#/$defs/sha256"
+              "const": "81b597522a946de54faac98150566348e7167fb7f862e0726eed93501a587093"
             },
             "reference_backend": {
               "const": "PyTorch CPU BF16 eager attention"
@@ -482,20 +482,16 @@
           "const": "mx.synchronize(generation_stream)"
         },
         "ttft_boundary": {
-          "type": "string",
-          "minLength": 1
+          "const": "Fresh prompt cache through materialization of the first greedy token using generate_step(max_tokens=0); no later decode is scheduled or returned."
         },
         "generation_loop_boundary": {
-          "type": "string",
-          "minLength": 1
+          "const": "Fresh prompt cache through generate_step(max_tokens=3) exhaustion and a post-timer fence on MLX-LM's generation stream."
         },
         "lookahead_accounting": {
-          "type": "string",
-          "minLength": 1
+          "const": "Pinned mlx-lm 0.31.3 schedules one next-token look-ahead before each yield, including one unreturned fourth token after the third returned token. The fenced loop includes that compute and the throughput name states this explicitly."
         },
         "model_load_boundary": {
-          "type": "string",
-          "minLength": 1
+          "const": "Model loading is outside warm steady-state samples and recorded once; operating-system file cache state was uncontrolled, so the observation is not labeled cold start."
         },
         "sample_retention": {
           "const": "all valid samples retained"

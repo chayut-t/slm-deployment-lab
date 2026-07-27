@@ -50,9 +50,31 @@ EXPECTED_HOST_MODEL = "Mac16,10"
 EXPECTED_HOST_CHIP = "Apple M4"
 EXPECTED_MEMORY_BYTES = 16 * 1024**3
 EXPECTED_GENERATED_TOKEN_IDS = [576, 8356, 3950]
+EXPECTED_PROMPT_TOKEN_IDS_SHA256 = (
+    "81b597522a946de54faac98150566348e7167fb7f862e0726eed93501a587093"
+)
 EXPECTED_WARMUP_REPETITIONS = 2
 EXPECTED_MEASURED_REPETITIONS = 10
 EXPECTED_LOOKAHEAD_TOKENS = 1
+EXPECTED_TTFT_BOUNDARY = (
+    "Fresh prompt cache through materialization of the first greedy token using "
+    "generate_step(max_tokens=0); no later decode is scheduled or returned."
+)
+EXPECTED_GENERATION_LOOP_BOUNDARY = (
+    "Fresh prompt cache through generate_step(max_tokens=3) exhaustion and a "
+    "post-timer fence on MLX-LM's generation stream."
+)
+EXPECTED_LOOKAHEAD_ACCOUNTING = (
+    "Pinned mlx-lm 0.31.3 schedules one next-token look-ahead before each yield, "
+    "including one unreturned fourth token after the third returned token. The "
+    "fenced loop includes that compute and the throughput name states this "
+    "explicitly."
+)
+EXPECTED_MODEL_LOAD_BOUNDARY = (
+    "Model loading is outside warm steady-state samples and recorded once; "
+    "operating-system file cache state was uncontrolled, so the observation is "
+    "not labeled cold start."
+)
 EXPECTED_MODEL_SOURCE_FILES = {
     "config.json": {
         "sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
@@ -198,6 +220,29 @@ def validate_evidence(path: Path) -> None:
         raise MlxBaselineError(f"{path}: fixture contract provenance differs")
     if document["canary"]["tokenizer_canaries"] != _expected_tokenizer_canaries():
         raise MlxBaselineError(f"{path}: tokenizer canary evidence differs")
+
+    t11_fixture = _load_json(DEFAULT_T11_FIXTURE)
+    fixture_prompt_digest = _canonical_json_sha256(t11_fixture["prompt_token_ids"])
+    if (
+        fixture_prompt_digest != EXPECTED_PROMPT_TOKEN_IDS_SHA256
+        or t11_fixture["source_fixture"]["token_ids_sha256"]
+        != EXPECTED_PROMPT_TOKEN_IDS_SHA256
+        or document["canary"]["generation"]["prompt_token_ids_sha256"]
+        != EXPECTED_PROMPT_TOKEN_IDS_SHA256
+    ):
+        raise MlxBaselineError(f"{path}: T11 prompt token provenance differs")
+
+    expected_boundaries = {
+        "ttft_boundary": EXPECTED_TTFT_BOUNDARY,
+        "generation_loop_boundary": EXPECTED_GENERATION_LOOP_BOUNDARY,
+        "lookahead_accounting": EXPECTED_LOOKAHEAD_ACCOUNTING,
+        "model_load_boundary": EXPECTED_MODEL_LOAD_BOUNDARY,
+    }
+    actual_boundaries = {
+        field: document["measurement_policy"][field] for field in expected_boundaries
+    }
+    if actual_boundaries != expected_boundaries:
+        raise MlxBaselineError(f"{path}: measurement boundary semantics differ")
 
     commit = document["source_git_commit"]
     runner = document["runner"]
@@ -891,9 +936,7 @@ def run_baseline(
             "tokenizer_canaries_passed": all_tokenizers_passed,
             "generation": {
                 "fixture_id": t11_fixture["source_fixture"]["id"],
-                "prompt_token_ids_sha256": t11_fixture["source_fixture"][
-                    "token_ids_sha256"
-                ],
+                "prompt_token_ids_sha256": EXPECTED_PROMPT_TOKEN_IDS_SHA256,
                 "reference_backend": "PyTorch CPU BF16 eager attention",
                 "candidate_backend": "MLX-LM MLX Metal GPU",
                 "decoding": "greedy argmax with lowest-token-ID tie break",
@@ -919,26 +962,10 @@ def run_baseline(
             "generation_stream": "mlx_lm.generate.generation_stream",
             "pre_timer_fence": "mx.synchronize(generation_stream)",
             "post_timer_fence": "mx.synchronize(generation_stream)",
-            "ttft_boundary": (
-                "Fresh prompt cache through materialization of the first greedy "
-                "token using generate_step(max_tokens=0); no later decode is "
-                "scheduled or returned."
-            ),
-            "generation_loop_boundary": (
-                "Fresh prompt cache through generate_step(max_tokens=3) exhaustion "
-                "and a post-timer fence on MLX-LM's generation stream."
-            ),
-            "lookahead_accounting": (
-                "Pinned mlx-lm 0.31.3 schedules one next-token look-ahead before "
-                "each yield, including one unreturned fourth token after the third "
-                "returned token. The fenced loop includes that compute and the "
-                "throughput name states this explicitly."
-            ),
-            "model_load_boundary": (
-                "Model loading is outside warm steady-state samples and recorded "
-                "once; operating-system file cache state was uncontrolled, so the "
-                "observation is not labeled cold start."
-            ),
+            "ttft_boundary": EXPECTED_TTFT_BOUNDARY,
+            "generation_loop_boundary": EXPECTED_GENERATION_LOOP_BOUNDARY,
+            "lookahead_accounting": EXPECTED_LOOKAHEAD_ACCOUNTING,
+            "model_load_boundary": EXPECTED_MODEL_LOAD_BOUNDARY,
             "sample_retention": "all valid samples retained",
             "quantile_method": "Hyndman-Fan type 7 linear",
         },
