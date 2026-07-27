@@ -114,13 +114,13 @@
       "id": "T12",
       "title": "Static cache and tensor contract",
       "definition": "ai/tasks/definitions/T12.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T11"],
       "resource_locks": [],
       "owner": "Codex T12 agent",
       "branch": "task/T12-static-cache-contract",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-27-T12-static-cache-contract.md"
     },
     {
       "id": "T13",

@@ -102,9 +102,9 @@ graph TD
 | T04 — Codex and Claude Code repository compatibility | completed | T03 | — | ai/worklogs/2026-07-25-T04-dual-agent-compatibility.md |
 | T10 — Token, prompt, and evaluation fixtures | completed | T00 | — | ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md |
 | T11 — Deterministic PyTorch reference | completed | T10 | — | ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md |
-| T12 — Static cache and tensor contract | in_progress | T11 | — | — |
+| T12 — Static cache and tensor contract | completed | T11 | — | ai/worklogs/2026-07-27-T12-static-cache-contract.md |
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
-| T20 — Four-context ONNX export matrix | blocked | T12 | t9_heavy_io | — |
+| T20 — Four-context ONNX export matrix | ready | T12 | t9_heavy_io | — |
 | T21 — ONNX Runtime CPU parity and graph inspection | blocked | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
@@ -128,10 +128,10 @@ graph TD
 
 ## Summary
 
-- ready: 1
-- in_progress: 3
-- blocked: 17
-- completed: 9
+- ready: 2
+- in_progress: 2
+- blocked: 16
+- completed: 10
 
 ## Resource capacities
 
