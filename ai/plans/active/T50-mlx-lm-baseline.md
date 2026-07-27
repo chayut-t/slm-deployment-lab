@@ -45,11 +45,11 @@ reference and reported without any unsupported ANE claim.
 
 ## Milestones
 
-- [ ] Audit the current M4 host, Python, MLX, and model artifact state.
-- [ ] Implement a versioned MLX-LM baseline runner and result schema.
-- [ ] Produce real local correctness, latency, and memory evidence.
-- [ ] Verify canaries and provenance, including the explicit no-ANE boundary.
-- [ ] Pass independent review and address all findings.
+- [x] Audit the current M4 host, Python, MLX, and model artifact state.
+- [x] Implement a versioned MLX-LM baseline runner and result schema.
+- [x] Produce real local correctness, latency, and memory evidence.
+- [x] Verify canaries and provenance, including the explicit no-ANE boundary.
+- [ ] Pass independent fresh-agent review and address all findings.
 
 ## Verification and acceptance
 
@@ -70,9 +70,20 @@ reference and reported without any unsupported ANE claim.
 
 - 2026-07-27: This task owns only the MLX-LM baseline; T51 will own the custom
   runtime and explicit cache implementation.
+- 2026-07-27: The existing project environments did not contain MLX. The
+  measured task-local environment pins MLX 0.32.0, MLX-LM 0.31.3, and their
+  exact runtime dependencies without changing the shared lockfile.
+- 2026-07-27: All five T10 token sequences matched exactly and MLX-LM
+  reproduced the T11 tokens `576, 8356, 3950`.
+- 2026-07-27: The ten-run median was 55.979 ms to MLX-LM's first yielded
+  token, 87.620 ms for the synchronized three-token generation loop, and
+  34.243 output tokens/second including prefill. MLX peak memory was
+  1,255,817,508 bytes.
 
 ## Progress and restart instructions
 
-Inspect the frozen T10/T11 fixtures and the currently installed MLX stack,
-then build the baseline runner around real local measurements and commit only
-small, reproducible evidence.
+Implementation, exact environment pins, real M4 evidence, and a draft public
+worklog are ready for independent review. A fresh agent should review the
+committed state, rerun the evidence validator and focused checks, address any
+findings, then finalize the worklog, move this plan to completed, and mark T50
+completed in the task graph.

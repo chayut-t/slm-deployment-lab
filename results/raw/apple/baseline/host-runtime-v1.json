@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "task_id": "T50",
+  "host": {
+    "target_product_name": "Mac mini",
+    "target_model_identifier": "Mac16,10",
+    "target_model_number": "MU9D3VC/A",
+    "target_chip": "Apple M4",
+    "target_memory_bytes": 17179869184,
+    "processor_topology": "proc 10:4:6",
+    "architecture": "arm64",
+    "macos_version": "15.7.7",
+    "macos_build": "24G720",
+    "darwin_release": "24.6.0"
+  },
+  "mlx_device": {
+    "default_device": "Device(gpu, 0)",
+    "device_name": "Apple M4",
+    "architecture": "applegpu_g16g",
+    "memory_size_bytes": 17179869184,
+    "max_recommended_working_set_size_bytes": 11453251584,
+    "max_buffer_length_bytes": 8589934592
+  },
+  "runtime": {
+    "python_version": "3.11.13",
+    "requirements_path": "environments/macos-m4/mlx-baseline-requirements.txt",
+    "requirements_sha256": "ffbcbcd796a2bde5f4cd51a6fc287a785ef0b62baa4fe24d7176aa3c74f590ce",
+    "packages": {
+      "annotated-doc": "0.0.4",
+      "anyio": "4.14.2",
+      "certifi": "2026.7.22",
+      "click": "8.4.2",
+      "filelock": "3.32.0",
+      "fsspec": "2026.6.0",
+      "h11": "0.16.0",
+      "hf-xet": "1.5.2",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "huggingface-hub": "1.25.1",
+      "idna": "3.18",
+      "jinja2": "3.1.6",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.3",
+      "mdurl": "0.1.2",
+      "mlx": "0.32.0",
+      "mlx-lm": "0.31.3",
+      "mlx-metal": "0.32.0",
+      "numpy": "2.4.6",
+      "packaging": "26.2",
+      "protobuf": "7.35.1",
+      "psutil": "7.2.2",
+      "pygments": "2.20.0",
+      "pyyaml": "6.0.3",
+      "regex": "2026.7.19",
+      "rich": "15.0.0",
+      "safetensors": "0.8.0",
+      "sentencepiece": "0.2.2",
+      "shellingham": "1.5.4",
+      "tokenizers": "0.22.2",
+      "tqdm": "4.70.0",
+      "transformers": "5.14.1",
+      "typer": "0.27.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "developer_tools": {
+    "command_line_tools_version": "26.0.0.0.1.1757719676",
+    "command_line_tools_check": {
+      "value": "package-id: com.apple.pkg.CLTools_Executables\nversion: 26.0.0.0.1.1757719676\nvolume: /\nlocation: /\ninstall-time: 1760770754",
+      "check_command": "pkgutil --pkg-info com.apple.pkg.CLTools_Executables",
+      "unavailable_reason": null
+    },
+    "xcode_version": {
+      "value": null,
+      "check_command": "xcodebuild -version",
+      "unavailable_reason": "xcode-select: error: tool 'xcodebuild' requires Xcode, but active developer directory '/Library/Developer/CommandLineTools' is a command line tools instance"
+    },
+    "metal_compiler_version": {
+      "value": null,
+      "check_command": "xcrun metal -v",
+      "unavailable_reason": "xcrun: error: unable to find utility \"metal\", not a developer tool or in PATH"
+    },
+    "instruments_version": {
+      "value": null,
+      "check_command": "xcrun instruments -s devices",
+      "unavailable_reason": "xcrun: error: unable to find utility \"instruments\", not a developer tool or in PATH"
+    }
+  },
+  "execution_claim": "MLX default GPU device on Apple M4. MLX/Metal evidence does not establish Apple Neural Engine (ANE) execution.",
+  "evidence_sha256": "9ccf330bcd0209055596d42c27fcd974d487e4b3b992acd9ae08acc8de87725d"
+}
