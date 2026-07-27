@@ -59,6 +59,13 @@ The prompt has no padding. `attention_mask` is all ones and `position_ids` is
 `[0, 1, ..., S-1]`. Every cache tensor contains valid values in `[0, S)` and
 zeros in `[S, C)`.
 
+Serialized prefill metadata names this transition
+`prefill_prefix_materialization`: `written_range` is
+`[0, prompt_length)`, `zero_filled_range` is
+`[prompt_length, cache_capacity)`, and `output_valid_length` is
+`prompt_length`. It deliberately has no decode-only `write_index` or
+`input_valid_range`.
+
 `float16` is the frozen deployment cache boundary. T11 remains the
 checkpoint-dtype BF16 numerical oracle. Crossing from T11 to this contract
 therefore performs an explicit BF16-to-FP16 cache cast, and downstream parity
@@ -94,6 +101,11 @@ For an incoming `valid_length = P`:
 
 Calling decode with `P >= C` is an error. No shifting, wraparound, eviction, or
 silent truncation is allowed.
+
+Serialized decode metadata names this transition
+`fixed_capacity_indexed_copy`: the input valid range is
+`[0, valid_length)`, the write index is `valid_length`, and the output valid
+length is `valid_length + 1`.
 
 ## GQA layout and byte accounting
 
@@ -135,6 +147,10 @@ away from the logical table.
 fixed FP16 buffers. `apply_decode_updates` clones those buffers, writes exactly
 one `[1, 8, 1, 128]` slice per layer, rejects overflow, and advances the valid
 length.
+
+Contract tests assert the complete graph-kind-specific serialized transition
+for both prefill and decode so a manifest cannot attach decode-only state
+fields to prefill again.
 
 The weightless PyTorch conformance test uses the same growing
 `past_key_values` protocol as T11. Across multiple decode steps it verifies:

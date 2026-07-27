@@ -33,6 +33,10 @@ BF16-to-FP16 deployment-boundary cast.
 - Added PyTorch/Transformers cache normalization, fixed FP16 cache
   materialization, concrete tensor-map conformance checks, and GQA byte
   accounting.
+- Independent review found that the first serializer attached decode-only
+  `valid_length` write metadata to prefill. Prefill now serializes prefix
+  materialization and zero-fill ranges, while decode alone serializes the
+  indexed write transition; regressions freeze both complete mappings.
 - Added deterministic contract, shape/dtype/name drift, memory, multi-step
   reference-equivalence, and overflow tests.
 - Added an architecture guide with tensor diagrams, mask/position rules,
@@ -100,8 +104,10 @@ BF16-to-FP16 deployment-boundary cast.
 - `int64` is the reference graph boundary. A target-specific rewrite to
   `int32` must be separately recorded and validated rather than silently
   changing this contract.
-- A fresh post-implementation agent will independently review this commit.
-  This worklog does not pre-claim that review's result.
+- Independent review identified one P1 machine-contract inconsistency:
+  prefill inherited decode-only update metadata despite lacking a
+  `valid_length` input. The graph-kind-specific serializer and regression
+  assertions resolve that finding without changing tensor or cache behavior.
 
 ## Follow-up
 

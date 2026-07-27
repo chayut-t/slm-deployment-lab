@@ -133,6 +133,20 @@ class GraphContract:
         return match
 
     def as_dict(self) -> dict[str, Any]:
+        if self.graph_kind == "prefill":
+            cache_update = {
+                "strategy": "prefill_prefix_materialization",
+                "written_range": "[0, prompt_length)",
+                "zero_filled_range": "[prompt_length, cache_capacity)",
+                "output_valid_length": "prompt_length",
+            }
+        else:
+            cache_update = {
+                "strategy": "fixed_capacity_indexed_copy",
+                "input_valid_range": "[0, valid_length)",
+                "write_index": "valid_length",
+                "output_valid_length": "valid_length + 1",
+            }
         return {
             "schema_version": 1,
             "model_id": MODEL_ID,
@@ -141,12 +155,7 @@ class GraphContract:
             "variant_id": self.variant_id,
             "prompt_length": self.prompt_length,
             "cache_capacity": self.cache_capacity,
-            "cache_update": {
-                "strategy": "fixed_capacity_indexed_copy",
-                "input_valid_range": "[0, valid_length)",
-                "write_index": "valid_length",
-                "output_valid_length": "valid_length + 1",
-            },
+            "cache_update": cache_update,
             "inputs": [tensor.as_dict() for tensor in self.inputs],
             "outputs": [tensor.as_dict() for tensor in self.outputs],
         }

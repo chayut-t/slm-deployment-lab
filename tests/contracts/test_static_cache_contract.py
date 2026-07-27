@@ -59,6 +59,7 @@ def test_contract_family_covers_all_contexts_without_dynamic_dimensions() -> Non
 
 def test_prefill_names_dtypes_shapes_and_gqa_layout_are_explicit() -> None:
     contract = build_prefill_contract(1024)
+    payload = contract.as_dict()
 
     assert [tensor.name for tensor in contract.inputs] == [
         "input_ids",
@@ -84,6 +85,14 @@ def test_prefill_names_dtypes_shapes_and_gqa_layout_are_explicit() -> None:
     assert contract.tensor("key_cache.27").dtype == CACHE_DTYPE
     assert contract.tensor("value_cache.27").dtype == CACHE_DTYPE
     assert contract.tensor("valid_length").shape == (1,)
+    assert payload["cache_update"] == {
+        "strategy": "prefill_prefix_materialization",
+        "written_range": "[0, prompt_length)",
+        "zero_filled_range": "[prompt_length, cache_capacity)",
+        "output_valid_length": "prompt_length",
+    }
+    assert "write_index" not in payload["cache_update"]
+    assert "input_valid_range" not in payload["cache_update"]
     assert len(contract.outputs) == 1 + 2 * NUM_LAYERS + 1
 
 
@@ -103,6 +112,8 @@ def test_decode_names_shapes_and_update_semantics_are_explicit() -> None:
         "write_index": "valid_length",
         "output_valid_length": "valid_length + 1",
     }
+    assert "written_range" not in payload["cache_update"]
+    assert "zero_filled_range" not in payload["cache_update"]
     assert len(contract.inputs) == 3 + 2 * NUM_LAYERS + 1
     assert len(contract.outputs) == 1 + 2 * NUM_LAYERS + 1
 
