@@ -40,7 +40,9 @@ is validated against `mlx-baseline-run-v2.schema.json` and links its timestamp,
 run ID, source commit, runner, benchmark protocol, fixtures, host/runtime,
 workload, raw samples, and recomputed summaries. The adjacent
 `.json.sha256` file anchors the complete result digest independently of the
-document's self-digest.
+document's self-digest. Both the schema and semantic validator bind the
+generation canary to the exact T11 prompt-token digest and reject changes to
+the canonical TTFT, generation-loop, look-ahead, or model-load boundary text.
 
 Timed regions fence `mlx_lm.generate.generation_stream` directly. The TTFT
 probe uses `generate_step(max_tokens=0)` to materialize the first token without

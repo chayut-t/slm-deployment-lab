@@ -2,9 +2,9 @@
   "schema_version": 2,
   "schema_id": "slm-lab-t50-mlx-baseline-run-v2",
   "task_id": "T50",
-  "run_id": "t50-mlx-lm-20260727T153916Z-082f5d279f7b",
-  "created_at": "2026-07-27T15:39:16Z",
-  "source_git_commit": "082f5d279f7bb5092b366081fe979035aec6afe1",
+  "run_id": "t50-mlx-lm-20260727T155820Z-e8c7e2dd33fa",
+  "created_at": "2026-07-27T15:58:20Z",
+  "source_git_commit": "e8c7e2dd33fa29f85d05004e16d521dad4ca99e0",
   "protocol": {
     "id": "slm-lab-benchmark-v1",
     "path": "configs/workloads/benchmark-protocol-v1.json",
@@ -12,7 +12,7 @@
   },
   "schema": {
     "path": "environments/macos-m4/mlx-baseline-run-v2.schema.json",
-    "sha256": "8de4f2ead2230848bb0ec942d57c1648242a0e0c802e8a856fde7886f0409f26"
+    "sha256": "42bb93712bb9baa9f07b0f390b250b721aeb365a2b6889861c22e843268d3bcd"
   },
   "fixture_contracts": {
     "model": {
@@ -150,7 +150,7 @@
   },
   "runner": {
     "path": "src/slm_lab/backends/mlx_baseline.py",
-    "sha256": "9292878af3e89bc2f40110d8575ec41e8730fa5c18ba8a58484f7dbbf09b4351"
+    "sha256": "e887376955fbad7f46a8ce91de534597e766f85407e5196773e97b74af9f01ad"
   },
   "canary": {
     "tokenizer_canaries": [
@@ -245,18 +245,18 @@
     "quantile_method": "Hyndman-Fan type 7 linear"
   },
   "model_load_observation": {
-    "seconds": 0.572871708,
+    "seconds": 0.469014875,
     "mlx_peak_memory_bytes": 1192099848,
-    "process_peak_rss_before_load_bytes": 100450304,
-    "process_peak_rss_after_load_bytes": 1304150016,
+    "process_peak_rss_before_load_bytes": 94535680,
+    "process_peak_rss_after_load_bytes": 1533411328,
     "file_cache_state": "uncontrolled"
   },
   "samples": [
     {
       "repetition": 1,
-      "ttft_seconds": 0.037839458,
-      "generation_loop_seconds": 0.080256666,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.38007257864412,
+      "ttft_seconds": 0.038450333,
+      "generation_loop_seconds": 0.077841708,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.53975043815843,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -268,9 +268,9 @@
     },
     {
       "repetition": 2,
-      "ttft_seconds": 0.037387125,
-      "generation_loop_seconds": 0.08062775,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.208033214370985,
+      "ttft_seconds": 0.038793334,
+      "generation_loop_seconds": 0.077393041,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.76317510252634,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -282,9 +282,9 @@
     },
     {
       "repetition": 3,
-      "ttft_seconds": 0.037018333,
-      "generation_loop_seconds": 0.080532625,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.251983280068174,
+      "ttft_seconds": 0.039520666,
+      "generation_loop_seconds": 0.078136291,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.39445104964094,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -296,9 +296,9 @@
     },
     {
       "repetition": 4,
-      "ttft_seconds": 0.037733625,
-      "generation_loop_seconds": 0.079512958,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.72969935290296,
+      "ttft_seconds": 0.038749458,
+      "generation_loop_seconds": 0.077785084,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.56780562196217,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -310,9 +310,9 @@
     },
     {
       "repetition": 5,
-      "ttft_seconds": 0.039157291,
-      "generation_loop_seconds": 0.078384125,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.27305592809768,
+      "ttft_seconds": 0.038691667,
+      "generation_loop_seconds": 0.077806625,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.557128008058434,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -324,9 +324,9 @@
     },
     {
       "repetition": 6,
-      "ttft_seconds": 0.03840125,
-      "generation_loop_seconds": 0.077871375,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.52506778004112,
+      "ttft_seconds": 0.039398292,
+      "generation_loop_seconds": 0.098475583,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 30.464404562093325,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -338,9 +338,9 @@
     },
     {
       "repetition": 7,
-      "ttft_seconds": 0.03794425,
-      "generation_loop_seconds": 0.077970416,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.47613176772072,
+      "ttft_seconds": 0.043156875,
+      "generation_loop_seconds": 0.081174458,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 36.957438015785705,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -352,9 +352,9 @@
     },
     {
       "repetition": 8,
-      "ttft_seconds": 0.037749208,
-      "generation_loop_seconds": 0.079295167,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.833327219047284,
+      "ttft_seconds": 0.0399275,
+      "generation_loop_seconds": 0.078528666,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.20260998703327,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -366,9 +366,9 @@
     },
     {
       "repetition": 9,
-      "ttft_seconds": 0.036635167,
-      "generation_loop_seconds": 0.079519584,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.72655551115559,
+      "ttft_seconds": 0.040333875,
+      "generation_loop_seconds": 0.07921425,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.87197379259413,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -380,9 +380,9 @@
     },
     {
       "repetition": 10,
-      "ttft_seconds": 0.037407584,
-      "generation_loop_seconds": 0.077818666,
-      "returned_output_tokens_per_second_including_prefill_and_lookahead": 38.55116200527005,
+      "ttft_seconds": 0.039033208,
+      "generation_loop_seconds": 0.079087708,
+      "returned_output_tokens_per_second_including_prefill_and_lookahead": 37.93256974901839,
       "ttft_mlx_peak_memory_bytes": 1255817508,
       "generation_loop_mlx_peak_memory_bytes": 1255817508,
       "generated_token_ids": [
@@ -396,39 +396,39 @@
   "summary": {
     "ttft_seconds": {
       "sample_count_valid": 10,
-      "minimum": 0.036635167,
-      "maximum": 0.039157291,
-      "mean": 0.0377273291,
-      "sample_standard_deviation": 0.0007049488230223114,
-      "median": 0.0377414165,
-      "p90": 0.0384768541,
-      "p95": 0.03881707255,
-      "median_absolute_deviation": 0.00034406199999999915,
-      "interquartile_range": 0.0005258122500000004
+      "minimum": 0.038450333,
+      "maximum": 0.043156875,
+      "mean": 0.0396055208,
+      "sample_standard_deviation": 0.0013818687705063094,
+      "median": 0.03921575,
+      "p90": 0.040616175,
+      "p95": 0.041886524999999994,
+      "median_absolute_deviation": 0.0004951875000000008,
+      "interquartile_range": 0.001065364499999999
     },
     "generation_loop_seconds": {
       "sample_count_valid": 10,
-      "minimum": 0.077818666,
-      "maximum": 0.08062775,
-      "mean": 0.0791789332,
-      "sample_standard_deviation": 0.0011048607065362278,
-      "median": 0.0794040625,
-      "p90": 0.0805421375,
-      "p95": 0.08058494375,
-      "median_absolute_deviation": 0.0010742499999999988,
-      "interquartile_range": 0.0019985522500000075
+      "minimum": 0.077393041,
+      "maximum": 0.098475583,
+      "mean": 0.0805443414,
+      "sample_standard_deviation": 0.006394638068819329,
+      "median": 0.0783324785,
+      "p90": 0.0829045705,
+      "p95": 0.09069007674999999,
+      "median_absolute_deviation": 0.0006513120000000011,
+      "interquartile_range": 0.001367218749999996
     },
     "returned_output_tokens_per_second_including_prefill_and_lookahead": {
       "sample_count_valid": 10,
-      "minimum": 37.208033214370985,
-      "maximum": 38.55116200527005,
-      "mean": 37.89550886373187,
-      "sample_standard_deviation": 0.5289630641383569,
-      "median": 37.78151328597512,
-      "p90": 38.527677202564014,
-      "p95": 38.53941960391703,
-      "median_absolute_deviation": 0.5105363240147547,
-      "interquartile_range": 0.9586694960429796
+      "minimum": 30.464404562093325,
+      "maximum": 38.76317510252634,
+      "mean": 37.425130632687114,
+      "sample_standard_deviation": 2.500922669741077,
+      "median": 38.2985305183371,
+      "p90": 38.58734257001859,
+      "p95": 38.67525883627246,
+      "median_absolute_deviation": 0.3176179364718905,
+      "interquartile_range": 0.665660833883237
     },
     "ttft_mlx_peak_memory_bytes": {
       "sample_count_valid": 10,
@@ -455,7 +455,7 @@
       "interquartile_range": 0.0
     }
   },
-  "process_peak_rss_bytes": 1304150016,
+  "process_peak_rss_bytes": 1533411328,
   "memory_methods": {
     "mlx_peak_memory": "mx.reset_peak_memory before each run and mx.get_peak_memory after fencing mlx_lm.generate.generation_stream; includes resident model allocations",
     "process_peak_rss": "resource.getrusage(RUSAGE_SELF).ru_maxrss on macOS; process-lifetime peak including Python and model load"
@@ -465,5 +465,5 @@
     "No Instruments, sustained power, thermal, or isolated kernel claim is made; those belong to T52.",
     "The generation-loop metric includes one MLX-LM look-ahead token that is computed but not returned."
   ],
-  "evidence_sha256": "4c13c5a525fa7194d7fe488d004c2d1ffdf151e065361cc4baa19294c026d8df"
+  "evidence_sha256": "25af82bcc8372d0817341b48af47f2c19877e59f4fc8fd75458e61b8e59477de"
 }

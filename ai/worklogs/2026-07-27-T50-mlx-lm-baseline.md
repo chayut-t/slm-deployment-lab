@@ -15,9 +15,9 @@ greedy generation oracle exactly: token IDs `576, 8356, 3950`.
 
 The synchronized warm baseline used two warm-ups and ten retained
 measurements. For the 18-token prompt and three-token output, median
-time-to-first-token was 37.741 ms. The pinned MLX-LM loop returned three
-tokens in a median 79.404 ms while also computing one unreturned look-ahead
-token, for 37.782 returned output tokens/second including prefill and that
+time-to-first-token was 39.216 ms. The pinned MLX-LM loop returned three
+tokens in a median 78.332 ms while also computing one unreturned look-ahead
+token, for 38.299 returned output tokens/second including prefill and that
 look-ahead. MLX reported 1,255,817,508 bytes peak memory for every measured
 region. This small canary is a correctness/performance baseline, not the T52
 four-context sweep.
@@ -35,6 +35,12 @@ four-context sweep.
   commit, runner, schema, benchmark protocol, fixtures, model, canaries,
   host/runtime, workload, raw samples, and recomputed summaries. An external
   digest anchor rejects a document whose self-digest alone was recomputed.
+- Bound the generation canary's prompt-token digest to the canonical JSON
+  digest of the exact T11 prompt token IDs in both schema and semantic
+  validation.
+- Froze the canonical TTFT, generation-loop, look-ahead, and model-load
+  boundary semantics in the schema and validator so contradictory prose
+  cannot accompany otherwise valid measurements.
 - Added dedicated repetition, synchronization, schema, provenance,
   cross-field, and adversarial validator tests.
 - Added an exact task-local MLX environment pin and macOS reproduction guide
@@ -51,26 +57,31 @@ four-context sweep.
   results/raw/apple/baseline --warmup-repetitions 2
   --measured-repetitions 10`
   - Passed all tokenizer and generation canaries and wrote run
-    `t50-mlx-lm-20260727T153916Z-082f5d279f7b` from clean source commit
-    `082f5d279f7bb5092b366081fe979035aec6afe1`.
-- `PYTHONPATH=src .venv/bin/python -m slm_lab.backends.mlx_baseline
+    `t50-mlx-lm-20260727T155820Z-e8c7e2dd33fa` from clean source commit
+    `e8c7e2dd33fa29f85d05004e16d521dad4ca99e0`.
+- `PYTHONPATH=src uv run --extra dev --locked python -m
+  slm_lab.backends.mlx_baseline
   --validate
   results/raw/apple/baseline/mlx-lm-baseline-run-v2.json`
   - Schema, external digest anchor, Git blob provenance, immutable contracts,
     exact environment, canaries, repetitions, raw samples, throughput, and
     summaries passed.
-- `ruff check src/slm_lab/backends/mlx_baseline.py
+- `uv run --extra dev --locked ruff check
+  src/slm_lab/backends/mlx_baseline.py
   tests/backends/test_mlx_baseline.py`
   - Passed.
-- `PYTHONPATH=src .venv/bin/python -m pytest -q
+- `PYTHONPATH=src uv run --extra dev --locked python -m pytest -q
+  tests/backends/test_mlx_baseline.py`
+  - 16 passed.
+- `PYTHONPATH=src uv run --extra dev --locked python -m pytest -q
   tests/backends/test_mlx_baseline.py
   tests/repo/test_t10_fixtures.py tests/repo/test_model_contract.py
   tests/reference/test_model_contract.py
   tests/reference/test_pytorch_reference.py`
-  - 45 passed, 3 intentional upstream/real-weight-gated skips.
-- `PYTHONPATH=src .venv/bin/python -m pytest -q`
-  - 137 passed, 3 intentional external/upstream-gated skips.
-- `.venv/bin/ruff check src tests`
+  - 42 passed, 3 intentional upstream/real-weight-gated skips.
+- `PYTHONPATH=src uv run --extra dev --locked python -m pytest -q`
+  - 134 passed, 3 intentional external/upstream-gated skips.
+- `uv run --extra dev --locked ruff check src tests`
   - Passed.
 - `python3 scripts/ai/render_task_status.py --check`
   - Passed with T50 retained in progress pending independent review.
@@ -88,9 +99,9 @@ four-context sweep.
   `applegpu_g16g`. This is MLX Metal GPU evidence and does not establish Apple
   Neural Engine (ANE) execution.
 - Provenance source commit:
-  `082f5d279f7bb5092b366081fe979035aec6afe1`. Evidence digest:
-  `4c13c5a525fa7194d7fe488d004c2d1ffdf151e065361cc4baa19294c026d8df`.
-- Model loading took 0.573 seconds in the measurement process and was outside
+  `e8c7e2dd33fa29f85d05004e16d521dad4ca99e0`. Evidence digest:
+  `25af82bcc8372d0817341b48af47f2c19877e59f4fc8fd75458e61b8e59477de`.
+- Model loading took 0.469 seconds in the measurement process and was outside
   steady-state timing. File-cache state was uncontrolled, so the observation
   is not labeled cold start.
 - The full 1,503,300,328-byte BF16 Safetensors file remained external. Its

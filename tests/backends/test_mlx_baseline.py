@@ -187,6 +187,40 @@ def test_recomputed_self_digest_cannot_bypass_external_anchor(
             lambda document: document["protocol"].__setitem__("sha256", "0" * 64),
             "benchmark protocol provenance differs",
         ),
+        (
+            lambda document: document["canary"]["generation"].__setitem__(
+                "prompt_token_ids_sha256", "0" * 64
+            ),
+            "schema failure",
+        ),
+        (
+            lambda document: document["measurement_policy"].__setitem__(
+                "ttft_boundary",
+                "Includes model loading and every later decode.",
+            ),
+            "schema failure",
+        ),
+        (
+            lambda document: document["measurement_policy"].__setitem__(
+                "generation_loop_boundary",
+                "Stops before the generation stream is fenced.",
+            ),
+            "schema failure",
+        ),
+        (
+            lambda document: document["measurement_policy"].__setitem__(
+                "lookahead_accounting",
+                "No unreturned look-ahead token is computed.",
+            ),
+            "schema failure",
+        ),
+        (
+            lambda document: document["measurement_policy"].__setitem__(
+                "model_load_boundary",
+                "Model loading is included and this is a cold-start result.",
+            ),
+            "schema failure",
+        ),
     ],
 )
 def test_recomputed_digest_and_anchor_still_fail_semantic_validation(

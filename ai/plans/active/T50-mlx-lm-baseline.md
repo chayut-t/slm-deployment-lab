@@ -62,7 +62,7 @@ reference and reported without any unsupported ANE claim.
 ## Artifact and privacy handling
 
 - Committed evidence: small structured results, source, environment files,
-  completed plan, and sanitized worklog.
+  active plan, and draft sanitized worklog pending final review.
 - External artifacts: model weights remain under the artifact root.
 - Private/local material: large/raw traces and machine-private details.
 
@@ -76,14 +76,17 @@ reference and reported without any unsupported ANE claim.
 - 2026-07-27: All five T10 token sequences matched exactly and MLX-LM
   reproduced the T11 tokens `576, 8356, 3950`.
 - 2026-07-27: Review fixes fence MLX-LM's actual generation stream. Median
-  no-look-ahead TTFT was 37.741 ms. The three-returned-token loop, including
-  one unreturned look-ahead, had median latency 79.404 ms and 37.782 returned
+  no-look-ahead TTFT was 39.216 ms. The three-returned-token loop, including
+  one unreturned look-ahead, had median latency 78.332 ms and 38.299 returned
   output tokens/second including prefill and look-ahead. MLX peak memory was
   1,255,817,508 bytes.
 - 2026-07-27: The v2 run bundle records source commit
-  `082f5d279f7bb5092b366081fe979035aec6afe1`, validates against an exact JSON
+  `e8c7e2dd33fa29f85d05004e16d521dad4ca99e0`, validates against an exact JSON
   Schema, cross-checks Git blobs and raw-sample summaries, and uses an external
   digest anchor in addition to its self-digest.
+- 2026-07-27: A second review fix binds the generation canary to the exact T11
+  prompt-token digest and freezes the canonical TTFT, generation-loop,
+  look-ahead, and model-load boundary semantics in both schema and validator.
 
 ## Progress and restart instructions
 
