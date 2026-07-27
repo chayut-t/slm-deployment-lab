@@ -102,20 +102,20 @@ graph TD
 | T04 — Codex and Claude Code repository compatibility | completed | T03 | — | ai/worklogs/2026-07-25-T04-dual-agent-compatibility.md |
 | T10 — Token, prompt, and evaluation fixtures | completed | T00 | — | ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md |
 | T11 — Deterministic PyTorch reference | completed | T10 | — | ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md |
-| T12 — Static cache and tensor contract | ready | T11 | — | — |
+| T12 — Static cache and tensor contract | in_progress | T11 | — | — |
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
 | T20 — Four-context ONNX export matrix | blocked | T12 | t9_heavy_io | — |
 | T21 — ONNX Runtime CPU parity and graph inspection | blocked | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
-| T32 — Device Cloud Qwen GenieX baseline and generation loop | ready | T02 | device_cloud_x_elite | — |
+| T32 — Device Cloud Qwen GenieX baseline and generation loop | in_progress | T02 | device_cloud_x_elite | — |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
 | T40 — AIMET and calibration environment | blocked | T10, T20 | t9_heavy_io | — |
 | T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
-| T50 — MLX-LM baseline | ready | T11 | apple_m4_heavy | — |
+| T50 — MLX-LM baseline | in_progress | T11 | apple_m4_heavy | — |
 | T51 — Custom MLX runtime | blocked | T12, T50 | apple_m4_heavy | — |
 | T52 — Apple profiling and context sweep | blocked | T13, T51 | apple_m4_heavy, t9_heavy_io | — |
 | T60 — ONNX Runtime CUDA context sweep | blocked | T02, T13, T20 | linux_nvidia_gpu, t9_heavy_io | — |
@@ -128,8 +128,8 @@ graph TD
 
 ## Summary
 
-- ready: 4
-- in_progress: 0
+- ready: 1
+- in_progress: 3
 - blocked: 17
 - completed: 9
 
