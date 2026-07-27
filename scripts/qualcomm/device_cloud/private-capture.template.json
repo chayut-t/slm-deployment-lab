@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+  "device": {
+    "product": "Snapdragon X Elite",
+    "form_factor": "Compute Reference Design",
+    "catalog_code": "REPLACE_WITH_OBSERVED_CATALOG_CODE",
+    "os": "REPLACE_WITH_EXACT_OS",
+    "chipset": "REPLACE_WITH_EXACT_CHIPSET",
+    "memory_bytes": 0,
+    "evidence_kind": "windows_system_information",
+    "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+    "private_reference": "private_not_committed"
+  },
+  "runtime": {
+    "geniex_version": "REPLACE_WITH_EXACT_VERSION",
+    "route": "llama_cpp",
+    "compute_selection": "npu",
+    "placement": {
+      "status": "observed",
+      "compute_unit": "NPU",
+      "backend": "HTP",
+      "device_id": "HTP0",
+      "evidence_kind": "geniex_runtime_log",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    }
+  },
+  "model": {
+    "logical_name": "Qwen3-0.6B",
+    "source": "Qualcomm AI Hub Models",
+    "source_version": "0.58.0",
+    "asset_runtime": "geniex_llamacpp",
+    "precision": "Q4_0",
+    "artifact_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+    "private_reference": "private_not_committed"
+  },
+  "generation": {
+    "prompt_sha256": "e36ded0e32a5d70a5b1c3d36d4e625ef98377475295d568b05b69d4719cfa055",
+    "prompt_private_reference": "private_not_committed",
+    "prompt_tokens": 0,
+    "output_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+    "output_private_reference": "private_not_committed",
+    "output_tokens": 0,
+    "finish_reason": "REPLACE_WITH_eos_stop_OR_max_tokens",
+    "valid_multi_token_output_confirmed": false
+  },
+  "timings": {
+    "artifact_load": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "model_load": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "tokenization": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "prefill": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "first_decode": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "decode": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "generation_total": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
+    "request_total": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    }
+  },
+  "synchronization": {
+    "backend": "qualcomm_device_cloud",
+    "method_id": "runtime_completion_fence",
+    "pre_timer_action": "host_clock_immediately_before_runtime_call",
+    "post_timer_action": "runtime_completion_before_host_clock_read",
+    "evidence_kind": "REPLACE_WITH_SYNCHRONIZATION_EVIDENCE_KIND",
+    "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+    "private_reference": "private_not_committed"
+  },
+  "cost": {
+    "paid_resources_used": false,
+    "cost_usd": 0
+  }
+}
