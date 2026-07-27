@@ -38,7 +38,9 @@ the T11 three-token generation oracle before writing
 `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json`. The single run bundle
 is validated against `mlx-baseline-run-v2.schema.json` and links its timestamp,
 run ID, source commit, runner, benchmark protocol, fixtures, host/runtime,
-workload, raw samples, and recomputed summaries.
+workload, raw samples, and recomputed summaries. The adjacent
+`.json.sha256` file anchors the complete result digest independently of the
+document's self-digest.
 
 Timed regions fence `mlx_lm.generate.generation_stream` directly. The TTFT
 probe uses `generate_step(max_tokens=0)` to materialize the first token without

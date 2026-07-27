@@ -11,14 +11,17 @@ from slm_lab.backends import mlx_baseline
 from slm_lab.backends.mlx_baseline import (
     EXPECTED_GENERATED_TOKEN_IDS,
     MlxBaselineError,
+    _canonical_json_sha256,
     _measure_generation_loop,
     _measure_ttft,
+    validate_evidence,
     validate_repetition_policy,
 )
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "environments/macos-m4/mlx-baseline-run-v2.schema.json"
+RESULT_PATH = ROOT / "results/raw/apple/baseline/mlx-lm-baseline-run-v2.json"
 
 
 class FakeMx:
@@ -120,3 +123,82 @@ def test_generation_loop_fences_mlx_lm_stream_and_returns_canary() -> None:
     assert peak_memory == 123
     assert mx.sync_calls == [generation_stream, generation_stream]
     assert mx.reset_count == 1
+
+
+def _write_mutated_result(
+    tmp_path: Path,
+    mutation: Any,
+    *,
+    update_anchor: bool,
+) -> Path:
+    document = json.loads(RESULT_PATH.read_text(encoding="utf-8"))
+    original_digest = document.pop("evidence_sha256")
+    mutation(document)
+    mutated_digest = _canonical_json_sha256(document)
+    document["evidence_sha256"] = mutated_digest
+
+    result_path = tmp_path / RESULT_PATH.name
+    result_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    anchored_digest = mutated_digest if update_anchor else original_digest
+    result_path.with_suffix(result_path.suffix + ".sha256").write_text(
+        f"{anchored_digest}  {result_path.name}\n",
+        encoding="utf-8",
+    )
+    return result_path
+
+
+def test_committed_result_passes_full_validator() -> None:
+    validate_evidence(RESULT_PATH)
+
+
+def test_recomputed_self_digest_cannot_bypass_external_anchor(
+    tmp_path: Path,
+) -> None:
+    result_path = _write_mutated_result(
+        tmp_path,
+        lambda document: document["samples"][0].__setitem__("ttft_seconds", 999.0),
+        update_anchor=False,
+    )
+
+    with pytest.raises(MlxBaselineError, match="external digest anchor differs"):
+        validate_evidence(result_path)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (
+            lambda document: document["host"].__setitem__(
+                "target_chip", "Fabricated chip"
+            ),
+            "schema failure",
+        ),
+        (
+            lambda document: document["runner"].__setitem__("sha256", "0" * 64),
+            "runner does not match",
+        ),
+        (
+            lambda document: document["summary"]["ttft_seconds"].__setitem__(
+                "median", 999.0
+            ),
+            "summary does not match",
+        ),
+        (
+            lambda document: document["protocol"].__setitem__("sha256", "0" * 64),
+            "benchmark protocol provenance differs",
+        ),
+    ],
+)
+def test_recomputed_digest_and_anchor_still_fail_semantic_validation(
+    tmp_path: Path,
+    mutation: Any,
+    message: str,
+) -> None:
+    result_path = _write_mutated_result(
+        tmp_path,
+        mutation,
+        update_anchor=True,
+    )
+
+    with pytest.raises(MlxBaselineError, match=message):
+        validate_evidence(result_path)

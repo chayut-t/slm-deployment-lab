@@ -15,10 +15,11 @@ greedy generation oracle exactly: token IDs `576, 8356, 3950`.
 
 The synchronized warm baseline used two warm-ups and ten retained
 measurements. For the 18-token prompt and three-token output, median
-time-to-first-token was 55.979 ms, median complete generation-loop latency was
-87.620 ms, and median throughput including prefill was 34.243 output
-tokens/second. MLX reported 1,255,817,508 bytes peak memory for every measured
-run. This small canary is a correctness/performance baseline, not the T52
+time-to-first-token was 37.741 ms. The pinned MLX-LM loop returned three
+tokens in a median 79.404 ms while also computing one unreturned look-ahead
+token, for 37.782 returned output tokens/second including prefill and that
+look-ahead. MLX reported 1,255,817,508 bytes peak memory for every measured
+region. This small canary is a correctness/performance baseline, not the T52
 four-context sweep.
 
 ## Changes
@@ -26,11 +27,16 @@ four-context sweep.
 - Added a reusable MLX-LM runner that verifies the immutable model and
   tokenizer checksums, loads the local checkpoint without remote code,
   validates all T10 tokenization canaries, and rejects T11 generation drift.
-- Added synchronized generation-loop measurement with explicit model-load,
-  lazy-evaluation, warm-up, repetition, sample-retention, and memory
-  boundaries.
-- Added self-digested structured parity, host/runtime, and performance
-  evidence under `results/raw/apple/baseline/`.
+- Added explicit pre/post timer fences on
+  `mlx_lm.generate.generation_stream`. TTFT uses
+  `generate_step(max_tokens=0)` to avoid scheduling a later decode, while the
+  three-token library-loop metric accounts for its one unreturned look-ahead.
+- Added one schema-validated v2 run bundle linking run ID/time, clean source
+  commit, runner, schema, benchmark protocol, fixtures, model, canaries,
+  host/runtime, workload, raw samples, and recomputed summaries. An external
+  digest anchor rejects a document whose self-digest alone was recomputed.
+- Added dedicated repetition, synchronization, schema, provenance,
+  cross-field, and adversarial validator tests.
 - Added an exact task-local MLX environment pin and macOS reproduction guide
   without changing the shared cross-platform dependency lock.
 - Sanitized host evidence to retain the Mac model, model number, chip, memory,
@@ -44,20 +50,28 @@ four-context sweep.
   .ai-local/models/qwen3-0.6b --output-dir
   results/raw/apple/baseline --warmup-repetitions 2
   --measured-repetitions 10`
-  - Passed all tokenizer and generation canaries and wrote three evidence
-    documents from real MLX Metal execution on the Apple M4.
+  - Passed all tokenizer and generation canaries and wrote run
+    `t50-mlx-lm-20260727T153916Z-082f5d279f7b` from clean source commit
+    `082f5d279f7bb5092b366081fe979035aec6afe1`.
 - `PYTHONPATH=src .venv/bin/python -m slm_lab.backends.mlx_baseline
-  --validate results/raw/apple/baseline/host-runtime-v1.json
-  results/raw/apple/baseline/mlx-lm-parity-v1.json
-  results/raw/apple/baseline/mlx-lm-performance-v1.json`
-  - All evidence self-digests and explicit no-ANE claim boundaries passed.
-- `ruff check src/slm_lab/backends/mlx_baseline.py`
+  --validate
+  results/raw/apple/baseline/mlx-lm-baseline-run-v2.json`
+  - Schema, external digest anchor, Git blob provenance, immutable contracts,
+    exact environment, canaries, repetitions, raw samples, throughput, and
+    summaries passed.
+- `ruff check src/slm_lab/backends/mlx_baseline.py
+  tests/backends/test_mlx_baseline.py`
   - Passed.
 - `PYTHONPATH=src .venv/bin/python -m pytest -q
+  tests/backends/test_mlx_baseline.py
   tests/repo/test_t10_fixtures.py tests/repo/test_model_contract.py
   tests/reference/test_model_contract.py
   tests/reference/test_pytorch_reference.py`
-  - 34 passed, 3 intentional upstream/real-weight-gated skips.
+  - 45 passed, 3 intentional upstream/real-weight-gated skips.
+- `PYTHONPATH=src .venv/bin/python -m pytest -q`
+  - 137 passed, 3 intentional external/upstream-gated skips.
+- `.venv/bin/ruff check src tests`
+  - Passed.
 - `python3 scripts/ai/render_task_status.py --check`
   - Passed with T50 retained in progress pending independent review.
 - `python3 scripts/repo/check_hygiene.py --all`
@@ -73,7 +87,10 @@ four-context sweep.
 - MLX reported `Device(gpu, 0)`, device name `Apple M4`, and architecture
   `applegpu_g16g`. This is MLX Metal GPU evidence and does not establish Apple
   Neural Engine (ANE) execution.
-- Model loading took 0.703 seconds in the measurement process and was outside
+- Provenance source commit:
+  `082f5d279f7bb5092b366081fe979035aec6afe1`. Evidence digest:
+  `4c13c5a525fa7194d7fe488d004c2d1ffdf151e065361cc4baa19294c026d8df`.
+- Model loading took 0.573 seconds in the measurement process and was outside
   steady-state timing. File-cache state was uncontrolled, so the observation
   is not labeled cold start.
 - The full 1,503,300,328-byte BF16 Safetensors file remained external. Its
@@ -85,9 +102,10 @@ four-context sweep.
 - The baseline covers one short frozen correctness canary. T52 owns the
   128/512/1,024/4,096-token sweep, sustained runs, Instruments traces, power,
   thermal, swap, and detailed profiling.
-- MLX-LM pipelines generation and may enqueue a later decode before the first
-  token is consumed. The recorded TTFT is the library's first-yield boundary,
-  not an isolated prefill measurement.
+- TTFT is a separate first-token-materialization probe. The generation-loop
+  metric is not directly comparable to a runtime that does not compute an
+  extra look-ahead token; the metric name and workload record preserve that
+  boundary.
 - Full Xcode, the standalone Metal compiler, and Instruments were not
   installed. The exact failed check commands are retained with null values;
   this does not block the T50 MLX runtime baseline.
@@ -106,11 +124,11 @@ four-context sweep.
 ## Learner debrief checklist
 
 - [ ] Compare the exact-token parity in
-  `results/raw/apple/baseline/mlx-lm-parity-v1.json` with the T11 PyTorch
-  reference.
+  `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` with the T11
+  PyTorch reference.
 - [ ] Explain why the timing boundary in
-  `results/raw/apple/baseline/mlx-lm-performance-v1.json` is a generation-loop
-  baseline rather than isolated prefill/decode evidence.
+  `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` separates
+  no-look-ahead TTFT from a library loop containing one look-ahead token.
 - [ ] Verify the exact host/runtime identity in
-  `results/raw/apple/baseline/host-runtime-v1.json` and explain why an MLX
-  Metal result is not an ANE claim.
+  `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` and explain why an
+  MLX Metal result is not an ANE claim.

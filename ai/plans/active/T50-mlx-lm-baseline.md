@@ -75,10 +75,15 @@ reference and reported without any unsupported ANE claim.
   exact runtime dependencies without changing the shared lockfile.
 - 2026-07-27: All five T10 token sequences matched exactly and MLX-LM
   reproduced the T11 tokens `576, 8356, 3950`.
-- 2026-07-27: The ten-run median was 55.979 ms to MLX-LM's first yielded
-  token, 87.620 ms for the synchronized three-token generation loop, and
-  34.243 output tokens/second including prefill. MLX peak memory was
+- 2026-07-27: Review fixes fence MLX-LM's actual generation stream. Median
+  no-look-ahead TTFT was 37.741 ms. The three-returned-token loop, including
+  one unreturned look-ahead, had median latency 79.404 ms and 37.782 returned
+  output tokens/second including prefill and look-ahead. MLX peak memory was
   1,255,817,508 bytes.
+- 2026-07-27: The v2 run bundle records source commit
+  `082f5d279f7bb5092b366081fe979035aec6afe1`, validates against an exact JSON
+  Schema, cross-checks Git blobs and raw-sample summaries, and uses an external
+  digest anchor in addition to its self-digest.
 
 ## Progress and restart instructions
 
