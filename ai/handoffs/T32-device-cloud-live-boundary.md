@@ -2,7 +2,7 @@
 
 Date: 2026-07-27
 Task: `T32`
-Status: active; blocked at learner authentication and live-device execution
+Status: in_progress; learner action required for live-device execution
 
 ## Prepared outcome
 
@@ -14,7 +14,8 @@ The Qualcomm Device Cloud public catalog showed a Snapdragon X Elite Compute
 Reference Design (`CRD8380X`, Windows), but the browser session was logged out
 and required learner login plus free-minute activation before the complete
 catalog or a session could be used. The live Device Cloud tab was left open
-for learner handoff.
+for learner handoff. This external boundary does not change the task graph
+state from `in_progress` to `blocked`.
 
 ## Changes ready on the task branch
 
@@ -23,11 +24,16 @@ for learner handoff.
   `geniex_llamacpp`/`Q4_0` provenance, observed NPU/HTP evidence, confirmed
   multi-token output, every timing boundary with a source, and zero
   paid-resource use.
+- Evidence claims are structured enums backed by SHA-256 digests and
+  `private_not_committed` references. NPU placement must affirm an observed
+  HTP-backed run rather than merely contain the text `NPU` or `HTP`.
 - A Windows PowerShell session workflow, private-capture template, and operator
-  guide pin the current model-card fetch contract and fixed prompt.
+  guide pin the current model-card fetch contract and normalized fixed-prompt
+  digest, stop on native-command failures, and use unique no-clobber
+  transcripts.
 - The public result page separates catalog discovery from allocated-device
   evidence and GenieX/llama.cpp from custom QNN/QAIRT evidence.
-- Seven task-scoped regression tests cover the normalizer. T32's original
+- Fourteen task-scoped regression tests cover the reviewed workflow defects. T32's original
   owned paths omitted the completed T30 test subtree; the coordinating agent
   explicitly approved the narrow ownership expansion for
   `tests/deployment/qualcomm/test_device_cloud.py`. No existing T30 test was
@@ -52,11 +58,14 @@ for learner handoff.
   tokenization, prefill, first decode, remaining decode, generation total, and
   request total. Missing boundaries are a blocker, not permission to relabel
   Workbench graph latency or session turnaround.
+- Raw and sanitized session files stay below `.ai-local/profiles/T32/`. T31
+  owns `results/processed/qualcomm/`; T32 publishes only the reviewed
+  normalized record or digest/link in its owned result page.
 
 ## Verification at handoff
 
 - `python -m unittest tests.deployment.qualcomm.test_device_cloud -v`:
-  7 tests passed.
+  14 tests passed.
 - `python -m pytest -q`: 125 passed, 3 skipped.
 - Repository-wide `unittest discover` was also attempted; it ran 93 tests but
   reported the Torch-absent pytest import-skip as one import error. The same

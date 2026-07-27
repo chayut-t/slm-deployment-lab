@@ -1,7 +1,7 @@
 # Device Cloud Qwen3-0.6B baseline
 
 Task: `T32`
-Status: blocked at learner authentication and live-device execution
+Status: in_progress; learner action required for live-device execution
 Last checked: 2026-07-27
 
 ## Current outcome
@@ -22,6 +22,8 @@ catalog was reachable without authentication and showed:
 This is catalog discovery, not an allocated-device environment manifest.
 Account minutes, current session availability, exact allocated hardware,
 runtime versions, generation output, and timings remain unobserved.
+This external boundary does not change the repository task from
+`in_progress` to `blocked`.
 
 ## Exact external boundary
 
@@ -50,6 +52,11 @@ PowerShell workflow fetches that asset, registers its local GGUF directory
 with GenieX, explicitly chooses the NPU compute target, and enters a persistent
 interactive generation loop. Raw output is written only below ignored
 `.ai-local/profiles/T32/`.
+
+The sanitizer also writes its reviewed intermediate output below
+`.ai-local/profiles/T32/`. T31 owns `results/processed/qualcomm/`, so T32 does
+not write there. When the live criteria pass, the normalized record or its
+digest/link will be published on this T32-owned result page.
 
 GenieX exposes two distinct runtime families:
 

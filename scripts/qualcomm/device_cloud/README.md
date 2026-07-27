@@ -40,14 +40,27 @@ powershell -ExecutionPolicy Bypass `
 
 The script registers the local bundle, explicitly chooses `--compute npu`,
 disables thinking, fixes seed 0, caps generation at 32 tokens, and records raw
-output under ignored `.ai-local/profiles/T32/`. The raw transcript can contain
-private paths and must never be committed.
+output under ignored `.ai-local/profiles/T32/`. Every transcript name combines
+a UTC timestamp and random GUID, and `Start-Transcript -NoClobber` prevents
+replacement. Every native command is wrapped with an explicit exit-code check;
+the script stops immediately after any nonzero result. The raw transcript can
+contain private paths and must never be committed.
 
 At the interactive prompt, use exactly:
 
 ```text
 Reply with five consecutive integers beginning at 41, separated by spaces.
 ```
+
+The prompt contract is UTF-8, NFC-normalized, with no trailing newline. Its
+pinned SHA-256 is:
+
+```text
+e36ded0e32a5d70a5b1c3d36d4e625ef98377475295d568b05b69d4719cfa055
+```
+
+The PowerShell runner recomputes this digest before starting and aborts if it
+does not match.
 
 Confirm the response contains at least two generated tokens and is a valid
 answer before setting `valid_multi_token_output_confirmed` to `true`. Record
@@ -75,6 +88,10 @@ Use one of these source labels for every timing:
 - `instrumented_host_clock`
 - `derived_from_runtime_counters`
 
+Every timing component also requires the SHA-256 of its private raw evidence
+and the public placeholder `private_reference: private_not_committed`. The raw
+files stay below `.ai-local/profiles/T32/`.
+
 If the installed GenieX build does not expose one boundary, stop and record
 the limitation in the task handoff. Do not derive prefill by subtracting an
 unrelated Workbench graph latency or label service/session turnaround as
@@ -96,14 +113,28 @@ Back on the repository host:
 ```bash
 PYTHONPATH=src python3 scripts/qualcomm/device_cloud/capture.py \
   --capture .ai-local/profiles/T32/capture.private.json \
-  --manifest results/processed/qualcomm/device-cloud-qwen3-0.6b.json
+  --manifest .ai-local/profiles/T32/device-cloud-qwen3-0.6b.sanitized.json
 ```
+
+T31 owns `results/processed/qualcomm/`; T32 must not write there. During the
+live completion pass, review the local sanitized JSON and publish its
+normalized record or digest/link only in the T32-owned
+`docs/results/qualcomm/device-cloud.md`.
 
 The validator fails closed unless the record proves multi-token generation,
 provides all timing boundaries with source labels, names observed NPU/HTP
-placement evidence, identifies the exact runtime and device, uses no paid
-resource, and contains no URL-, account-, session-, email-, or path-like
-public text.
+placement evidence, identifies the exact runtime and device, uses strict
+RFC3339 UTC time, uses no paid resource, and contains no URL-, account-,
+session-, email-, or path-like public text.
+
+Public evidence is structured rather than free-form:
+
+- placement must be `status: observed`, `compute_unit: NPU`, `backend: HTP`,
+  `device_id: HTP0`, and use `geniex_runtime_log`;
+- synchronization actions and evidence use the enumerated values from the
+  template;
+- device, model, prompt, output, placement, timings, and synchronization carry
+  evidence digests plus `private_not_committed` references.
 
 ## Claim boundary
 

@@ -86,6 +86,14 @@ distinct.
 - 2026-07-27: The coordinating agent approved one narrow ownership expansion
   for `tests/deployment/qualcomm/test_device_cloud.py`; no existing T30 test
   is modified.
+- 2026-07-27: Independent review required structured evidence enums with
+  digests/private references, affirmative NPU/HTP placement, strict RFC3339
+  time, boolean-safe numeric validation, a normalized prompt digest, native
+  failure checks, and unique no-clobber transcripts.
+- 2026-07-27: Raw and sanitized session results remain under
+  `.ai-local/profiles/T32/`; T31 owns `results/processed/qualcomm/`. T32
+  publishes the reviewed normalized record or digest/link only in its owned
+  result page.
 
 ## Progress and restart instructions
 

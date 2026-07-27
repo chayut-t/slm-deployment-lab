@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import tempfile
 import unittest
+import unicodedata
 from pathlib import Path
 
 from slm_lab.deployment.qualcomm.device_cloud import (
     DeviceCloudCaptureError,
+    FIXED_PROMPT,
+    FIXED_PROMPT_SHA256,
+    PRIVATE_REFERENCE,
     main,
     manifest_sha256,
     normalize_capture,
@@ -17,14 +22,17 @@ from slm_lab.deployment.qualcomm.device_cloud import (
 
 
 SHA_A = "a" * 64
-SHA_B = "b" * 64
 SHA_C = "c" * 64
+SHA_D = "d" * 64
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def timing(milliseconds: float) -> dict[str, object]:
     return {
         "milliseconds": milliseconds,
         "source": "geniex_runtime_report",
+        "evidence_sha256": SHA_D,
+        "private_reference": PRIVATE_REFERENCE,
     }
 
 
@@ -39,24 +47,39 @@ def complete_capture() -> dict[str, object]:
             "os": "Windows 11 build 26100",
             "chipset": "X1E80100",
             "memory_bytes": 34_359_738_368,
+            "evidence_kind": "windows_system_information",
+            "evidence_sha256": SHA_A,
+            "private_reference": PRIVATE_REFERENCE,
         },
         "runtime": {
             "geniex_version": "0.3.1",
             "route": "llama_cpp",
             "compute_selection": "npu",
-            "placement_evidence": "GenieX log reported HTP0 NPU device",
+            "placement": {
+                "status": "observed",
+                "compute_unit": "NPU",
+                "backend": "HTP",
+                "device_id": "HTP0",
+                "evidence_kind": "geniex_runtime_log",
+                "evidence_sha256": SHA_D,
+                "private_reference": PRIVATE_REFERENCE,
+            },
         },
         "model": {
             "logical_name": "Qwen3-0.6B",
             "source": "Qualcomm AI Hub Models",
+            "source_version": "0.58.0",
             "asset_runtime": "geniex_llamacpp",
             "precision": "Q4_0",
             "artifact_sha256": SHA_A,
+            "private_reference": PRIVATE_REFERENCE,
         },
         "generation": {
-            "prompt_sha256": SHA_B,
+            "prompt_sha256": FIXED_PROMPT_SHA256,
+            "prompt_private_reference": PRIVATE_REFERENCE,
             "prompt_tokens": 14,
             "output_sha256": SHA_C,
+            "output_private_reference": PRIVATE_REFERENCE,
             "output_tokens": 9,
             "finish_reason": "eos",
             "valid_multi_token_output_confirmed": True,
@@ -74,9 +97,11 @@ def complete_capture() -> dict[str, object]:
         "synchronization": {
             "backend": "qualcomm_device_cloud",
             "method_id": "runtime_completion_fence",
-            "pre_timer_action": "Host clock recorded immediately before runtime call",
-            "post_timer_action": "Final output token materialized before clock read",
-            "evidence": "Runtime returned after output stream completion",
+            "pre_timer_action": "host_clock_immediately_before_runtime_call",
+            "post_timer_action": "runtime_completion_before_host_clock_read",
+            "evidence_kind": "instrumented_runtime_trace",
+            "evidence_sha256": SHA_D,
+            "private_reference": PRIVATE_REFERENCE,
         },
         "cost": {"paid_resources_used": False, "cost_usd": 0},
     }
@@ -93,14 +118,31 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         )
         self.assertEqual(manifest["runtime"]["route"], "llama_cpp")
         self.assertEqual(manifest["model"]["asset_runtime"], "geniex_llamacpp")
+        self.assertEqual(manifest["model"]["source_version"], "0.58.0")
         self.assertEqual(manifest["model"]["precision"], "Q4_0")
         self.assertEqual(manifest["generation"]["output_tokens"], 9)
+        self.assertEqual(
+            manifest["generation"]["prompt_contract"],
+            "t32_fixed_prompt_utf8_nfc_no_trailing_newline_v1",
+        )
+        self.assertEqual(
+            manifest["runtime"]["placement"],
+            {
+                "status": "observed",
+                "compute_unit": "NPU",
+                "backend": "HTP",
+                "device_id": "HTP0",
+                "evidence_kind": "geniex_runtime_log",
+                "evidence_sha256": SHA_D,
+                "private_reference": PRIVATE_REFERENCE,
+            },
+        )
         self.assertFalse(manifest["provenance"]["hosted_graph_latency_included"])
         self.assertEqual(len(manifest_sha256(manifest)), 64)
 
     def test_private_text_is_rejected_without_echoing_value(self) -> None:
         capture = complete_capture()
-        capture["runtime"]["placement_evidence"] = "learner@example.invalid"
+        capture["device"]["os"] = "learner@example.invalid"
 
         with self.assertRaises(DeviceCloudCaptureError) as caught:
             normalize_capture(capture)
@@ -125,6 +167,46 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         with self.assertRaisesRegex(DeviceCloudCaptureError, "llama_cpp"):
             normalize_capture(capture)
 
+    def test_placement_requires_affirmative_structured_npu_htp_evidence(self) -> None:
+        for field, value in (
+            ("status", "not_observed"),
+            ("compute_unit", "CPU"),
+            ("backend", "CPU"),
+            ("device_id", "HTP1"),
+            ("evidence_kind", "operator_note"),
+        ):
+            with self.subTest(field=field):
+                capture = complete_capture()
+                capture["runtime"]["placement"][field] = value
+                with self.assertRaises(DeviceCloudCaptureError):
+                    normalize_capture(capture)
+
+    def test_all_public_evidence_has_digest_and_private_reference(self) -> None:
+        for mutate in (
+            lambda capture: capture["device"].update(
+                {"private_reference": "raw_log_path"}
+            ),
+            lambda capture: capture["device"].update(
+                {"evidence_kind": "operator_note"}
+            ),
+            lambda capture: capture["model"].update(
+                {"artifact_sha256": "not-a-digest"}
+            ),
+            lambda capture: capture["runtime"]["placement"].update(
+                {"evidence_sha256": "not-a-digest"}
+            ),
+            lambda capture: capture["timings"]["prefill"].update(
+                {"private_reference": "raw_log_path"}
+            ),
+            lambda capture: capture["synchronization"].update(
+                {"evidence_sha256": "not-a-digest"}
+            ),
+        ):
+            capture = complete_capture()
+            mutate(capture)
+            with self.assertRaises(DeviceCloudCaptureError):
+                normalize_capture(capture)
+
     def test_all_timing_boundaries_and_consistent_totals_are_required(self) -> None:
         missing = complete_capture()
         del missing["timings"]["prefill"]
@@ -141,6 +223,44 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         capture["cost"] = {"paid_resources_used": True, "cost_usd": 1}
 
         with self.assertRaisesRegex(DeviceCloudCaptureError, "no paid resources"):
+            normalize_capture(capture)
+
+    def test_boolean_values_are_rejected_in_numeric_fields(self) -> None:
+        for mutate in (
+            lambda capture: capture.update({"schema_version": True}),
+            lambda capture: capture["cost"].update({"cost_usd": False}),
+            lambda capture: capture["timings"]["prefill"].update(
+                {"milliseconds": False}
+            ),
+        ):
+            capture = complete_capture()
+            mutate(capture)
+            with self.assertRaises(DeviceCloudCaptureError):
+                normalize_capture(capture)
+
+    def test_observed_at_is_strict_rfc3339_utc(self) -> None:
+        for value in (
+            "2026-07-27",
+            "2026-07-27 18:00:00Z",
+            "2026-07-27T18:00:00+00:00",
+            "2026-7-27T18:00:00Z",
+            "2026-07-27T18:00Z",
+            "2026-02-30T18:00:00Z",
+        ):
+            with self.subTest(value=value):
+                capture = complete_capture()
+                capture["observed_at"] = value
+                with self.assertRaises(DeviceCloudCaptureError):
+                    normalize_capture(capture)
+
+    def test_prompt_digest_is_pinned_to_normalized_fixed_prompt(self) -> None:
+        normalized = unicodedata.normalize("NFC", FIXED_PROMPT)
+        digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        self.assertEqual(digest, FIXED_PROMPT_SHA256)
+
+        capture = complete_capture()
+        capture["generation"]["prompt_sha256"] = SHA_C
+        with self.assertRaisesRegex(DeviceCloudCaptureError, "pinned"):
             normalize_capture(capture)
 
     def test_cli_writes_only_normalized_fields(self) -> None:
@@ -173,6 +293,39 @@ class DeviceCloudCaptureTests(unittest.TestCase):
 
         with self.assertRaisesRegex(DeviceCloudCaptureError, "unsupported fields"):
             normalize_capture(capture_with_private_unknown)
+
+    def test_powershell_runner_is_no_clobber_and_checks_native_failures(self) -> None:
+        script = (
+            REPO_ROOT
+            / "scripts"
+            / "qualcomm"
+            / "device_cloud"
+            / "run_qwen_baseline.ps1"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("function Invoke-NativeChecked", script)
+        self.assertIn("if ($LASTEXITCODE -ne 0)", script)
+        self.assertIn("[guid]::NewGuid()", script)
+        self.assertIn("Start-Transcript -Path $transcriptPath -NoClobber", script)
+        self.assertNotIn("Start-Transcript -Path $transcriptPath -Force", script)
+        self.assertEqual(script.count("Invoke-NativeChecked"), 5)
+        self.assertIn(FIXED_PROMPT_SHA256, script)
+
+    def test_publication_path_and_lifecycle_match_t32_ownership(self) -> None:
+        readme = (
+            REPO_ROOT / "scripts" / "qualcomm" / "device_cloud" / "README.md"
+        ).read_text(encoding="utf-8")
+        result = (
+            REPO_ROOT / "docs" / "results" / "qualcomm" / "device-cloud.md"
+        ).read_text(encoding="utf-8")
+        handoff = (
+            REPO_ROOT / "ai" / "handoffs" / "T32-device-cloud-live-boundary.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotIn("--manifest results/processed/qualcomm", readme)
+        self.assertIn(".ai-local/profiles/T32/", readme)
+        self.assertIn("Status: in_progress", result)
+        self.assertIn("Status: in_progress", handoff)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,11 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 MANIFEST_TYPE = "slm_lab.qualcomm.device_cloud.generation"
+PRIVATE_REFERENCE = "private_not_committed"
+FIXED_PROMPT = (
+    "Reply with five consecutive integers beginning at 41, separated by spaces."
+)
+FIXED_PROMPT_SHA256 = "e36ded0e32a5d70a5b1c3d36d4e625ef98377475295d568b05b69d4719cfa055"
 TIMING_COMPONENTS = (
     "artifact_load",
     "model_load",
@@ -36,6 +41,14 @@ TIMING_SOURCES = {
     "instrumented_host_clock",
     "derived_from_runtime_counters",
 }
+DEVICE_EVIDENCE_KINDS = {"windows_system_information"}
+PLACEMENT_EVIDENCE_KINDS = {"geniex_runtime_log"}
+SYNCHRONIZATION_EVIDENCE_KINDS = {
+    "instrumented_runtime_trace",
+    "timestamped_runtime_log",
+}
+PRE_TIMER_ACTIONS = {"host_clock_immediately_before_runtime_call"}
+POST_TIMER_ACTIONS = {"runtime_completion_before_host_clock_read"}
 PRIVATE_TEXT_PATTERNS = (
     re.compile(r"https?://", re.IGNORECASE),
     re.compile(r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b"),
@@ -48,6 +61,7 @@ PRIVATE_TEXT_PATTERNS = (
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 EXACT_VERSION_PATTERN = re.compile(r"^[0-9]+(?:\.[0-9]+)+(?:[A-Za-z0-9._+-]*)$")
 SAFE_TEXT_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._()+,:=@-]{0,199}$")
+RFC3339_UTC_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
 
 
 class DeviceCloudCaptureError(RuntimeError):
@@ -117,15 +131,23 @@ def _nonnegative_number(value: Any, field: str) -> float:
 
 
 def _utc_timestamp(value: Any, field: str) -> str:
-    if not isinstance(value, str) or not value.endswith("Z"):
-        raise DeviceCloudCaptureError(f"{field} must be an ISO-8601 UTC timestamp")
+    if not isinstance(value, str) or not RFC3339_UTC_PATTERN.fullmatch(value):
+        raise DeviceCloudCaptureError(f"{field} must be a strict RFC3339 UTC timestamp")
     try:
         datetime.fromisoformat(value[:-1] + "+00:00")
     except ValueError:
         raise DeviceCloudCaptureError(
-            f"{field} must be an ISO-8601 UTC timestamp"
+            f"{field} must be a strict RFC3339 UTC timestamp"
         ) from None
     return value
+
+
+def _private_reference(value: Any, field: str) -> str:
+    if value != PRIVATE_REFERENCE:
+        raise DeviceCloudCaptureError(
+            f"{field} must be the sanitized private evidence reference"
+        )
+    return PRIVATE_REFERENCE
 
 
 def _timing(value: Any, field: str) -> dict[str, Any]:
@@ -133,7 +155,12 @@ def _timing(value: Any, field: str) -> dict[str, Any]:
     _require_exact_keys(
         timing,
         field,
-        required={"milliseconds", "source"},
+        required={
+            "milliseconds",
+            "source",
+            "evidence_sha256",
+            "private_reference",
+        },
     )
     source = timing["source"]
     if source not in TIMING_SOURCES:
@@ -145,6 +172,12 @@ def _timing(value: Any, field: str) -> dict[str, Any]:
             timing["milliseconds"], f"{field}.milliseconds"
         ),
         "source": source,
+        "evidence_sha256": _sha256(
+            timing["evidence_sha256"], f"{field}.evidence_sha256"
+        ),
+        "private_reference": _private_reference(
+            timing["private_reference"], f"{field}.private_reference"
+        ),
     }
 
 
@@ -160,6 +193,9 @@ def _normalize_device(value: Any) -> dict[str, Any]:
             "os",
             "chipset",
             "memory_bytes",
+            "evidence_kind",
+            "evidence_sha256",
+            "private_reference",
         },
     )
     if device["product"] != "Snapdragon X Elite":
@@ -170,6 +206,8 @@ def _normalize_device(value: Any) -> dict[str, Any]:
         raise DeviceCloudCaptureError(
             "device.form_factor must be Compute Reference Design"
         )
+    if device["evidence_kind"] not in DEVICE_EVIDENCE_KINDS:
+        raise DeviceCloudCaptureError("device.evidence_kind is not supported")
     return {
         "product": device["product"],
         "form_factor": device["form_factor"],
@@ -177,6 +215,11 @@ def _normalize_device(value: Any) -> dict[str, Any]:
         "os": _safe_text(device["os"], "device.os"),
         "chipset": _safe_text(device["chipset"], "device.chipset"),
         "memory_bytes": _positive_int(device["memory_bytes"], "device.memory_bytes"),
+        "evidence_kind": device["evidence_kind"],
+        "evidence_sha256": _sha256(device["evidence_sha256"], "device.evidence_sha256"),
+        "private_reference": _private_reference(
+            device["private_reference"], "device.private_reference"
+        ),
     }
 
 
@@ -189,26 +232,65 @@ def _normalize_runtime(value: Any) -> dict[str, Any]:
             "geniex_version",
             "route",
             "compute_selection",
-            "placement_evidence",
+            "placement",
         },
     )
     if runtime["route"] != "llama_cpp":
         raise DeviceCloudCaptureError(
             "runtime.route must be llama_cpp for the T32 ready-made baseline"
         )
-    if runtime["compute_selection"] not in {"npu", "hybrid"}:
-        raise DeviceCloudCaptureError("runtime.compute_selection must be npu or hybrid")
-    placement = _safe_text(runtime["placement_evidence"], "runtime.placement_evidence")
-    if "NPU" not in placement and "HTP" not in placement:
+    if runtime["compute_selection"] != "npu":
         raise DeviceCloudCaptureError(
-            "runtime.placement_evidence must name observed NPU or HTP evidence"
+            "runtime.compute_selection must be npu for the pinned T32 baseline"
+        )
+    placement = _require_mapping(runtime["placement"], "runtime.placement")
+    _require_exact_keys(
+        placement,
+        "runtime.placement",
+        required={
+            "status",
+            "compute_unit",
+            "backend",
+            "device_id",
+            "evidence_kind",
+            "evidence_sha256",
+            "private_reference",
+        },
+    )
+    if placement["status"] != "observed":
+        raise DeviceCloudCaptureError("runtime.placement.status must be observed")
+    if (
+        placement["compute_unit"] != "NPU"
+        or placement["backend"] != "HTP"
+        or placement["device_id"] != "HTP0"
+    ):
+        raise DeviceCloudCaptureError(
+            "runtime.placement must affirm observed NPU compute on HTP0"
+        )
+    if placement["evidence_kind"] not in PLACEMENT_EVIDENCE_KINDS:
+        raise DeviceCloudCaptureError(
+            "runtime.placement.evidence_kind is not supported"
         )
     return {
         "name": "GenieX",
         "version": _exact_version(runtime["geniex_version"], "runtime.geniex_version"),
         "route": runtime["route"],
         "compute_selection": runtime["compute_selection"],
-        "placement_evidence": placement,
+        "placement": {
+            "status": "observed",
+            "compute_unit": "NPU",
+            "backend": "HTP",
+            "device_id": "HTP0",
+            "evidence_kind": placement["evidence_kind"],
+            "evidence_sha256": _sha256(
+                placement["evidence_sha256"],
+                "runtime.placement.evidence_sha256",
+            ),
+            "private_reference": _private_reference(
+                placement["private_reference"],
+                "runtime.placement.private_reference",
+            ),
+        },
     }
 
 
@@ -220,14 +302,17 @@ def _normalize_model(value: Any) -> dict[str, Any]:
         required={
             "logical_name",
             "source",
+            "source_version",
             "asset_runtime",
             "precision",
             "artifact_sha256",
+            "private_reference",
         },
     )
     expected = {
         "logical_name": "Qwen3-0.6B",
         "source": "Qualcomm AI Hub Models",
+        "source_version": "0.58.0",
         "asset_runtime": "geniex_llamacpp",
         "precision": "Q4_0",
     }
@@ -237,6 +322,9 @@ def _normalize_model(value: Any) -> dict[str, Any]:
     return {
         **expected,
         "artifact_sha256": _sha256(model["artifact_sha256"], "model.artifact_sha256"),
+        "private_reference": _private_reference(
+            model["private_reference"], "model.private_reference"
+        ),
     }
 
 
@@ -247,8 +335,10 @@ def _normalize_generation(value: Any) -> dict[str, Any]:
         "generation",
         required={
             "prompt_sha256",
+            "prompt_private_reference",
             "prompt_tokens",
             "output_sha256",
+            "output_private_reference",
             "output_tokens",
             "finish_reason",
             "valid_multi_token_output_confirmed",
@@ -266,15 +356,27 @@ def _normalize_generation(value: Any) -> dict[str, Any]:
         raise DeviceCloudCaptureError(
             "generation.finish_reason must be eos, stop, or max_tokens"
         )
+    prompt_sha256 = _sha256(generation["prompt_sha256"], "generation.prompt_sha256")
+    if prompt_sha256 != FIXED_PROMPT_SHA256:
+        raise DeviceCloudCaptureError(
+            "generation.prompt_sha256 does not match the pinned normalized prompt"
+        )
     return {
-        "prompt_sha256": _sha256(
-            generation["prompt_sha256"], "generation.prompt_sha256"
+        "prompt_contract": "t32_fixed_prompt_utf8_nfc_no_trailing_newline_v1",
+        "prompt_sha256": prompt_sha256,
+        "prompt_private_reference": _private_reference(
+            generation["prompt_private_reference"],
+            "generation.prompt_private_reference",
         ),
         "prompt_tokens": _positive_int(
             generation["prompt_tokens"], "generation.prompt_tokens"
         ),
         "output_sha256": _sha256(
             generation["output_sha256"], "generation.output_sha256"
+        ),
+        "output_private_reference": _private_reference(
+            generation["output_private_reference"],
+            "generation.output_private_reference",
         ),
         "output_tokens": output_tokens,
         "finish_reason": finish_reason,
@@ -334,7 +436,11 @@ def normalize_capture(capture: Mapping[str, Any]) -> dict[str, Any]:
             "cost",
         },
     )
-    if capture["schema_version"] != SCHEMA_VERSION:
+    if (
+        isinstance(capture["schema_version"], bool)
+        or not isinstance(capture["schema_version"], int)
+        or capture["schema_version"] != SCHEMA_VERSION
+    ):
         raise DeviceCloudCaptureError(
             f"capture.schema_version must be {SCHEMA_VERSION}"
         )
@@ -348,7 +454,9 @@ def normalize_capture(capture: Mapping[str, Any]) -> dict[str, Any]:
             "method_id",
             "pre_timer_action",
             "post_timer_action",
-            "evidence",
+            "evidence_kind",
+            "evidence_sha256",
+            "private_reference",
         },
     )
     if synchronization["backend"] != "qualcomm_device_cloud":
@@ -359,6 +467,16 @@ def normalize_capture(capture: Mapping[str, Any]) -> dict[str, Any]:
         raise DeviceCloudCaptureError(
             "synchronization.method_id must be runtime_completion_fence"
         )
+    if synchronization["pre_timer_action"] not in PRE_TIMER_ACTIONS:
+        raise DeviceCloudCaptureError(
+            "synchronization.pre_timer_action is not supported"
+        )
+    if synchronization["post_timer_action"] not in POST_TIMER_ACTIONS:
+        raise DeviceCloudCaptureError(
+            "synchronization.post_timer_action is not supported"
+        )
+    if synchronization["evidence_kind"] not in SYNCHRONIZATION_EVIDENCE_KINDS:
+        raise DeviceCloudCaptureError("synchronization.evidence_kind is not supported")
 
     cost = _require_mapping(capture["cost"], "cost")
     _require_exact_keys(
@@ -366,7 +484,13 @@ def normalize_capture(capture: Mapping[str, Any]) -> dict[str, Any]:
         "cost",
         required={"paid_resources_used", "cost_usd"},
     )
-    if cost["paid_resources_used"] is not False or cost["cost_usd"] != 0:
+    if (
+        cost["paid_resources_used"] is not False
+        or isinstance(cost["cost_usd"], bool)
+        or not isinstance(cost["cost_usd"], (int, float))
+        or not math.isfinite(float(cost["cost_usd"]))
+        or cost["cost_usd"] != 0
+    ):
         raise DeviceCloudCaptureError(
             "T32 capture must use no paid resources and report cost_usd 0"
         )
@@ -385,22 +509,22 @@ def normalize_capture(capture: Mapping[str, Any]) -> dict[str, Any]:
         "synchronization": {
             "backend": synchronization["backend"],
             "method_id": synchronization["method_id"],
-            "pre_timer_action": _safe_text(
-                synchronization["pre_timer_action"],
-                "synchronization.pre_timer_action",
+            "pre_timer_action": synchronization["pre_timer_action"],
+            "post_timer_action": synchronization["post_timer_action"],
+            "evidence_kind": synchronization["evidence_kind"],
+            "evidence_sha256": _sha256(
+                synchronization["evidence_sha256"],
+                "synchronization.evidence_sha256",
             ),
-            "post_timer_action": _safe_text(
-                synchronization["post_timer_action"],
-                "synchronization.post_timer_action",
-            ),
-            "evidence": _safe_text(
-                synchronization["evidence"], "synchronization.evidence"
+            "private_reference": _private_reference(
+                synchronization["private_reference"],
+                "synchronization.private_reference",
             ),
         },
         "cost": {"paid_resources_used": False, "cost_usd": 0},
         "provenance": {
             "service": "Qualcomm Device Cloud",
-            "external_session_reference": "private_not_committed",
+            "external_session_reference": PRIVATE_REFERENCE,
             "hosted_graph_latency_included": False,
             "raw_logs_committed": False,
             "private_identifiers_committed": False,
