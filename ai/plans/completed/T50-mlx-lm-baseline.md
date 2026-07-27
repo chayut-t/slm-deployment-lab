@@ -1,6 +1,6 @@
 # T50: MLX-LM baseline
 
-Status: active
+Status: completed
 Owner: Codex T50 agent
 Updated: 2026-07-27
 
@@ -49,7 +49,7 @@ reference and reported without any unsupported ANE claim.
 - [x] Implement a versioned MLX-LM baseline runner and result schema.
 - [x] Produce real local correctness, latency, and memory evidence.
 - [x] Verify canaries and provenance, including the explicit no-ANE boundary.
-- [ ] Pass independent fresh-agent review and address all findings.
+- [x] Pass independent fresh-agent review and address all findings.
 
 ## Verification and acceptance
 
@@ -62,7 +62,7 @@ reference and reported without any unsupported ANE claim.
 ## Artifact and privacy handling
 
 - Committed evidence: small structured results, source, environment files,
-  active plan, and draft sanitized worklog pending final review.
+  completed plan, and final sanitized worklog.
 - External artifacts: model weights remain under the artifact root.
 - Private/local material: large/raw traces and machine-private details.
 
@@ -90,8 +90,9 @@ reference and reported without any unsupported ANE claim.
 
 ## Progress and restart instructions
 
-Implementation, exact environment pins, real M4 evidence, and a draft public
-worklog are ready for independent review. A fresh agent should review the
-committed state, rerun the evidence validator and focused checks, address any
-findings, then finalize the worklog, move this plan to completed, and mark T50
-completed in the task graph.
+Implementation, exact environment pins, real M4 evidence, and the final public
+worklog are complete. Fresh independent review approved checkpoint
+`31f07dcfa3d40ee01fd5f3707c414778c8dcc3ce` with no findings after reproducing
+the evidence validator and dedicated, focused, full, task-status, and hygiene
+checks. The learner debrief remains intentionally unchecked and user-owned;
+it does not block the completed engineering task.

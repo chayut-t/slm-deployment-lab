@@ -3,7 +3,7 @@
 Date: 2026-07-27
 Task: `T50`
 Visibility: `public`
-Status: draft
+Status: completed
 
 ## Outcome
 
@@ -84,9 +84,18 @@ four-context sweep.
 - `uv run --extra dev --locked ruff check src tests`
   - Passed.
 - `python3 scripts/ai/render_task_status.py --check`
-  - Passed with T50 retained in progress pending independent review.
+  - Passed after T50 was marked completed and generated status was refreshed.
 - `python3 scripts/repo/check_hygiene.py --all`
-  - Passed with the final public file set.
+  - Passed with the final completed lifecycle file set.
+- Fresh independent review of checkpoint
+  `31f07dcfa3d40ee01fd5f3707c414778c8dcc3ce`
+  - Approved with no findings.
+  - Reproduced the evidence validator, Ruff, dedicated `16 passed`, focused
+    `42 passed, 3 skipped`, full `134 passed, 3 skipped`, task-status, hygiene,
+    and clean-status checks.
+  - Confirmed the exact T11 prompt digest binding, canonical timing semantics,
+    source Git blobs, external digest anchor, stream fences, no-look-ahead
+    TTFT, and one unreturned generation-loop look-ahead.
 
 ## Decisions and evidence
 
@@ -126,13 +135,15 @@ four-context sweep.
 
 ## Follow-up
 
-- Review state: implementation and evidence are ready for a fresh independent
-  agent; T50 remains in progress until that review passes.
-- After review: address any findings, set this worklog to completed, move the
-  active plan to completed, mark T50 completed in the task graph, and
-  regenerate task status. T51 will then need only its T12 dependency.
+- T50 engineering acceptance and independent review are complete. T51 now
+  needs only its T12 dependency.
+- The learner debrief below remains intentionally unchecked and user-owned. It
+  is a study follow-up, not a blocker for the completed engineering task.
 
 ## Learner debrief checklist
+
+These study items require explicit learner confirmation and therefore remain
+unchecked:
 
 - [ ] Compare the exact-token parity in
   `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` with the T11

@@ -270,13 +270,13 @@
       "id": "T50",
       "title": "MLX-LM baseline",
       "definition": "ai/tasks/definitions/T50.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T11"],
       "resource_locks": ["apple_m4_heavy"],
       "owner": "Codex T50 agent",
       "branch": "task/T50-mlx-lm-baseline",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md"
     },
     {
       "id": "T51",
