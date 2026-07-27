@@ -141,6 +141,12 @@ under `ai/worklogs/`. Draft or merely local work is not completed.
 
 ## Git and multi-agent rules
 
+- Default to native `git` commands for repository operations, including
+  status, diff, branch and worktree management, staging, commits, fetches,
+  merges, rebases, and pushes. Use `gh` only for GitHub-specific functionality
+  that `git` does not cover, such as pull requests, issues, checks, releases,
+  or GitHub API queries. Do not require `gh` authentication for an operation
+  that the configured Git remote can perform directly.
 - Use tool-neutral task branches such as `task/T31-qwen-workbench`. Historical
   `codex/TNN-*` branches remain valid and must not be renamed.
 - Use one active writer per file set. Coordinate ownership before editing
