@@ -1,0 +1,777 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/slm-lab/mlx-baseline-run-v2.schema.json",
+  "title": "SLM Lab T50 MLX-LM baseline run bundle v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_id",
+    "task_id",
+    "run_id",
+    "created_at",
+    "source_git_commit",
+    "protocol",
+    "schema",
+    "fixture_contracts",
+    "execution_claim",
+    "host",
+    "mlx_device",
+    "runtime",
+    "developer_tools",
+    "model",
+    "runner",
+    "canary",
+    "workload",
+    "measurement_policy",
+    "model_load_observation",
+    "samples",
+    "summary",
+    "process_peak_rss_bytes",
+    "memory_methods",
+    "limitations",
+    "evidence_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "schema_id": {
+      "const": "slm-lab-t50-mlx-baseline-run-v2"
+    },
+    "task_id": {
+      "const": "T50"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^t50-mlx-lm-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{12}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_git_commit": {
+      "$ref": "#/$defs/gitSha"
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256"],
+      "properties": {
+        "id": {
+          "const": "slm-lab-benchmark-v1"
+        },
+        "path": {
+          "const": "configs/workloads/benchmark-protocol-v1.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "const": "environments/macos-m4/mlx-baseline-run-v2.schema.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "fixture_contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "t10", "t11"],
+      "properties": {
+        "model": {
+          "$ref": "#/$defs/pathDigest"
+        },
+        "t10": {
+          "$ref": "#/$defs/pathDigest"
+        },
+        "t11": {
+          "$ref": "#/$defs/pathDigest"
+        }
+      }
+    },
+    "execution_claim": {
+      "const": "MLX-LM generation on the MLX Metal GPU backend; this is not Apple Neural Engine (ANE) execution evidence."
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_product_name",
+        "target_model_identifier",
+        "target_model_number",
+        "target_chip",
+        "target_memory_bytes",
+        "processor_topology",
+        "architecture",
+        "macos_version",
+        "macos_build",
+        "darwin_release"
+      ],
+      "properties": {
+        "target_product_name": {
+          "const": "Mac mini"
+        },
+        "target_model_identifier": {
+          "const": "Mac16,10"
+        },
+        "target_model_number": {
+          "const": "MU9D3VC/A"
+        },
+        "target_chip": {
+          "const": "Apple M4"
+        },
+        "target_memory_bytes": {
+          "const": 17179869184
+        },
+        "processor_topology": {
+          "const": "proc 10:4:6"
+        },
+        "architecture": {
+          "const": "arm64"
+        },
+        "macos_version": {
+          "const": "15.7.7"
+        },
+        "macos_build": {
+          "const": "24G720"
+        },
+        "darwin_release": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "mlx_device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_device",
+        "device_name",
+        "architecture",
+        "memory_size_bytes",
+        "max_recommended_working_set_size_bytes",
+        "max_buffer_length_bytes"
+      ],
+      "properties": {
+        "default_device": {
+          "const": "Device(gpu, 0)"
+        },
+        "device_name": {
+          "const": "Apple M4"
+        },
+        "architecture": {
+          "const": "applegpu_g16g"
+        },
+        "memory_size_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "max_recommended_working_set_size_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "max_buffer_length_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python_version",
+        "requirements_path",
+        "requirements_sha256",
+        "packages"
+      ],
+      "properties": {
+        "python_version": {
+          "const": "3.11.13"
+        },
+        "requirements_path": {
+          "const": "environments/macos-m4/mlx-baseline-requirements.txt"
+        },
+        "requirements_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "packages": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9][0-9A-Za-z.+-]*$"
+          }
+        }
+      }
+    },
+    "developer_tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_line_tools_version",
+        "command_line_tools_check",
+        "xcode_version",
+        "metal_compiler_version",
+        "instruments_version"
+      ],
+      "properties": {
+        "command_line_tools_version": {
+          "type": ["string", "null"]
+        },
+        "command_line_tools_check": {
+          "$ref": "#/$defs/commandResult"
+        },
+        "xcode_version": {
+          "$ref": "#/$defs/commandResult"
+        },
+        "metal_compiler_version": {
+          "$ref": "#/$defs/commandResult"
+        },
+        "instruments_version": {
+          "$ref": "#/$defs/commandResult"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision",
+        "checkpoint_dtype",
+        "weights_format",
+        "trust_remote_code",
+        "source_files"
+      ],
+      "properties": {
+        "id": {
+          "const": "Qwen/Qwen3-0.6B"
+        },
+        "revision": {
+          "const": "c1899de289a04d12100db370d81485cdf75e47ca"
+        },
+        "checkpoint_dtype": {
+          "const": "bfloat16"
+        },
+        "weights_format": {
+          "const": "safetensors"
+        },
+        "trust_remote_code": {
+          "const": false
+        },
+        "source_files": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "config.json",
+            "generation_config.json",
+            "model.safetensors",
+            "tokenizer.json",
+            "tokenizer_config.json"
+          ],
+          "properties": {
+            "config.json": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "generation_config.json": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "model.safetensors": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "tokenizer.json": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "tokenizer_config.json": {
+              "$ref": "#/$defs/fileEvidence"
+            }
+          }
+        }
+      }
+    },
+    "runner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "const": "src/slm_lab/backends/mlx_baseline.py"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "canary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tokenizer_canaries",
+        "tokenizer_canaries_passed",
+        "generation"
+      ],
+      "properties": {
+        "tokenizer_canaries": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "interface",
+              "expected_token_count",
+              "actual_token_count",
+              "expected_token_ids_sha256",
+              "actual_token_ids_sha256",
+              "exact_match"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "interface": {
+                "enum": ["raw_completion", "chat_template"]
+              },
+              "expected_token_count": {
+                "$ref": "#/$defs/positiveInteger"
+              },
+              "actual_token_count": {
+                "$ref": "#/$defs/positiveInteger"
+              },
+              "expected_token_ids_sha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "actual_token_ids_sha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "exact_match": {
+                "const": true
+              }
+            }
+          }
+        },
+        "tokenizer_canaries_passed": {
+          "const": true
+        },
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fixture_id",
+            "prompt_token_ids_sha256",
+            "reference_backend",
+            "candidate_backend",
+            "decoding",
+            "expected_generated_token_ids",
+            "actual_generated_token_ids",
+            "exact_token_match"
+          ],
+          "properties": {
+            "fixture_id": {
+              "const": "raw_ascii"
+            },
+            "prompt_token_ids_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "reference_backend": {
+              "const": "PyTorch CPU BF16 eager attention"
+            },
+            "candidate_backend": {
+              "const": "MLX-LM MLX Metal GPU"
+            },
+            "decoding": {
+              "const": "greedy argmax with lowest-token-ID tie break"
+            },
+            "expected_generated_token_ids": {
+              "$ref": "#/$defs/generatedTokens"
+            },
+            "actual_generated_token_ids": {
+              "$ref": "#/$defs/generatedTokens"
+            },
+            "exact_token_match": {
+              "const": true
+            }
+          }
+        }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "fixture_id",
+        "prompt_tokens",
+        "returned_output_tokens",
+        "scheduled_lookahead_tokens",
+        "batch_size",
+        "model_loading_included"
+      ],
+      "properties": {
+        "id": {
+          "const": "numerical_canary"
+        },
+        "fixture_id": {
+          "const": "raw_ascii"
+        },
+        "prompt_tokens": {
+          "const": 18
+        },
+        "returned_output_tokens": {
+          "const": 3
+        },
+        "scheduled_lookahead_tokens": {
+          "const": 1
+        },
+        "batch_size": {
+          "const": 1
+        },
+        "model_loading_included": {
+          "const": false
+        }
+      }
+    },
+    "measurement_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timing_class",
+        "warmup_repetitions",
+        "measured_repetitions",
+        "clock",
+        "generation_stream",
+        "pre_timer_fence",
+        "post_timer_fence",
+        "ttft_boundary",
+        "generation_loop_boundary",
+        "lookahead_accounting",
+        "model_load_boundary",
+        "sample_retention",
+        "quantile_method"
+      ],
+      "properties": {
+        "timing_class": {
+          "const": "generation_loop"
+        },
+        "warmup_repetitions": {
+          "const": 2
+        },
+        "measured_repetitions": {
+          "const": 10
+        },
+        "clock": {
+          "const": "time.perf_counter_ns"
+        },
+        "generation_stream": {
+          "const": "mlx_lm.generate.generation_stream"
+        },
+        "pre_timer_fence": {
+          "const": "mx.synchronize(generation_stream)"
+        },
+        "post_timer_fence": {
+          "const": "mx.synchronize(generation_stream)"
+        },
+        "ttft_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generation_loop_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lookahead_accounting": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_load_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sample_retention": {
+          "const": "all valid samples retained"
+        },
+        "quantile_method": {
+          "const": "Hyndman-Fan type 7 linear"
+        }
+      }
+    },
+    "model_load_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seconds",
+        "mlx_peak_memory_bytes",
+        "process_peak_rss_before_load_bytes",
+        "process_peak_rss_after_load_bytes",
+        "file_cache_state"
+      ],
+      "properties": {
+        "seconds": {
+          "$ref": "#/$defs/positiveNumber"
+        },
+        "mlx_peak_memory_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "process_peak_rss_before_load_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "process_peak_rss_after_load_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "file_cache_state": {
+          "const": "uncontrolled"
+        }
+      }
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "repetition",
+          "ttft_seconds",
+          "generation_loop_seconds",
+          "returned_output_tokens_per_second_including_prefill_and_lookahead",
+          "ttft_mlx_peak_memory_bytes",
+          "generation_loop_mlx_peak_memory_bytes",
+          "generated_token_ids",
+          "scheduled_lookahead_tokens"
+        ],
+        "properties": {
+          "repetition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "ttft_seconds": {
+            "$ref": "#/$defs/positiveNumber"
+          },
+          "generation_loop_seconds": {
+            "$ref": "#/$defs/positiveNumber"
+          },
+          "returned_output_tokens_per_second_including_prefill_and_lookahead": {
+            "$ref": "#/$defs/positiveNumber"
+          },
+          "ttft_mlx_peak_memory_bytes": {
+            "$ref": "#/$defs/positiveInteger"
+          },
+          "generation_loop_mlx_peak_memory_bytes": {
+            "$ref": "#/$defs/positiveInteger"
+          },
+          "generated_token_ids": {
+            "$ref": "#/$defs/generatedTokens"
+          },
+          "scheduled_lookahead_tokens": {
+            "const": 1
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ttft_seconds",
+        "generation_loop_seconds",
+        "returned_output_tokens_per_second_including_prefill_and_lookahead",
+        "ttft_mlx_peak_memory_bytes",
+        "generation_loop_mlx_peak_memory_bytes"
+      ],
+      "properties": {
+        "ttft_seconds": {
+          "$ref": "#/$defs/summary"
+        },
+        "generation_loop_seconds": {
+          "$ref": "#/$defs/summary"
+        },
+        "returned_output_tokens_per_second_including_prefill_and_lookahead": {
+          "$ref": "#/$defs/summary"
+        },
+        "ttft_mlx_peak_memory_bytes": {
+          "$ref": "#/$defs/summary"
+        },
+        "generation_loop_mlx_peak_memory_bytes": {
+          "$ref": "#/$defs/summary"
+        }
+      }
+    },
+    "process_peak_rss_bytes": {
+      "$ref": "#/$defs/positiveInteger"
+    },
+    "memory_methods": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mlx_peak_memory", "process_peak_rss"],
+      "properties": {
+        "mlx_peak_memory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "process_peak_rss": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "evidence_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "positiveNumber": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generatedTokens": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        {
+          "const": 576
+        },
+        {
+          "const": 8356
+        },
+        {
+          "const": 3950
+        }
+      ]
+    },
+    "pathDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "size_bytes"],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "$ref": "#/$defs/positiveInteger"
+        }
+      }
+    },
+    "commandResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "check_command", "unavailable_reason"],
+      "properties": {
+        "value": {
+          "type": ["string", "null"]
+        },
+        "check_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unavailable_reason": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_count_valid",
+        "minimum",
+        "maximum",
+        "mean",
+        "sample_standard_deviation",
+        "median",
+        "p90",
+        "p95",
+        "median_absolute_deviation",
+        "interquartile_range"
+      ],
+      "properties": {
+        "sample_count_valid": {
+          "const": 10
+        },
+        "minimum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maximum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "mean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sample_standard_deviation": {
+          "type": "number",
+          "minimum": 0
+        },
+        "median": {
+          "type": "number",
+          "minimum": 0
+        },
+        "p90": {
+          "type": "number",
+          "minimum": 0
+        },
+        "p95": {
+          "type": "number",
+          "minimum": 0
+        },
+        "median_absolute_deviation": {
+          "type": "number",
+          "minimum": 0
+        },
+        "interquartile_range": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

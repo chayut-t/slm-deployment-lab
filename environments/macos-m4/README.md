@@ -34,10 +34,18 @@ PYTHONPATH=src .ai-local/envs/t50-mlx/bin/python \
 ```
 
 The runner verifies the source checksums, all five T10 tokenizer canaries, and
-the T11 three-token generation oracle before writing results. It synchronizes
-MLX around warm measurement loops and records exact host, runtime, latency,
-and memory evidence. The result is an MLX Metal GPU baseline and makes no
-Apple Neural Engine (ANE) execution claim.
+the T11 three-token generation oracle before writing
+`results/raw/apple/baseline/mlx-lm-baseline-run-v2.json`. The single run bundle
+is validated against `mlx-baseline-run-v2.schema.json` and links its timestamp,
+run ID, source commit, runner, benchmark protocol, fixtures, host/runtime,
+workload, raw samples, and recomputed summaries.
+
+Timed regions fence `mlx_lm.generate.generation_stream` directly. The TTFT
+probe uses `generate_step(max_tokens=0)` to materialize the first token without
+scheduling a later decode. The three-token library loop includes MLX-LM's one
+unreturned look-ahead token and labels its throughput accordingly. The result
+is an MLX Metal GPU baseline and makes no Apple Neural Engine (ANE) execution
+claim.
 
 T51 owns the custom MLX runtime. T52 owns the four-context sweep, Instruments,
 MLX profiling, power, and thermal evidence. Null Xcode, Metal compiler, or
