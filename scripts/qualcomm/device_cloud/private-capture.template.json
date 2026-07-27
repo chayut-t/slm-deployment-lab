@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "observed_at": "REPLACE_WITH_UTC_TIMESTAMP",
+  "device": {
+    "product": "Snapdragon X Elite",
+    "form_factor": "Compute Reference Design",
+    "catalog_code": "REPLACE_WITH_OBSERVED_CATALOG_CODE",
+    "os": "REPLACE_WITH_EXACT_OS",
+    "chipset": "REPLACE_WITH_EXACT_CHIPSET",
+    "memory_bytes": 0
+  },
+  "runtime": {
+    "geniex_version": "REPLACE_WITH_EXACT_VERSION",
+    "route": "llama_cpp",
+    "compute_selection": "npu",
+    "placement_evidence": "REPLACE_WITH_OBSERVED_NPU_OR_HTP_EVIDENCE"
+  },
+  "model": {
+    "logical_name": "Qwen3-0.6B",
+    "source": "Qualcomm AI Hub Models",
+    "asset_runtime": "geniex_llamacpp",
+    "precision": "Q4_0",
+    "artifact_sha256": "REPLACE_WITH_LOWERCASE_SHA256"
+  },
+  "generation": {
+    "prompt_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+    "prompt_tokens": 0,
+    "output_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+    "output_tokens": 0,
+    "finish_reason": "REPLACE_WITH_eos_stop_OR_max_tokens",
+    "valid_multi_token_output_confirmed": false
+  },
+  "timings": {
+    "artifact_load": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "model_load": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "tokenization": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "prefill": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "first_decode": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "decode": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "generation_total": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    },
+    "request_total": {
+      "milliseconds": 0,
+      "source": "REPLACE_WITH_TIMING_SOURCE"
+    }
+  },
+  "synchronization": {
+    "backend": "qualcomm_device_cloud",
+    "method_id": "runtime_completion_fence",
+    "pre_timer_action": "REPLACE_WITH_OBSERVED_ACTION",
+    "post_timer_action": "REPLACE_WITH_OBSERVED_ACTION",
+    "evidence": "REPLACE_WITH_OBSERVED_COMPLETION_EVIDENCE"
+  },
+  "cost": {
+    "paid_resources_used": false,
+    "cost_usd": 0
+  }
+}

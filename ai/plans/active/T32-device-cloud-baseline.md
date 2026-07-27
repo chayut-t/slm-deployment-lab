@@ -47,9 +47,10 @@ distinct.
 
 ## Milestones
 
-- [ ] Audit T02 access evidence and current Device Cloud prerequisites.
-- [ ] Implement sanitized manifest/timing capture and reproducible commands.
-- [ ] Run or prepare the live Snapdragon X Elite GenieX generation session.
+- [x] Audit T02 access evidence and current Device Cloud prerequisites.
+- [x] Implement sanitized manifest/timing capture and reproducible commands.
+- [x] Prepare the live Snapdragon X Elite GenieX generation session.
+- [ ] Run the live session after learner login and free-minute confirmation.
 - [ ] Validate multi-token output and timing-boundary labels.
 - [ ] Pass independent review and address all findings.
 
@@ -63,8 +64,10 @@ distinct.
 
 ## Artifact and privacy handling
 
-- Committed evidence: sanitized environment/timing manifest, commands,
-  documentation, completed plan, and worklog.
+- Current committed evidence: capture tooling, commands, bounded result page,
+  active plan, and sanitized handoff.
+- Completion evidence: sanitized environment/timing manifest, completed plan,
+  and public worklog, only after the live acceptance criteria pass.
 - External artifacts: ready-made model/runtime assets remain external.
 - Private/local material: account/session identifiers and raw service output
   under `.ai-local/`.
@@ -73,9 +76,23 @@ distinct.
 
 - 2026-07-27: The task may pause only at the documented learner-authentication
   or live-device boundary; no paid resource is authorized.
+- 2026-07-27: Public catalog discovery confirmed a Snapdragon X Elite Compute
+  Reference Design (`CRD8380X`, Windows) and an `Unlock Free Minutes` label,
+  but the browser session is logged out. This does not establish account
+  minutes, allocated hardware, or availability.
+- 2026-07-27: The pinned v0.58.0 Qwen3-0.6B model card names the ready asset
+  `geniex_llamacpp` at `Q4_0`; this baseline is intentionally distinct from a
+  custom `qairt`/QNN bundle.
+- 2026-07-27: The coordinating agent approved one narrow ownership expansion
+  for `tests/deployment/qualcomm/test_device_cloud.py`; no existing T30 test
+  is modified.
 
 ## Progress and restart instructions
 
-Start from T02 evidence, make all capture tooling testable without live access,
-then attempt the live free Device Cloud session. Record any access boundary
-precisely without fabricating hardware results.
+The offline sanitizer, PowerShell workflow, fixed prompt, private template,
+tests, and bounded result page are ready. Resume by having the learner sign in
+to the Device Cloud tab, confirm free minutes, and start the X Elite CRD
+session. Follow `scripts/qualcomm/device_cloud/README.md`; keep raw logs under
+`.ai-local/profiles/T32/`. Do not complete the task unless the allocated-device
+identity, exact GenieX/runtime route, NPU/HTP evidence, valid multi-token
+output, and every timing boundary pass the sanitizer and learner review.
