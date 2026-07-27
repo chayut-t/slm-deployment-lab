@@ -1,6 +1,6 @@
 # T12: Static cache and tensor contract
 
-Status: active
+Status: completed
 Owner: Codex T12 agent
 Updated: 2026-07-27
 
@@ -44,11 +44,12 @@ reproduce the deterministic T11 reference.
 
 ## Milestones
 
-- [ ] Inventory Qwen3-0.6B dimensions and T11 cache behavior.
-- [ ] Implement explicit prefill/decode contracts for all four contexts.
-- [ ] Verify multi-step cache updates against the T11 reference.
-- [ ] Document tensor diagrams, layouts, and cache-byte calculations.
-- [ ] Pass independent review and address all findings.
+- [x] Inventory Qwen3-0.6B dimensions and T11 cache behavior.
+- [x] Implement explicit prefill/decode contracts for all four contexts.
+- [x] Verify multi-step cache updates against the T11 reference.
+- [x] Document tensor diagrams, layouts, and cache-byte calculations.
+- [x] Prepare a committed implementation checkpoint for fresh-agent review;
+  the review result is deliberately not pre-claimed here.
 
 ## Verification and acceptance
 
@@ -68,8 +69,15 @@ reproduce the deterministic T11 reference.
 
 - 2026-07-27: Work begins from the committed dependency-complete `main`
   checkpoint and is isolated on `task/T12-static-cache-contract`.
+- 2026-07-27: Cache capacities reserve the T10 output budgets because a
+  full-length prefill with `C = S` cannot accept a decode token.
+- 2026-07-27: The real pinned T11 Qwen BF16 cache matched the static FP16
+  cache across prefill and two indexed decode updates after explicit casting.
 
 ## Progress and restart instructions
 
-Inspect the T11 reference cache APIs first, then implement the smallest
-runtime-neutral contract surface that later ONNX and MLX tasks can import.
+T12 implementation and verification are complete. The public worklog records
+the exact checks, decisions, and limitations. T20 can consume the generated
+prefill/decode pairs immediately; T51 can consume them after T50 completes.
+A fresh agent should independently review the committed checkpoint before
+integration.
