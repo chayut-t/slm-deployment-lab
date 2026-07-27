@@ -115,8 +115,8 @@ graph TD
 | T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
-| T50 — MLX-LM baseline | in_progress | T11 | apple_m4_heavy | — |
-| T51 — Custom MLX runtime | blocked | T12, T50 | apple_m4_heavy | — |
+| T50 — MLX-LM baseline | completed | T11 | apple_m4_heavy | ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md |
+| T51 — Custom MLX runtime | ready | T12, T50 | apple_m4_heavy | — |
 | T52 — Apple profiling and context sweep | blocked | T13, T51 | apple_m4_heavy, t9_heavy_io | — |
 | T60 — ONNX Runtime CUDA context sweep | blocked | T02, T13, T20 | linux_nvidia_gpu, t9_heavy_io | — |
 | T70 — FastAPI backend contract | blocked | T33, T51, T60 | — | — |
@@ -128,10 +128,10 @@ graph TD
 
 ## Summary
 
-- ready: 2
-- in_progress: 2
-- blocked: 16
-- completed: 10
+- ready: 3
+- in_progress: 1
+- blocked: 15
+- completed: 11
 
 ## Resource capacities
 
