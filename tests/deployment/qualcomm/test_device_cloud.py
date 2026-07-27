@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import io
 import json
 import tempfile
 import unittest
 import unicodedata
+from contextlib import redirect_stderr
 from pathlib import Path
 
 from slm_lab.deployment.qualcomm.device_cloud import (
@@ -238,6 +240,22 @@ class DeviceCloudCaptureTests(unittest.TestCase):
             with self.assertRaises(DeviceCloudCaptureError):
                 normalize_capture(capture)
 
+    def test_huge_integer_timing_is_rejected_through_safe_cli_path(self) -> None:
+        capture = complete_capture()
+        capture["timings"]["prefill"]["milliseconds"] = 10**400
+
+        with self.assertRaisesRegex(DeviceCloudCaptureError, "finite number"):
+            normalize_capture(capture)
+        self._assert_cli_rejects(capture)
+
+    def test_huge_integer_cost_is_rejected_through_safe_cli_path(self) -> None:
+        capture = complete_capture()
+        capture["cost"]["cost_usd"] = 10**400
+
+        with self.assertRaisesRegex(DeviceCloudCaptureError, "finite number"):
+            normalize_capture(capture)
+        self._assert_cli_rejects(capture)
+
     def test_observed_at_is_strict_rfc3339_utc(self) -> None:
         for value in (
             "2026-07-27",
@@ -326,6 +344,29 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         self.assertIn(".ai-local/profiles/T32/", readme)
         self.assertIn("Status: in_progress", result)
         self.assertIn("Status: in_progress", handoff)
+
+    def _assert_cli_rejects(self, capture: dict[str, object]) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            capture_path = root / "capture.json"
+            manifest_path = root / "manifest.json"
+            capture_path.write_text(json.dumps(capture), encoding="utf-8")
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
+                main(
+                    [
+                        "--capture",
+                        str(capture_path),
+                        "--manifest",
+                        str(manifest_path),
+                    ]
+                )
+
+            self.assertEqual(caught.exception.code, 2)
+            self.assertIn("finite number", stderr.getvalue())
+            self.assertNotIn(str(10**400), stderr.getvalue())
+            self.assertFalse(manifest_path.exists())
 
 
 if __name__ == "__main__":

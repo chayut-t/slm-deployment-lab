@@ -124,7 +124,10 @@ def _positive_int(value: Any, field: str, *, minimum: int = 1) -> int:
 def _nonnegative_number(value: Any, field: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise DeviceCloudCaptureError(f"{field} must be a finite number")
-    result = float(value)
+    try:
+        result = float(value)
+    except (OverflowError, TypeError, ValueError):
+        raise DeviceCloudCaptureError(f"{field} must be a finite number >= 0") from None
     if not math.isfinite(result) or result < 0:
         raise DeviceCloudCaptureError(f"{field} must be a finite number >= 0")
     return result
@@ -484,13 +487,8 @@ def normalize_capture(capture: Mapping[str, Any]) -> dict[str, Any]:
         "cost",
         required={"paid_resources_used", "cost_usd"},
     )
-    if (
-        cost["paid_resources_used"] is not False
-        or isinstance(cost["cost_usd"], bool)
-        or not isinstance(cost["cost_usd"], (int, float))
-        or not math.isfinite(float(cost["cost_usd"]))
-        or cost["cost_usd"] != 0
-    ):
+    cost_usd = _nonnegative_number(cost["cost_usd"], "cost.cost_usd")
+    if cost["paid_resources_used"] is not False or cost_usd != 0:
         raise DeviceCloudCaptureError(
             "T32 capture must use no paid resources and report cost_usd 0"
         )
