@@ -140,6 +140,14 @@ Use both services:
 
 Qualcomm states that Workbench is currently free and exposes 50+ hosted devices. Device Cloud offers free minutes subject to availability and program terms. Verify access, quota, devices, versions, and job turnaround during the first project days because these are external and can change.
 
+For future Device Cloud tasks comparable to T32, prefer reproducible CLI,
+SDK, or REST workflows executed directly by Codex for session submission,
+status polling, device interaction, evidence capture, and session completion.
+Avoid browser-driven session lifecycle operations when a supported
+command-line or API path exists. Reserve the browser for unavoidable
+authentication, consent, unsupported operations, or recovery, and document
+the reason whenever that fallback is required.
+
 ### 3.2 Target-device policy
 
 | Target | Role | Required evidence |
@@ -1264,7 +1272,10 @@ manual Run workflow
   → upload GitHub workflow artifacts
 ```
 
-The GitHub runner is an orchestrator; Qualcomm hardware executes the model. Device Cloud interactive sessions remain manual.
+The GitHub runner is an orchestrator; Qualcomm hardware executes the model.
+Device Cloud interactive-session lifecycle operations should use the
+Codex-operated CLI, SDK, or REST path described in Section 3.1 rather than a
+browser whenever supported.
 
 Do not:
 

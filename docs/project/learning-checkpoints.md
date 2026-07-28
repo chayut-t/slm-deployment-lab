@@ -94,7 +94,7 @@ Learn:
 
 Study checkpoint:
 
-- [ ] Participate in or review the Device Cloud session and explain every
+- [x] Participate in or review the Device Cloud session and explain every
   timing boundary before T32 is accepted.
 
 Related notebook: `04_ai_hub_pipeline.ipynb`
@@ -126,7 +126,7 @@ Attention: Deep study
 
 Study checkpoint:
 
-- [ ] Draw the prefill/decode tensor contract and calculate KV-cache bytes for
+- [x] Draw the prefill/decode tensor contract and calculate KV-cache bytes for
   at least two context sizes.
 
 Related notebooks: `00_model_shape_memory_budget.ipynb`,
@@ -307,7 +307,7 @@ Attention: Review
 
 Study checkpoint:
 
-- [ ] Compare MLX-LM output and timings with the PyTorch reference.
+- [x] Compare MLX-LM output and timings with the PyTorch reference.
 
 ### T51 — Custom MLX runtime
 

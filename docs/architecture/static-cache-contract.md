@@ -166,16 +166,15 @@ T11 tolerances.
 
 ## Learner debrief
 
-- [ ] Draw both graph boundaries without consulting the diagrams.
-- [ ] Explain why `C = S` cannot support a decode after a full-length prefill.
-- [ ] Calculate the 112 MiB and 448 MiB prompt-resident figures from model
+- [x] Draw both graph boundaries without consulting the diagrams.
+- [x] Explain why `C = S` cannot support a decode after a full-length prefill.
+- [x] Calculate the 112 MiB and 448 MiB prompt-resident figures from model
   dimensions.
-- [ ] Calculate the S1024 and S4096 allocation figures including generation
+- [x] Calculate the S1024 and S4096 allocation figures including generation
   reserve.
-- [ ] Explain why 8 K/V heads, rather than 16 query heads, determine cache
+- [x] Explain why 8 K/V heads, rather than 16 query heads, determine cache
   bytes.
-- [ ] Trace one update from `valid_length` to `updated_valid_length` and name
+- [x] Trace one update from `valid_length` to `updated_valid_length` and name
   the exact cache slice that changes.
 
-Do not mark these study items complete without the learner's explicit
-confirmation.
+The learner explicitly confirmed these study items on 2026-07-28.

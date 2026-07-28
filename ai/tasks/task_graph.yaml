@@ -198,13 +198,13 @@
       "id": "T32",
       "title": "Device Cloud Qwen GenieX baseline and generation loop",
       "definition": "ai/tasks/definitions/T32.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T02"],
       "resource_locks": ["device_cloud_x_elite"],
       "owner": "Codex T32 agent",
       "branch": "task/T32-device-cloud-baseline",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-28-T32-device-cloud-baseline.md"
     },
     {
       "id": "T33",

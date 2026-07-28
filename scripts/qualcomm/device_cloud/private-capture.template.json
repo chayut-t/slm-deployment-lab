@@ -16,6 +16,11 @@
     "geniex_version": "REPLACE_WITH_EXACT_VERSION",
     "route": "llama_cpp",
     "compute_selection": "npu",
+    "version_evidence": {
+      "evidence_kind": "geniex_version_output",
+      "evidence_sha256": "REPLACE_WITH_LOWERCASE_SHA256",
+      "private_reference": "private_not_committed"
+    },
     "placement": {
       "status": "observed",
       "compute_unit": "NPU",
@@ -28,8 +33,8 @@
   },
   "model": {
     "logical_name": "Qwen3-0.6B",
-    "source": "Qualcomm AI Hub Models",
-    "source_version": "0.58.0",
+    "source": "REPLACE_WITH_OBSERVED_SUPPORTED_SOURCE",
+    "source_version": "REPLACE_WITH_OBSERVED_SOURCE_VERSION",
     "asset_runtime": "geniex_llamacpp",
     "precision": "Q4_0",
     "artifact_sha256": "REPLACE_WITH_LOWERCASE_SHA256",

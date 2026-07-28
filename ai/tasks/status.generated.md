@@ -109,7 +109,7 @@ graph TD
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
-| T32 — Device Cloud Qwen GenieX baseline and generation loop | in_progress | T02 | device_cloud_x_elite | — |
+| T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
 | T40 — AIMET and calibration environment | blocked | T10, T20 | t9_heavy_io | — |
 | T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
@@ -129,9 +129,9 @@ graph TD
 ## Summary
 
 - ready: 3
-- in_progress: 1
+- in_progress: 0
 - blocked: 15
-- completed: 11
+- completed: 12
 
 ## Resource capacities
 

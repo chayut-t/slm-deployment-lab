@@ -41,8 +41,25 @@ TIMING_SOURCES = {
     "instrumented_host_clock",
     "derived_from_runtime_counters",
 }
+TIMING_SOURCE_CONTRACT = {
+    "artifact_load": "instrumented_host_clock",
+    "model_load": "instrumented_host_clock",
+    "tokenization": "instrumented_host_clock",
+    "prefill": "geniex_runtime_report",
+    "first_decode": "derived_from_runtime_counters",
+    "decode": "derived_from_runtime_counters",
+    "generation_total": "derived_from_runtime_counters",
+    "request_total": "instrumented_host_clock",
+}
+MODEL_ARTIFACTS = {
+    (
+        "Hugging Face via GenieX",
+        "272676c9e0eb9f33a7719ba3d27482fbb445e801 Q4_0",
+    ): "33bcc57074ec7b6eada5a90651ee546ec0c2b271002c22baf9f1b2dd1e8f75cb",
+}
 DEVICE_EVIDENCE_KINDS = {"windows_system_information"}
 PLACEMENT_EVIDENCE_KINDS = {"geniex_runtime_log"}
+RUNTIME_VERSION_EVIDENCE_KINDS = {"geniex_version_output"}
 SYNCHRONIZATION_EVIDENCE_KINDS = {
     "instrumented_runtime_trace",
     "timestamped_runtime_log",
@@ -235,6 +252,7 @@ def _normalize_runtime(value: Any) -> dict[str, Any]:
             "geniex_version",
             "route",
             "compute_selection",
+            "version_evidence",
             "placement",
         },
     )
@@ -245,6 +263,18 @@ def _normalize_runtime(value: Any) -> dict[str, Any]:
     if runtime["compute_selection"] != "npu":
         raise DeviceCloudCaptureError(
             "runtime.compute_selection must be npu for the pinned T32 baseline"
+        )
+    version_evidence = _require_mapping(
+        runtime["version_evidence"], "runtime.version_evidence"
+    )
+    _require_exact_keys(
+        version_evidence,
+        "runtime.version_evidence",
+        required={"evidence_kind", "evidence_sha256", "private_reference"},
+    )
+    if version_evidence["evidence_kind"] not in RUNTIME_VERSION_EVIDENCE_KINDS:
+        raise DeviceCloudCaptureError(
+            "runtime.version_evidence.evidence_kind is not supported"
         )
     placement = _require_mapping(runtime["placement"], "runtime.placement")
     _require_exact_keys(
@@ -279,6 +309,17 @@ def _normalize_runtime(value: Any) -> dict[str, Any]:
         "version": _exact_version(runtime["geniex_version"], "runtime.geniex_version"),
         "route": runtime["route"],
         "compute_selection": runtime["compute_selection"],
+        "version_evidence": {
+            "evidence_kind": version_evidence["evidence_kind"],
+            "evidence_sha256": _sha256(
+                version_evidence["evidence_sha256"],
+                "runtime.version_evidence.evidence_sha256",
+            ),
+            "private_reference": _private_reference(
+                version_evidence["private_reference"],
+                "runtime.version_evidence.private_reference",
+            ),
+        },
         "placement": {
             "status": "observed",
             "compute_unit": "NPU",
@@ -314,17 +355,31 @@ def _normalize_model(value: Any) -> dict[str, Any]:
     )
     expected = {
         "logical_name": "Qwen3-0.6B",
-        "source": "Qualcomm AI Hub Models",
-        "source_version": "0.58.0",
         "asset_runtime": "geniex_llamacpp",
         "precision": "Q4_0",
     }
     for field, expected_value in expected.items():
         if model[field] != expected_value:
             raise DeviceCloudCaptureError(f"model.{field} must be {expected_value!r}")
+    source = (
+        _safe_text(model["source"], "model.source"),
+        _safe_text(model["source_version"], "model.source_version"),
+    )
+    if source not in MODEL_ARTIFACTS:
+        raise DeviceCloudCaptureError(
+            "model source must identify the observed immutable GenieX "
+            "Hugging Face artifact"
+        )
+    artifact_sha256 = _sha256(model["artifact_sha256"], "model.artifact_sha256")
+    if artifact_sha256 != MODEL_ARTIFACTS[source]:
+        raise DeviceCloudCaptureError(
+            "model.artifact_sha256 does not match the immutable source revision"
+        )
     return {
         **expected,
-        "artifact_sha256": _sha256(model["artifact_sha256"], "model.artifact_sha256"),
+        "source": source[0],
+        "source_version": source[1],
+        "artifact_sha256": artifact_sha256,
         "private_reference": _private_reference(
             model["private_reference"], "model.private_reference"
         ),
@@ -395,14 +450,19 @@ def _normalize_timings(value: Any) -> dict[str, Any]:
         required=set(TIMING_COMPONENTS),
     )
     result = {name: _timing(timings[name], f"timings.{name}") for name in timings}
+    for name, expected_source in TIMING_SOURCE_CONTRACT.items():
+        if result[name]["source"] != expected_source:
+            raise DeviceCloudCaptureError(
+                f"timings.{name}.source must be {expected_source}"
+            )
     generation_total = result["generation_total"]["milliseconds"]
     generation_components = sum(
         result[name]["milliseconds"] for name in ("prefill", "first_decode", "decode")
     )
-    if generation_total + 0.001 < generation_components:
+    if abs(generation_total - generation_components) > 0.001:
         raise DeviceCloudCaptureError(
-            "timings.generation_total cannot be smaller than "
-            "prefill + first_decode + decode"
+            "timings.generation_total must equal prefill + first_decode + "
+            "decode within rounding tolerance"
         )
     request_total = result["request_total"]["milliseconds"]
     request_components = (

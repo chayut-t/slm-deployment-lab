@@ -135,22 +135,20 @@ four-context sweep.
 
 ## Follow-up
 
-- T50 engineering acceptance and independent review are complete. T51 now
-  needs only its T12 dependency.
-- The learner debrief below remains intentionally unchecked and user-owned. It
-  is a study follow-up, not a blocker for the completed engineering task.
+- T50 engineering acceptance and independent review are complete. T12 and T50
+  are both completed, so T51 is ready.
+- The learner explicitly confirmed the debrief below on 2026-07-28.
 
 ## Learner debrief checklist
 
-These study items require explicit learner confirmation and therefore remain
-unchecked:
+These study items were explicitly confirmed by the learner on 2026-07-28:
 
-- [ ] Compare the exact-token parity in
+- [x] Compare the exact-token parity in
   `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` with the T11
   PyTorch reference.
-- [ ] Explain why the timing boundary in
+- [x] Explain why the timing boundary in
   `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` separates
   no-look-ahead TTFT from a library loop containing one look-ahead token.
-- [ ] Verify the exact host/runtime identity in
+- [x] Verify the exact host/runtime identity in
   `results/raw/apple/baseline/mlx-lm-baseline-run-v2.json` and explain why an
   MLX Metal result is not an ANE claim.

@@ -67,6 +67,49 @@ answer before setting `valid_multi_token_output_confirmed` to `true`. Record
 the UTF-8 SHA-256 of the exact prompt and exact output rather than copying
 their text into the public manifest.
 
+### Direct GenieX registry route and boundary probe
+
+The direct GenieX Hugging Face registry route can be run as follows:
+
+```powershell
+geniex pull unsloth/Qwen3-0.6B-GGUF:q4_0 `
+  --model-hub hf `
+  --skip-update `
+  --verbose
+
+powershell -ExecutionPolicy Bypass `
+  -File scripts\qualcomm\device_cloud\measure_qwen_boundaries.ps1 `
+  -ModelPath C:\PRIVATE\PATH\TO\Qwen3-0.6B-Q4_0.gguf `
+  -PrivateRoot C:\PRIVATE\T32
+```
+
+`measure_qwen_boundaries.ps1` pins GenieX to `HTP0`, applies the model's chat
+template with thinking disabled, tokenizes the exact formatted prompt through
+the installed `llama.cpp` vocabulary, and passes those token IDs to the same
+NPU model handle. It writes a timestamped private transcript and private JSON
+record. The direct registry provenance must be recorded as `Hugging Face via
+GenieX`, source version
+`272676c9e0eb9f33a7719ba3d27482fbb445e801 Q4_0`; the captured artifact hash
+matches that immutable Hugging Face revision. Do not relabel it as a
+`qai-hub-models` download or treat the rolling `q4_0` registry alias as the
+immutable provenance.
+
+The completion sanitizer currently accepts only that immutable
+source/revision/digest tuple. A future `qai-hub-models` capture must add its
+own independently verified immutable artifact mapping before it can emit a
+completed manifest.
+
+Before sanitizing, preserve the installed runtime identity from the executable
+rather than trusting literals embedded in the probe:
+
+```powershell
+geniex --version *> .ai-local\profiles\T32\geniex-version.private.txt
+```
+
+Hash that private file and use `geniex_version_output` as the runtime version
+evidence kind. The probe's runtime fields are convenience annotations; the
+separately captured version output is authoritative.
+
 ## Timing boundaries
 
 Do not infer missing metrics. Capture each boundary explicitly:
@@ -117,9 +160,11 @@ PYTHONPATH=src python3 scripts/qualcomm/device_cloud/capture.py \
 ```
 
 T31 owns `results/processed/qualcomm/`; T32 must not write there. During the
-live completion pass, review the local sanitized JSON and publish its
-normalized record or digest/link only in the T32-owned
-`docs/results/qualcomm/device-cloud.md`.
+live completion pass, review the local sanitized JSON but publish only the
+learner-approved generic setup and aggregate latency in the T32-owned
+`docs/results/qualcomm/device-cloud.md`. Under the current publication
+boundary, do not copy the normalized manifest or its evidence digests into
+tracked files.
 
 The validator fails closed unless the record proves multi-token generation,
 provides all timing boundaries with source labels, names observed NPU/HTP

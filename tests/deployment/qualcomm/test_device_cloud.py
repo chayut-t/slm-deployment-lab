@@ -26,13 +26,17 @@ from slm_lab.deployment.qualcomm.device_cloud import (
 SHA_A = "a" * 64
 SHA_C = "c" * 64
 SHA_D = "d" * 64
+QWEN_Q4_0_SHA256 = "33bcc57074ec7b6eada5a90651ee546ec0c2b271002c22baf9f1b2dd1e8f75cb"
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def timing(milliseconds: float) -> dict[str, object]:
+def timing(
+    milliseconds: float,
+    source: str = "geniex_runtime_report",
+) -> dict[str, object]:
     return {
         "milliseconds": milliseconds,
-        "source": "geniex_runtime_report",
+        "source": source,
         "evidence_sha256": SHA_D,
         "private_reference": PRIVATE_REFERENCE,
     }
@@ -57,6 +61,11 @@ def complete_capture() -> dict[str, object]:
             "geniex_version": "0.3.1",
             "route": "llama_cpp",
             "compute_selection": "npu",
+            "version_evidence": {
+                "evidence_kind": "geniex_version_output",
+                "evidence_sha256": SHA_D,
+                "private_reference": PRIVATE_REFERENCE,
+            },
             "placement": {
                 "status": "observed",
                 "compute_unit": "NPU",
@@ -69,11 +78,11 @@ def complete_capture() -> dict[str, object]:
         },
         "model": {
             "logical_name": "Qwen3-0.6B",
-            "source": "Qualcomm AI Hub Models",
-            "source_version": "0.58.0",
+            "source": "Hugging Face via GenieX",
+            "source_version": "272676c9e0eb9f33a7719ba3d27482fbb445e801 Q4_0",
             "asset_runtime": "geniex_llamacpp",
             "precision": "Q4_0",
-            "artifact_sha256": SHA_A,
+            "artifact_sha256": QWEN_Q4_0_SHA256,
             "private_reference": PRIVATE_REFERENCE,
         },
         "generation": {
@@ -87,14 +96,14 @@ def complete_capture() -> dict[str, object]:
             "valid_multi_token_output_confirmed": True,
         },
         "timings": {
-            "artifact_load": timing(10),
-            "model_load": timing(20),
-            "tokenization": timing(2),
+            "artifact_load": timing(10, "instrumented_host_clock"),
+            "model_load": timing(20, "instrumented_host_clock"),
+            "tokenization": timing(2, "instrumented_host_clock"),
             "prefill": timing(30),
-            "first_decode": timing(5),
-            "decode": timing(40),
-            "generation_total": timing(76),
-            "request_total": timing(109),
+            "first_decode": timing(5, "derived_from_runtime_counters"),
+            "decode": timing(40, "derived_from_runtime_counters"),
+            "generation_total": timing(75, "derived_from_runtime_counters"),
+            "request_total": timing(109, "instrumented_host_clock"),
         },
         "synchronization": {
             "backend": "qualcomm_device_cloud",
@@ -120,7 +129,10 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         )
         self.assertEqual(manifest["runtime"]["route"], "llama_cpp")
         self.assertEqual(manifest["model"]["asset_runtime"], "geniex_llamacpp")
-        self.assertEqual(manifest["model"]["source_version"], "0.58.0")
+        self.assertEqual(
+            manifest["model"]["source_version"],
+            "272676c9e0eb9f33a7719ba3d27482fbb445e801 Q4_0",
+        )
         self.assertEqual(manifest["model"]["precision"], "Q4_0")
         self.assertEqual(manifest["generation"]["output_tokens"], 9)
         self.assertEqual(
@@ -141,6 +153,27 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         )
         self.assertFalse(manifest["provenance"]["hosted_graph_latency_included"])
         self.assertEqual(len(manifest_sha256(manifest)), 64)
+
+    def test_observed_geniex_hugging_face_source_is_supported(self) -> None:
+        capture = complete_capture()
+
+        manifest = normalize_capture(capture)
+
+        self.assertEqual(manifest["model"]["source"], "Hugging Face via GenieX")
+
+    def test_model_artifact_must_match_immutable_source_revision(self) -> None:
+        capture = complete_capture()
+        capture["model"]["artifact_sha256"] = SHA_A
+
+        with self.assertRaisesRegex(DeviceCloudCaptureError, "artifact_sha256"):
+            normalize_capture(capture)
+
+    def test_unknown_model_source_is_rejected(self) -> None:
+        capture = complete_capture()
+        capture["model"]["source"] = "Unverified registry"
+
+        with self.assertRaisesRegex(DeviceCloudCaptureError, "model source"):
+            normalize_capture(capture)
 
     def test_private_text_is_rejected_without_echoing_value(self) -> None:
         capture = complete_capture()
@@ -197,6 +230,9 @@ class DeviceCloudCaptureTests(unittest.TestCase):
             lambda capture: capture["runtime"]["placement"].update(
                 {"evidence_sha256": "not-a-digest"}
             ),
+            lambda capture: capture["runtime"]["version_evidence"].update(
+                {"evidence_sha256": "not-a-digest"}
+            ),
             lambda capture: capture["timings"]["prefill"].update(
                 {"private_reference": "raw_log_path"}
             ),
@@ -219,6 +255,29 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         inconsistent["timings"]["generation_total"]["milliseconds"] = 1
         with self.assertRaisesRegex(DeviceCloudCaptureError, "generation_total"):
             normalize_capture(inconsistent)
+
+        inflated = complete_capture()
+        inflated["timings"]["generation_total"]["milliseconds"] = 100
+        with self.assertRaisesRegex(DeviceCloudCaptureError, "must equal"):
+            normalize_capture(inflated)
+
+    def test_each_timing_boundary_requires_its_semantic_source(self) -> None:
+        wrong_sources = {
+            "artifact_load": "geniex_runtime_report",
+            "model_load": "derived_from_runtime_counters",
+            "tokenization": "geniex_runtime_report",
+            "prefill": "instrumented_host_clock",
+            "first_decode": "geniex_runtime_report",
+            "decode": "instrumented_host_clock",
+            "generation_total": "instrumented_host_clock",
+            "request_total": "derived_from_runtime_counters",
+        }
+        for component, source in wrong_sources.items():
+            with self.subTest(component=component):
+                capture = complete_capture()
+                capture["timings"][component]["source"] = source
+                with self.assertRaisesRegex(DeviceCloudCaptureError, component):
+                    normalize_capture(capture)
 
     def test_paid_resource_record_is_rejected(self) -> None:
         capture = complete_capture()
@@ -329,6 +388,35 @@ class DeviceCloudCaptureTests(unittest.TestCase):
         self.assertEqual(script.count("Invoke-NativeChecked"), 5)
         self.assertIn(FIXED_PROMPT_SHA256, script)
 
+    def test_boundary_probe_pins_prompt_npu_and_all_timing_components(self) -> None:
+        script = (
+            REPO_ROOT
+            / "scripts"
+            / "qualcomm"
+            / "device_cloud"
+            / "measure_qwen_boundaries.ps1"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(FIXED_PROMPT_SHA256, script)
+        self.assertIn('$devicePointer = [T32Native]::Utf8("HTP0")', script)
+        self.assertIn("geniex_llm_apply_chat_template", script)
+        self.assertIn("llama_tokenize", script)
+        self.assertIn("input_ids_count = $tokenCount", script)
+        for component in (
+            "artifact_load",
+            "model_load",
+            "tokenization",
+            "prefill",
+            "first_decode",
+            "decode",
+            "generation_total",
+            "request_total",
+        ):
+            self.assertIn(component, script)
+        self.assertIn('request_total = "instrumented_host_clock"', script)
+        self.assertIn('$normalizedGeneratedText -eq "41 42 43 44 45"', script)
+        self.assertIn("valid_multi_token_output_confirmed", script)
+
     def test_publication_path_and_lifecycle_match_t32_ownership(self) -> None:
         readme = (
             REPO_ROOT / "scripts" / "qualcomm" / "device_cloud" / "README.md"
@@ -342,8 +430,22 @@ class DeviceCloudCaptureTests(unittest.TestCase):
 
         self.assertNotIn("--manifest results/processed/qualcomm", readme)
         self.assertIn(".ai-local/profiles/T32/", readme)
-        self.assertIn("Status: in_progress", result)
-        self.assertIn("Status: in_progress", handoff)
+        self.assertIn("Status: completed", result)
+        self.assertIn("learner directed", handoff)
+        self.assertIn("confidential", result)
+        self.assertIn("## Benchmark setup", result)
+        self.assertIn("## Published single-run latency", result)
+        self.assertIn("Requested compute", result)
+        self.assertIn("observed-placement evidence remains private", result)
+        for private_live_value in (
+            "CONFIDENTIAL_LIVE_CHIPSET_CANARY",
+            "99999999999",
+            "Confidential Windows build canary",
+            "9876.54321",
+            "ffffffffffffffff",
+        ):
+            self.assertNotIn(private_live_value, result)
+            self.assertNotIn(private_live_value, handoff)
 
     def _assert_cli_rejects(self, capture: dict[str, object]) -> None:
         with tempfile.TemporaryDirectory() as temporary:

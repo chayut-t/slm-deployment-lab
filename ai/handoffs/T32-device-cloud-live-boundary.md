@@ -1,99 +1,71 @@
-# T32 Device Cloud live boundary handoff
+# T32 Device Cloud live-capture handoff
 
-Date: 2026-07-27
+Date: 2026-07-28
 Task: `T32`
-Status: in_progress; learner action required for live-device execution
+Status: completed
 
-## Prepared outcome
+## Outcome
 
-A reproducible, privacy-safe Qwen3-0.6B GenieX/`llama_cpp` capture path is
-ready. No live generation, timing, runtime, or allocated-device result is
-claimed, and T32 remains `in_progress`.
+A free Qualcomm Device Cloud session was captured with the T32 fixed prompt
+and ready-made Qwen3-0.6B GenieX/`llama.cpp` route. The private validator
+currently accepts device identity, runtime identity, placement, multi-token
+generation, all eight timing boundaries, synchronization, model provenance,
+and zero paid-resource use.
 
-The Qualcomm Device Cloud public catalog showed a Snapdragon X Elite Compute
-Reference Design (`CRD8380X`, Windows), but the browser session was logged out
-and required learner login plus free-minute activation before the complete
-catalog or a session could be used. The live Device Cloud tab was left open
-for learner handoff. This external boundary does not change the task graph
-state from `in_progress` to `blocked`.
+The Device Cloud UI labels information about the allocated device
+confidential under its access agreement, and research found no express public
+permission for the complete live-device record. The learner directed
+publication of the generic reproducibility setup and aggregate latency
+measurements. Allocated-device evidence, observed placement proof, exact
+installed versions, session/account identifiers, logs, manifests, and
+evidence digests remain private. This learner-selected boundary is not
+presented as a legal determination.
 
-## Changes ready on the task branch
+## Reproducible public route
 
-- A closed-schema capture normalizer refuses to emit a completed manifest
-  without exact device/runtime identity, Qwen3-0.6B
-  `geniex_llamacpp`/`Q4_0` provenance, observed NPU/HTP evidence, confirmed
-  multi-token output, every timing boundary with a source, and zero
-  paid-resource use.
-- Evidence claims are structured enums backed by SHA-256 digests and
-  `private_not_committed` references. NPU placement must affirm an observed
-  HTP-backed run rather than merely contain the text `NPU` or `HTP`.
-- A Windows PowerShell session workflow, private-capture template, and operator
-  guide pin the current model-card fetch contract and normalized fixed-prompt
-  digest, stop on native-command failures, and use unique no-clobber
-  transcripts.
-- The public result page separates catalog discovery from allocated-device
-  evidence and GenieX/llama.cpp from custom QNN/QAIRT evidence.
-- Fourteen task-scoped regression tests cover the reviewed workflow defects. T32's original
-  owned paths omitted the completed T30 test subtree; the coordinating agent
-  explicitly approved the narrow ownership expansion for
-  `tests/deployment/qualcomm/test_device_cloud.py`. No existing T30 test was
-  modified.
+- Qualcomm AI Hub Models v0.58.0 publishes the
+  `Qwen3-0.6B`/`geniex_llamacpp`/`Q4_0` route.
+- The direct GenieX registry route is also supported by the capture tooling.
+- The public Q4_0 file is pinned to immutable Hugging Face revision
+  `272676c9e0eb9f33a7719ba3d27482fbb445e801` and SHA-256
+  `33bcc57074ec7b6eada5a90651ee546ec0c2b271002c22baf9f1b2dd1e8f75cb`.
+- `measure_qwen_boundaries.ps1` applies the model chat template with thinking
+  disabled, invokes the exact installed `llama.cpp` vocabulary tokenizer, and
+  passes the resulting IDs to one persistent generation call.
 
-## Evidence and decisions
+The direct registry source must not be relabelled as a
+`qai-hub-models==0.58.0` download. The rolling registry alias is not immutable;
+the public revision and artifact hash pin the actual model bytes.
 
-- T02 proves authenticated Workbench access only; its worklog leaves Device
-  Cloud minutes, X Elite availability, and a live session to T32.
-- Public catalog discovery on 2026-07-27 exposed the X Elite CRD and an
-  `Unlock Free Minutes` label, but not account minutes or allocated hardware.
-- Qualcomm AI Hub Models v0.58.0 publishes:
+## Timing and claim boundaries
 
-  ```text
-  qai-hub-models fetch Qwen3-0.6B --runtime geniex_llamacpp --precision q4_0
-  ```
+The record separates artifact open/map, model load, tokenization, prefill,
+first decode, remaining decode, generation total, and complete request wall
+time. The aggregate values are published in
+`docs/results/qualcomm/device-cloud.md`. Complete request includes the
+tokenizer subprocess and probe overhead from artifact open/map through
+generation completion. Device allocation, SSH transport, downloads, and
+interactive turnaround are excluded.
 
-- Current GenieX documentation distinguishes `llama_cpp` GGUF execution from
-  `qairt` precompiled-bundle execution. T32's ready-made route uses
-  `llama_cpp`; it cannot satisfy the custom-QNN path.
-- A completed capture must distinguish artifact load, model load,
-  tokenization, prefill, first decode, remaining decode, generation total, and
-  request total. Missing boundaries are a blocker, not permission to relabel
-  Workbench graph latency or session turnaround.
-- Raw and sanitized session files stay below `.ai-local/profiles/T32/`. T31
-  owns `results/processed/qualcomm/`; T32 publishes only the reviewed
-  normalized record or digest/link in its owned result page.
+This single acceptance capture is not a distribution benchmark. The
+ready-made GenieX/`llama.cpp` result does not prove the custom QNN/QAIRT
+static-graph path.
 
-## Verification at handoff
+## Private/public evidence split
 
-- `python -m unittest tests.deployment.qualcomm.test_device_cloud -v`:
-  14 tests passed.
-- `python -m pytest -q`: 125 passed, 3 skipped.
-- Repository-wide `unittest discover` was also attempted; it ran 93 tests but
-  reported the Torch-absent pytest import-skip as one import error. The same
-  suite passes under the repository's configured pytest runner, where that
-  dependency is correctly skipped.
-- `ruff check` across the T32 Python source, command, and tests: passed.
-- `ruff format --check` across the same paths: passed.
-- `python scripts/ai/render_task_status.py --check`: passed for 30 tasks.
-- `python scripts/repo/check_hygiene.py --all`: passed for 210 tracked and
-  untracked public files.
-- `git diff --check` and final ignored-status inspection: passed; only
-  task-scoped public files are present, with caches/artifacts ignored.
-- The PowerShell workflow could not be executed or syntax checked on the macOS
-  implementation host.
+- Private evidence root: `.ai-local/profiles/T32/qdc-2026-07-28/`.
+- Raw transcripts, environment identity, exact output, detailed timing
+  records, checksums, and sanitized manifest remain ignored.
+- Public result: `docs/results/qualcomm/device-cloud.md`.
+- Public live evidence is limited to the learner-approved generic setup and
+  aggregate latency measurements.
+- T31 owns `results/processed/qualcomm/`; T32 writes no result there.
+- No paid resource was used.
 
-## Resume procedure
+## Completion
 
-1. Learner signs in at `https://qdc.qualcomm.com/`, confirms free minutes, and
-   starts the X Elite CRD session. No paid resource is authorized.
-2. Follow `scripts/qualcomm/device_cloud/README.md`; keep raw logs under
-   `.ai-local/profiles/T32/`.
-3. Record allocated-device identity, exact GenieX version, runtime placement,
-   model artifact hash, token counts, output hash, and all timing values.
-4. If the installed GenieX build does not expose every timing boundary, add
-   trustworthy runtime/API instrumentation or preserve a bounded blocker. Do
-   not derive values from unrelated Workbench or session timings.
-5. Run the sanitizer and review the private/public split and every timing
-   boundary with the learner.
-6. Only after every T32 acceptance criterion is satisfied, create the public
-   worklog, set the graph worklog/status, render task status, and move the
-   active execution plan to completed.
+The final private evidence is frozen and checksum-verified. Engineering and
+publication work are complete. Fresh post-publication review and re-review
+approved the generic-setup, aggregate-latency, and privacy boundaries.
+The learner explicitly confirmed the timing, GenieX-versus-custom-QNN, and
+private/public evidence-split debrief on 2026-07-28.
