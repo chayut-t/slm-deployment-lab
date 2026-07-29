@@ -6,6 +6,7 @@ import copy
 import importlib.util
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -188,6 +189,34 @@ class GitSnapshotTests(unittest.TestCase):
         self.run_git(repository, "add", ".")
 
         result = self.run_hygiene(repository)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_pre_commit_uses_project_venv_without_system_python(self) -> None:
+        repository = self.make_repository()
+        venv_bin = repository / ".venv" / "bin"
+        venv_bin.mkdir(parents=True, exist_ok=True)
+        venv_python = venv_bin / "python"
+        venv_python.unlink(missing_ok=True)
+        venv_python.write_text(
+            f"#!/bin/sh\nexec {shlex.quote(sys.executable)} \"$@\"\n",
+            encoding="utf-8",
+        )
+        venv_python.chmod(0o755)
+
+        git_executable = shutil.which("git")
+        self.assertIsNotNone(git_executable)
+        isolated_bin = Path(self.addCleanupDirectory()) / "bin"
+        isolated_bin.mkdir()
+        (isolated_bin / "git").symlink_to(git_executable)
+
+        result = subprocess.run(
+            (str(repository / ".githooks" / "pre-commit"),),
+            cwd=repository,
+            env={**os.environ, "PATH": str(isolated_bin)},
+            text=True,
+            capture_output=True,
+            check=False,
+        )
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_staged_invalid_graph_cannot_hide_behind_valid_worktree(self) -> None:

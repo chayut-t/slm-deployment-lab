@@ -14,6 +14,7 @@ development.
 
 ## Start here
 
+- [Development setup](DEVELOPMENT.md)
 - [Project plan](docs/project/plan.md)
 - [Agent operating rules](AGENTS.md)
 - [Execution-plan conventions](PLANS.md)

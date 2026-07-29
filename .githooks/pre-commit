@@ -4,4 +4,29 @@ set -eu
 repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
 
-python3 scripts/repo/check_hygiene.py --staged
+python_cmd=""
+python_candidate="$repo_root/.venv/bin/python"
+if [ -x "$python_candidate" ] &&
+    "$python_candidate" -c 'import sys; raise SystemExit(sys.version_info[:2] != (3, 11))' >/dev/null 2>&1; then
+    python_cmd="$python_candidate"
+fi
+if [ -z "$python_cmd" ] && command -v uv >/dev/null 2>&1; then
+    python_candidate=$(
+        uv python find --managed-python --no-project 3.11.13 2>/dev/null || true
+    )
+    if [ -n "$python_candidate" ] &&
+        "$python_candidate" -c 'import sys; raise SystemExit(sys.version_info[:2] != (3, 11))' >/dev/null 2>&1; then
+        python_cmd="$python_candidate"
+    fi
+fi
+if [ -z "$python_cmd" ] && command -v python3 >/dev/null 2>&1; then
+    if python3 -c 'import sys; raise SystemExit(sys.version_info[:2] != (3, 11))' >/dev/null 2>&1; then
+        python_cmd="python3"
+    fi
+fi
+if [ -z "$python_cmd" ]; then
+    echo "error: Python 3.11.13 is required for repository hooks" >&2
+    exit 1
+fi
+
+"$python_cmd" scripts/repo/check_hygiene.py --staged

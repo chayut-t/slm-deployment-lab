@@ -29,6 +29,7 @@ __pycache__/
 # Frontend dependencies and builds
 node_modules/
 dist/
+/site/
 
 # Large local artifacts. The root entry may be a symlink to external storage.
 /artifacts
