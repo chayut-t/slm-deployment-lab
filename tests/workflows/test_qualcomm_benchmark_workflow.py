@@ -57,6 +57,34 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def prefill_specs(context: int) -> dict[str, dict[str, Any]]:
+    return {
+        "input_ids": {"shape": [1, context], "dtype": "int64"},
+        "attention_mask": {"shape": [1, context], "dtype": "int64"},
+        "position_ids": {"shape": [1, context], "dtype": "int64"},
+    }
+
+
+def decode_specs(context: int) -> dict[str, dict[str, Any]]:
+    capacity = {128: 160, 512: 576, 1024: 1152, 4096: 4224}[context]
+    specs = {
+        "input_ids": {"shape": [1, 1], "dtype": "int64"},
+        "attention_mask": {"shape": [1, capacity], "dtype": "int64"},
+        "position_ids": {"shape": [1, 1], "dtype": "int64"},
+    }
+    for layer in range(28):
+        specs[f"key_cache.{layer}"] = {
+            "shape": [1, 8, capacity, 128],
+            "dtype": "float16",
+        }
+        specs[f"value_cache.{layer}"] = {
+            "shape": [1, 8, capacity, 128],
+            "dtype": "float16",
+        }
+    specs["valid_length"] = {"shape": [1], "dtype": "int64"}
+    return specs
+
+
 class QualcommBenchmarkWorkflowTests(unittest.TestCase):
     def setUp(self) -> None:
         self.workflow, self.text = load_workflow()
@@ -289,21 +317,23 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             "schema_version": 2,
             "stage": "compile",
             "client_version": "0.53.0",
-            "device": {"name": "Snapdragon X Elite CRD"},
+            "device": {
+                "name": "Snapdragon X Elite CRD",
+                "os": "",
+                "attributes": [],
+            },
             "runtime": {"name": "QAIRT", "version": "2.45.0.260326154327"},
             "source_artifact": {
                 "path": "artifacts/qualcomm-request-bundle/inputs/model.onnx",
-                "logical_name": "qwen3-prefill-128-fp16.onnx",
+                "logical_name": "qwen3-0.6b-prefill-s128-fp16.onnx",
                 "sha256": sha256(source_path),
             },
             "output_artifact": (
                 "artifacts/qualcomm-actions-private/snapdragon-x-elite/"
                 "128/fp16/compiled.bin"
             ),
-            "output_logical_name": "qwen3-prefill-128-fp16.bin",
-            "input_specs": {
-                "input_ids": {"shape": [1, 128], "dtype": "int32"}
-            },
+            "output_logical_name": "qwen3-0.6b-prefill-s128-fp16.qnn.bin",
+            "input_specs": prefill_specs(128),
             "options": (
                 "--target_runtime qnn_context_binary "
                 "--qairt_version 2.45.0.260326154327"
@@ -335,6 +365,11 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
                 ),
                 "revision": revision,
                 "run_id": 42,
+            },
+            "source": {
+                "release_tag": "qualcomm-source-v1",
+                "asset_name": "qualcomm-source.zip",
+                "archive_sha256": "c" * 64,
             },
             "selection": {
                 "target": "snapdragon-x-elite",
@@ -379,6 +414,197 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         }
         return root, environment
 
+    def make_later_stage_bundle(
+        self,
+        stage: str,
+        *,
+        predecessor_mutator=None,
+        request_mutator=None,
+    ) -> tuple[Path, dict[str, str]]:
+        if stage not in {"inference", "profile"}:
+            raise ValueError(stage)
+        root = Path(tempfile.mkdtemp(prefix="slm-lab-t72-later-stage-test-"))
+        self.addCleanup(shutil.rmtree, root, True)
+        bundle_root = root / "artifacts" / "qualcomm-request-bundle"
+        tuple_root = bundle_root / "snapdragon-x-elite" / "128" / "fp16"
+        inputs_root = bundle_root / "inputs"
+        tuple_root.mkdir(parents=True)
+        inputs_root.mkdir(parents=True)
+
+        stem = "qwen3-0.6b-prefill-s128-fp16"
+        compiled_path = inputs_root / f"{stem}.qnn.bin"
+        compiled_path.write_bytes(b"synthetic-compiled")
+        compiled_sha = sha256(compiled_path)
+        predecessor = {
+            "schema_version": 2,
+            "manifest_type": "slm_lab.qualcomm.ai_hub.stage",
+            "stage": "compile",
+            "status": "success",
+            "graph_contract": {"input_specs": prefill_specs(128)},
+            "lineage": {
+                "source_artifacts": [
+                    {
+                        "role": "source_model",
+                        "logical_name": f"{stem}.onnx",
+                        "sha256": "d" * 64,
+                        "byte_size": 1,
+                    }
+                ]
+            },
+            "result": {
+                "target_artifact": {
+                    "role": "compiled_model",
+                    "logical_name": f"{stem}.qnn.bin",
+                    "sha256": compiled_sha,
+                    "byte_size": compiled_path.stat().st_size,
+                }
+            },
+        }
+        if predecessor_mutator is not None:
+            predecessor_mutator(predecessor)
+        predecessor_path = inputs_root / f"{stem}.compile-manifest.json"
+        predecessor_path.write_text(
+            json.dumps(predecessor, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+        request = {
+            "schema_version": 2,
+            "stage": stage,
+            "client_version": "0.53.0",
+            "device": {
+                "name": "Snapdragon X Elite CRD",
+                "os": "",
+                "attributes": [],
+            },
+            "runtime": {"name": "QAIRT", "version": "2.45.0.260326154327"},
+            "predecessor_manifest": (
+                "artifacts/qualcomm-request-bundle/inputs/"
+                f"{stem}.compile-manifest.json"
+            ),
+            "compiled_artifact": {
+                "path": (
+                    "artifacts/qualcomm-request-bundle/inputs/"
+                    f"{stem}.qnn.bin"
+                ),
+                "logical_name": f"{stem}.qnn.bin",
+                "sha256": compiled_sha,
+            },
+            "options": "--qairt_framework 2.45.0.260326154327",
+            "job_name": (
+                f"slm-lab-t72-snapdragon-x-elite-128-fp16-{stage}"
+            ),
+            "timeout_seconds": 3600,
+            "retry": False,
+        }
+        if stage == "inference":
+            dataset_path = inputs_root / f"{stem}.inputs.h5"
+            dataset_path.write_bytes(b"synthetic-dataset")
+            request.update(
+                {
+                    "input_dataset": {
+                        "path": (
+                            "artifacts/qualcomm-request-bundle/inputs/"
+                            f"{stem}.inputs.h5"
+                        ),
+                        "logical_name": f"{stem}.inputs.h5",
+                        "sha256": sha256(dataset_path),
+                    },
+                    "output_artifact": (
+                        "artifacts/qualcomm-actions-private/"
+                        "snapdragon-x-elite/128/fp16/outputs.h5"
+                    ),
+                    "output_logical_name": f"{stem}.outputs.h5",
+                }
+            )
+        else:
+            request.update(
+                {
+                    "raw_profile_output": (
+                        "artifacts/qualcomm-actions-private/"
+                        "snapdragon-x-elite/128/fp16/profile.json"
+                    ),
+                    "raw_profile_logical_name": f"{stem}.profile.json",
+                }
+            )
+        if request_mutator is not None:
+            request_mutator(request)
+        request_relative = Path(
+            f"snapdragon-x-elite/128/fp16/{stage}-request.json"
+        )
+        request_path = bundle_root / request_relative
+        request_path.write_text(
+            json.dumps(request, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+        files = []
+        for path in sorted(bundle_root.rglob("*")):
+            if path.is_file():
+                files.append(
+                    {
+                        "path": path.relative_to(bundle_root).as_posix(),
+                        "sha256": sha256(path),
+                    }
+                )
+        revision = "a" * 40
+        bundle_manifest = {
+            "schema_version": 1,
+            "producer": {
+                "workflow_path": (
+                    ".github/workflows/qualcomm-request-bundle.yml"
+                ),
+                "revision": revision,
+                "run_id": 42,
+            },
+            "source": {
+                "release_tag": "qualcomm-source-v1",
+                "asset_name": "qualcomm-source.zip",
+                "archive_sha256": "c" * 64,
+            },
+            "selection": {
+                "target": "snapdragon-x-elite",
+                "context": 128,
+                "precision": "fp16",
+                "stage": stage,
+            },
+            "request": {
+                "path": request_relative.as_posix(),
+                "sha256": sha256(request_path),
+            },
+            "files": files,
+        }
+        manifest_path = bundle_root / "bundle-manifest.json"
+        manifest_path.write_text(
+            json.dumps(bundle_manifest, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        environment = {
+            **os.environ,
+            "BUNDLE_ROOT": "artifacts/qualcomm-request-bundle",
+            "CONTEXT": "128",
+            "EXPECTED_BUNDLE_MANIFEST_SHA256": sha256(manifest_path),
+            "EXPECTED_PRODUCER_REVISION": revision,
+            "EXPECTED_PRODUCER_RUN_ID": "42",
+            "EXPECTED_PRODUCER_WORKFLOW": (
+                ".github/workflows/qualcomm-request-bundle.yml"
+            ),
+            "MANIFEST": (
+                "results/qualcomm-actions/snapdragon-x-elite/128/fp16/"
+                f"{stage}-manifest.json"
+            ),
+            "PRECISION": "fp16",
+            "PRIVATE_OUTPUT_ROOT": "artifacts/qualcomm-actions-private",
+            "PUBLIC_MANIFEST_ROOT": "results/qualcomm-actions",
+            "REQUEST": (
+                "artifacts/qualcomm-request-bundle/"
+                f"{request_relative.as_posix()}"
+            ),
+            "STAGE": stage,
+            "TARGET": "snapdragon-x-elite",
+        }
+        return root, environment
+
     def run_bundle_validator(
         self,
         root: Path,
@@ -403,6 +629,7 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         *,
         request_mutator=None,
         escaped_entry: bool = False,
+        unsafe_entry=None,
     ) -> tuple[Path, dict[str, str]]:
         root = Path(tempfile.mkdtemp(prefix="slm-lab-t72-producer-test-"))
         self.addCleanup(shutil.rmtree, root, True)
@@ -416,7 +643,11 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         request = {
             "schema_version": 2,
             "stage": "compile",
-            "device": {"name": "Snapdragon X Elite CRD"},
+            "device": {
+                "name": "Snapdragon X Elite CRD",
+                "os": "",
+                "attributes": [],
+            },
             "job_name": "slm-lab-t72-snapdragon-x-elite-128-fp16-compile",
         }
         if request_mutator is not None:
@@ -429,6 +660,8 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             source.writestr("inputs/model.onnx", b"synthetic-onnx")
             if escaped_entry:
                 source.writestr("../escaped.txt", b"escape")
+            if unsafe_entry is not None:
+                source.writestr(unsafe_entry, b"unsafe")
         environment = {
             **os.environ,
             "CONTEXT": "128",
@@ -436,6 +669,8 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             "PRODUCER_RUN_ID": "42",
             "PRECISION": "fp16",
             "SOURCE_ARCHIVE_SHA256": sha256(archive),
+            "SOURCE_ASSET_NAME": "qualcomm-source.zip",
+            "SOURCE_RELEASE_TAG": "qualcomm-source-v1",
             "STAGE": "compile",
             "TARGET": "snapdragon-x-elite",
         }
@@ -481,6 +716,14 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(manifest["producer"]["revision"], "a" * 40)
         self.assertEqual(manifest["producer"]["run_id"], 42)
+        self.assertEqual(
+            manifest["source"],
+            {
+                "release_tag": "qualcomm-source-v1",
+                "asset_name": "qualcomm-source.zip",
+                "archive_sha256": environment["SOURCE_ARCHIVE_SHA256"],
+            },
+        )
 
     def test_producer_rejects_wrong_reviewed_source_digest(self) -> None:
         root, environment = self.make_source_archive()
@@ -495,6 +738,16 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unsafe or duplicate path", result.stderr)
         self.assertFalse((root / "artifacts" / "escaped.txt").exists())
+
+    def test_producer_rejects_noncanonical_source_paths(self) -> None:
+        for path in (".", "inputs\\model.bin", "inputs//model.bin"):
+            with self.subTest(path=path):
+                root, environment = self.make_source_archive(
+                    unsafe_entry=path
+                )
+                result = self.run_producer_builder(root, environment)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("unsafe or duplicate path", result.stderr)
 
     def test_producer_rejects_mislabeled_source_tuple(self) -> None:
         def mislabel(request):
@@ -520,6 +773,53 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             step_names.index("Configure the client without printing the secret"),
         )
 
+    def test_valid_decode_t12_axes_are_accepted(self) -> None:
+        def make_decode(request):
+            request["input_specs"] = decode_specs(128)
+            request["source_artifact"]["logical_name"] = (
+                "qwen3-0.6b-decode-s128-fp16.onnx"
+            )
+            request["output_logical_name"] = (
+                "qwen3-0.6b-decode-s128-fp16.qnn.bin"
+            )
+
+        root, environment = self.make_compile_bundle(make_decode)
+        result = self.run_bundle_validator(root, environment)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_valid_inference_and_profile_predecessors_are_accepted(self) -> None:
+        for stage in ("inference", "profile"):
+            with self.subTest(stage=stage):
+                root, environment = self.make_later_stage_bundle(stage)
+                result = self.run_bundle_validator(root, environment)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_inference_predecessor_precision_conflict_is_rejected(self) -> None:
+        def predecessor_w8(predecessor):
+            predecessor["lineage"]["source_artifacts"][0]["logical_name"] = (
+                "qwen3-0.6b-prefill-s128-w8a8.onnx"
+            )
+
+        root, environment = self.make_later_stage_bundle(
+            "inference",
+            predecessor_mutator=predecessor_w8,
+        )
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("consistently bind precision label", result.stderr)
+
+    def test_profile_predecessor_context_conflict_is_rejected(self) -> None:
+        def predecessor_s512(predecessor):
+            predecessor["graph_contract"]["input_specs"] = prefill_specs(512)
+
+        root, environment = self.make_later_stage_bundle(
+            "profile",
+            predecessor_mutator=predecessor_s512,
+        )
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("exactly match a T12 tensor/axis contract", result.stderr)
+
     def test_bundle_with_mislabeled_request_tuple_is_rejected(self) -> None:
         def mislabel(request):
             request["job_name"] = (
@@ -530,6 +830,42 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         result = self.run_bundle_validator(root, environment)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("job name does not bind", result.stderr)
+
+    def test_bundle_with_contradictory_full_selector_is_rejected(self) -> None:
+        def contradict_selector(request):
+            request["device"]["os"] = "Android"
+
+        root, environment = self.make_compile_bundle(contradict_selector)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("full device selector conflicts", result.stderr)
+
+    def test_bundle_with_contradictory_precision_metadata_is_rejected(
+        self,
+    ) -> None:
+        def contradict_precision(request):
+            request["source_artifact"]["logical_name"] = (
+                "qwen3-0.6b-prefill-s128-w8a8.onnx"
+            )
+
+        root, environment = self.make_compile_bundle(contradict_precision)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("consistently bind precision label", result.stderr)
+
+    def test_coincidental_context_dimension_is_not_t12_evidence(self) -> None:
+        def contradict_context(request):
+            request["input_specs"] = {
+                "input_ids": {"shape": [1, 127], "dtype": "int64"},
+                "attention_mask": {"shape": [1, 127], "dtype": "int64"},
+                "position_ids": {"shape": [1, 127], "dtype": "int64"},
+                "decoy": {"shape": [1, 128], "dtype": "int64"},
+            }
+
+        root, environment = self.make_compile_bundle(contradict_context)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("exactly match a T12 tensor/axis contract", result.stderr)
 
     def test_bundle_with_input_path_escape_is_rejected(self) -> None:
         def escape(request):
@@ -545,6 +881,19 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         result = self.run_bundle_validator(root, environment)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("escaped its allowed runner-private root", result.stderr)
+
+    def test_normalizing_parent_traversal_is_rejected_before_resolution(
+        self,
+    ) -> None:
+        def traverse(request):
+            request["source_artifact"]["path"] = (
+                "artifacts/qualcomm-request-bundle/inputs/../inputs/model.onnx"
+            )
+
+        root, environment = self.make_compile_bundle(traverse)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("canonical repository-relative syntax", result.stderr)
 
     def test_bundle_with_wrong_artifact_digest_is_rejected(self) -> None:
         def corrupt_digest(request):
@@ -580,6 +929,25 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         result = self.run_bundle_validator(root, environment)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("identity or revision", result.stderr)
+
+    def test_bundle_with_invalid_source_provenance_is_rejected(self) -> None:
+        root, environment = self.make_compile_bundle()
+        manifest_path = (
+            root
+            / "artifacts"
+            / "qualcomm-request-bundle"
+            / "bundle-manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["source"]["archive_sha256"] = "not-a-reviewed-digest"
+        manifest_path.write_text(
+            json.dumps(manifest, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        environment["EXPECTED_BUNDLE_MANIFEST_SHA256"] = sha256(manifest_path)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("source archive digest is invalid", result.stderr)
 
     def test_time_and_concurrency_are_bounded(self) -> None:
         self.assertEqual(self.jobs["authorize"]["timeout-minutes"], "5")

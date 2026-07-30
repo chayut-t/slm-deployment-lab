@@ -150,6 +150,11 @@ The artifact root also contains `bundle-manifest.json`:
     "revision": "<exact 40-character dispatch commit>",
     "run_id": 123456789
   },
+  "source": {
+    "release_tag": "qualcomm-source-v1",
+    "asset_name": "qualcomm-source.zip",
+    "archive_sha256": "<reviewed source ZIP digest>"
+  },
   "selection": {
     "target": "snapdragon-x-elite",
     "context": 128,
@@ -181,23 +186,68 @@ copies the reviewed SHA-256 of the manifest into the dispatch input, so an
 immutable Actions artifact alone is not treated as evidence that its contents
 were reviewed.
 
-The request must use the exact T30 stage keys and bind its stage, exact hosted
-device selector, context, and precision label to the dispatch. T72 uses a
-canonical job-name contract:
+The manifest's source record must exactly contain the conservative release
+tag, asset name, and reviewed source ZIP digest used by the producer. The
+benchmark validates that closed schema and safe character/digest forms before
+using the request; the reviewed bundle-manifest digest binds their exact
+values.
+
+The request must use the exact T30 stage keys and bind its stage, full hosted
+device selector, context, and precision label to the dispatch. Canonical target
+selectors are:
+
+| Dispatch target | `name` | `os` | `attributes` |
+|---|---|---|---|
+| `snapdragon-x-elite` | `Snapdragon X Elite CRD` | empty | empty list |
+| `dragonwing-iq-9075` | `Dragonwing IQ-9075 EVK` | empty | empty list |
+| `snapdragon-8-elite` | `Snapdragon 8 Elite QRD` | empty | empty list |
+
+An omitted or conflicting `os`/`attributes` field is rejected even when the
+name matches. Empty values avoid asserting an unobserved service OS or
+attribute while retaining one canonical complete SDK selector.
+
+T72 uses a canonical job-name contract:
 
 ```text
 slm-lab-t72-<target>-<context>-<precision>-<stage>
 ```
 
-Compile input specs—or the predecessor compile manifest for inference and
-profile—must contain the selected static context. Inference/profile compiled
-artifact name and digest must match the predecessor manifest. This binding
-prevents a correctly located request from silently describing a different
-tuple; it still does not prove that hardware achieved the requested precision.
+The graph kind is identified only by exact equality with a frozen T12 input
+contract, not by finding the context integer somewhere in a shape:
 
-All JSON paths are repository-relative. Request JSON and every input artifact
-must resolve under `artifacts/qualcomm-request-bundle/`. Compile/inference/raw
-profile outputs must resolve under
+- Prefill requires exactly `input_ids`, `attention_mask`, and `position_ids`,
+  each `int64 [1, S]`.
+- Decode requires `int64 [1,1]` token/position IDs, `int64 [1,C]`
+  `attention_mask`, all 28 `key_cache.L` and `value_cache.L` tensors as
+  `float16 [1,8,C,128]`, and `int64 [1] valid_length`.
+- `(S,C)` must be exactly `(128,160)`, `(512,576)`, `(1024,1152)`, or
+  `(4096,4224)`.
+
+Inference/profile predecessor manifests must expose one of those exact input
+maps. Their compiled artifact name and digest must match the request.
+
+Precision is bound consistently through canonical logical metadata:
+
+```text
+qwen3-0.6b-<prefill|decode>-s<context>-<precision>.onnx
+qwen3-0.6b-<prefill|decode>-s<context>-<precision>.qnn.bin
+qwen3-0.6b-<prefill|decode>-s<context>-<precision>.inputs.h5
+qwen3-0.6b-<prefill|decode>-s<context>-<precision>.outputs.h5
+qwen3-0.6b-<prefill|decode>-s<context>-<precision>.profile.json
+```
+
+Source, compiled, dataset, output, and predecessor logical names are checked
+where applicable. This proves consistent labeling and lineage; it does **not**
+prove that a compiler accepted the precision or that hardware executed that
+arithmetic. Those claims still require stage evidence.
+
+All JSON paths use one canonical repository-relative spelling: no absolute
+path, empty component, `.`, `..`, backslash, duplicate separator, symlink
+component, or spelling that changes when normalized. Rejection happens before
+filesystem resolution, even if `..` would normalize back inside the allowed
+root. Request JSON and every input artifact must resolve under
+`artifacts/qualcomm-request-bundle/`. Compile/inference/raw profile outputs
+must resolve under
 `artifacts/qualcomm-actions-private/`. The sanitized manifest alone resolves
 under `results/qualcomm-actions/`. These roots are distinct, and path escapes
 or symlinks fail before the AI Hub secret is configured. T30 then repeats its
@@ -317,8 +367,10 @@ environment gates, exact producer workflow/revision checks, immutable
 bundle-manifest and file digests, tuple semantics, path confinement, minimal
 permissions, fixed script delegation, pinned actions/client, secret placement,
 cleanup, and sanitized-only upload. Adversarial fixtures prove that a
-successful wrong-producer run, a mislabeled tuple, and an escaped path fail
-before credential configuration.
+successful wrong-producer run, wrong revision/source provenance, contradictory
+full selector/precision/context, coincidental context dimension, malformed
+inference/profile predecessor, modified digest, and escaped or merely
+normalizing traversal path fail before credential configuration.
 
 T72 does **not** add or inspect a real secret, create the protected GitHub
 environment, stage or publish a release asset, produce a real request bundle,

@@ -59,19 +59,33 @@ inspected and no GitHub Actions or Qualcomm job was run.
 - Added executable adversarial regressions for successful wrong-producer runs,
   wrong producer revisions, wrong source/manifest digests, mislabeled request
   tuples, source ZIP path escapes, and request path escapes.
+- Second-review fixes require the complete canonical target selector object,
+  bind the selected precision label to every source/compiled/dataset/output
+  logical name and compile-predecessor lineage, and validate context using the
+  exact T12 prefill or decode tensor contract instead of any matching
+  dimension.
+- Producer manifests now record the exact source release tag, asset name, and
+  reviewed ZIP SHA-256, and the benchmark validates that fixed schema before
+  the secret-bearing step.
+- Producer and benchmark path handling rejects empty components, `.`, `..`,
+  backslashes, and every noncanonical POSIX spelling before path resolution.
+- Added inference/profile predecessor fixtures and adversarial regressions for
+  full-selector contradictions, precision/context lineage drift, coincidental
+  dimensions, traversal spellings, source-provenance drift, and valid exact
+  decode axes.
 
 ## Verification
 
 - Command:
   `PYTHONPATH=src python3 -m unittest discover -s tests/workflows -p 'test_*.py' -v`
-- Result: 22 focused producer/benchmark workflow tests passed.
+- Result: 32 focused producer/benchmark workflow tests passed.
 - Command:
   `PYTHONPATH=src <project-python> -m unittest tests.deployment.qualcomm.test_ai_hub -v`
 - Result: all 21 T30 adapter contract tests passed.
 - Command: `<project-python> -m ruff check tests/workflows`
 - Result: passed.
 - Command: `PYTHONPATH=src <project-python> -m pytest -q`
-- Result: with an isolated writable uv cache, 182 tests passed and six
+- Result: with an isolated writable uv cache, 192 tests passed and six
   intentional opt-in tests skipped. One T03 repository-automation test failed:
   `test_staged_graph_requires_matching_staged_status` assumes at least one
   dependency-ready task remains `planned`, while the public parallel-work
@@ -79,7 +93,7 @@ inspected and no GitHub Actions or Qualcomm job was run.
   T72 code was not in the traceback.
 - Command:
   `UV_CACHE_DIR=<writable-temp> PYTHONPATH=src <project-python> -m pytest -q -k 'not test_staged_graph_requires_matching_staged_status'`
-- Result: 182 tests passed, six intentional opt-in tests skipped, and the one
+- Result: 192 tests passed, six intentional opt-in tests skipped, and the one
   coordination-sensitive T03 test was explicitly deselected.
 - Commands: `python3 scripts/ai/render_task_status.py --check`,
   `python3 scripts/repo/check_hygiene.py --all`, and `git diff --check`.
@@ -99,6 +113,10 @@ inspected and no GitHub Actions or Qualcomm job was run.
   digest; it does not create a release or upload from a learner's machine.
   Protected-environment review remains the final human authorization before
   any quota-consuming submission.
+- Precision in T72 is a selected logical metadata label, not proof of observed
+  hardware arithmetic. The validator makes that label consistent across
+  source, compiled, dataset, output, profile, and predecessor evidence; only
+  sanitized external results can support an achieved-precision claim.
 - GitHub-hosted runner time and service turnaround are orchestration evidence,
   not Qualcomm device latency.
 

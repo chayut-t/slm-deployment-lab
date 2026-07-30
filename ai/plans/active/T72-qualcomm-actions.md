@@ -118,10 +118,17 @@ hardware boundaries work without creating secrets or running external jobs.
   expansion. The producer uses a content-addressed same-repository release
   asset as the non-dangling source mechanism; staging that asset remains an
   explicit learner-controlled prerequisite and is never performed by T72.
+- 2026-07-30: The second independent review required the semantic contract to
+  bind the full canonical device selector, logical precision metadata,
+  exact T12 tensor names/dtypes/axes, and compile predecessor lineage rather
+  than accepting partial selectors or coincidental dimensions.
+- 2026-07-30: Source-release tag, asset name, and reviewed archive digest now
+  cross the producer/consumer boundary explicitly. Relative bundle paths must
+  be canonical POSIX spellings before either workflow resolves them.
 
 ## Progress and restart instructions
 
-Review fixes are in progress. Validate the producer, immutable bundle manifest,
-selected request semantics, source/archive safety, and runner-private paths;
-add adversarial regressions, then rerun focused/full checks. Keep T72 in
-progress with no graph worklog until fresh review accepts it.
+Second-review fixes and adversarial regressions are implemented. Rerun focused
+and repository-wide checks, commit the exact candidate, and request a fresh
+independent rereview. Keep T72 in progress with no graph worklog until that
+review accepts it.

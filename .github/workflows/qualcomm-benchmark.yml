@@ -259,10 +259,28 @@ jobs:
 
           SHA256_LENGTH = 64
           REVISION_LENGTH = 40
-          TARGET_DEVICE_NAMES = {
-              "snapdragon-x-elite": "Snapdragon X Elite CRD",
-              "dragonwing-iq-9075": "Dragonwing IQ-9075 EVK",
-              "snapdragon-8-elite": "Snapdragon 8 Elite QRD",
+          CONTEXT_CAPACITIES = {
+              128: 160,
+              512: 576,
+              1024: 1152,
+              4096: 4224,
+          }
+          TARGET_DEVICE_SELECTORS = {
+              "snapdragon-x-elite": {
+                  "name": "Snapdragon X Elite CRD",
+                  "os": "",
+                  "attributes": [],
+              },
+              "dragonwing-iq-9075": {
+                  "name": "Dragonwing IQ-9075 EVK",
+                  "os": "",
+                  "attributes": [],
+              },
+              "snapdragon-8-elite": {
+                  "name": "Snapdragon 8 Elite QRD",
+                  "os": "",
+                  "attributes": [],
+              },
           }
           COMMON_REQUEST_KEYS = {
               "schema_version",
@@ -336,6 +354,19 @@ jobs:
               return set(value) == set(required) | (set(value) & set(optional))
 
 
+          def canonical_relative_path(value):
+              if not isinstance(value, str) or not value or "\\" in value:
+                  return False
+              segments = value.split("/")
+              if any(segment in {"", ".", ".."} for segment in segments):
+                  return False
+              pure_path = PurePosixPath(value)
+              return (
+                  not pure_path.is_absolute()
+                  and pure_path.as_posix() == value
+              )
+
+
           repo_root = Path.cwd().resolve()
 
 
@@ -359,8 +390,8 @@ jobs:
 
 
           def resolve_repo_path(raw, root, *, must_exist):
-              if not isinstance(raw, str) or not raw or Path(raw).is_absolute():
-                  fail("request paths must be nonempty repository-relative strings")
+              if not canonical_relative_path(raw):
+                  fail("request paths must use canonical repository-relative syntax")
               candidate = repo_root / raw
               current = repo_root
               for part in Path(raw).parts:
@@ -394,7 +425,14 @@ jobs:
           bundle = load_object(manifest_path, "bundle manifest")
           if not exact_keys(
               bundle,
-              {"schema_version", "producer", "selection", "request", "files"},
+              {
+                  "schema_version",
+                  "producer",
+                  "source",
+                  "selection",
+                  "request",
+                  "files",
+              },
           ):
               fail("bundle manifest fields do not match schema version 1")
           if bundle["schema_version"] != 1:
@@ -408,6 +446,7 @@ jobs:
           revision = os.environ["EXPECTED_PRODUCER_REVISION"]
           if (
               len(revision) != REVISION_LENGTH
+              or any(character not in "0123456789abcdef" for character in revision)
               or producer
               != {
                   "workflow_path": os.environ["EXPECTED_PRODUCER_WORKFLOW"],
@@ -416,6 +455,40 @@ jobs:
               }
           ):
               fail("bundle producer identity or revision does not match dispatch")
+
+          source = bundle["source"]
+          if not isinstance(source, dict) or not exact_keys(
+              source,
+              {"release_tag", "asset_name", "archive_sha256"},
+          ):
+              fail("bundle source provenance fields are invalid")
+          allowed_source_characters = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789._+-"
+          )
+          for field in ("release_tag", "asset_name"):
+              value = source[field]
+              if (
+                  not isinstance(value, str)
+                  or not 1 <= len(value) <= 128
+                  or not value[0].isalnum()
+                  or any(
+                      character not in allowed_source_characters
+                      for character in value
+                  )
+              ):
+                  fail("bundle source provenance value is unsafe")
+          source_sha = source["archive_sha256"]
+          if (
+              not isinstance(source_sha, str)
+              or len(source_sha) != SHA256_LENGTH
+              or any(
+                  character not in "0123456789abcdef"
+                  for character in source_sha
+              )
+          ):
+              fail("bundle source archive digest is invalid")
 
           expected_selection = {
               "target": os.environ["TARGET"],
@@ -437,13 +510,8 @@ jobs:
                   fail("bundle file entry is invalid")
               raw_path = entry["path"]
               digest = entry["sha256"]
-              if not isinstance(raw_path, str) or not raw_path:
-                  fail("bundle file path is invalid")
-              pure_path = PurePosixPath(raw_path)
               if (
-                  pure_path.is_absolute()
-                  or ".." in pure_path.parts
-                  or pure_path.as_posix() != raw_path
+                  not canonical_relative_path(raw_path)
                   or raw_path == "bundle-manifest.json"
                   or raw_path in file_digests
               ):
@@ -517,10 +585,10 @@ jobs:
               or request.get("retry", False) is not False
           ):
               fail("selected request base semantics do not match dispatch")
-          if request.get("device", {}).get("name") != TARGET_DEVICE_NAMES[
+          if request.get("device") != TARGET_DEVICE_SELECTORS[
               expected_selection["target"]
           ]:
-              fail("selected request device does not match dispatch target")
+              fail("selected request full device selector conflicts with target")
           expected_job_name = (
               f"slm-lab-t72-{expected_selection['target']}-"
               f"{expected_selection['context']}-{expected_selection['precision']}-"
@@ -528,6 +596,64 @@ jobs:
           )
           if request.get("job_name") != expected_job_name:
               fail("selected request job name does not bind the dispatch tuple")
+
+
+          def tensor_spec(shape, dtype):
+              return {"shape": list(shape), "dtype": dtype}
+
+
+          def t12_input_specs(graph_kind):
+              context = expected_selection["context"]
+              capacity = CONTEXT_CAPACITIES[context]
+              if graph_kind == "prefill":
+                  return {
+                      "input_ids": tensor_spec((1, context), "int64"),
+                      "attention_mask": tensor_spec((1, context), "int64"),
+                      "position_ids": tensor_spec((1, context), "int64"),
+                  }
+              specs = {
+                  "input_ids": tensor_spec((1, 1), "int64"),
+                  "attention_mask": tensor_spec((1, capacity), "int64"),
+                  "position_ids": tensor_spec((1, 1), "int64"),
+              }
+              for layer in range(28):
+                  shape = (1, 8, capacity, 128)
+                  specs[f"key_cache.{layer}"] = tensor_spec(
+                      shape, "float16"
+                  )
+                  specs[f"value_cache.{layer}"] = tensor_spec(
+                      shape, "float16"
+                  )
+              specs["valid_length"] = tensor_spec((1,), "int64")
+              return specs
+
+
+          def identify_t12_graph(input_specs):
+              matches = [
+                  graph_kind
+                  for graph_kind in ("prefill", "decode")
+                  if input_specs == t12_input_specs(graph_kind)
+              ]
+              if len(matches) != 1:
+                  fail(
+                      "input specs do not exactly match a T12 tensor/axis contract"
+                  )
+              return matches[0]
+
+
+          def expected_logical_names(graph_kind):
+              stem = (
+                  f"qwen3-0.6b-{graph_kind}-s"
+                  f"{expected_selection['context']}-"
+                  f"{expected_selection['precision']}"
+              )
+              return {
+                  "source": f"{stem}.onnx",
+                  "compiled": f"{stem}.qnn.bin",
+                  "dataset": f"{stem}.inputs.h5",
+                  "inference_output": f"{stem}.outputs.h5",
+                  "profile_output": f"{stem}.profile.json",
+              }
 
 
           def bundle_relative(path):
@@ -568,24 +694,9 @@ jobs:
           )
 
 
-          def specs_contain_context(specs):
-              if not isinstance(specs, dict) or not specs:
-                  return False
-              for spec in specs.values():
-                  if not isinstance(spec, dict):
-                      return False
-                  shape = spec.get("shape")
-                  if (
-                      isinstance(shape, list)
-                      and expected_selection["context"] in shape
-                  ):
-                      return True
-              return False
-
-
           if stage == "compile":
-              if not specs_contain_context(request.get("input_specs")):
-                  fail("compile input specs do not bind the selected context")
+              graph_kind = identify_t12_graph(request.get("input_specs"))
+              predecessor_artifact = None
           else:
               predecessor_path = resolve_repo_path(
                   request.get("predecessor_manifest"),
@@ -607,15 +718,25 @@ jobs:
                   != "slm_lab.qualcomm.ai_hub.stage"
                   or predecessor.get("stage") != "compile"
                   or predecessor.get("status") != "success"
-                  or not specs_contain_context(
-                      predecessor.get("graph_contract", {}).get("input_specs")
-                  )
               ):
-                  fail("predecessor compile manifest does not bind context")
+                  fail("predecessor is not a successful T30 compile manifest")
+              graph_kind = identify_t12_graph(
+                  predecessor.get("graph_contract", {}).get("input_specs")
+              )
               compiled = verified_artifacts["compiled_artifact"][1]
               predecessor_artifact = (
                   predecessor.get("result", {}).get("target_artifact", {})
               )
+              predecessor_sources = predecessor.get("lineage", {}).get(
+                  "source_artifacts"
+              )
+              if (
+                  not isinstance(predecessor_sources, list)
+                  or len(predecessor_sources) != 1
+                  or not isinstance(predecessor_sources[0], dict)
+              ):
+                  fail("predecessor source evidence is missing or ambiguous")
+              predecessor_source = predecessor_sources[0]
               if (
                   compiled.get("logical_name")
                   != predecessor_artifact.get("logical_name")
@@ -623,6 +744,57 @@ jobs:
                   != predecessor_artifact.get("sha256")
               ):
                   fail("compiled artifact does not match predecessor manifest")
+
+          logical_names = expected_logical_names(graph_kind)
+          if stage == "compile":
+              logical_metadata = {
+                  "source": request["source_artifact"].get("logical_name"),
+                  "compiled": request.get("output_logical_name"),
+              }
+              expected_logical_metadata = {
+                  "source": logical_names["source"],
+                  "compiled": logical_names["compiled"],
+              }
+          elif stage == "inference":
+              logical_metadata = {
+                  "compiled": request["compiled_artifact"].get("logical_name"),
+                  "predecessor_compiled": predecessor_artifact.get(
+                      "logical_name"
+                  ),
+                  "predecessor_source": predecessor_source.get(
+                      "logical_name"
+                  ),
+                  "dataset": request["input_dataset"].get("logical_name"),
+                  "output": request.get("output_logical_name"),
+              }
+              expected_logical_metadata = {
+                  "compiled": logical_names["compiled"],
+                  "predecessor_compiled": logical_names["compiled"],
+                  "predecessor_source": logical_names["source"],
+                  "dataset": logical_names["dataset"],
+                  "output": logical_names["inference_output"],
+              }
+          else:
+              logical_metadata = {
+                  "compiled": request["compiled_artifact"].get("logical_name"),
+                  "predecessor_compiled": predecessor_artifact.get(
+                      "logical_name"
+                  ),
+                  "predecessor_source": predecessor_source.get(
+                      "logical_name"
+                  ),
+                  "output": request.get("raw_profile_logical_name"),
+              }
+              expected_logical_metadata = {
+                  "compiled": logical_names["compiled"],
+                  "predecessor_compiled": logical_names["compiled"],
+                  "predecessor_source": logical_names["source"],
+                  "output": logical_names["profile_output"],
+              }
+          if logical_metadata != expected_logical_metadata:
+              fail(
+                  "logical metadata does not consistently bind precision label"
+              )
 
           print("bundle validation passed")
           PY

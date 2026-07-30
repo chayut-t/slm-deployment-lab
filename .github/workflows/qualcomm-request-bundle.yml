@@ -242,6 +242,8 @@ jobs:
           PRODUCER_RUN_ID: ${{ github.run_id }}
           PRECISION: ${{ inputs.precision }}
           SOURCE_ARCHIVE_SHA256: ${{ inputs.source_archive_sha256 }}
+          SOURCE_ASSET_NAME: ${{ inputs.source_asset_name }}
+          SOURCE_RELEASE_TAG: ${{ inputs.source_release_tag }}
           STAGE: ${{ inputs.stage }}
           TARGET: ${{ inputs.target }}
         shell: bash
@@ -260,10 +262,22 @@ jobs:
           MAX_FILES = 10_000
           MAX_UNCOMPRESSED_BYTES = 8 * 1024 * 1024 * 1024
           SHA256_LENGTH = 64
-          TARGET_DEVICE_NAMES = {
-              "snapdragon-x-elite": "Snapdragon X Elite CRD",
-              "dragonwing-iq-9075": "Dragonwing IQ-9075 EVK",
-              "snapdragon-8-elite": "Snapdragon 8 Elite QRD",
+          TARGET_DEVICE_SELECTORS = {
+              "snapdragon-x-elite": {
+                  "name": "Snapdragon X Elite CRD",
+                  "os": "",
+                  "attributes": [],
+              },
+              "dragonwing-iq-9075": {
+                  "name": "Dragonwing IQ-9075 EVK",
+                  "os": "",
+                  "attributes": [],
+              },
+              "snapdragon-8-elite": {
+                  "name": "Snapdragon 8 Elite QRD",
+                  "os": "",
+                  "attributes": [],
+              },
           }
 
 
@@ -315,12 +329,16 @@ jobs:
               for entry in entries:
                   raw_name = entry.filename
                   pure_path = PurePosixPath(raw_name)
+                  segments = raw_name.rstrip("/").split("/")
                   mode = entry.external_attr >> 16
                   if (
                       not raw_name
                       or "\\" in raw_name
                       or pure_path.is_absolute()
-                      or ".." in pure_path.parts
+                      or any(
+                          segment in {"", ".", ".."}
+                          for segment in segments
+                      )
                       or any(part.startswith(".") for part in pure_path.parts)
                       or pure_path.as_posix() != raw_name.rstrip("/")
                       or raw_name.rstrip("/") == "bundle-manifest.json"
@@ -378,8 +396,8 @@ jobs:
               or request.get("schema_version") != 2
               or request.get("stage") != selection["stage"]
               or request.get("job_name") != expected_job_name
-              or request.get("device", {}).get("name")
-              != TARGET_DEVICE_NAMES[selection["target"]]
+              or request.get("device")
+              != TARGET_DEVICE_SELECTORS[selection["target"]]
           ):
               fail("selected request does not match workload tuple")
 
@@ -414,6 +432,11 @@ jobs:
                   ),
                   "revision": os.environ["PRODUCER_REVISION"],
                   "run_id": int(os.environ["PRODUCER_RUN_ID"]),
+              },
+              "source": {
+                  "release_tag": os.environ["SOURCE_RELEASE_TAG"],
+                  "asset_name": os.environ["SOURCE_ASSET_NAME"],
+                  "archive_sha256": expected_archive_sha,
               },
               "selection": selection,
               "request": {
