@@ -54,6 +54,20 @@ layouts.
   - Passed after T51 completion metadata regeneration.
 - `python3 scripts/repo/check_hygiene.py --all`
   - Passed.
+- Fresh independent review of checkpoint
+  `97d05d0470189449f2fb12602cb51f1ccd8af0de`
+  - Approved with no implementation findings.
+  - Reproduced all `13 passed` real-MLX tests on the Apple M4.
+  - Independently compared real-model cached decode with full-forward
+    execution through both cache layouts. Top-1 agreed in both cases and the
+    maximum absolute FP32-logit difference after FP16 cache storage was
+    `0.00423`.
+  - The review environment produced three full-suite artifacts unrelated to
+    T51 behavior: two copied-virtualenv/pre-commit-hook checks reached a
+    sandboxed macOS Python/Metal abort, and one repository-automation check
+    requires a planned task whose dependencies are completed, but none existed
+    while T51 was intentionally held `in_progress` for review. Restoring T51
+    to `completed` makes T52 eligible and restores that lifecycle fixture.
 
 ## Decisions and evidence
 
