@@ -12,6 +12,7 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import platform
 import re
 import subprocess
 from dataclasses import dataclass
@@ -58,6 +59,9 @@ TASK_ID = "T20"
 EXPORTER_SOURCE_PATH = PROJECT_ROOT / "src/slm_lab/export/onnx_matrix.py"
 FROZEN_T10_BUNDLE_CANONICAL_SHA256 = (
     "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745"
+)
+FROZEN_EXPORT_CONFIG_SHA256 = (
+    "be885020992520443d11b883d890d1ceeac424648107007ef8332f37f629d147"
 )
 
 
@@ -130,6 +134,7 @@ class ExportConfig:
     model_contract_path: Path
     token_fixture: TokenFixtureBundle
     evidence_attestation: ExportAttestation
+    trusted_config_sha256: str
 
 
 @dataclass(frozen=True)
@@ -420,16 +425,53 @@ def _load_export_attestation(value: Any) -> ExportAttestation:
     )
 
 
-def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
-    """Load and strictly validate the committed export configuration."""
+def _trusted_export_config_bytes(path: Path | str) -> tuple[Path, bytes]:
+    """Return the one fixed config only when disk, HEAD, and code agree."""
 
-    source = Path(path)
+    source = Path(path).resolve()
+    expected_source = DEFAULT_CONFIG_PATH.resolve()
+    if source != expected_source:
+        raise ExportConfigurationError(
+            "T20 accepts only the fixed tracked export config "
+            f"{expected_source}, found {source}"
+        )
     try:
-        payload = json.loads(source.read_text(encoding="utf-8"))
+        raw = source.read_bytes()
+    except OSError as exc:
+        raise ExportConfigurationError(f"invalid export config {source}: {exc}") from exc
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != FROZEN_EXPORT_CONFIG_SHA256:
+        raise ExportConfigurationError(
+            "tracked T20 export config differs from its code-pinned SHA-256: "
+            f"expected {FROZEN_EXPORT_CONFIG_SHA256}, found {digest}"
+        )
+    relative = source.relative_to(PROJECT_ROOT).as_posix()
+    try:
+        committed = subprocess.check_output(
+            ["git", "show", f"HEAD:{relative}"],
+            cwd=PROJECT_ROOT,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ExportConfigurationError(
+            f"cannot read committed T20 export config HEAD:{relative}: {exc}"
+        ) from exc
+    if raw != committed:
+        raise ExportConfigurationError(
+            f"tracked T20 export config must exactly match HEAD:{relative}"
+        )
+    return source, raw
+
+
+def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
+    """Load the immutable, committed export configuration."""
+
+    source, raw = _trusted_export_config_bytes(path)
+    try:
+        payload = json.loads(raw)
         export = payload["export"]
         packages = payload["packages"]
         contexts = tuple(payload["contexts"])
-    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
         raise ExportConfigurationError(f"invalid export config {source}: {exc}") from exc
 
     if payload.get("schema_version") != 1 or payload.get("task_id") != TASK_ID:
@@ -492,7 +534,18 @@ def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
         model_contract_path=model_contract_path,
         token_fixture=token_fixture,
         evidence_attestation=evidence_attestation,
+        trusted_config_sha256=FROZEN_EXPORT_CONFIG_SHA256,
     )
+
+
+def _verify_trusted_config(config: ExportConfig) -> None:
+    """Reject parsed or constructed config state outside the trust root."""
+
+    trusted = load_export_config()
+    if config != trusted:
+        raise ExportConfigurationError(
+            "in-memory T20 export config differs from the immutable tracked config"
+        )
 
 
 def _legacy_cache(cache: Any) -> tuple[tuple[Any, Any], ...]:
@@ -1248,6 +1301,7 @@ def verify_manifest_evidence(
 ) -> None:
     """Reconstruct every deterministic field and reject any claim drift."""
 
+    _verify_trusted_config(config)
     validate_manifest("artifact", manifest)
     created_at = manifest.get("created_at")
     if not isinstance(created_at, str):
@@ -1311,6 +1365,14 @@ def _selected_contexts(requested: int | None, config: ExportConfig) -> tuple[int
 
 
 def _verify_runtime(config: ExportConfig) -> None:
+    _verify_trusted_config(config)
+    actual_python_version = platform.python_version()
+    expected_python_version = config.evidence_attestation.runtime_python_version
+    if actual_python_version != expected_python_version:
+        raise ExportConfigurationError(
+            "Python version mismatch: expected "
+            f"{expected_python_version}, found {actual_python_version}"
+        )
     _require_exact_version(_package_version("torch"), config.torch_version, "torch")
     _require_exact_version(
         _package_version("transformers"),

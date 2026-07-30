@@ -20,7 +20,7 @@ boundaries. No compiler, runtime-parity, accelerator-placement, or performance
 claim is made.
 
 The task remains `in_progress` and its task-graph worklog remains null while
-the first independent review findings await fresh rereview.
+the third independent-review remediation awaits fresh rereview.
 
 ## Changes
 
@@ -61,6 +61,16 @@ the first independent review findings await fresh rereview.
   pre-DynamicCache `14518d7...` ancestor with its matching source hash, and
   that change both Python fields to `9.9.9`. Both are rejected against the
   independent attestation.
+- Third-rereview remediation makes the fixed tracked export configuration an
+  immutable trust root: its exact bytes must match both a code-pinned SHA-256
+  and the `HEAD` Git blob at
+  `configs/models/qwen3-0.6b-onnx-export.json`.
+- Alternate config paths and modified in-memory `ExportConfig` instances are
+  rejected. Coherent config/manifest substitution regressions now cover every
+  attested field: run ID, exporter commit, runtime Python, source weights,
+  external data, and all graph hashes.
+- Runtime verification now compares the actual interpreter version with the
+  attested Python `3.11.15`, before package-version checks.
 
 ## Verification
 
@@ -134,6 +144,29 @@ the first independent review findings await fresh rereview.
     claimed ready task completes.
 - `/Users/chayut/projects/slm-deployment-lab/.venv/bin/ruff check src tests`
   - Passed after review remediation.
+
+### Third-rereview remediation verification
+
+- `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
+  SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src
+  /private/tmp/slm-t12-venv/bin/python -m
+  slm_lab.export.onnx_matrix validate`
+  - Passed under the exact attested Python 3.11.15 runtime after enforcing the
+    immutable config trust root.
+- `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
+  tests/export tests/contracts`
+  - `48 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
+    numerical gate already completed by T12.
+- `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
+  PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
+  -m pytest -q`
+  - `197 passed, 10 skipped, 1 failed`.
+  - The sole failure remains the concurrent-claim baseline
+    `GitSnapshotTests.test_staged_graph_requires_matching_staged_status`
+    `StopIteration`; no planned task has all dependencies completed while
+    T20, T51, and T72 remain concurrently `in_progress`.
+- `/Users/chayut/projects/slm-deployment-lab/.venv/bin/ruff check src tests`
+  - Passed.
 
 ## Decisions and evidence
 

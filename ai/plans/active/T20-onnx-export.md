@@ -54,6 +54,8 @@ commands, contracts, versions, and content hashes.
 - [x] Address P1 deterministic-manifest and exporter-provenance findings.
 - [x] Address P2 configured T10 fixture and workload-provenance findings.
 - [x] Anchor exporter revision and runtime Python outside the manifests.
+- [x] Bind configuration to the fixed code-pinned and HEAD-committed blob.
+- [x] Enforce actual Python against the recorded export runtime.
 - [ ] Pass fresh independent rereview.
 
 ## Verification and acceptance
@@ -99,11 +101,20 @@ commands, contracts, versions, and content hashes.
   run attestation in the export configuration now independently pins the
   DynamicCache-capable exporter commit, runtime Python, source weights, eight
   graph hashes, and external-data hash.
+- 2026-07-30: Third rereview found that callers could coherently substitute
+  the parsed configuration itself. Loading is now restricted to the fixed
+  tracked path whose bytes must match both a code-pinned digest and its exact
+  `HEAD` Git blob; every in-memory field is compared with a fresh trusted
+  parse before evidence validation.
+- 2026-07-30: Third rereview also found that Python was recorded but not
+  compared with the executing interpreter. Runtime validation now requires
+  actual Python `3.11.15`, with a direct mismatch regression.
 
 ## Progress and restart instructions
 
-Both second-rereview findings are implemented with coherent-tamper regressions,
-and the four manifests have been regenerated without changing their original
-creation timestamps. Run the focused/full checks recorded in the worklog,
-commit this attestation fix, and request another fresh independent rereview.
-Keep T20 `in_progress` with a null graph worklog until rereview passes.
+Both third-rereview findings are implemented with coherent-tamper regressions
+for every pinned field. Focused validation is green; the only repository-wide
+failure remains the known concurrent-claim fixture baseline recorded in the
+worklog. Commit this trust-root fix and request another fresh independent
+rereview. Keep T20 `in_progress` with a null graph worklog until rereview
+passes.

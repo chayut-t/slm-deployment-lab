@@ -60,13 +60,12 @@ def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     ) == config.contexts
 
 
-def test_export_config_rejects_context_drift(tmp_path: Path) -> None:
+def test_export_config_rejects_caller_supplied_path(tmp_path: Path) -> None:
     payload = json.loads(CONFIG.read_text(encoding="utf-8"))
-    payload["contexts"] = [128]
-    path = tmp_path / "invalid.json"
+    path = tmp_path / "copied.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
-    with pytest.raises(ExportConfigurationError, match="contexts must exactly"):
+    with pytest.raises(ExportConfigurationError, match="fixed tracked export config"):
         load_export_config(path)
 
 
@@ -81,13 +80,8 @@ def test_export_config_rejects_configured_fixture_with_stale_token_hash(
     fixture["context_workloads"][0]["token_ids"][0] += 1
     fixture_path = tmp_path / "tampered-token-fixtures.json"
     fixture_path.write_text(json.dumps(fixture), encoding="utf-8")
-    payload = json.loads(CONFIG.read_text(encoding="utf-8"))
-    payload["token_fixture"] = str(fixture_path)
-    config_path = tmp_path / "tampered-export-config.json"
-    config_path.write_text(json.dumps(payload), encoding="utf-8")
-
     with pytest.raises(ExportConfigurationError, match="S128.*hash drift"):
-        load_export_config(config_path)
+        onnx_matrix._load_token_fixture(fixture_path, str(fixture_path))
 
 
 def test_export_config_rejects_coherent_frozen_token_content_drift(
@@ -103,16 +97,21 @@ def test_export_config_rejects_coherent_frozen_token_content_drift(
     record["token_ids_sha256"] = canonical_json_sha256(record["token_ids"])
     fixture_path = tmp_path / "coherently-tampered-token-fixtures.json"
     fixture_path.write_text(json.dumps(fixture), encoding="utf-8")
-    payload = json.loads(CONFIG.read_text(encoding="utf-8"))
-    payload["token_fixture"] = str(fixture_path)
-    config_path = tmp_path / "tampered-export-config.json"
-    config_path.write_text(json.dumps(payload), encoding="utf-8")
-
     with pytest.raises(
         ExportConfigurationError,
         match="configured T10 token fixture is invalid|frozen canonical",
     ):
-        load_export_config(config_path)
+        onnx_matrix._load_token_fixture(fixture_path, str(fixture_path))
+
+
+def test_runtime_rejects_actual_python_version_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = load_export_config(CONFIG)
+    monkeypatch.setattr(onnx_matrix.platform, "python_version", lambda: "9.9.9")
+
+    with pytest.raises(ExportConfigurationError, match="Python version mismatch"):
+        onnx_matrix._verify_runtime(config)
 
 
 def test_example_inputs_use_exact_fixture_and_contract() -> None:
@@ -443,6 +442,134 @@ def test_manifest_verification_accepts_untampered_evidence() -> None:
         (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
     )
     _verify_s128_manifest(manifest)
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "run_id",
+        "exporter_commit",
+        "runtime_python_version",
+        "source_artifact_sha256",
+        "external_data_sha256",
+        "graph_hashes",
+    ),
+)
+def test_manifest_rejects_coherent_in_memory_attestation_substitution(
+    field: str,
+) -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    tampered = json.loads(json.dumps(manifest))
+    config = load_export_config(CONFIG)
+    attestation = config.evidence_attestation
+    prefill = _artifact_record(manifest["artifacts"]["prefill"])
+    decode = _artifact_record(manifest["artifacts"]["decode"])
+    source_weights_sha256 = manifest["source_artifact_sha256"]
+
+    if field == "run_id":
+        attestation = dataclasses.replace(attestation, run_id="substituted-run")
+    elif field == "exporter_commit":
+        older_commit = "14518d736110fe12b000e84c0738808002900b8f"
+        attestation = dataclasses.replace(
+            attestation,
+            exporter_commit=older_commit,
+        )
+        tampered["git_commit"] = older_commit
+        tampered["export_provenance"]["commit"] = older_commit
+        tampered["export_provenance"]["exporter_source"]["sha256"] = (
+            "429bc57e68967f91881e1ed0927320fce76220895dd2625e71ef79b99008c00a"
+        )
+    elif field == "runtime_python_version":
+        attestation = dataclasses.replace(
+            attestation,
+            runtime_python_version="9.9.9",
+        )
+        tampered["toolchain"]["python"] = "9.9.9"
+    elif field == "source_artifact_sha256":
+        source_weights_sha256 = "2" * 64
+        attestation = dataclasses.replace(
+            attestation,
+            source_artifact_sha256=source_weights_sha256,
+        )
+        tampered["source_artifact_sha256"] = source_weights_sha256
+    elif field == "external_data_sha256":
+        external_data_sha256 = "3" * 64
+        attestation = dataclasses.replace(
+            attestation,
+            external_data_sha256=external_data_sha256,
+        )
+        prefill = dataclasses.replace(
+            prefill,
+            external_data=tuple(
+                dataclasses.replace(item, sha256=external_data_sha256)
+                for item in prefill.external_data
+            ),
+        )
+        decode = dataclasses.replace(
+            decode,
+            external_data=tuple(
+                dataclasses.replace(item, sha256=external_data_sha256)
+                for item in decode.external_data
+            ),
+        )
+        for graph_kind in ("prefill", "decode"):
+            for item in tampered["artifacts"][graph_kind]["external_data"]:
+                item["sha256"] = external_data_sha256
+    else:
+        graph_sha256 = "4" * 64
+        attestation = dataclasses.replace(
+            attestation,
+            graph_hashes=tuple(
+                (
+                    context,
+                    graph_sha256 if context == 128 else prefill_sha256,
+                    decode_sha256,
+                )
+                for context, prefill_sha256, decode_sha256 in attestation.graph_hashes
+            ),
+        )
+        prefill = dataclasses.replace(prefill, sha256=graph_sha256)
+        tampered["artifacts"]["prefill"]["sha256"] = graph_sha256
+
+    tampered["export_provenance"]["run_attestation"] = attestation.as_dict()
+    forged_config = dataclasses.replace(
+        config,
+        evidence_attestation=attestation,
+    )
+
+    with pytest.raises(ExportConfigurationError, match="in-memory"):
+        verify_manifest_evidence(
+            tampered,
+            prompt_length=128,
+            config=forged_config,
+            prefill=prefill,
+            decode=decode,
+            source_weights_sha256=source_weights_sha256,
+            host_manifest_sha256=manifest["host_manifest_sha256"],
+        )
+
+
+def test_manifest_rejects_modified_in_memory_export_setting() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    config = dataclasses.replace(
+        load_export_config(CONFIG),
+        external_data_threshold_bytes=0,
+    )
+
+    with pytest.raises(ExportConfigurationError, match="in-memory"):
+        verify_manifest_evidence(
+            manifest,
+            prompt_length=128,
+            config=config,
+            prefill=_artifact_record(manifest["artifacts"]["prefill"]),
+            decode=_artifact_record(manifest["artifacts"]["decode"]),
+            source_weights_sha256=manifest["source_artifact_sha256"],
+            host_manifest_sha256=manifest["host_manifest_sha256"],
+        )
 
 
 @pytest.mark.parametrize(
