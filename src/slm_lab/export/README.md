@@ -42,8 +42,11 @@ Plain `validate` is intentionally stronger than schema validation. It
 re-hashes the external graph/data files, proves the historical exporter commit
 exists in the current branch ancestry, checks the exporter/config/model/T10
 Git blobs from that commit, reconstructs every deterministic manifest field,
-and rejects any claim or evidence drift. `created_at` is the only
-run-generated manifest field reused during reconstruction.
+and rejects any claim or evidence drift. The committed export configuration
+independently attests the required exporter commit, runtime Python, source
+weights, graph matrix, and external-data digest; the manifest cannot select
+alternate values. `created_at` is the only run-generated manifest field reused
+during reconstruction.
 
 Export evidence proves only that the pinned host toolchain produced
 ONNX-checker-valid graphs whose public I/O matches T12 and whose external

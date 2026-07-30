@@ -45,6 +45,10 @@ def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     assert config.transformers_version == "4.51.3"
     assert config.onnx_version == "1.18.0"
     assert config.external_data_threshold_bytes == 1024
+    assert config.evidence_attestation.exporter_commit == (
+        "631fd70bcff9b73b81c08a2a2e0127cad07f09ca"
+    )
+    assert config.evidence_attestation.runtime_python_version == "3.11.15"
     assert config.token_fixture.source_path == (
         ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
     )
@@ -385,8 +389,8 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
         )
         provenance = manifest["export_provenance"]
         assert provenance["commit"] == manifest["git_commit"]
-        assert provenance["runtime_python_version"] == (
-            manifest["toolchain"]["python"]
+        assert provenance["run_attestation"] == (
+            load_export_config(CONFIG).evidence_attestation.as_dict()
         )
         assert provenance["exporter_source"]["path"] == (
             "src/slm_lab/export/onnx_matrix.py"
@@ -448,7 +452,14 @@ def test_manifest_verification_accepts_untampered_evidence() -> None:
         (("chat_template_sha256",), "0" * 64),
         (("exporter_version",), "0.0.0"),
         (("toolchain", "python"), "0.0.0"),
-        (("export_provenance", "runtime_python_version"), "0.0.0"),
+        (
+            (
+                "export_provenance",
+                "run_attestation",
+                "runtime_python_version",
+            ),
+            "0.0.0",
+        ),
         (("toolchain", "torch"), "0.0.0"),
         (("toolchain", "transformers"), "0.0.0"),
         (("toolchain", "onnx"), "0.0.0"),
@@ -485,4 +496,36 @@ def test_manifest_verification_rejects_deterministic_claim_drift(
         ExportConfigurationError,
         match="manifest|exporter commit",
     ):
+        _verify_s128_manifest(tampered, evidence_manifest=manifest)
+
+
+def test_manifest_rejects_coherent_switch_to_pre_dynamic_cache_ancestor() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    tampered = json.loads(json.dumps(manifest))
+    older_commit = "14518d736110fe12b000e84c0738808002900b8f"
+    tampered["git_commit"] = older_commit
+    provenance = tampered["export_provenance"]
+    provenance["commit"] = older_commit
+    provenance["run_attestation"]["exporter_commit"] = older_commit
+    provenance["exporter_source"]["sha256"] = (
+        "429bc57e68967f91881e1ed0927320fce76220895dd2625e71ef79b99008c00a"
+    )
+
+    with pytest.raises(ExportConfigurationError, match="manifest"):
+        _verify_s128_manifest(tampered, evidence_manifest=manifest)
+
+
+def test_manifest_rejects_paired_runtime_python_tampering() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    tampered = json.loads(json.dumps(manifest))
+    tampered["toolchain"]["python"] = "9.9.9"
+    tampered["export_provenance"]["run_attestation"][
+        "runtime_python_version"
+    ] = "9.9.9"
+
+    with pytest.raises(ExportConfigurationError, match="manifest"):
         _verify_s128_manifest(tampered, evidence_manifest=manifest)

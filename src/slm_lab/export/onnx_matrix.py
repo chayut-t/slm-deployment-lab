@@ -12,7 +12,6 @@ import hashlib
 import importlib.metadata
 import json
 import os
-import platform
 import re
 import subprocess
 from dataclasses import dataclass
@@ -67,6 +66,54 @@ class ExportConfigurationError(ValueError):
 
 
 @dataclass(frozen=True)
+class ExportAttestation:
+    """Independent, committed identity of the completed export run."""
+
+    run_id: str
+    exporter_commit: str
+    runtime_python_version: str
+    source_artifact_sha256: str
+    external_data_sha256: str
+    graph_hashes: tuple[tuple[int, str, str], ...]
+
+    def graph_sha256(self, prompt_length: int, graph_kind: str) -> str:
+        if graph_kind not in {"prefill", "decode"}:
+            raise ExportConfigurationError(
+                f"attestation has no graph kind {graph_kind!r}"
+            )
+        match = next(
+            (
+                (prefill, decode)
+                for context, prefill, decode in self.graph_hashes
+                if context == prompt_length
+            ),
+            None,
+        )
+        if match is None:
+            raise ExportConfigurationError(
+                f"attestation has no S{prompt_length} graph hashes"
+            )
+        return match[0] if graph_kind == "prefill" else match[1]
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "run_id": self.run_id,
+            "exporter_commit": self.exporter_commit,
+            "runtime_python_version": self.runtime_python_version,
+            "source_artifact_sha256": self.source_artifact_sha256,
+            "external_data_sha256": self.external_data_sha256,
+            "graph_sha256": {
+                f"S{context}": {
+                    "prefill": prefill,
+                    "decode": decode,
+                }
+                for context, prefill, decode in self.graph_hashes
+            },
+        }
+
+
+@dataclass(frozen=True)
 class ExportConfig:
     """Exact, declarative settings for the reference ONNX matrix."""
 
@@ -82,6 +129,7 @@ class ExportConfig:
     source_path: Path
     model_contract_path: Path
     token_fixture: TokenFixtureBundle
+    evidence_attestation: ExportAttestation
 
 
 @dataclass(frozen=True)
@@ -288,6 +336,90 @@ def _load_token_fixture(path: Path, configured_path: str) -> TokenFixtureBundle:
     )
 
 
+def _load_export_attestation(value: Any) -> ExportAttestation:
+    if not isinstance(value, Mapping) or value.get("schema_version") != 1:
+        raise ExportConfigurationError(
+            "evidence_attestation must be a schema-version 1 mapping"
+        )
+    expected_keys = {
+        "schema_version",
+        "run_id",
+        "exporter_commit",
+        "runtime_python_version",
+        "source_artifact_sha256",
+        "external_data_sha256",
+        "graph_sha256",
+    }
+    if set(value) != expected_keys:
+        raise ExportConfigurationError(
+            "evidence_attestation fields differ from the frozen contract"
+        )
+    run_id = value["run_id"]
+    exporter_commit = value["exporter_commit"]
+    python_version = value["runtime_python_version"]
+    if not isinstance(run_id, str) or not re.fullmatch(
+        r"T20-[A-Za-z0-9._-]+",
+        run_id,
+    ):
+        raise ExportConfigurationError("invalid T20 evidence run_id")
+    if not isinstance(exporter_commit, str) or not re.fullmatch(
+        r"[0-9a-f]{40}",
+        exporter_commit,
+    ):
+        raise ExportConfigurationError(
+            "attested exporter_commit must be a full lowercase Git SHA"
+        )
+    if not isinstance(python_version, str) or not re.fullmatch(
+        r"[0-9]+\.[0-9]+\.[0-9]+",
+        python_version,
+    ):
+        raise ExportConfigurationError(
+            "attested runtime_python_version must be exact"
+        )
+    for field in ("source_artifact_sha256", "external_data_sha256"):
+        digest = value[field]
+        if not isinstance(digest, str) or not re.fullmatch(
+            r"[0-9a-f]{64}",
+            digest,
+        ):
+            raise ExportConfigurationError(
+                f"attestation {field} must be a SHA-256 digest"
+            )
+
+    graph_document = value["graph_sha256"]
+    if not isinstance(graph_document, Mapping) or set(graph_document) != {
+        f"S{context}" for context in CONTEXT_VARIANTS
+    }:
+        raise ExportConfigurationError(
+            "attestation graph hashes must cover the exact context matrix"
+        )
+    graph_hashes: list[tuple[int, str, str]] = []
+    for context in CONTEXT_VARIANTS:
+        pair = graph_document[f"S{context}"]
+        if not isinstance(pair, Mapping) or set(pair) != {"prefill", "decode"}:
+            raise ExportConfigurationError(
+                f"S{context} attestation must identify prefill and decode"
+            )
+        for kind in ("prefill", "decode"):
+            digest = pair[kind]
+            if not isinstance(digest, str) or not re.fullmatch(
+                r"[0-9a-f]{64}",
+                digest,
+            ):
+                raise ExportConfigurationError(
+                    f"S{context} {kind} attestation is not SHA-256"
+                )
+        graph_hashes.append((context, pair["prefill"], pair["decode"]))
+    return ExportAttestation(
+        run_id=run_id,
+        exporter_commit=exporter_commit,
+        runtime_python_version=python_version,
+        source_artifact_sha256=value["source_artifact_sha256"],
+        external_data_sha256=value["external_data_sha256"],
+        graph_hashes=tuple(graph_hashes),
+    )
+
+
 def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
     """Load and strictly validate the committed export configuration."""
 
@@ -319,6 +451,9 @@ def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
     token_fixture = _load_token_fixture(
         token_fixture_path,
         configured_token_fixture,
+    )
+    evidence_attestation = _load_export_attestation(
+        payload.get("evidence_attestation")
     )
     if contexts != tuple(CONTEXT_VARIANTS):
         raise ExportConfigurationError(
@@ -356,6 +491,7 @@ def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
         source_path=source.resolve(),
         model_contract_path=model_contract_path,
         token_fixture=token_fixture,
+        evidence_attestation=evidence_attestation,
     )
 
 
@@ -876,16 +1012,34 @@ def _blob_record(
 
 def _export_provenance(
     *,
-    git_commit: str,
     config: ExportConfig,
     prompt_length: int,
-    runtime_python_version: str,
 ) -> dict[str, Any]:
+    git_commit = config.evidence_attestation.exporter_commit
     _validate_exporter_commit(git_commit)
+    export_config_relative = _repository_relative(
+        config.source_path,
+        "export config",
+    )
+    historical_config = json.loads(
+        _git_blob(git_commit, export_config_relative).decode("utf-8")
+    )
+    current_config = _load_json_document(config.source_path, "export config")
+    current_export_settings = dict(current_config)
+    current_export_settings.pop("evidence_attestation", None)
+    if historical_config != current_export_settings:
+        raise ExportConfigurationError(
+            "current export settings differ from the attested exporter "
+            f"commit {git_commit}"
+        )
     workload = config.token_fixture.workload(prompt_length)
     return {
         "commit": git_commit,
-        "runtime_python_version": runtime_python_version,
+        "run_attestation": config.evidence_attestation.as_dict(),
+        "attestation_source": {
+            "path": export_config_relative,
+            "sha256": _sha256(config.source_path),
+        },
         "exporter_source": _blob_record(
             git_commit,
             EXPORTER_SOURCE_PATH,
@@ -896,7 +1050,7 @@ def _export_provenance(
             git_commit,
             config.source_path,
             "export config",
-            require_current_match=True,
+            require_current_match=False,
         ),
         "model_contract": _blob_record(
             git_commit,
@@ -931,19 +1085,43 @@ def _export_provenance(
     }
 
 
-def _git_commit() -> str:
-    value = subprocess.check_output(
-        ("git", "rev-parse", "HEAD"), cwd=PROJECT_ROOT, text=True
-    ).strip()
-    if len(value) != 40:
-        raise ExportConfigurationError("Git did not return a full commit SHA")
-    return value
-
-
 def _utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(
         timespec="seconds"
     ).replace("+00:00", "Z")
+
+
+def _validate_attested_artifacts(
+    *,
+    prompt_length: int,
+    config: ExportConfig,
+    prefill: OnnxArtifactRecord,
+    decode: OnnxArtifactRecord,
+    source_weights_sha256: str,
+) -> None:
+    attestation = config.evidence_attestation
+    if source_weights_sha256 != attestation.source_artifact_sha256:
+        raise ExportConfigurationError(
+            "source weights differ from the independent export attestation"
+        )
+    for record in (prefill, decode):
+        expected_graph_sha256 = attestation.graph_sha256(
+            prompt_length,
+            record.graph_kind,
+        )
+        if record.sha256 != expected_graph_sha256:
+            raise ExportConfigurationError(
+                f"S{prompt_length} {record.graph_kind} graph differs from "
+                "the independent export attestation"
+            )
+        if not record.external_data or any(
+            item.sha256 != attestation.external_data_sha256
+            for item in record.external_data
+        ):
+            raise ExportConfigurationError(
+                f"S{prompt_length} {record.graph_kind} external data differs "
+                "from the independent export attestation"
+            )
 
 
 def _manifest_payload(
@@ -953,11 +1131,16 @@ def _manifest_payload(
     prefill: OnnxArtifactRecord,
     decode: OnnxArtifactRecord,
     source_weights_sha256: str,
-    git_commit: str,
     host_manifest_sha256: str,
     created_at: str,
-    runtime_python_version: str | None = None,
 ) -> dict[str, Any]:
+    _validate_attested_artifacts(
+        prompt_length=prompt_length,
+        config=config,
+        prefill=prefill,
+        decode=decode,
+        source_weights_sha256=source_weights_sha256,
+    )
     model_contract = load_model_contract()
     prefill_contract = build_prefill_contract(prompt_length).as_dict()
     decode_contract = build_decode_contract(prompt_length).as_dict()
@@ -966,7 +1149,8 @@ def _manifest_payload(
         "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src "
         "python -m slm_lab.export.onnx_matrix"
     )
-    python_version = runtime_python_version or platform.python_version()
+    git_commit = config.evidence_attestation.exporter_commit
+    python_version = config.evidence_attestation.runtime_python_version
     return {
         "schema_version": 1,
         "model_id": model_contract.model_id,
@@ -1007,10 +1191,8 @@ def _manifest_payload(
         "created_at": created_at,
         "status": "exported_and_shape_validated",
         "export_provenance": _export_provenance(
-            git_commit=git_commit,
             config=config,
             prompt_length=prompt_length,
-            runtime_python_version=python_version,
         ),
         "variant_id": f"S{prompt_length}",
         "cache_capacity": CONTEXT_VARIANTS[prompt_length],
@@ -1067,24 +1249,10 @@ def verify_manifest_evidence(
     """Reconstruct every deterministic field and reject any claim drift."""
 
     validate_manifest("artifact", manifest)
-    git_commit = manifest.get("git_commit")
     created_at = manifest.get("created_at")
-    provenance = manifest.get("export_provenance")
-    recorded_python_version = (
-        provenance.get("runtime_python_version")
-        if isinstance(provenance, Mapping)
-        else None
-    )
-    if not isinstance(git_commit, str) or not isinstance(created_at, str):
+    if not isinstance(created_at, str):
         raise ExportConfigurationError(
-            f"S{prompt_length} manifest lacks exporter commit or creation time"
-        )
-    if not isinstance(recorded_python_version, str) or not re.fullmatch(
-        r"[0-9]+\.[0-9]+\.[0-9]+",
-        recorded_python_version,
-    ):
-        raise ExportConfigurationError(
-            f"S{prompt_length} manifest lacks exact runtime Python provenance"
+            f"S{prompt_length} manifest lacks creation time"
         )
     expected = _manifest_payload(
         prompt_length=prompt_length,
@@ -1092,10 +1260,8 @@ def verify_manifest_evidence(
         prefill=prefill,
         decode=decode,
         source_weights_sha256=source_weights_sha256,
-        git_commit=git_commit,
         host_manifest_sha256=host_manifest_sha256,
         created_at=created_at,
-        runtime_python_version=recorded_python_version,
     )
     if manifest != expected:
         differing_fields = sorted(
@@ -1246,13 +1412,7 @@ def run_validate(
             if destination.exists():
                 try:
                     prior = json.loads(destination.read_text(encoding="utf-8"))
-                    git_commit = prior["git_commit"]
                     created_at = prior["created_at"]
-                    prior_provenance = prior.get("export_provenance", {})
-                    runtime_python_version = prior_provenance.get(
-                        "runtime_python_version",
-                        prior["toolchain"]["python"],
-                    )
                 except (
                     OSError,
                     json.JSONDecodeError,
@@ -1263,19 +1423,15 @@ def run_validate(
                         f"cannot preserve provenance from {destination}: {exc}"
                     ) from exc
             else:
-                git_commit = _git_commit()
                 created_at = _utc_now()
-                runtime_python_version = platform.python_version()
             manifest = _manifest_payload(
                 prompt_length=prompt_length,
                 config=config,
                 prefill=records["prefill"],
                 decode=records["decode"],
                 source_weights_sha256=source_weights_sha256,
-                git_commit=git_commit,
                 host_manifest_sha256=host_manifest_sha256,
                 created_at=created_at,
-                runtime_python_version=runtime_python_version,
             )
             validate_manifest("artifact", manifest)
             destination.write_text(

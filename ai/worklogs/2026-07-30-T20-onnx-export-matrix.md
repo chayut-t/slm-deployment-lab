@@ -52,6 +52,15 @@ the first independent review findings await fresh rereview.
   recorded toolchain versions/settings, status, commands, input/cache
   summaries, claim boundaries, source provenance, artifact hashes, configured
   fixture path, stale workload hashes, and coherent token-content tampering.
+- Second-rereview remediation adds an independent committed run attestation to
+  the export configuration. It pins exporter commit `631fd70...` (the
+  DynamicCache fix), actual Python `3.11.15`, source-weight hash, every graph
+  hash, and the shared external-data hash rather than trusting values selected
+  by each manifest.
+- Added coherent-tamper regressions that change the manifest to the valid but
+  pre-DynamicCache `14518d7...` ancestor with its matching source hash, and
+  that change both Python fields to `9.9.9`. Both are rejected against the
+  independent attestation.
 
 ## Verification
 
@@ -110,12 +119,12 @@ the first independent review findings await fresh rereview.
     data.
 - `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
   tests/export tests/contracts`
-  - `38 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
+  - `40 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
     numerical gate already completed by T12.
 - `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
   PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
   -m pytest -q`
-  - `187 passed, 10 skipped, 1 failed`.
+  - `189 passed, 10 skipped, 1 failed`.
   - The sole failure is the known claim-baseline
     `GitSnapshotTests.test_staged_graph_requires_matching_staged_status`
     `StopIteration`: while T20, T51, and T72 are concurrently `in_progress`,

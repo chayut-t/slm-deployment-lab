@@ -53,6 +53,7 @@ commands, contracts, versions, and content hashes.
 - [x] Prepare the implementation and evidence for independent review.
 - [x] Address P1 deterministic-manifest and exporter-provenance findings.
 - [x] Address P2 configured T10 fixture and workload-provenance findings.
+- [x] Anchor exporter revision and runtime Python outside the manifests.
 - [ ] Pass fresh independent rereview.
 
 ## Verification and acceptance
@@ -65,8 +66,8 @@ commands, contracts, versions, and content hashes.
 
 ## Artifact and privacy handling
 
-- Committed evidence: implementation, tests, configuration, manifests,
-  completed plan, and sanitized worklog.
+- Committed evidence: implementation, tests, configuration/attestation,
+  manifests, active plan, and sanitized in-progress worklog.
 - External artifacts: ONNX protobufs and data shards under
   `SLM_LAB_ARTIFACT_ROOT/onnx/reference/T20/`.
 - Private/local material: raw command logs and agent session identifiers only.
@@ -93,11 +94,16 @@ commands, contracts, versions, and content hashes.
   Configuration now resolves the fixture actually consumed by export, runs
   the frozen T10 validators and canonical digest check, and records the exact
   workload prompt/token hashes in each manifest.
+- 2026-07-30: Second rereview found that a coherently changed manifest could
+  select another valid ancestor or invent a paired Python version. A committed
+  run attestation in the export configuration now independently pins the
+  DynamicCache-capable exporter commit, runtime Python, source weights, eight
+  graph hashes, and external-data hash.
 
 ## Progress and restart instructions
 
-Both independent-review findings are implemented with adversarial regressions
+Both second-rereview findings are implemented with coherent-tamper regressions,
 and the four manifests have been regenerated without changing their original
-export commit or creation timestamps. Run the focused/full checks recorded in
-the worklog, commit the review fixes, and request a fresh independent rereview.
-Keep T20 `in_progress` with a null graph worklog until that rereview passes.
+creation timestamps. Run the focused/full checks recorded in the worklog,
+commit this attestation fix, and request another fresh independent rereview.
+Keep T20 `in_progress` with a null graph worklog until rereview passes.
