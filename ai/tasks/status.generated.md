@@ -104,7 +104,7 @@ graph TD
 | T11 — Deterministic PyTorch reference | completed | T10 | — | ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md |
 | T12 — Static cache and tensor contract | completed | T11 | — | ai/worklogs/2026-07-27-T12-static-cache-contract.md |
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
-| T20 — Four-context ONNX export matrix | ready | T12 | t9_heavy_io | — |
+| T20 — Four-context ONNX export matrix | in_progress | T12 | t9_heavy_io | — |
 | T21 — ONNX Runtime CPU parity and graph inspection | blocked | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
@@ -116,20 +116,20 @@ graph TD
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
 | T50 — MLX-LM baseline | completed | T11 | apple_m4_heavy | ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md |
-| T51 — Custom MLX runtime | ready | T12, T50 | apple_m4_heavy | — |
+| T51 — Custom MLX runtime | in_progress | T12, T50 | apple_m4_heavy | — |
 | T52 — Apple profiling and context sweep | blocked | T13, T51 | apple_m4_heavy, t9_heavy_io | — |
 | T60 — ONNX Runtime CUDA context sweep | blocked | T02, T13, T20 | linux_nvidia_gpu, t9_heavy_io | — |
 | T70 — FastAPI backend contract | blocked | T33, T51, T60 | — | — |
 | T71 — React UI and local demo | blocked | T70 | — | — |
-| T72 — Manual GitHub Actions AI Hub workflow | ready | T03, T30 | — | — |
+| T72 — Manual GitHub Actions AI Hub workflow | in_progress | T03, T30 | — | — |
 | T80 — Integrated guides, notebooks, and MkDocs | blocked | T03, T43, T52, T60, T72 | — | — |
 | T81 — Final evaluation and report | blocked | T13, T43, T52, T60 | t9_heavy_io | — |
 | T82 — Reproduction and release audit | blocked | T71, T72, T80, T81 | — | — |
 
 ## Summary
 
-- ready: 3
-- in_progress: 0
+- ready: 0
+- in_progress: 3
 - blocked: 15
 - completed: 12
 
