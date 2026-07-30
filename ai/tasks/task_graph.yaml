@@ -342,13 +342,13 @@
       "id": "T72",
       "title": "Manual GitHub Actions AI Hub workflow",
       "definition": "ai/tasks/definitions/T72.yaml",
-      "status": "completed",
+      "status": "in_progress",
       "depends_on": ["T03", "T30"],
       "resource_locks": [],
       "owner": "Codex T72 agent",
       "branch": "task/T72-qualcomm-actions",
       "github_issue": null,
-      "worklog": "ai/worklogs/2026-07-30-T72-qualcomm-actions.md"
+      "worklog": null
     },
     {
       "id": "T80",
