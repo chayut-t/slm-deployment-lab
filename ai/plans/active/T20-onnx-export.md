@@ -1,6 +1,6 @@
 # T20: Four-context ONNX export matrix
 
-Status: completed
+Status: active — review fixes ready for rereview
 Owner: Codex T20 agent
 Updated: 2026-07-30
 
@@ -51,6 +51,9 @@ commands, contracts, versions, and content hashes.
 - [x] Commit four context manifests with exact source/toolchain provenance.
 - [x] Pass focused tests, full repository tests, task-status, and hygiene.
 - [x] Prepare the implementation and evidence for independent review.
+- [x] Address P1 deterministic-manifest and exporter-provenance findings.
+- [x] Address P2 configured T10 fixture and workload-provenance findings.
+- [ ] Pass fresh independent rereview.
 
 ## Verification and acceptance
 
@@ -80,9 +83,21 @@ commands, contracts, versions, and content hashes.
 - 2026-07-30: All eight real graphs passed ONNX checker, exact static-I/O, and
   external-data validation. Four manifests tie them to exporter source commit
   `631fd70bcff9b73b81c08a2a2e0127cad07f09ca`.
+- 2026-07-30: Independent review found that validation covered artifacts and
+  selected identity fields but not every deterministic manifest claim.
+  Validation now reconstructs the full manifest and binds the historical
+  exporter commit to exact Git blobs for source, configuration, model, and T10
+  inputs.
+- 2026-07-30: Independent review found that export configuration did not
+  control the tracing fixture and same-length token drift could pass.
+  Configuration now resolves the fixture actually consumed by export, runs
+  the frozen T10 validators and canonical digest check, and records the exact
+  workload prompt/token hashes in each manifest.
 
 ## Progress and restart instructions
 
-T20 implementation and evidence are complete and ready for independent review.
-T21 can start from the completed branch after the review findings, if any, are
-addressed and integrated.
+Both independent-review findings are implemented with adversarial regressions
+and the four manifests have been regenerated without changing their original
+export commit or creation timestamps. Run the focused/full checks recorded in
+the worklog, commit the review fixes, and request a fresh independent rereview.
+Keep T20 `in_progress` with a null graph worklog until that rereview passes.

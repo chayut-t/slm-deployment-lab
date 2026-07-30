@@ -4875,6 +4875,43 @@
   },
   "created_at": "2026-07-30T09:41:01Z",
   "device_type": null,
+  "export_provenance": {
+    "commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+    "export_config": {
+      "path": "configs/models/qwen3-0.6b-onnx-export.json",
+      "sha256": "02a2fe3c95333a80ec31baf150ca6591adde5513ffdd2431212d0646bb5850df"
+    },
+    "exporter_source": {
+      "path": "src/slm_lab/export/onnx_matrix.py",
+      "sha256": "74866df0c506d110d1310dd381b2abcb74574d25dd3638e80859151f5bab1334"
+    },
+    "model_contract": {
+      "path": "configs/models/qwen3-0.6b.yaml",
+      "sha256": "c74e9957bbf5736ffa3c0ab8a34b45aae661327515ec1d1da02d6c004a3c509f"
+    },
+    "runtime_python_version": "3.11.15",
+    "t10_source_fixture": {
+      "path": "tests/fixtures/t10/source-prompts-v1.json",
+      "sha256": "cde0bfce4aca064ebc4c8118588d9a50db0b1a9538f1753dbe6772d63e3bf6b4"
+    },
+    "t10_workload_contract": {
+      "path": "configs/workloads/t10-token-fixtures.json",
+      "sha256": "f6d7af38fdf8a90854894b6fd2b56ce4854f36b31fd18ec930077264c8c7bd7a"
+    },
+    "token_fixture_bundle": {
+      "canonical_json_sha256": "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745",
+      "path": "tests/fixtures/t10/token-fixtures-v1.json",
+      "sha256": "c3448a10848c3b9b1d816b920a8c9cc78d06428a0bb8c359dae1d8d9b0035492"
+    },
+    "workload": {
+      "context_length": 128,
+      "generated_tokens": 32,
+      "id": "S128",
+      "prompt_sha256": "1f4b85089f585a7c7b81c191823e724d898d1e7ddb7ad2a01db9d6c25ed6c2fb",
+      "token_count": 128,
+      "token_ids_sha256": "52d8283880b465f99406bcf64f0460f421b3ebe508a347b40eefa20b29d1e5fa"
+    }
+  },
   "exporter": "torch.onnx.export",
   "exporter_version": "2.7.1",
   "git_commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",

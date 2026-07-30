@@ -12,8 +12,10 @@ prefill/decode pairs generated directly from the T12 contract. The exporter:
   public cache shapes;
 - forces model initializers into ONNX external data;
 - runs the ONNX checker and exact name/dtype/shape conformance checks; and
-- records graph, data-file, source-weight, toolchain, host, and contract
-  hashes in four commit-safe manifests.
+- validates the configured T10 bundle against its frozen canonical digest and
+  every context workload's prompt/token hashes; and
+- records graph, data-file, source-weight, toolchain, host, contract, export
+  source/config, and T10 input hashes in four commit-safe manifests.
 
 The graph protobufs and data shards are deliberately excluded from Git. Run
 one context with the pinned isolated environment:
@@ -35,6 +37,13 @@ PYTHONPATH=src \
 /path/to/python -m slm_lab.export.onnx_matrix validate \
   --context 128 --write-manifests
 ```
+
+Plain `validate` is intentionally stronger than schema validation. It
+re-hashes the external graph/data files, proves the historical exporter commit
+exists in the current branch ancestry, checks the exporter/config/model/T10
+Git blobs from that commit, reconstructs every deterministic manifest field,
+and rejects any claim or evidence drift. `created_at` is the only
+run-generated manifest field reused during reconstruction.
 
 Export evidence proves only that the pinned host toolchain produced
 ONNX-checker-valid graphs whose public I/O matches T12 and whose external

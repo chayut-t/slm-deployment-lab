@@ -3,14 +3,14 @@
 Date: 2026-07-30
 Task: `T20`
 Visibility: `public`
-Status: completed
+Status: in progress — independent review fixes ready for rereview
 
 ## Outcome
 
-T20 exported the pinned Qwen3-0.6B model into eight reference ONNX graphs:
-static prefill and one-token decode for S128, S512, S1024, and S4096. Every
-graph passed ONNX checker validation and exact public name, dtype, and shape
-conformance against the frozen T12 contract.
+T20 implementation exported the pinned Qwen3-0.6B model into eight reference
+ONNX graphs: static prefill and one-token decode for S128, S512, S1024, and
+S4096. Every graph passed ONNX checker validation and exact public name, dtype,
+and shape conformance against the frozen T12 contract.
 
 The large protobuf tensor payloads remain under
 `SLM_LAB_ARTIFACT_ROOT/onnx/reference/T20/`. Four committed context manifests
@@ -18,6 +18,9 @@ record exact commands, source/model/toolchain revisions, serialized T12
 contracts, graph hashes, external-data hashes, and explicit evidence
 boundaries. No compiler, runtime-parity, accelerator-placement, or performance
 claim is made.
+
+The task remains `in_progress` and its task-graph worklog remains null while
+the first independent review findings await fresh rereview.
 
 ## Changes
 
@@ -37,6 +40,18 @@ claim is made.
   overwrite-protection, committed-manifest, and shape regression tests.
 - Added four manifests under `results/manifests/onnx/`; each identifies
   exporting source commit `631fd70bcff9b73b81c08a2a2e0127cad07f09ca`.
+- Independent review remediation now reconstructs every deterministic
+  manifest field, validates the historical exporter commit and branch
+  ancestry, and binds it to content hashes for exporter source, export
+  configuration, model contract, T10 contract/source/bundle, and the exact
+  context workload.
+- Export configuration now resolves and supplies the tracing token fixture.
+  The fixture must pass the complete offline T10 validation, the frozen
+  canonical bundle digest, and explicit per-workload prompt/token hashes.
+- Added adversarial tests for altered commits, chat-template hash, all
+  recorded toolchain versions/settings, status, commands, input/cache
+  summaries, claim boundaries, source provenance, artifact hashes, configured
+  fixture path, stale workload hashes, and coherent token-content tampering.
 
 ## Verification
 
@@ -84,6 +99,33 @@ claim is made.
 - `python3 scripts/repo/check_hygiene.py --all`
   - Passed.
 
+### Independent-review remediation verification
+
+- `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
+  SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src
+  /private/tmp/slm-t12-venv/bin/python -m
+  slm_lab.export.onnx_matrix validate`
+  - Passed after reconstructing all four manifests and matching their
+    historical Git blobs, T10 inputs, contracts, graph protobufs, and external
+    data.
+- `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
+  tests/export tests/contracts`
+  - `38 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
+    numerical gate already completed by T12.
+- `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
+  PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
+  -m pytest -q`
+  - `187 passed, 10 skipped, 1 failed`.
+  - The sole failure is the known claim-baseline
+    `GitSnapshotTests.test_staged_graph_requires_matching_staged_status`
+    `StopIteration`: while T20, T51, and T72 are concurrently `in_progress`,
+    the test fixture cannot find a planned task whose dependencies are all
+    completed. The unrelated automation test was not changed; it passed on
+    the earlier completion baseline and will become applicable again when a
+    claimed ready task completes.
+- `/Users/chayut/projects/slm-deployment-lab/.venv/bin/ruff check src tests`
+  - Passed after review remediation.
+
 ## Decisions and evidence
 
 - The pinned source `model.safetensors` hash is
@@ -124,8 +166,10 @@ claim is made.
 
 ## Follow-up
 
-- Newly unblocked tasks: T21 and T40.
-- Recommended next action: T21 should consume the manifests, verify every
+- Newly unblocked tasks: none while independent rereview is pending.
+- Recommended next action: fresh independent rereview should rerun the
+  adversarial manifest/fixture tests and external evidence validation. After
+  approval, T21 should consume the manifests, verify every
   external hash before loading, run multi-position decode parity in ONNX
   Runtime CPU, and inspect whether `valid_length` remains a live internal
   slice/scatter dependency rather than a traced constant.

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import slm_lab.export.onnx_matrix as onnx_matrix
 from slm_lab.contracts import (
     CONTEXT_VARIANTS,
     build_decode_contract,
@@ -27,6 +28,7 @@ from slm_lab.export.onnx_matrix import (
     verify_manifest_evidence,
 )
 from slm_lab.manifests.validation import validate_manifest
+from slm_lab.evaluation.fixtures import canonical_json_sha256
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +45,15 @@ def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     assert config.transformers_version == "4.51.3"
     assert config.onnx_version == "1.18.0"
     assert config.external_data_threshold_bytes == 1024
+    assert config.token_fixture.source_path == (
+        ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
+    )
+    assert config.token_fixture.canonical_json_sha256 == (
+        "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745"
+    )
+    assert tuple(
+        workload.context_length for workload in config.token_fixture.workloads
+    ) == config.contexts
 
 
 def test_export_config_rejects_context_drift(tmp_path: Path) -> None:
@@ -55,6 +66,51 @@ def test_export_config_rejects_context_drift(tmp_path: Path) -> None:
         load_export_config(path)
 
 
+def test_export_config_rejects_configured_fixture_with_stale_token_hash(
+    tmp_path: Path,
+) -> None:
+    fixture = json.loads(
+        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    fixture["context_workloads"][0]["token_ids"][0] += 1
+    fixture_path = tmp_path / "tampered-token-fixtures.json"
+    fixture_path.write_text(json.dumps(fixture), encoding="utf-8")
+    payload = json.loads(CONFIG.read_text(encoding="utf-8"))
+    payload["token_fixture"] = str(fixture_path)
+    config_path = tmp_path / "tampered-export-config.json"
+    config_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ExportConfigurationError, match="S128.*hash drift"):
+        load_export_config(config_path)
+
+
+def test_export_config_rejects_coherent_frozen_token_content_drift(
+    tmp_path: Path,
+) -> None:
+    fixture = json.loads(
+        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    record = fixture["context_workloads"][0]
+    record["token_ids"][0] += 1
+    record["token_ids_sha256"] = canonical_json_sha256(record["token_ids"])
+    fixture_path = tmp_path / "coherently-tampered-token-fixtures.json"
+    fixture_path.write_text(json.dumps(fixture), encoding="utf-8")
+    payload = json.loads(CONFIG.read_text(encoding="utf-8"))
+    payload["token_fixture"] = str(fixture_path)
+    config_path = tmp_path / "tampered-export-config.json"
+    config_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        ExportConfigurationError,
+        match="configured T10 token fixture is invalid|frozen canonical",
+    ):
+        load_export_config(config_path)
+
+
 def test_example_inputs_use_exact_fixture_and_contract() -> None:
     torch = pytest.importorskip("torch")
     fixture = json.loads(
@@ -65,7 +121,11 @@ def test_example_inputs_use_exact_fixture_and_contract() -> None:
     expected = fixture["context_workloads"][0]["token_ids"]
 
     prefill = build_prefill_contract(128)
-    prefill_inputs = build_example_inputs(prefill)
+    config = load_export_config(CONFIG)
+    prefill_inputs = build_example_inputs(
+        prefill,
+        token_fixture=config.token_fixture,
+    )
     validate_tensor_mapping(
         dict(zip((tensor.name for tensor in prefill.inputs), prefill_inputs)),
         prefill.inputs,
@@ -73,7 +133,10 @@ def test_example_inputs_use_exact_fixture_and_contract() -> None:
     assert prefill_inputs[0].tolist() == [expected]
 
     decode = build_decode_contract(128)
-    decode_inputs = build_example_inputs(decode)
+    decode_inputs = build_example_inputs(
+        decode,
+        token_fixture=config.token_fixture,
+    )
     validate_tensor_mapping(
         dict(zip((tensor.name for tensor in decode.inputs), decode_inputs)),
         decode.inputs,
@@ -82,6 +145,45 @@ def test_example_inputs_use_exact_fixture_and_contract() -> None:
     assert decode_inputs[2].item() == 128
     assert decode_inputs[-1].item() == 128
     assert decode_inputs[3].dtype == torch.float16
+
+
+def test_run_export_supplies_the_configured_token_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    config = load_export_config(CONFIG)
+    observed = []
+    monkeypatch.setattr(onnx_matrix, "_verify_runtime", lambda _: None)
+    monkeypatch.setattr(onnx_matrix, "_artifact_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        onnx_matrix,
+        "load_reference_model",
+        lambda **_: SimpleNamespace(model=object()),
+    )
+    monkeypatch.setattr(
+        onnx_matrix,
+        "PrefillWrapper",
+        lambda model, prompt_length: object(),
+    )
+    monkeypatch.setattr(
+        onnx_matrix,
+        "DecodeWrapper",
+        lambda model, prompt_length: object(),
+    )
+
+    def capture_inputs(contract, *, token_fixture):
+        observed.append((contract.graph_kind, token_fixture))
+        return ()
+
+    monkeypatch.setattr(onnx_matrix, "build_example_inputs", capture_inputs)
+    monkeypatch.setattr(onnx_matrix, "export_onnx_graph", lambda *args: None)
+
+    onnx_matrix.run_export((128,), config)
+
+    assert observed == [
+        ("prefill", config.token_fixture),
+        ("decode", config.token_fixture),
+    ]
 
 
 def _tiny_causal_model(torch):
@@ -234,6 +336,33 @@ def test_artifact_subdirectory_covers_every_capacity() -> None:
     assert CONTEXT_VARIANTS == {128: 160, 512: 576, 1024: 1152, 4096: 4224}
 
 
+def _artifact_record(payload) -> OnnxArtifactRecord:
+    return OnnxArtifactRecord(
+        graph_kind=payload["graph_kind"],
+        relative_path=payload["relative_path"],
+        sha256=payload["sha256"],
+        size_bytes=payload["size_bytes"],
+        external_data=tuple(
+            ExternalDataRecord(**item) for item in payload["external_data"]
+        ),
+        input_tensors=tuple(payload["input_tensors"]),
+        output_tensors=tuple(payload["output_tensors"]),
+    )
+
+
+def _verify_s128_manifest(manifest, *, evidence_manifest=None) -> None:
+    evidence = evidence_manifest or manifest
+    verify_manifest_evidence(
+        manifest,
+        prompt_length=128,
+        config=load_export_config(CONFIG),
+        prefill=_artifact_record(evidence["artifacts"]["prefill"]),
+        decode=_artifact_record(evidence["artifacts"]["decode"]),
+        source_weights_sha256=evidence["source_artifact_sha256"],
+        host_manifest_sha256=evidence["host_manifest_sha256"],
+    )
+
+
 def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None:
     manifest_directory = ROOT / "results/manifests/onnx"
     paths = sorted(manifest_directory.glob("S*.json"))
@@ -254,6 +383,23 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
         assert manifest["artifacts"]["root"] == (
             "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20"
         )
+        provenance = manifest["export_provenance"]
+        assert provenance["commit"] == manifest["git_commit"]
+        assert provenance["runtime_python_version"] == (
+            manifest["toolchain"]["python"]
+        )
+        assert provenance["exporter_source"]["path"] == (
+            "src/slm_lab/export/onnx_matrix.py"
+        )
+        assert provenance["export_config"]["path"] == (
+            "configs/models/qwen3-0.6b-onnx-export.json"
+        )
+        assert provenance["token_fixture_bundle"][
+            "canonical_json_sha256"
+        ] == (
+            "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745"
+        )
+        assert provenance["workload"]["id"] == f"S{prompt_length}"
         for kind, contract in (
             ("prefill", build_prefill_contract(prompt_length)),
             ("decode", build_decode_contract(prompt_length)),
@@ -288,34 +434,55 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
             )
 
 
-def test_manifest_verification_rejects_external_hash_drift() -> None:
+def test_manifest_verification_accepts_untampered_evidence() -> None:
     manifest = json.loads(
         (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
     )
-    prefill = manifest["artifacts"]["prefill"]
-    decode = manifest["artifacts"]["decode"]
-    def record(payload):
-        return OnnxArtifactRecord(
-            graph_kind=payload["graph_kind"],
-            relative_path=payload["relative_path"],
-            sha256=payload["sha256"],
-            size_bytes=payload["size_bytes"],
-            external_data=tuple(
-                ExternalDataRecord(**item) for item in payload["external_data"]
-            ),
-            input_tensors=tuple(payload["input_tensors"]),
-            output_tensors=tuple(payload["output_tensors"]),
-        )
+    _verify_s128_manifest(manifest)
 
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    (
+        (("git_commit",), "0" * 40),
+        (("chat_template_sha256",), "0" * 64),
+        (("exporter_version",), "0.0.0"),
+        (("toolchain", "python"), "0.0.0"),
+        (("export_provenance", "runtime_python_version"), "0.0.0"),
+        (("toolchain", "torch"), "0.0.0"),
+        (("toolchain", "transformers"), "0.0.0"),
+        (("toolchain", "onnx"), "0.0.0"),
+        (("toolchain", "attention_implementation"), "sdpa"),
+        (("toolchain", "device"), "cuda"),
+        (("runtime",), "onnxruntime"),
+        (("runtime_version",), "0.0.0"),
+        (("status",), "compiled"),
+        (("commands", "export"), "python unpinned_export.py"),
+        (("input_contract",), {}),
+        (("cache_contract",), {}),
+        (("claim_boundary", "does_not_establish"), []),
+        (
+            ("export_provenance", "exporter_source", "sha256"),
+            "0" * 64,
+        ),
+        (("artifacts", "decode", "sha256"), "0" * 64),
+    ),
+)
+def test_manifest_verification_rejects_deterministic_claim_drift(
+    path: tuple[str, ...],
+    value,
+) -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
     tampered = json.loads(json.dumps(manifest))
-    tampered["artifacts"]["decode"]["sha256"] = "0" * 64
-    with pytest.raises(ExportConfigurationError, match="do not match"):
-        verify_manifest_evidence(
-            tampered,
-            prompt_length=128,
-            config=load_export_config(CONFIG),
-            prefill=record(prefill),
-            decode=record(decode),
-            source_weights_sha256=manifest["source_artifact_sha256"],
-            host_manifest_sha256=manifest["host_manifest_sha256"],
-        )
+    target = tampered
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+
+    with pytest.raises(
+        ExportConfigurationError,
+        match="manifest|exporter commit",
+    ):
+        _verify_s128_manifest(tampered, evidence_manifest=manifest)

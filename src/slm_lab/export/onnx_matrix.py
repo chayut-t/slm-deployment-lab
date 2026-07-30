@@ -13,6 +13,7 @@ import importlib.metadata
 import json
 import os
 import platform
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -31,6 +32,11 @@ from slm_lab.contracts.static_cache import (
     NUM_KEY_VALUE_HEADS,
     VOCAB_SIZE,
 )
+from slm_lab.evaluation.fixtures import (
+    FixtureValidationError,
+    canonical_json_sha256,
+    validate_documents,
+)
 from slm_lab.manifests.validation import validate_manifest
 from slm_lab.models import load_model_contract, load_reference_model
 
@@ -40,10 +46,20 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / "configs/models/qwen3-0.6b-onnx-export.json
 DEFAULT_TOKEN_FIXTURE_PATH = (
     PROJECT_ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
 )
+DEFAULT_T10_CONTRACT_PATH = (
+    PROJECT_ROOT / "configs/workloads/t10-token-fixtures.json"
+)
+DEFAULT_T10_SOURCE_PATH = (
+    PROJECT_ROOT / "tests/fixtures/t10/source-prompts-v1.json"
+)
 DEFAULT_HOST_MANIFEST_PATH = PROJECT_ROOT / "results/hosts/apple-m4-primary.json"
 DEFAULT_MANIFEST_DIRECTORY = PROJECT_ROOT / "results/manifests/onnx"
 ARTIFACT_SUBDIRECTORY = Path("onnx/reference/T20")
 TASK_ID = "T20"
+EXPORTER_SOURCE_PATH = PROJECT_ROOT / "src/slm_lab/export/onnx_matrix.py"
+FROZEN_T10_BUNDLE_CANONICAL_SHA256 = (
+    "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745"
+)
 
 
 class ExportConfigurationError(ValueError):
@@ -63,6 +79,57 @@ class ExportConfig:
     external_data_threshold_bytes: int
     contexts: tuple[int, ...]
     seed: int
+    source_path: Path
+    model_contract_path: Path
+    token_fixture: TokenFixtureBundle
+
+
+@dataclass(frozen=True)
+class TokenWorkload:
+    """One hash-validated frozen T10 context workload."""
+
+    fixture_id: str
+    context_length: int
+    generated_tokens: int
+    prompt_sha256: str
+    token_ids_sha256: str
+    token_ids: tuple[int, ...]
+
+    def provenance(self) -> dict[str, Any]:
+        return {
+            "id": self.fixture_id,
+            "context_length": self.context_length,
+            "generated_tokens": self.generated_tokens,
+            "prompt_sha256": self.prompt_sha256,
+            "token_ids_sha256": self.token_ids_sha256,
+            "token_count": len(self.token_ids),
+        }
+
+
+@dataclass(frozen=True)
+class TokenFixtureBundle:
+    """Validated content identity and workloads for the configured T10 bundle."""
+
+    source_path: Path
+    configured_path: str
+    canonical_json_sha256: str
+    file_sha256: str
+    workloads: tuple[TokenWorkload, ...]
+
+    def workload(self, prompt_length: int) -> TokenWorkload:
+        match = next(
+            (
+                workload
+                for workload in self.workloads
+                if workload.context_length == prompt_length
+            ),
+            None,
+        )
+        if match is None:
+            raise ExportConfigurationError(
+                f"token fixture has no exact S{prompt_length} workload"
+            )
+        return match
 
 
 @dataclass(frozen=True)
@@ -121,6 +188,106 @@ def _require_exact_version(actual: str, expected: str, package: str) -> None:
         )
 
 
+def _load_json_document(path: Path, label: str) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ExportConfigurationError(f"invalid {label} {path}: {exc}") from exc
+
+
+def _resolve_configured_path(value: Any, label: str) -> tuple[Path, str]:
+    if not isinstance(value, str) or not value:
+        raise ExportConfigurationError(f"{label} must be a non-empty path")
+    configured = Path(value)
+    path = configured if configured.is_absolute() else PROJECT_ROOT / configured
+    path = path.resolve()
+    if not path.is_file():
+        raise ExportConfigurationError(f"{label} does not exist: {value}")
+    return path, value
+
+
+def _load_token_fixture(path: Path, configured_path: str) -> TokenFixtureBundle:
+    bundle = _load_json_document(path, "T10 token fixture")
+    try:
+        context_records = bundle["context_workloads"]
+    except (KeyError, TypeError) as exc:
+        raise ExportConfigurationError(
+            "configured T10 token fixture lacks context workloads"
+        ) from exc
+    for record in context_records:
+        fixture_id = record.get("id", "<unknown>")
+        token_ids = record.get("token_ids")
+        if not isinstance(token_ids, list) or not all(
+            isinstance(token_id, int) and token_id >= 0
+            for token_id in token_ids
+        ):
+            raise ExportConfigurationError(
+                f"{fixture_id}: token IDs must be nonnegative integers"
+            )
+        if record.get("token_ids_sha256") != canonical_json_sha256(token_ids):
+            raise ExportConfigurationError(
+                f"{fixture_id}: token ID hash drift"
+            )
+        prompt = record.get("prompt")
+        if not isinstance(prompt, str) or record.get(
+            "prompt_sha256"
+        ) != hashlib.sha256(prompt.encode("utf-8")).hexdigest():
+            raise ExportConfigurationError(f"{fixture_id}: prompt hash drift")
+
+    source = _load_json_document(DEFAULT_T10_SOURCE_PATH, "T10 source fixture")
+    t10_contract = _load_json_document(
+        DEFAULT_T10_CONTRACT_PATH,
+        "T10 workload contract",
+    )
+    model_contract = _load_json_document(
+        DEFAULT_CONFIG_PATH.with_name("qwen3-0.6b.yaml"),
+        "Qwen model contract",
+    )
+    try:
+        validate_documents(
+            source=source,
+            bundle=bundle,
+            config=t10_contract,
+            model_contract=model_contract,
+        )
+    except (FixtureValidationError, KeyError, TypeError) as exc:
+        raise ExportConfigurationError(
+            f"configured T10 token fixture is invalid: {exc}"
+        ) from exc
+
+    canonical_digest = canonical_json_sha256(bundle)
+    if canonical_digest != FROZEN_T10_BUNDLE_CANONICAL_SHA256:
+        raise ExportConfigurationError(
+            "configured T10 token fixture differs from the frozen canonical "
+            f"digest {FROZEN_T10_BUNDLE_CANONICAL_SHA256}"
+        )
+
+    workloads = tuple(
+        TokenWorkload(
+            fixture_id=record["id"],
+            context_length=record["context_length"],
+            generated_tokens=record["generated_tokens"],
+            prompt_sha256=record["prompt_sha256"],
+            token_ids_sha256=record["token_ids_sha256"],
+            token_ids=tuple(record["token_ids"]),
+        )
+        for record in context_records
+    )
+    if tuple(workload.context_length for workload in workloads) != tuple(
+        CONTEXT_VARIANTS
+    ):
+        raise ExportConfigurationError(
+            "configured token fixture does not cover the frozen context matrix"
+        )
+    return TokenFixtureBundle(
+        source_path=path,
+        configured_path=configured_path,
+        canonical_json_sha256=canonical_digest,
+        file_sha256=_sha256(path),
+        workloads=workloads,
+    )
+
+
 def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
     """Load and strictly validate the committed export configuration."""
 
@@ -135,6 +302,24 @@ def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
 
     if payload.get("schema_version") != 1 or payload.get("task_id") != TASK_ID:
         raise ExportConfigurationError("export config identity must be schema 1 / T20")
+    model_contract_path, _ = _resolve_configured_path(
+        payload.get("model_contract"),
+        "model_contract",
+    )
+    if model_contract_path != DEFAULT_CONFIG_PATH.with_name(
+        "qwen3-0.6b.yaml"
+    ).resolve():
+        raise ExportConfigurationError(
+            "export must use the frozen Qwen3-0.6B model contract"
+        )
+    token_fixture_path, configured_token_fixture = _resolve_configured_path(
+        payload.get("token_fixture"),
+        "token_fixture",
+    )
+    token_fixture = _load_token_fixture(
+        token_fixture_path,
+        configured_token_fixture,
+    )
     if contexts != tuple(CONTEXT_VARIANTS):
         raise ExportConfigurationError(
             f"contexts must exactly match {tuple(CONTEXT_VARIANTS)}, found {contexts}"
@@ -168,6 +353,9 @@ def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
         external_data_threshold_bytes=threshold,
         contexts=contexts,
         seed=seed,
+        source_path=source.resolve(),
+        model_contract_path=model_contract_path,
+        token_fixture=token_fixture,
     )
 
 
@@ -354,33 +542,18 @@ def _dtype_from_contract(torch: Any, dtype: str) -> Any:
         ) from exc
 
 
-def _load_prompt_tokens(prompt_length: int, fixture_path: Path) -> list[int]:
-    payload = json.loads(fixture_path.read_text(encoding="utf-8"))
-    match = next(
-        (
-            workload
-            for workload in payload["context_workloads"]
-            if workload["context_length"] == prompt_length
-        ),
-        None,
-    )
-    if match is None or len(match["token_ids"]) != prompt_length:
-        raise ExportConfigurationError(
-            f"token fixture has no exact S{prompt_length} workload"
-        )
-    return list(match["token_ids"])
-
-
 def build_example_inputs(
     contract: GraphContract,
     *,
-    token_fixture_path: Path = DEFAULT_TOKEN_FIXTURE_PATH,
+    token_fixture: TokenFixtureBundle | None = None,
 ) -> tuple[Any, ...]:
     """Build deterministic concrete tensors for tracing one static graph."""
 
     torch = _torch_module()
     values: list[Any] = []
-    prompt_tokens = _load_prompt_tokens(contract.prompt_length, token_fixture_path)
+    fixture = token_fixture or load_export_config().token_fixture
+    workload = fixture.workload(contract.prompt_length)
+    prompt_tokens = workload.token_ids
     for spec in contract.inputs:
         dtype = _dtype_from_contract(torch, spec.dtype)
         if spec.name == "input_ids" and contract.graph_kind == "prefill":
@@ -612,11 +785,150 @@ def export_onnx_graph(
     inline_path.unlink()
 
 
-def _canonical_sha256(value: Mapping[str, Any]) -> str:
+def _canonical_sha256(value: Any) -> str:
     encoded = json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _repository_relative(path: Path, label: str) -> str:
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError as exc:
+        raise ExportConfigurationError(
+            f"{label} must be a repository file, found {resolved}"
+        ) from exc
+    tracked = subprocess.run(
+        ("git", "ls-files", "--error-unmatch", relative),
+        cwd=PROJECT_ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if tracked.returncode != 0:
+        raise ExportConfigurationError(
+            f"{label} is not tracked by Git: {relative}"
+        )
+    return relative
+
+
+def _validate_exporter_commit(commit: str) -> None:
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ExportConfigurationError(
+            f"exporter commit must be a full lowercase Git SHA, found {commit!r}"
+        )
+    commit_check = subprocess.run(
+        ("git", "cat-file", "-e", f"{commit}^{{commit}}"),
+        cwd=PROJECT_ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if commit_check.returncode != 0:
+        raise ExportConfigurationError(
+            f"exporter commit does not exist locally: {commit}"
+        )
+    ancestor_check = subprocess.run(
+        ("git", "merge-base", "--is-ancestor", commit, "HEAD"),
+        cwd=PROJECT_ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if ancestor_check.returncode != 0:
+        raise ExportConfigurationError(
+            f"exporter commit is not an ancestor of HEAD: {commit}"
+        )
+
+
+def _git_blob(commit: str, relative_path: str) -> bytes:
+    try:
+        return subprocess.check_output(
+            ("git", "show", f"{commit}:{relative_path}"),
+            cwd=PROJECT_ROOT,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise ExportConfigurationError(
+            f"exporter commit {commit} does not contain {relative_path}"
+        ) from exc
+
+
+def _blob_record(
+    commit: str,
+    path: Path,
+    label: str,
+    *,
+    require_current_match: bool,
+) -> dict[str, str]:
+    relative = _repository_relative(path, label)
+    commit_digest = hashlib.sha256(_git_blob(commit, relative)).hexdigest()
+    if require_current_match:
+        current_digest = _sha256(path)
+        if commit_digest != current_digest:
+            raise ExportConfigurationError(
+                f"{label} changed after exporter commit {commit}: "
+                f"{commit_digest} != {current_digest}"
+            )
+    return {"path": relative, "sha256": commit_digest}
+
+
+def _export_provenance(
+    *,
+    git_commit: str,
+    config: ExportConfig,
+    prompt_length: int,
+    runtime_python_version: str,
+) -> dict[str, Any]:
+    _validate_exporter_commit(git_commit)
+    workload = config.token_fixture.workload(prompt_length)
+    return {
+        "commit": git_commit,
+        "runtime_python_version": runtime_python_version,
+        "exporter_source": _blob_record(
+            git_commit,
+            EXPORTER_SOURCE_PATH,
+            "exporter source",
+            require_current_match=False,
+        ),
+        "export_config": _blob_record(
+            git_commit,
+            config.source_path,
+            "export config",
+            require_current_match=True,
+        ),
+        "model_contract": _blob_record(
+            git_commit,
+            config.model_contract_path,
+            "model contract",
+            require_current_match=True,
+        ),
+        "t10_workload_contract": _blob_record(
+            git_commit,
+            DEFAULT_T10_CONTRACT_PATH,
+            "T10 workload contract",
+            require_current_match=True,
+        ),
+        "t10_source_fixture": _blob_record(
+            git_commit,
+            DEFAULT_T10_SOURCE_PATH,
+            "T10 source fixture",
+            require_current_match=True,
+        ),
+        "token_fixture_bundle": {
+            **_blob_record(
+                git_commit,
+                config.token_fixture.source_path,
+                "configured token fixture",
+                require_current_match=True,
+            ),
+            "canonical_json_sha256": (
+                config.token_fixture.canonical_json_sha256
+            ),
+        },
+        "workload": workload.provenance(),
+    }
 
 
 def _git_commit() -> str:
@@ -644,6 +956,7 @@ def _manifest_payload(
     git_commit: str,
     host_manifest_sha256: str,
     created_at: str,
+    runtime_python_version: str | None = None,
 ) -> dict[str, Any]:
     model_contract = load_model_contract()
     prefill_contract = build_prefill_contract(prompt_length).as_dict()
@@ -653,6 +966,7 @@ def _manifest_payload(
         "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src "
         "python -m slm_lab.export.onnx_matrix"
     )
+    python_version = runtime_python_version or platform.python_version()
     return {
         "schema_version": 1,
         "model_id": model_contract.model_id,
@@ -692,6 +1006,12 @@ def _manifest_payload(
         "host_manifest_sha256": host_manifest_sha256,
         "created_at": created_at,
         "status": "exported_and_shape_validated",
+        "export_provenance": _export_provenance(
+            git_commit=git_commit,
+            config=config,
+            prompt_length=prompt_length,
+            runtime_python_version=python_version,
+        ),
         "variant_id": f"S{prompt_length}",
         "cache_capacity": CONTEXT_VARIANTS[prompt_length],
         "contract": {
@@ -701,7 +1021,7 @@ def _manifest_payload(
             "decode_sha256": _canonical_sha256(decode_contract),
         },
         "toolchain": {
-            "python": platform.python_version(),
+            "python": python_version,
             "torch": config.torch_version,
             "transformers": config.transformers_version,
             "onnx": config.onnx_version,
@@ -744,59 +1064,48 @@ def verify_manifest_evidence(
     source_weights_sha256: str,
     host_manifest_sha256: str,
 ) -> None:
-    """Match committed evidence to freshly inspected external artifacts."""
+    """Reconstruct every deterministic field and reject any claim drift."""
 
     validate_manifest("artifact", manifest)
-    model_contract = load_model_contract()
-    expected_identity = {
-        "model_id": model_contract.model_id,
-        "model_revision": model_contract.revision,
-        "tokenizer_revision": model_contract.revision,
-        "task_id": TASK_ID,
-        "exporter": config.exporter,
-        "exporter_version": config.torch_version,
-        "opset": config.opset,
-        "context_length": prompt_length,
-        "precision": config.precision,
-        "cache_capacity": CONTEXT_VARIANTS[prompt_length],
-        "source_artifact_sha256": source_weights_sha256,
-        "host_manifest_sha256": host_manifest_sha256,
-    }
-    mismatched = {
-        key: {"expected": expected, "found": manifest.get(key)}
-        for key, expected in expected_identity.items()
-        if manifest.get(key) != expected
-    }
-    if mismatched:
+    git_commit = manifest.get("git_commit")
+    created_at = manifest.get("created_at")
+    provenance = manifest.get("export_provenance")
+    recorded_python_version = (
+        provenance.get("runtime_python_version")
+        if isinstance(provenance, Mapping)
+        else None
+    )
+    if not isinstance(git_commit, str) or not isinstance(created_at, str):
         raise ExportConfigurationError(
-            f"S{prompt_length} manifest identity mismatch: {mismatched}"
+            f"S{prompt_length} manifest lacks exporter commit or creation time"
         )
-
-    expected_contract = {
-        "prefill": build_prefill_contract(prompt_length).as_dict(),
-        "decode": build_decode_contract(prompt_length).as_dict(),
-    }
-    for kind, contract in expected_contract.items():
-        if manifest.get("contract", {}).get(kind) != contract:
-            raise ExportConfigurationError(
-                f"S{prompt_length} manifest {kind} contract drift"
-            )
-        if manifest["contract"].get(f"{kind}_sha256") != _canonical_sha256(
-            contract
-        ):
-            raise ExportConfigurationError(
-                f"S{prompt_length} manifest {kind} contract hash mismatch"
-            )
-
-    expected_artifacts = {
-        "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20",
-        "prefill": prefill.as_dict(),
-        "decode": decode.as_dict(),
-    }
-    if manifest.get("artifacts") != expected_artifacts:
+    if not isinstance(recorded_python_version, str) or not re.fullmatch(
+        r"[0-9]+\.[0-9]+\.[0-9]+",
+        recorded_python_version,
+    ):
         raise ExportConfigurationError(
-            f"S{prompt_length} committed artifact hashes or shapes do not "
-            "match external files"
+            f"S{prompt_length} manifest lacks exact runtime Python provenance"
+        )
+    expected = _manifest_payload(
+        prompt_length=prompt_length,
+        config=config,
+        prefill=prefill,
+        decode=decode,
+        source_weights_sha256=source_weights_sha256,
+        git_commit=git_commit,
+        host_manifest_sha256=host_manifest_sha256,
+        created_at=created_at,
+        runtime_python_version=recorded_python_version,
+    )
+    if manifest != expected:
+        differing_fields = sorted(
+            key
+            for key in set(manifest) | set(expected)
+            if manifest.get(key) != expected.get(key)
+        )
+        raise ExportConfigurationError(
+            f"S{prompt_length} manifest deterministic fields differ: "
+            f"{differing_fields}"
         )
 
 
@@ -885,7 +1194,10 @@ def run_export(contexts: Iterable[int], config: ExportConfig) -> None:
                 continue
             export_onnx_graph(
                 wrapper,
-                build_example_inputs(contract),
+                build_example_inputs(
+                    contract,
+                    token_fixture=config.token_fixture,
+                ),
                 contract,
                 destination,
                 config,
@@ -906,9 +1218,7 @@ def run_validate(
     if not source_weights.is_file():
         raise ExportConfigurationError(f"missing pinned weights: {source_weights}")
     source_weights_sha256 = _sha256(source_weights)
-    git_commit = _git_commit()
     host_manifest_sha256 = _sha256(DEFAULT_HOST_MANIFEST_PATH)
-    created_at = _utc_now()
     if write_manifests:
         DEFAULT_MANIFEST_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
@@ -931,7 +1241,31 @@ def run_validate(
                     config.external_data_threshold_bytes
                 ),
             )
+        destination = DEFAULT_MANIFEST_DIRECTORY / f"S{prompt_length}.json"
         if write_manifests:
+            if destination.exists():
+                try:
+                    prior = json.loads(destination.read_text(encoding="utf-8"))
+                    git_commit = prior["git_commit"]
+                    created_at = prior["created_at"]
+                    prior_provenance = prior.get("export_provenance", {})
+                    runtime_python_version = prior_provenance.get(
+                        "runtime_python_version",
+                        prior["toolchain"]["python"],
+                    )
+                except (
+                    OSError,
+                    json.JSONDecodeError,
+                    KeyError,
+                    TypeError,
+                ) as exc:
+                    raise ExportConfigurationError(
+                        f"cannot preserve provenance from {destination}: {exc}"
+                    ) from exc
+            else:
+                git_commit = _git_commit()
+                created_at = _utc_now()
+                runtime_python_version = platform.python_version()
             manifest = _manifest_payload(
                 prompt_length=prompt_length,
                 config=config,
@@ -941,15 +1275,14 @@ def run_validate(
                 git_commit=git_commit,
                 host_manifest_sha256=host_manifest_sha256,
                 created_at=created_at,
+                runtime_python_version=runtime_python_version,
             )
             validate_manifest("artifact", manifest)
-            destination = DEFAULT_MANIFEST_DIRECTORY / f"S{prompt_length}.json"
             destination.write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
         else:
-            destination = DEFAULT_MANIFEST_DIRECTORY / f"S{prompt_length}.json"
             try:
                 manifest = json.loads(destination.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as exc:
