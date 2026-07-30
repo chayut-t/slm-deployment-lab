@@ -138,13 +138,13 @@
       "id": "T20",
       "title": "Four-context ONNX export matrix",
       "definition": "ai/tasks/definitions/T20.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T12"],
       "resource_locks": ["t9_heavy_io"],
       "owner": "Codex T20 agent",
       "branch": "task/T20-onnx-export",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md"
     },
     {
       "id": "T21",

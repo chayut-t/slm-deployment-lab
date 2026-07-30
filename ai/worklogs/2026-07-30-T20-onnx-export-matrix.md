@@ -3,7 +3,7 @@
 Date: 2026-07-30
 Task: `T20`
 Visibility: `public`
-Status: in progress — independent review fixes ready for rereview
+Status: completed
 
 ## Outcome
 
@@ -19,8 +19,9 @@ contracts, graph hashes, external-data hashes, and explicit evidence
 boundaries. No compiler, runtime-parity, accelerator-placement, or performance
 claim is made.
 
-The task remains `in_progress` and its task-graph worklog remains null while
-the fifth independent-review remediation awaits fresh rereview.
+Fresh final rereview approved candidate
+`b352c32c63dce54c497c2f31d15cc6463392a700` with no findings. The completed
+task now unblocks T21 for ONNX Runtime parity and graph-risk inspection.
 
 ## Changes
 
@@ -225,6 +226,26 @@ the fifth independent-review remediation awaits fresh rereview.
     `StopIteration`; no planned task has all dependencies completed while
     T20, T51, and T72 remain concurrently `in_progress`.
 
+### Final closure verification
+
+- Fresh final independent rereview approved
+  `b352c32c63dce54c497c2f31d15cc6463392a700` with no findings.
+- `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
+  SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src
+  /private/tmp/slm-t12-venv/bin/python -m
+  slm_lab.export.onnx_matrix validate`
+  - Passed for all four contexts on the completed task state.
+- `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
+  tests/export tests/contracts`
+  - `55 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
+    numerical gate already completed by T12.
+- `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
+  PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
+  -m pytest -q`
+  - `205 passed, 10 skipped`.
+  - The prior concurrent-claim task-automation failure cleared after T20
+    completion made planned task T21 ready.
+
 ## Decisions and evidence
 
 - The pinned source `model.safetensors` hash is
@@ -246,6 +267,30 @@ the fifth independent-review remediation awaits fresh rereview.
   `dim_value`; symbolic public shapes are rejected even when tracing could
   infer them at runtime.
 
+## Independent review history
+
+- Initial review required complete deterministic manifest reconstruction,
+  historical Git-blob provenance, and binding export inputs to the configured
+  frozen T10 fixture. Those findings added exact source/config/model/fixture
+  evidence and adversarial drift tests.
+- Second rereview required an independent committed run attestation so a
+  coherent manifest could not select another valid ancestor, Python version,
+  source artifact, graph set, or external-data payload.
+- Third rereview required the attestation source itself to match a code-pinned
+  digest and exact `HEAD` config blob, rejection of modified in-memory
+  configurations, and comparison of actual Python with the recorded runtime.
+- Fourth rereview found that dataclass equality could delegate to nested custom
+  equality and clarified symlink handling. Exact recursive config types,
+  canonical primitive comparison, and strict fixed-file handling replaced
+  object equality.
+- Fifth rereview applied the same boundary to manifests and raw config paths.
+  Manifests now require exact builtin JSON types and canonical byte comparison;
+  config loading checks the exact absolute builtin string before constructing
+  a `Path`.
+- Final fresh rereview examined
+  `b352c32c63dce54c497c2f31d15cc6463392a700` and approved T20 with no
+  findings.
+
 ## Risks and limitations
 
 - T20 validates export structure and content identity, not numerical runtime
@@ -265,10 +310,8 @@ the fifth independent-review remediation awaits fresh rereview.
 
 ## Follow-up
 
-- Newly unblocked tasks: none while independent rereview is pending.
-- Recommended next action: fresh independent rereview should rerun the
-  adversarial manifest/fixture tests and external evidence validation. After
-  approval, T21 should consume the manifests, verify every
+- Newly unblocked task: T21.
+- Recommended next action: T21 should consume the manifests, verify every
   external hash before loading, run multi-position decode parity in ONNX
   Runtime CPU, and inspect whether `valid_length` remains a live internal
   slice/scatter dependency rather than a traced constant.

@@ -1,6 +1,6 @@
 # T20: Four-context ONNX export matrix
 
-Status: active — review fixes ready for rereview
+Status: completed — final independent rereview approved
 Owner: Codex T20 agent
 Updated: 2026-07-30
 
@@ -60,7 +60,7 @@ commands, contracts, versions, and content hashes.
 - [x] Reject config symlinks and lexically different path aliases.
 - [x] Canonicalize exact-builtin manifest trees before comparison.
 - [x] Check the raw absolute config spelling before `Path` construction.
-- [ ] Pass fresh independent rereview.
+- [x] Pass fresh independent rereview.
 
 ## Verification and acceptance
 
@@ -73,7 +73,7 @@ commands, contracts, versions, and content hashes.
 ## Artifact and privacy handling
 
 - Committed evidence: implementation, tests, configuration/attestation,
-  manifests, active plan, and sanitized in-progress worklog.
+  manifests, completed plan, and sanitized public worklog.
 - External artifacts: ONNX protobufs and data shards under
   `SLM_LAB_ARTIFACT_ROOT/onnx/reference/T20/`.
 - Private/local material: raw command logs and agent session identifiers only.
@@ -131,11 +131,9 @@ commands, contracts, versions, and content hashes.
   string equal to the fixed absolute path and rejects normalized-equivalent
   spellings.
 
-## Progress and restart instructions
+## Completion
 
-Both fifth-rereview findings are implemented with mapping-adapter and raw-path
-spelling regressions. Focused validation is green; the only
-repository-wide failure remains the known concurrent-claim fixture baseline
-recorded in the worklog. Commit this trust-boundary fix and request another
-fresh independent rereview. Keep T20 `in_progress` with a null graph worklog
-until rereview passes.
+Final fresh independent rereview approved
+`b352c32c63dce54c497c2f31d15cc6463392a700` with no findings. All task outputs
+and acceptance criteria are satisfied; T21 is the next consumer for runtime
+parity and graph-risk validation.
