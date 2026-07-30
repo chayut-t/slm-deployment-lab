@@ -35,6 +35,19 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/models/qwen3-0.6b-onnx-export.json"
 
 
+class _EqualityAdapter:
+    """Delegate fixture fields while remaining broadly equality-compatible."""
+
+    def __init__(self, target) -> None:
+        self._target = target
+
+    def __getattr__(self, name):
+        return getattr(self._target, name)
+
+    def __eq__(self, other) -> bool:
+        return True
+
+
 def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     config = load_export_config(CONFIG)
 
@@ -67,6 +80,26 @@ def test_export_config_rejects_caller_supplied_path(tmp_path: Path) -> None:
 
     with pytest.raises(ExportConfigurationError, match="fixed tracked export config"):
         load_export_config(path)
+
+
+def test_export_config_rejects_symlink_alias(tmp_path: Path) -> None:
+    alias = tmp_path / CONFIG.name
+    alias.symlink_to(CONFIG)
+
+    with pytest.raises(ExportConfigurationError, match="fixed tracked export config"):
+        load_export_config(alias)
+
+
+def test_export_config_rejects_symlink_at_configured_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    alias = tmp_path / CONFIG.name
+    alias.symlink_to(CONFIG)
+    monkeypatch.setattr(onnx_matrix, "DEFAULT_CONFIG_PATH", alias)
+
+    with pytest.raises(ExportConfigurationError, match="must not be a symlink"):
+        load_export_config(alias)
 
 
 def test_export_config_rejects_configured_fixture_with_stale_token_hash(
@@ -565,6 +598,36 @@ def test_manifest_rejects_modified_in_memory_export_setting() -> None:
             manifest,
             prompt_length=128,
             config=config,
+            prefill=_artifact_record(manifest["artifacts"]["prefill"]),
+            decode=_artifact_record(manifest["artifacts"]["decode"]),
+            source_weights_sha256=manifest["source_artifact_sha256"],
+            host_manifest_sha256=manifest["host_manifest_sha256"],
+        )
+
+
+def test_manifest_rejects_nested_equality_adapter() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    tampered = json.loads(json.dumps(manifest))
+    config = load_export_config(CONFIG)
+    substituted_attestation = dataclasses.replace(
+        config.evidence_attestation,
+        run_id="equality-adapter-run",
+    )
+    tampered["export_provenance"]["run_attestation"] = (
+        substituted_attestation.as_dict()
+    )
+    adapted_config = dataclasses.replace(
+        config,
+        evidence_attestation=_EqualityAdapter(substituted_attestation),
+    )
+
+    with pytest.raises(ExportConfigurationError, match="non-exact type"):
+        verify_manifest_evidence(
+            tampered,
+            prompt_length=128,
+            config=adapted_config,
             prefill=_artifact_record(manifest["artifacts"]["prefill"]),
             decode=_artifact_record(manifest["artifacts"]["decode"]),
             source_weights_sha256=manifest["source_artifact_sha256"],

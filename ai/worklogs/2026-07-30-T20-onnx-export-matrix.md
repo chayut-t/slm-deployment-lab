@@ -20,7 +20,7 @@ boundaries. No compiler, runtime-parity, accelerator-placement, or performance
 claim is made.
 
 The task remains `in_progress` and its task-graph worklog remains null while
-the third independent-review remediation awaits fresh rereview.
+the fourth independent-review remediation awaits fresh rereview.
 
 ## Changes
 
@@ -71,6 +71,13 @@ the third independent-review remediation awaits fresh rereview.
   external data, and all graph hashes.
 - Runtime verification now compares the actual interpreter version with the
   attested Python `3.11.15`, before package-version checks.
+- Fourth-rereview remediation removes dataclass equality from the trust
+  decision. It requires exact types for `ExportConfig`, every nested
+  dataclass, tuple, path, and primitive, then compares an explicit canonical
+  primitive serialization with a freshly parsed trusted configuration.
+- The fixed config boundary now rejects symlink aliases as well as any
+  lexically different path. A delegated equality-adapter regression confirms
+  that nested objects cannot substitute attested values.
 
 ## Verification
 
@@ -167,6 +174,27 @@ the third independent-review remediation awaits fresh rereview.
     T20, T51, and T72 remain concurrently `in_progress`.
 - `/Users/chayut/projects/slm-deployment-lab/.venv/bin/ruff check src tests`
   - Passed.
+
+### Fourth-rereview remediation verification
+
+- `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
+  SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src
+  /private/tmp/slm-t12-venv/bin/python -m
+  slm_lab.export.onnx_matrix validate`
+  - Passed after replacing equality-based trust comparison with strict type
+    validation and canonical primitive serialization.
+- `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
+  tests/export tests/contracts`
+  - `51 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
+    numerical gate already completed by T12.
+- `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
+  PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
+  -m pytest -q`
+  - `200 passed, 10 skipped, 1 failed`.
+  - The sole failure remains the concurrent-claim baseline
+    `GitSnapshotTests.test_staged_graph_requires_matching_staged_status`
+    `StopIteration`; no planned task has all dependencies completed while
+    T20, T51, and T72 remain concurrently `in_progress`.
 
 ## Decisions and evidence
 

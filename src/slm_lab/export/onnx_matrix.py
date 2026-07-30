@@ -428,12 +428,16 @@ def _load_export_attestation(value: Any) -> ExportAttestation:
 def _trusted_export_config_bytes(path: Path | str) -> tuple[Path, bytes]:
     """Return the one fixed config only when disk, HEAD, and code agree."""
 
-    source = Path(path).resolve()
-    expected_source = DEFAULT_CONFIG_PATH.resolve()
+    source = Path(path)
+    expected_source = DEFAULT_CONFIG_PATH
     if source != expected_source:
         raise ExportConfigurationError(
             "T20 accepts only the fixed tracked export config "
             f"{expected_source}, found {source}"
+        )
+    if source.is_symlink():
+        raise ExportConfigurationError(
+            f"T20 export config must not be a symlink: {source}"
         )
     try:
         raw = source.read_bytes()
@@ -538,11 +542,166 @@ def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
     )
 
 
+def _require_exact_type(value: Any, expected: type, field: str) -> None:
+    if type(value) is not expected:
+        raise ExportConfigurationError(
+            "in-memory T20 export config has non-exact type at "
+            f"{field}: expected {expected.__name__}, found {type(value).__name__}"
+        )
+
+
+def _config_primitive(config: ExportConfig) -> dict[str, Any]:
+    """Normalize an exactly typed config into JSON-safe primitive values."""
+
+    _require_exact_type(config, ExportConfig, "config")
+    for field in (
+        "opset",
+        "external_data_threshold_bytes",
+        "seed",
+    ):
+        _require_exact_type(getattr(config, field), int, field)
+    for field in (
+        "precision",
+        "exporter",
+        "torch_version",
+        "transformers_version",
+        "onnx_version",
+        "trusted_config_sha256",
+    ):
+        _require_exact_type(getattr(config, field), str, field)
+    path_type = type(DEFAULT_CONFIG_PATH)
+    _require_exact_type(config.source_path, path_type, "source_path")
+    _require_exact_type(config.model_contract_path, path_type, "model_contract_path")
+    _require_exact_type(config.contexts, tuple, "contexts")
+    for index, context in enumerate(config.contexts):
+        _require_exact_type(context, int, f"contexts[{index}]")
+
+    fixture = config.token_fixture
+    _require_exact_type(fixture, TokenFixtureBundle, "token_fixture")
+    _require_exact_type(fixture.source_path, path_type, "token_fixture.source_path")
+    for field in (
+        "configured_path",
+        "canonical_json_sha256",
+        "file_sha256",
+    ):
+        _require_exact_type(
+            getattr(fixture, field),
+            str,
+            f"token_fixture.{field}",
+        )
+    _require_exact_type(fixture.workloads, tuple, "token_fixture.workloads")
+    workloads: list[dict[str, Any]] = []
+    for index, workload in enumerate(fixture.workloads):
+        prefix = f"token_fixture.workloads[{index}]"
+        _require_exact_type(workload, TokenWorkload, prefix)
+        for field in ("context_length", "generated_tokens"):
+            _require_exact_type(getattr(workload, field), int, f"{prefix}.{field}")
+        for field in (
+            "fixture_id",
+            "prompt_sha256",
+            "token_ids_sha256",
+        ):
+            _require_exact_type(getattr(workload, field), str, f"{prefix}.{field}")
+        _require_exact_type(workload.token_ids, tuple, f"{prefix}.token_ids")
+        for token_index, token_id in enumerate(workload.token_ids):
+            _require_exact_type(
+                token_id,
+                int,
+                f"{prefix}.token_ids[{token_index}]",
+            )
+        workloads.append(
+            {
+                "fixture_id": workload.fixture_id,
+                "context_length": workload.context_length,
+                "generated_tokens": workload.generated_tokens,
+                "prompt_sha256": workload.prompt_sha256,
+                "token_ids_sha256": workload.token_ids_sha256,
+                "token_ids": list(workload.token_ids),
+            }
+        )
+
+    attestation = config.evidence_attestation
+    _require_exact_type(
+        attestation,
+        ExportAttestation,
+        "evidence_attestation",
+    )
+    for field in (
+        "run_id",
+        "exporter_commit",
+        "runtime_python_version",
+        "source_artifact_sha256",
+        "external_data_sha256",
+    ):
+        _require_exact_type(
+            getattr(attestation, field),
+            str,
+            f"evidence_attestation.{field}",
+        )
+    _require_exact_type(
+        attestation.graph_hashes,
+        tuple,
+        "evidence_attestation.graph_hashes",
+    )
+    graph_hashes: list[list[int | str]] = []
+    for index, graph_hash in enumerate(attestation.graph_hashes):
+        prefix = f"evidence_attestation.graph_hashes[{index}]"
+        _require_exact_type(graph_hash, tuple, prefix)
+        if len(graph_hash) != 3:
+            raise ExportConfigurationError(
+                f"in-memory T20 export config has invalid length at {prefix}"
+            )
+        context, prefill, decode = graph_hash
+        _require_exact_type(context, int, f"{prefix}[0]")
+        _require_exact_type(prefill, str, f"{prefix}[1]")
+        _require_exact_type(decode, str, f"{prefix}[2]")
+        graph_hashes.append([context, prefill, decode])
+
+    return {
+        "opset": config.opset,
+        "precision": config.precision,
+        "exporter": config.exporter,
+        "torch_version": config.torch_version,
+        "transformers_version": config.transformers_version,
+        "onnx_version": config.onnx_version,
+        "external_data_threshold_bytes": config.external_data_threshold_bytes,
+        "contexts": list(config.contexts),
+        "seed": config.seed,
+        "source_path": config.source_path.as_posix(),
+        "model_contract_path": config.model_contract_path.as_posix(),
+        "token_fixture": {
+            "source_path": fixture.source_path.as_posix(),
+            "configured_path": fixture.configured_path,
+            "canonical_json_sha256": fixture.canonical_json_sha256,
+            "file_sha256": fixture.file_sha256,
+            "workloads": workloads,
+        },
+        "evidence_attestation": {
+            "run_id": attestation.run_id,
+            "exporter_commit": attestation.exporter_commit,
+            "runtime_python_version": attestation.runtime_python_version,
+            "source_artifact_sha256": attestation.source_artifact_sha256,
+            "external_data_sha256": attestation.external_data_sha256,
+            "graph_hashes": graph_hashes,
+        },
+        "trusted_config_sha256": config.trusted_config_sha256,
+    }
+
+
+def _canonical_config_bytes(config: ExportConfig) -> bytes:
+    return json.dumps(
+        _config_primitive(config),
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
 def _verify_trusted_config(config: ExportConfig) -> None:
     """Reject parsed or constructed config state outside the trust root."""
 
+    candidate = _canonical_config_bytes(config)
     trusted = load_export_config()
-    if config != trusted:
+    if candidate != _canonical_config_bytes(trusted):
         raise ExportConfigurationError(
             "in-memory T20 export config differs from the immutable tracked config"
         )

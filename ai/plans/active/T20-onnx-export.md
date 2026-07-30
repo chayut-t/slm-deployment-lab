@@ -56,6 +56,8 @@ commands, contracts, versions, and content hashes.
 - [x] Anchor exporter revision and runtime Python outside the manifests.
 - [x] Bind configuration to the fixed code-pinned and HEAD-committed blob.
 - [x] Enforce actual Python against the recorded export runtime.
+- [x] Replace object equality with exact-type canonical comparison.
+- [x] Reject config symlinks and lexically different path aliases.
 - [ ] Pass fresh independent rereview.
 
 ## Verification and acceptance
@@ -109,12 +111,21 @@ commands, contracts, versions, and content hashes.
 - 2026-07-30: Third rereview also found that Python was recorded but not
   compared with the executing interpreter. Runtime validation now requires
   actual Python `3.11.15`, with a direct mismatch regression.
+- 2026-07-30: Fourth rereview found that Python dataclass equality could
+  delegate to a nested object's custom equality behavior. Trust comparison
+  now first requires exact types throughout the complete configuration tree,
+  then compares explicit canonical primitive serializations; no caller object
+  participates in equality.
+- 2026-07-30: Fourth rereview clarified that fixed-path loading must reject
+  symlink aliases rather than resolving them to the tracked file. The loader
+  now checks lexical identity before resolution and rejects a symlink at the
+  fixed path.
 
 ## Progress and restart instructions
 
-Both third-rereview findings are implemented with coherent-tamper regressions
-for every pinned field. Focused validation is green; the only repository-wide
-failure remains the known concurrent-claim fixture baseline recorded in the
-worklog. Commit this trust-root fix and request another fresh independent
-rereview. Keep T20 `in_progress` with a null graph worklog until rereview
-passes.
+Both fourth-rereview findings are implemented with equality-adapter and
+symlink-alias regressions. Focused validation is green; the only
+repository-wide failure remains the known concurrent-claim fixture baseline
+recorded in the worklog. Commit this trust-boundary fix and request another
+fresh independent rereview. Keep T20 `in_progress` with a null graph worklog
+until rereview passes.
