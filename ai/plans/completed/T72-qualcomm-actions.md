@@ -1,6 +1,6 @@
 # T72: Manual GitHub Actions AI Hub workflow
 
-Status: active
+Status: completed
 Owner: Codex T72 agent
 Updated: 2026-07-30
 
@@ -70,8 +70,8 @@ hardware boundaries work without creating secrets or running external jobs.
   printing the token, and calls exactly one local T30 stage script.
 - [x] Guide explains learner setup, request-bundle lineage, security model,
   dispatch, evidence, failure handling, and the unverified external boundary.
-- [ ] Focused and repository-wide required checks pass, with a public worklog and T72
-  completion metadata.
+- [x] Focused and repository-wide required checks pass, with a public worklog
+  and T72 completion metadata.
 
 ## Verification and acceptance
 
@@ -130,10 +130,14 @@ hardware boundaries work without creating secrets or running external jobs.
   checks were weaker than consumer checks. Tensor specs now undergo exact
   builtin-type validation before T12 comparison, and both workflows enforce
   the same leading-alphanumeric, safe-character, 128-character source rule.
+- 2026-07-30: Final independent review approved implementation commit
+  `d33e2f7e29167fa7fab42a0576203dde88b5fc33` with no actionable findings.
+  Offline acceptance is complete; every external setup and execution boundary
+  remains explicitly learner-controlled and unverified.
 
 ## Progress and restart instructions
 
-Third-review fixes and adversarial regressions are implemented. Rerun focused
-and repository-wide checks, commit the exact candidate, and request a fresh
-independent rereview. Keep T72 in progress with no graph worklog until that
-review accepts it.
+T72 is complete. The reviewed workflows, guide, tests, public worklog, task
+graph entry, and generated status are the restart surfaces. A future external
+run must begin with the learner security checklist and must not treat this
+offline completion as Qualcomm hardware evidence.

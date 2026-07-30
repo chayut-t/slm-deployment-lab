@@ -121,7 +121,7 @@ graph TD
 | T60 — ONNX Runtime CUDA context sweep | blocked | T02, T13, T20 | linux_nvidia_gpu, t9_heavy_io | — |
 | T70 — FastAPI backend contract | blocked | T33, T51, T60 | — | — |
 | T71 — React UI and local demo | blocked | T70 | — | — |
-| T72 — Manual GitHub Actions AI Hub workflow | in_progress | T03, T30 | — | — |
+| T72 — Manual GitHub Actions AI Hub workflow | completed | T03, T30 | — | ai/worklogs/2026-07-30-T72-qualcomm-actions.md |
 | T80 — Integrated guides, notebooks, and MkDocs | blocked | T03, T43, T52, T60, T72 | — | — |
 | T81 — Final evaluation and report | blocked | T13, T43, T52, T60 | t9_heavy_io | — |
 | T82 — Reproduction and release audit | blocked | T71, T72, T80, T81 | — | — |
@@ -129,9 +129,9 @@ graph TD
 ## Summary
 
 - ready: 0
-- in_progress: 3
+- in_progress: 2
 - blocked: 15
-- completed: 12
+- completed: 13
 
 ## Resource capacities
 

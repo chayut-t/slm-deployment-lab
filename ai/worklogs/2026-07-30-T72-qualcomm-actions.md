@@ -3,15 +3,16 @@
 Date: 2026-07-30
 Task: `T72`
 Visibility: `public`
-Status: in_progress
+Status: completed
 
 ## Outcome
 
-Initial implementation produced a manually dispatched Qualcomm AI Hub workflow
-and offline validation. Independent review then identified incomplete producer
-identity and bundle semantic/path/digest validation, so T72 is reopened while
-those findings are addressed and freshly reviewed. No secret was created or
-inspected and no GitHub Actions or Qualcomm job was run.
+Completed a manually dispatched, fork-safe Qualcomm AI Hub workflow plus its
+fixed reviewed request-bundle producer, offline semantic/security validation,
+and learner operations guide. Three rounds of independent findings were
+remediated, and final independent review approved implementation commit
+`d33e2f7e29167fa7fab42a0576203dde88b5fc33` with no actionable findings. No
+secret was created or inspected and no GitHub Actions or Qualcomm job was run.
 
 ## Changes
 
@@ -106,7 +107,10 @@ inspected and no GitHub Actions or Qualcomm job was run.
   coordination-sensitive T03 test was explicitly deselected.
 - Commands: `python3 scripts/ai/render_task_status.py --check`,
   `python3 scripts/repo/check_hygiene.py --all`, and `git diff --check`.
-- Result: all passed on the current rereview snapshot.
+- Result: all passed on the final reviewed snapshot and were repeated after
+  lifecycle closure.
+- Independent review result: the final reviewer approved implementation commit
+  `d33e2f7e29167fa7fab42a0576203dde88b5fc33` with no actionable findings.
 
 ## Decisions and evidence
 
@@ -145,16 +149,16 @@ inspected and no GitHub Actions or Qualcomm job was run.
 
 ## Follow-up
 
-- Independent review status: P1 producer identity/revision and bundle
-  validation findings have implementation and adversarial regression fixes.
-  The coordinator authorized and the T72 definition records the narrow
-  producer-workflow scope expansion. This worklog remains unreferenced by the
-  task graph until a fresh reviewer accepts the fixes.
-- Newly unblocked tasks: none while T72 remains in progress.
-- Recommended next action: perform a fresh independent rereview of the
-  producer trust terminus, benchmark pre-secret validator, adversarial tests,
-  and lifecycle metadata. Only after acceptance should T72 be completed and
-  the learner proceed to external setup.
+- Independent review status: all producer identity/revision,
+  tuple/path/digest, exact T12 type/axis, precision-lineage, and source-name
+  parity findings were fixed with adversarial regressions. Final review
+  accepted the exact implementation commit with no actionable findings.
+- Newly unblocked tasks: T72 no longer blocks T80 or T82; each remains subject
+  to its other task-graph dependencies.
+- Recommended next action: retain offline completion as the implementation
+  baseline. Before any optional real run, the learner must personally review
+  the security checklist, provision the protected environment/secret, stage a
+  licensed source archive, and authorize service quota/cost.
 - Learner debrief:
   - [ ] Trace a dispatch through authorization, environment approval, client
     setup, the local stage script, credential cleanup, and manifest upload in
