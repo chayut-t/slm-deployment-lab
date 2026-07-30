@@ -101,17 +101,25 @@ jobs:
             *) echo "unsupported stage" >&2; exit 2 ;;
           esac
           case "$SOURCE_RELEASE_TAG" in
-            ""|*[!A-Za-z0-9._+-]*)
-              echo "release tag contains unsupported characters" >&2
+            ""|[!A-Za-z0-9]*|*[!A-Za-z0-9._+-]*)
+              echo "release tag must start alphanumeric and use safe characters" >&2
               exit 2
               ;;
           esac
+          if [ "${#SOURCE_RELEASE_TAG}" -gt 128 ]; then
+            echo "release tag must not exceed 128 characters" >&2
+            exit 2
+          fi
           case "$SOURCE_ASSET_NAME" in
-            ""|*[!A-Za-z0-9._+-]*)
-              echo "asset name contains unsupported characters" >&2
+            ""|[!A-Za-z0-9]*|*[!A-Za-z0-9._+-]*)
+              echo "asset name must start alphanumeric and use safe characters" >&2
               exit 2
               ;;
           esac
+          if [ "${#SOURCE_ASSET_NAME}" -gt 128 ]; then
+            echo "asset name must not exceed 128 characters" >&2
+            exit 2
+          fi
           case "$SOURCE_ARCHIVE_SHA256" in
             *[!0-9a-f]*)
               echo "source archive SHA-256 must be lowercase hexadecimal" >&2
@@ -279,6 +287,16 @@ jobs:
                   "attributes": [],
               },
           }
+          SOURCE_NAME_CHARACTERS = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789._+-"
+          )
+          SOURCE_NAME_INITIAL_CHARACTERS = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789"
+          )
 
 
           def fail(message):
@@ -299,9 +317,26 @@ jobs:
               return digest.hexdigest()
 
 
+          def valid_source_name(value):
+              return (
+                  type(value) is str
+                  and 1 <= len(value) <= 128
+                  and value[0] in SOURCE_NAME_INITIAL_CHARACTERS
+                  and all(
+                      character in SOURCE_NAME_CHARACTERS
+                      for character in value
+                  )
+              )
+
+
           archive = Path(
               "artifacts/qualcomm-release-source/source-bundle.zip"
           )
+          if not all(
+              valid_source_name(os.environ[name])
+              for name in ("SOURCE_RELEASE_TAG", "SOURCE_ASSET_NAME")
+          ):
+              fail("source release tag or asset name is unsafe")
           expected_archive_sha = os.environ["SOURCE_ARCHIVE_SHA256"]
           if (
               not archive.is_file()

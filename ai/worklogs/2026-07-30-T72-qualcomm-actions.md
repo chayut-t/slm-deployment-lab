@@ -73,19 +73,28 @@ inspected and no GitHub Actions or Qualcomm job was run.
   full-selector contradictions, precision/context lineage drift, coincidental
   dimensions, traversal spellings, source-provenance drift, and valid exact
   decode axes.
+- Third-review fixes walk the complete selected or predecessor tensor-spec map
+  and require exact builtin dictionaries, lists, strings, and positive integer
+  dimensions before T12 equality. This rejects boolean/float numeric aliases
+  across prefill, decode cache axes, compile, inference, and profile.
+- Producer authorization, producer bundle construction, and benchmark
+  consumption now apply the same source release-tag/asset-name rule: leading
+  ASCII alphanumeric, no more than 128 characters, and only ASCII
+  alphanumeric plus `._+-`. Parity regressions cover invalid leading/length
+  cases and the valid maximum-length boundary.
 
 ## Verification
 
 - Command:
   `PYTHONPATH=src python3 -m unittest discover -s tests/workflows -p 'test_*.py' -v`
-- Result: 32 focused producer/benchmark workflow tests passed.
+- Result: 36 focused producer/benchmark workflow tests passed.
 - Command:
   `PYTHONPATH=src <project-python> -m unittest tests.deployment.qualcomm.test_ai_hub -v`
 - Result: all 21 T30 adapter contract tests passed.
 - Command: `<project-python> -m ruff check tests/workflows`
 - Result: passed.
 - Command: `PYTHONPATH=src <project-python> -m pytest -q`
-- Result: with an isolated writable uv cache, 192 tests passed and six
+- Result: with an isolated writable uv cache, 196 tests passed and six
   intentional opt-in tests skipped. One T03 repository-automation test failed:
   `test_staged_graph_requires_matching_staged_status` assumes at least one
   dependency-ready task remains `planned`, while the public parallel-work
@@ -93,7 +102,7 @@ inspected and no GitHub Actions or Qualcomm job was run.
   T72 code was not in the traceback.
 - Command:
   `UV_CACHE_DIR=<writable-temp> PYTHONPATH=src <project-python> -m pytest -q -k 'not test_staged_graph_requires_matching_staged_status'`
-- Result: 192 tests passed, six intentional opt-in tests skipped, and the one
+- Result: 196 tests passed, six intentional opt-in tests skipped, and the one
   coordination-sensitive T03 test was explicitly deselected.
 - Commands: `python3 scripts/ai/render_task_status.py --check`,
   `python3 scripts/repo/check_hygiene.py --all`, and `git diff --check`.

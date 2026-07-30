@@ -462,22 +462,33 @@ jobs:
               {"release_tag", "asset_name", "archive_sha256"},
           ):
               fail("bundle source provenance fields are invalid")
-          allowed_source_characters = set(
+          source_name_characters = set(
               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
               "abcdefghijklmnopqrstuvwxyz"
               "0123456789._+-"
           )
-          for field in ("release_tag", "asset_name"):
-              value = source[field]
-              if (
-                  not isinstance(value, str)
-                  or not 1 <= len(value) <= 128
-                  or not value[0].isalnum()
-                  or any(
-                      character not in allowed_source_characters
+          source_name_initial_characters = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789"
+          )
+
+
+          def valid_source_name(value):
+              return (
+                  type(value) is str
+                  and 1 <= len(value) <= 128
+                  and value[0] in source_name_initial_characters
+                  and all(
+                      character in source_name_characters
                       for character in value
                   )
-              ):
+              )
+
+
+          for field in ("release_tag", "asset_name"):
+              value = source[field]
+              if not valid_source_name(value):
                   fail("bundle source provenance value is unsafe")
           source_sha = source["archive_sha256"]
           if (
@@ -629,6 +640,26 @@ jobs:
 
 
           def identify_t12_graph(input_specs):
+              if type(input_specs) is not dict:
+                  fail(
+                      "input specs must use exact builtin JSON tensor types"
+                  )
+              for name, spec in input_specs.items():
+                  if (
+                      type(name) is not str
+                      or type(spec) is not dict
+                      or set(spec) != {"shape", "dtype"}
+                      or type(spec["shape"]) is not list
+                      or not spec["shape"]
+                      or any(
+                          type(dimension) is not int or dimension <= 0
+                          for dimension in spec["shape"]
+                      )
+                      or type(spec["dtype"]) is not str
+                  ):
+                      fail(
+                          "input specs must use exact builtin JSON tensor types"
+                      )
               matches = [
                   graph_kind
                   for graph_kind in ("prefill", "decode")

@@ -223,6 +223,12 @@ contract, not by finding the context integer somewhere in a shape:
 - `(S,C)` must be exactly `(128,160)`, `(512,576)`, `(1024,1152)`, or
   `(4096,4224)`.
 
+The validator checks exact builtin JSON container and scalar types before
+comparing those contracts. In particular, every dimension must have JSON
+integer type and be positive; JSON booleans or floating-point values are
+rejected even when Python would otherwise compare `true == 1` or
+`128.0 == 128`.
+
 Inference/profile predecessor manifests must expose one of those exact input
 maps. Their compiled artifact name and digest must match the request.
 

@@ -695,6 +695,25 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             check=False,
         )
 
+    def run_producer_input_validator(
+        self,
+        root: Path,
+        environment: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        validator = next(
+            step
+            for step in self.producer_steps
+            if step["name"].startswith("Validate fixed source")
+        )
+        return subprocess.run(
+            ("bash", "-c", validator["run"]),
+            cwd=root,
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
     def test_producer_builds_content_addressed_bundle(self) -> None:
         root, environment = self.make_source_archive()
         result = self.run_producer_builder(root, environment)
@@ -731,6 +750,105 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         result = self.run_producer_builder(root, environment)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("does not match reviewed SHA-256", result.stderr)
+
+    def test_producer_and_consumer_enforce_source_name_rule_parity(
+        self,
+    ) -> None:
+        fields = (
+            ("release_tag", "SOURCE_RELEASE_TAG"),
+            ("asset_name", "SOURCE_ASSET_NAME"),
+        )
+        for manifest_field, environment_field in fields:
+            for invalid_value in (".leading-punctuation", "a" * 129):
+                with self.subTest(
+                    field=manifest_field,
+                    value=invalid_value,
+                ):
+                    producer_root, producer_environment = (
+                        self.make_source_archive()
+                    )
+                    producer_environment[environment_field] = invalid_value
+                    input_result = self.run_producer_input_validator(
+                        producer_root,
+                        producer_environment,
+                    )
+                    self.assertNotEqual(input_result.returncode, 0)
+                    producer_result = self.run_producer_builder(
+                        producer_root,
+                        producer_environment,
+                    )
+                    self.assertNotEqual(producer_result.returncode, 0)
+                    self.assertIn(
+                        "release tag or asset name is unsafe",
+                        producer_result.stderr,
+                    )
+
+                    consumer_root, consumer_environment = (
+                        self.make_compile_bundle()
+                    )
+                    manifest_path = (
+                        consumer_root
+                        / "artifacts"
+                        / "qualcomm-request-bundle"
+                        / "bundle-manifest.json"
+                    )
+                    manifest = json.loads(
+                        manifest_path.read_text(encoding="utf-8")
+                    )
+                    manifest["source"][manifest_field] = invalid_value
+                    manifest_path.write_text(
+                        json.dumps(manifest, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+                    consumer_environment[
+                        "EXPECTED_BUNDLE_MANIFEST_SHA256"
+                    ] = sha256(manifest_path)
+                    consumer_result = self.run_bundle_validator(
+                        consumer_root,
+                        consumer_environment,
+                    )
+                    self.assertNotEqual(consumer_result.returncode, 0)
+                    self.assertIn(
+                        "source provenance value is unsafe",
+                        consumer_result.stderr,
+                    )
+
+        producer_root, producer_environment = self.make_source_archive()
+        producer_environment["SOURCE_RELEASE_TAG"] = "a" * 128
+        producer_environment["SOURCE_ASSET_NAME"] = "b" * 128
+        input_result = self.run_producer_input_validator(
+            producer_root,
+            producer_environment,
+        )
+        self.assertEqual(input_result.returncode, 0, input_result.stderr)
+        producer_result = self.run_producer_builder(
+            producer_root,
+            producer_environment,
+        )
+        self.assertEqual(producer_result.returncode, 0, producer_result.stderr)
+
+        consumer_root, consumer_environment = self.make_compile_bundle()
+        manifest_path = (
+            consumer_root
+            / "artifacts"
+            / "qualcomm-request-bundle"
+            / "bundle-manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["source"]["release_tag"] = "a" * 128
+        manifest["source"]["asset_name"] = "b" * 128
+        manifest_path.write_text(
+            json.dumps(manifest, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        consumer_environment["EXPECTED_BUNDLE_MANIFEST_SHA256"] = sha256(
+            manifest_path
+        )
+        consumer_result = self.run_bundle_validator(
+            consumer_root,
+            consumer_environment,
+        )
+        self.assertEqual(consumer_result.returncode, 0, consumer_result.stderr)
 
     def test_producer_rejects_source_archive_path_escape(self) -> None:
         root, environment = self.make_source_archive(escaped_entry=True)
@@ -787,12 +905,99 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         result = self.run_bundle_validator(root, environment)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_compile_rejects_prefill_bool_and_float_dimension_aliases(
+        self,
+    ) -> None:
+        substitutions = (
+            ("input_ids", 0, True),
+            ("attention_mask", 1, 128.0),
+        )
+        for tensor_name, axis, alias in substitutions:
+            with self.subTest(
+                tensor=tensor_name,
+                axis=axis,
+                alias=alias,
+            ):
+                def substitute(request):
+                    request["input_specs"][tensor_name]["shape"][axis] = alias
+
+                root, environment = self.make_compile_bundle(substitute)
+                result = self.run_bundle_validator(root, environment)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(
+                    "exact builtin JSON tensor types",
+                    result.stderr,
+                )
+
+    def test_compile_rejects_decode_cache_bool_and_float_axis_aliases(
+        self,
+    ) -> None:
+        substitutions = (
+            ("key_cache.0", 0, True),
+            ("value_cache.27", 2, 160.0),
+        )
+        for tensor_name, axis, alias in substitutions:
+            with self.subTest(
+                tensor=tensor_name,
+                axis=axis,
+                alias=alias,
+            ):
+                def substitute(request):
+                    request["input_specs"] = decode_specs(128)
+                    request["input_specs"][tensor_name]["shape"][axis] = alias
+                    request["source_artifact"]["logical_name"] = (
+                        "qwen3-0.6b-decode-s128-fp16.onnx"
+                    )
+                    request["output_logical_name"] = (
+                        "qwen3-0.6b-decode-s128-fp16.qnn.bin"
+                    )
+
+                root, environment = self.make_compile_bundle(substitute)
+                result = self.run_bundle_validator(root, environment)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(
+                    "exact builtin JSON tensor types",
+                    result.stderr,
+                )
+
     def test_valid_inference_and_profile_predecessors_are_accepted(self) -> None:
         for stage in ("inference", "profile"):
             with self.subTest(stage=stage):
                 root, environment = self.make_later_stage_bundle(stage)
                 result = self.run_bundle_validator(root, environment)
                 self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_later_stages_reject_predecessor_numeric_type_aliases(self) -> None:
+        cases = (
+            ("inference", "input_ids", 0, True, False),
+            ("profile", "key_cache.0", 2, 160.0, True),
+        )
+        for stage, tensor_name, axis, alias, decode in cases:
+            with self.subTest(
+                stage=stage,
+                tensor=tensor_name,
+                axis=axis,
+                alias=alias,
+            ):
+                def substitute(predecessor):
+                    if decode:
+                        predecessor["graph_contract"]["input_specs"] = (
+                            decode_specs(128)
+                        )
+                    predecessor["graph_contract"]["input_specs"][
+                        tensor_name
+                    ]["shape"][axis] = alias
+
+                root, environment = self.make_later_stage_bundle(
+                    stage,
+                    predecessor_mutator=substitute,
+                )
+                result = self.run_bundle_validator(root, environment)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(
+                    "exact builtin JSON tensor types",
+                    result.stderr,
+                )
 
     def test_inference_predecessor_precision_conflict_is_rejected(self) -> None:
         def predecessor_w8(predecessor):

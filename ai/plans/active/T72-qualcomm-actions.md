@@ -125,10 +125,15 @@ hardware boundaries work without creating secrets or running external jobs.
 - 2026-07-30: Source-release tag, asset name, and reviewed archive digest now
   cross the producer/consumer boundary explicitly. Relative bundle paths must
   be canonical POSIX spellings before either workflow resolves them.
+- 2026-07-30: The third independent review found that ordinary Python equality
+  treats JSON booleans/floats as integer aliases and that producer source-name
+  checks were weaker than consumer checks. Tensor specs now undergo exact
+  builtin-type validation before T12 comparison, and both workflows enforce
+  the same leading-alphanumeric, safe-character, 128-character source rule.
 
 ## Progress and restart instructions
 
-Second-review fixes and adversarial regressions are implemented. Rerun focused
+Third-review fixes and adversarial regressions are implemented. Rerun focused
 and repository-wide checks, commit the exact candidate, and request a fresh
 independent rereview. Keep T72 in progress with no graph worklog until that
 review accepts it.
