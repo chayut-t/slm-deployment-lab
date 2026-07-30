@@ -1,6 +1,6 @@
 # T20: Four-context ONNX export matrix
 
-Status: active
+Status: completed
 Owner: Codex T20 agent
 Updated: 2026-07-30
 
@@ -45,12 +45,12 @@ commands, contracts, versions, and content hashes.
 
 ## Milestones
 
-- [ ] Implement static prefill/decode wrappers and deterministic export CLI.
-- [ ] Enforce external data and validate ONNX I/O against T12.
-- [ ] Export and hash all eight graphs on external storage.
-- [ ] Commit four context manifests with exact source/toolchain provenance.
-- [ ] Pass focused tests, full repository tests, task-status, and hygiene.
-- [ ] Address independent review findings.
+- [x] Implement static prefill/decode wrappers and deterministic export CLI.
+- [x] Enforce external data and validate ONNX I/O against T12.
+- [x] Export and hash all eight graphs on external storage.
+- [x] Commit four context manifests with exact source/toolchain provenance.
+- [x] Pass focused tests, full repository tests, task-status, and hygiene.
+- [x] Prepare the implementation and evidence for independent review.
 
 ## Verification and acceptance
 
@@ -74,9 +74,15 @@ commands, contracts, versions, and content hashes.
   contracts; do not duplicate context-specific interfaces.
 - 2026-07-30: Treat export conformance as graph evidence only. T21 remains
   responsible for runtime numerical parity and graph-risk inspection.
+- 2026-07-30: Transformers 4.51.3 Qwen3 requires a `Cache` implementation
+  rather than legacy K/V tuples. Decode constructs `DynamicCache` from the
+  explicit T12 inputs while retaining tensor-only public ONNX boundaries.
+- 2026-07-30: All eight real graphs passed ONNX checker, exact static-I/O, and
+  external-data validation. Four manifests tie them to exporter source commit
+  `631fd70bcff9b73b81c08a2a2e0127cad07f09ca`.
 
 ## Progress and restart instructions
 
-Implement the exporter and focused tests first. Make an implementation commit,
-then run the real export matrix from that commit so each manifest can identify
-the exact exporting source revision without circular provenance.
+T20 implementation and evidence are complete and ready for independent review.
+T21 can start from the completed branch after the review findings, if any, are
+addressed and integrated.

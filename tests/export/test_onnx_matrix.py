@@ -23,6 +23,7 @@ from slm_lab.export.onnx_matrix import (
     inspect_onnx_artifact,
     load_export_config,
 )
+from slm_lab.manifests.validation import validate_manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -228,3 +229,57 @@ def test_existing_artifact_is_never_overwritten(tmp_path: Path) -> None:
 
 def test_artifact_subdirectory_covers_every_capacity() -> None:
     assert CONTEXT_VARIANTS == {128: 160, 512: 576, 1024: 1152, 4096: 4224}
+
+
+def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None:
+    manifest_directory = ROOT / "results/manifests/onnx"
+    paths = sorted(manifest_directory.glob("S*.json"))
+    assert [path.name for path in paths] == [
+        "S1024.json",
+        "S128.json",
+        "S4096.json",
+        "S512.json",
+    ]
+
+    for path in paths:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        validate_manifest("artifact", manifest)
+        prompt_length = manifest["context_length"]
+        assert manifest["status"] == "exported_and_shape_validated"
+        assert manifest["variant_id"] == f"S{prompt_length}"
+        assert manifest["cache_capacity"] == CONTEXT_VARIANTS[prompt_length]
+        assert manifest["artifacts"]["root"] == (
+            "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20"
+        )
+        for kind, contract in (
+            ("prefill", build_prefill_contract(prompt_length)),
+            ("decode", build_decode_contract(prompt_length)),
+        ):
+            artifact = manifest["artifacts"][kind]
+            assert artifact["graph_kind"] == kind
+            assert artifact["relative_path"] == (
+                f"S{prompt_length}/{kind}.onnx"
+            )
+            assert artifact["size_bytes"] > 0
+            assert len(artifact["sha256"]) == 64
+            assert artifact["input_tensors"] == [
+                {
+                    "name": spec.name,
+                    "dtype": spec.dtype,
+                    "shape": list(spec.shape),
+                }
+                for spec in contract.inputs
+            ]
+            assert artifact["output_tensors"] == [
+                {
+                    "name": spec.name,
+                    "dtype": spec.dtype,
+                    "shape": list(spec.shape),
+                }
+                for spec in contract.outputs
+            ]
+            assert artifact["external_data"]
+            assert all(
+                len(record["sha256"]) == 64 and record["size_bytes"] > 0
+                for record in artifact["external_data"]
+            )

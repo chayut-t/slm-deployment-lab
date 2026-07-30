@@ -1,0 +1,4976 @@
+{
+  "artifacts": {
+    "decode": {
+      "external_data": [
+        {
+          "location": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "input_tensors": [
+        {
+          "dtype": "int64",
+          "name": "input_ids",
+          "shape": [
+            1,
+            1
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "attention_mask",
+          "shape": [
+            1,
+            4224
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "position_ids",
+          "shape": [
+            1,
+            1
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "output_tensors": [
+        {
+          "dtype": "float32",
+          "name": "next_logits",
+          "shape": [
+            1,
+            151936
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "updated_valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "relative_path": "S4096/decode.onnx",
+      "sha256": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd",
+      "size_bytes": 1759947
+    },
+    "prefill": {
+      "external_data": [
+        {
+          "location": "prefill.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "prefill",
+      "input_tensors": [
+        {
+          "dtype": "int64",
+          "name": "input_ids",
+          "shape": [
+            1,
+            4096
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "attention_mask",
+          "shape": [
+            1,
+            4096
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "position_ids",
+          "shape": [
+            1,
+            4096
+          ]
+        }
+      ],
+      "output_tensors": [
+        {
+          "dtype": "float32",
+          "name": "last_logits",
+          "shape": [
+            1,
+            151936
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "relative_path": "S4096/prefill.onnx",
+      "sha256": "c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988",
+      "size_bytes": 35209213
+    },
+    "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20"
+  },
+  "cache_capacity": 4224,
+  "cache_contract": {
+    "decode": {
+      "input_valid_range": "[0, valid_length)",
+      "output_valid_length": "valid_length + 1",
+      "strategy": "fixed_capacity_indexed_copy",
+      "write_index": "valid_length"
+    },
+    "prefill": {
+      "output_valid_length": "prompt_length",
+      "strategy": "prefill_prefix_materialization",
+      "written_range": "[0, prompt_length)",
+      "zero_filled_range": "[prompt_length, cache_capacity)"
+    }
+  },
+  "calibration_dataset_revision": null,
+  "chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "claim_boundary": {
+    "does_not_establish": [
+      "onnxruntime_numerical_parity",
+      "compiler_acceptance",
+      "accelerator_placement",
+      "latency_or_memory_performance"
+    ],
+    "establishes": [
+      "pinned_host_export_completed",
+      "onnx_checker_accepted_graph",
+      "public_io_matches_frozen_T12_contract",
+      "external_data_files_exist_and_match_committed_hashes"
+    ]
+  },
+  "commands": {
+    "export": "HF_HOME=<local-cache> TRANSFORMERS_OFFLINE=1 SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.export.onnx_matrix export --context 4096",
+    "validate": "HF_HOME=<local-cache> TRANSFORMERS_OFFLINE=1 SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.export.onnx_matrix validate --context 4096"
+  },
+  "compile_options": {},
+  "context_length": 4096,
+  "contract": {
+    "decode": {
+      "cache_capacity": 4224,
+      "cache_update": {
+        "input_valid_range": "[0, valid_length)",
+        "output_valid_length": "valid_length + 1",
+        "strategy": "fixed_capacity_indexed_copy",
+        "write_index": "valid_length"
+      },
+      "graph_kind": "decode",
+      "inputs": [
+        {
+          "description": "Exactly one teacher-forced or selected decode token.",
+          "dtype": "int64",
+          "layout": [
+            "batch",
+            "sequence"
+          ],
+          "name": "input_ids",
+          "shape": [
+            1,
+            1
+          ]
+        },
+        {
+          "description": "One through the current token at valid_length; zero after it.",
+          "dtype": "int64",
+          "layout": [
+            "batch",
+            "cache_position"
+          ],
+          "name": "attention_mask",
+          "shape": [
+            1,
+            4224
+          ]
+        },
+        {
+          "description": "Equals valid_length for the current token.",
+          "dtype": "int64",
+          "layout": [
+            "batch",
+            "sequence"
+          ],
+          "name": "position_ids",
+          "shape": [
+            1,
+            1
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA key cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Incoming GQA value cache; only [0, valid_length) is valid.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Number of valid incoming cache positions and current write index.",
+          "dtype": "int64",
+          "layout": [
+            "batch"
+          ],
+          "name": "valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "outputs": [
+        {
+          "description": "Float32 logits after incorporating the current decode token.",
+          "dtype": "float32",
+          "layout": [
+            "batch",
+            "vocabulary"
+          ],
+          "name": "next_logits",
+          "shape": [
+            1,
+            151936
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Key cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_key.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Value cache with the current token written at valid_length.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "present_value.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Equals incoming valid_length + 1.",
+          "dtype": "int64",
+          "layout": [
+            "batch"
+          ],
+          "name": "updated_valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "prompt_length": 4096,
+      "schema_version": 1,
+      "variant_id": "S4096"
+    },
+    "decode_sha256": "975480200933bb6d3e3691fbce6f7a641c04faac0adb6f14630392460ebc190b",
+    "prefill": {
+      "cache_capacity": 4224,
+      "cache_update": {
+        "output_valid_length": "prompt_length",
+        "strategy": "prefill_prefix_materialization",
+        "written_range": "[0, prompt_length)",
+        "zero_filled_range": "[prompt_length, cache_capacity)"
+      },
+      "graph_kind": "prefill",
+      "inputs": [
+        {
+          "description": "Exact T10 prompt token IDs.",
+          "dtype": "int64",
+          "layout": [
+            "batch",
+            "sequence"
+          ],
+          "name": "input_ids",
+          "shape": [
+            1,
+            4096
+          ]
+        },
+        {
+          "description": "One for every real prompt token; padding is not permitted.",
+          "dtype": "int64",
+          "layout": [
+            "batch",
+            "sequence"
+          ],
+          "name": "attention_mask",
+          "shape": [
+            1,
+            4096
+          ]
+        },
+        {
+          "description": "Zero-based positions [0, prompt_length).",
+          "dtype": "int64",
+          "layout": [
+            "batch",
+            "sequence"
+          ],
+          "name": "position_ids",
+          "shape": [
+            1,
+            4096
+          ]
+        }
+      ],
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "outputs": [
+        {
+          "description": "Float32 next-token logits for the last prompt position.",
+          "dtype": "float32",
+          "layout": [
+            "batch",
+            "vocabulary"
+          ],
+          "name": "last_logits",
+          "shape": [
+            1,
+            151936
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA key cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "key_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "GQA value cache; prompt prefix is valid and reserve is zero-filled.",
+          "dtype": "float16",
+          "layout": [
+            "batch",
+            "kv_head",
+            "cache_position",
+            "head_dim"
+          ],
+          "name": "value_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "description": "Equals prompt_length after prefill.",
+          "dtype": "int64",
+          "layout": [
+            "batch"
+          ],
+          "name": "valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "prompt_length": 4096,
+      "schema_version": 1,
+      "variant_id": "S4096"
+    },
+    "prefill_sha256": "6a91a89f0b627a6eb85c2045d0df0943ebf92b3546a6a4c2f52dd025ca921520"
+  },
+  "created_at": "2026-07-30T09:54:14Z",
+  "device_type": null,
+  "exporter": "torch.onnx.export",
+  "exporter_version": "2.7.1",
+  "git_commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+  "host_manifest_sha256": "4de649d6489dd0326e8682a53b244e719742436f5f896feb277b463cebb740f7",
+  "input_contract": {
+    "decode": [
+      "input_ids",
+      "attention_mask",
+      "position_ids",
+      "key_cache.0",
+      "value_cache.0",
+      "key_cache.1",
+      "value_cache.1",
+      "key_cache.2",
+      "value_cache.2",
+      "key_cache.3",
+      "value_cache.3",
+      "key_cache.4",
+      "value_cache.4",
+      "key_cache.5",
+      "value_cache.5",
+      "key_cache.6",
+      "value_cache.6",
+      "key_cache.7",
+      "value_cache.7",
+      "key_cache.8",
+      "value_cache.8",
+      "key_cache.9",
+      "value_cache.9",
+      "key_cache.10",
+      "value_cache.10",
+      "key_cache.11",
+      "value_cache.11",
+      "key_cache.12",
+      "value_cache.12",
+      "key_cache.13",
+      "value_cache.13",
+      "key_cache.14",
+      "value_cache.14",
+      "key_cache.15",
+      "value_cache.15",
+      "key_cache.16",
+      "value_cache.16",
+      "key_cache.17",
+      "value_cache.17",
+      "key_cache.18",
+      "value_cache.18",
+      "key_cache.19",
+      "value_cache.19",
+      "key_cache.20",
+      "value_cache.20",
+      "key_cache.21",
+      "value_cache.21",
+      "key_cache.22",
+      "value_cache.22",
+      "key_cache.23",
+      "value_cache.23",
+      "key_cache.24",
+      "value_cache.24",
+      "key_cache.25",
+      "value_cache.25",
+      "key_cache.26",
+      "value_cache.26",
+      "key_cache.27",
+      "value_cache.27",
+      "valid_length"
+    ],
+    "prefill": [
+      "input_ids",
+      "attention_mask",
+      "position_ids"
+    ]
+  },
+  "model_id": "Qwen/Qwen3-0.6B",
+  "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "opset": 18,
+  "precision": "float16",
+  "profile_options": {},
+  "provider_options": {},
+  "qairt_version": null,
+  "quantization": null,
+  "runtime": null,
+  "runtime_version": null,
+  "schema_version": 1,
+  "source_artifact_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+  "status": "exported_and_shape_validated",
+  "target_device": null,
+  "task_id": "T20",
+  "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "toolchain": {
+    "attention_implementation": "eager",
+    "device": "cpu",
+    "onnx": "1.18.0",
+    "python": "3.11.15",
+    "torch": "2.7.1",
+    "transformers": "4.51.3"
+  },
+  "variant_id": "S4096"
+}
