@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task_id": "T20",
+  "model_contract": "configs/models/qwen3-0.6b.yaml",
+  "token_fixture": "tests/fixtures/t10/token-fixtures-v1.json",
+  "contexts": [
+    128,
+    512,
+    1024,
+    4096
+  ],
+  "packages": {
+    "torch": "2.7.1",
+    "transformers": "4.51.3",
+    "onnx": "1.18.0"
+  },
+  "export": {
+    "exporter": "torch.onnx.export",
+    "opset": 18,
+    "precision": "float16",
+    "attention_implementation": "eager",
+    "device": "cpu",
+    "seed": 0,
+    "external_data_threshold_bytes": 1024,
+    "constant_folding": false,
+    "dynamic_axes": null
+  },
+  "artifact_directory": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20",
+  "manifest_directory": "results/manifests/onnx"
+}
