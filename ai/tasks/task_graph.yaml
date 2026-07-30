@@ -282,13 +282,13 @@
       "id": "T51",
       "title": "Custom MLX runtime",
       "definition": "ai/tasks/definitions/T51.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T12", "T50"],
       "resource_locks": ["apple_m4_heavy"],
       "owner": "Codex T51 agent",
       "branch": "task/T51-mlx-runtime",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-07-30-T51-custom-mlx-runtime.md"
     },
     {
       "id": "T52",
