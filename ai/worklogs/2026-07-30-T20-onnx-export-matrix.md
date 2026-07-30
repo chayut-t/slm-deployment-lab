@@ -65,8 +65,14 @@ claim is made.
     validated the artifact schema, and wrote the four public manifests.
 - `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
   tests/export tests/contracts`
-  - Passed: `15 passed, 1 skipped`; the skip is the explicit real-Qwen T12
+  - Passed: `16 passed, 1 skipped`; the skip is the explicit real-Qwen T12
     numerical gate, which T12 already completed.
+- `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
+  SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src
+  /private/tmp/slm-t12-venv/bin/python -m
+  slm_lab.export.onnx_matrix validate`
+  - Passed: all four committed manifests matched freshly checked graph,
+    external-data, source-weight, host, toolchain, and contract identities.
 - `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
   PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
   -m pytest -q`

@@ -16,12 +16,15 @@ from slm_lab.contracts import (
 from slm_lab.contracts.static_cache import NUM_LAYERS
 from slm_lab.export.onnx_matrix import (
     DecodeWrapper,
+    ExternalDataRecord,
     ExportConfigurationError,
+    OnnxArtifactRecord,
     PrefillWrapper,
     build_example_inputs,
     export_onnx_graph,
     inspect_onnx_artifact,
     load_export_config,
+    verify_manifest_evidence,
 )
 from slm_lab.manifests.validation import validate_manifest
 
@@ -283,3 +286,36 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
                 len(record["sha256"]) == 64 and record["size_bytes"] > 0
                 for record in artifact["external_data"]
             )
+
+
+def test_manifest_verification_rejects_external_hash_drift() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    prefill = manifest["artifacts"]["prefill"]
+    decode = manifest["artifacts"]["decode"]
+    def record(payload):
+        return OnnxArtifactRecord(
+            graph_kind=payload["graph_kind"],
+            relative_path=payload["relative_path"],
+            sha256=payload["sha256"],
+            size_bytes=payload["size_bytes"],
+            external_data=tuple(
+                ExternalDataRecord(**item) for item in payload["external_data"]
+            ),
+            input_tensors=tuple(payload["input_tensors"]),
+            output_tensors=tuple(payload["output_tensors"]),
+        )
+
+    tampered = json.loads(json.dumps(manifest))
+    tampered["artifacts"]["decode"]["sha256"] = "0" * 64
+    with pytest.raises(ExportConfigurationError, match="do not match"):
+        verify_manifest_evidence(
+            tampered,
+            prompt_length=128,
+            config=load_export_config(CONFIG),
+            prefill=record(prefill),
+            decode=record(decode),
+            source_weights_sha256=manifest["source_artifact_sha256"],
+            host_manifest_sha256=manifest["host_manifest_sha256"],
+        )

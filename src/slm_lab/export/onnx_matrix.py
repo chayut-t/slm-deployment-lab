@@ -734,6 +734,72 @@ def _manifest_payload(
     }
 
 
+def verify_manifest_evidence(
+    manifest: Mapping[str, Any],
+    *,
+    prompt_length: int,
+    config: ExportConfig,
+    prefill: OnnxArtifactRecord,
+    decode: OnnxArtifactRecord,
+    source_weights_sha256: str,
+    host_manifest_sha256: str,
+) -> None:
+    """Match committed evidence to freshly inspected external artifacts."""
+
+    validate_manifest("artifact", manifest)
+    model_contract = load_model_contract()
+    expected_identity = {
+        "model_id": model_contract.model_id,
+        "model_revision": model_contract.revision,
+        "tokenizer_revision": model_contract.revision,
+        "task_id": TASK_ID,
+        "exporter": config.exporter,
+        "exporter_version": config.torch_version,
+        "opset": config.opset,
+        "context_length": prompt_length,
+        "precision": config.precision,
+        "cache_capacity": CONTEXT_VARIANTS[prompt_length],
+        "source_artifact_sha256": source_weights_sha256,
+        "host_manifest_sha256": host_manifest_sha256,
+    }
+    mismatched = {
+        key: {"expected": expected, "found": manifest.get(key)}
+        for key, expected in expected_identity.items()
+        if manifest.get(key) != expected
+    }
+    if mismatched:
+        raise ExportConfigurationError(
+            f"S{prompt_length} manifest identity mismatch: {mismatched}"
+        )
+
+    expected_contract = {
+        "prefill": build_prefill_contract(prompt_length).as_dict(),
+        "decode": build_decode_contract(prompt_length).as_dict(),
+    }
+    for kind, contract in expected_contract.items():
+        if manifest.get("contract", {}).get(kind) != contract:
+            raise ExportConfigurationError(
+                f"S{prompt_length} manifest {kind} contract drift"
+            )
+        if manifest["contract"].get(f"{kind}_sha256") != _canonical_sha256(
+            contract
+        ):
+            raise ExportConfigurationError(
+                f"S{prompt_length} manifest {kind} contract hash mismatch"
+            )
+
+    expected_artifacts = {
+        "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20",
+        "prefill": prefill.as_dict(),
+        "decode": decode.as_dict(),
+    }
+    if manifest.get("artifacts") != expected_artifacts:
+        raise ExportConfigurationError(
+            f"S{prompt_length} committed artifact hashes or shapes do not "
+            "match external files"
+        )
+
+
 def _artifact_root() -> Path:
     value = os.environ.get("SLM_LAB_ARTIFACT_ROOT")
     if not value:
@@ -865,22 +931,39 @@ def run_validate(
                     config.external_data_threshold_bytes
                 ),
             )
-        manifest = _manifest_payload(
-            prompt_length=prompt_length,
-            config=config,
-            prefill=records["prefill"],
-            decode=records["decode"],
-            source_weights_sha256=source_weights_sha256,
-            git_commit=git_commit,
-            host_manifest_sha256=host_manifest_sha256,
-            created_at=created_at,
-        )
-        validate_manifest("artifact", manifest)
         if write_manifests:
+            manifest = _manifest_payload(
+                prompt_length=prompt_length,
+                config=config,
+                prefill=records["prefill"],
+                decode=records["decode"],
+                source_weights_sha256=source_weights_sha256,
+                git_commit=git_commit,
+                host_manifest_sha256=host_manifest_sha256,
+                created_at=created_at,
+            )
+            validate_manifest("artifact", manifest)
             destination = DEFAULT_MANIFEST_DIRECTORY / f"S{prompt_length}.json"
             destination.write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
+            )
+        else:
+            destination = DEFAULT_MANIFEST_DIRECTORY / f"S{prompt_length}.json"
+            try:
+                manifest = json.loads(destination.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ExportConfigurationError(
+                    f"cannot load committed manifest {destination}: {exc}"
+                ) from exc
+            verify_manifest_evidence(
+                manifest,
+                prompt_length=prompt_length,
+                config=config,
+                prefill=records["prefill"],
+                decode=records["decode"],
+                source_weights_sha256=source_weights_sha256,
+                host_manifest_sha256=host_manifest_sha256,
             )
 
 
