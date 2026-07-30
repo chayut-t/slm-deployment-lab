@@ -29,6 +29,7 @@ from slm_lab.contracts.static_cache import (
     BATCH_SIZE,
     HEAD_DIM,
     NUM_KEY_VALUE_HEADS,
+    VOCAB_SIZE,
 )
 from slm_lab.manifests.validation import validate_manifest
 from slm_lab.models import load_model_contract, load_reference_model
@@ -212,7 +213,11 @@ class PrefillWrapper:
                     use_cache=True,
                     return_dict=True,
                 )
-                result: list[Any] = [output.logits[:, -1, :].to(torch.float32)]
+                result: list[Any] = [
+                    output.logits[:, -1, :]
+                    .to(torch.float32)
+                    .reshape(BATCH_SIZE, VOCAB_SIZE)
+                ]
                 for key, value in _legacy_cache(output.past_key_values):
                     result.append(
                         torch.nn.functional.pad(
@@ -254,6 +259,12 @@ class DecodeWrapper:
 
     def __new__(cls, model: Any, *, prompt_length: int) -> Any:
         torch = _torch_module()
+        try:
+            from transformers.cache_utils import DynamicCache
+        except ImportError as exc:
+            raise ExportConfigurationError(
+                "Transformers DynamicCache is required for decode export"
+            ) from exc
 
         class _Module(torch.nn.Module):
             def __init__(self) -> None:
@@ -283,15 +294,20 @@ class DecodeWrapper:
                 active_mask = torch.narrow(
                     attention_mask, 1, 0, valid_length[0] + 1
                 )
+                model_cache = DynamicCache.from_legacy_cache(cache_pairs)
                 output = self.model(
                     input_ids=input_ids,
                     attention_mask=active_mask,
                     position_ids=position_ids,
-                    past_key_values=cache_pairs,
+                    past_key_values=model_cache,
                     use_cache=True,
                     return_dict=True,
                 )
-                result: list[Any] = [output.logits[:, -1, :].to(torch.float32)]
+                result: list[Any] = [
+                    output.logits[:, -1, :]
+                    .to(torch.float32)
+                    .reshape(BATCH_SIZE, VOCAB_SIZE)
+                ]
                 index = valid_length.reshape(1, 1, 1, 1)
                 for layer, (present_key, present_value) in enumerate(
                     _legacy_cache(output.past_key_values)
@@ -501,21 +517,25 @@ def inspect_onnx_artifact(
     validate_onnx_contract(model, contract)
 
     external_locations: set[str] = set()
-    inline_bytes = 0
+    largest_inline_initializer = 0
     for initializer in model.graph.initializer:
         location = _external_location(initializer)
         if location is not None:
             external_locations.add(location)
         else:
-            inline_bytes += len(initializer.raw_data)
+            largest_inline_initializer = max(
+                largest_inline_initializer,
+                len(initializer.raw_data),
+            )
     if not external_locations:
         raise ExportConfigurationError(
             f"{onnx_path}: model weights are not stored as ONNX external data"
         )
-    if inline_bytes > inline_initializer_limit_bytes:
+    if largest_inline_initializer > inline_initializer_limit_bytes:
         raise ExportConfigurationError(
-            f"{onnx_path}: {inline_bytes} inline initializer bytes exceed "
-            f"limit {inline_initializer_limit_bytes}"
+            f"{onnx_path}: largest inline initializer is "
+            f"{largest_inline_initializer} bytes, exceeding limit "
+            f"{inline_initializer_limit_bytes}"
         )
 
     external_records = tuple(
@@ -787,6 +807,16 @@ def run_export(contexts: Iterable[int], config: ExportConfig) -> None:
                 / f"S{prompt_length}"
                 / f"{contract.graph_kind}.onnx"
             )
+            if destination.exists():
+                inspect_onnx_artifact(
+                    destination,
+                    contract,
+                    artifact_directory=artifact_directory,
+                    inline_initializer_limit_bytes=(
+                        config.external_data_threshold_bytes
+                    ),
+                )
+                continue
             export_onnx_graph(
                 wrapper,
                 build_example_inputs(contract),
