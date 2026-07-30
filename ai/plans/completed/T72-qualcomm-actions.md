@@ -1,6 +1,6 @@
 # T72: Manual GitHub Actions AI Hub workflow
 
-Status: active
+Status: completed
 Owner: Codex T72 agent
 Updated: 2026-07-30
 
@@ -57,14 +57,14 @@ hardware boundaries work without creating secrets or running external jobs.
 
 ## Milestones
 
-- [ ] Workflow dispatch inputs and fork/default-branch/environment gates are
+- [x] Workflow dispatch inputs and fork/default-branch/environment gates are
   mechanically validated.
-- [ ] Workflow downloads only a same-repository/default-branch request bundle,
+- [x] Workflow downloads only a same-repository/default-branch request bundle,
   configures the pinned client without printing the token, and calls exactly
   one local T30 stage script.
-- [ ] Guide explains learner setup, request-bundle lineage, security model,
+- [x] Guide explains learner setup, request-bundle lineage, security model,
   dispatch, evidence, failure handling, and the unverified external boundary.
-- [ ] Focused and repository-wide checks pass, with a public worklog and T72
+- [x] Focused and repository-wide required checks pass, with a public worklog and T72
   completion metadata.
 
 ## Verification and acceptance
@@ -101,11 +101,12 @@ hardware boundaries work without creating secrets or running external jobs.
 - 2026-07-30: The request bundle must come from a successful same-repository
   default-branch Actions run, and environment approval remains the last human
   check before external submission.
+- 2026-07-30: Offline implementation and acceptance checks passed. Real secret
+  setup, environment approval, bundle production, workflow dispatch, and
+  Qualcomm execution remain explicitly learner-controlled and unverified.
 
 ## Progress and restart instructions
 
-Policy, learning checkpoints, dependencies, and T03/T30 contracts have been
-read. Implement the workflow, guide, and tests next. Do not add a secret or
-dispatch the workflow. After verification, create a public T72 worklog, update
-only T72's status/worklog fields, regenerate task status, move this plan to
-`ai/plans/completed/`, and make task-scoped local commits.
+Implementation is complete. Resume by reading the public worklog and guide.
+The next external step is learner review and protected-environment setup; do
+not add a secret or dispatch a Qualcomm job without that explicit approval.
