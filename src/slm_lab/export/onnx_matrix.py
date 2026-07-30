@@ -11,6 +11,7 @@ import datetime as dt
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 import platform
 import re
@@ -43,6 +44,7 @@ from slm_lab.models import load_model_contract, load_reference_model
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "configs/models/qwen3-0.6b-onnx-export.json"
+DEFAULT_CONFIG_SPELLING = DEFAULT_CONFIG_PATH.as_posix()
 DEFAULT_TOKEN_FIXTURE_PATH = (
     PROJECT_ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
 )
@@ -425,16 +427,23 @@ def _load_export_attestation(value: Any) -> ExportAttestation:
     )
 
 
-def _trusted_export_config_bytes(path: Path | str) -> tuple[Path, bytes]:
+def _trusted_export_config_bytes(path: str) -> tuple[Path, bytes]:
     """Return the one fixed config only when disk, HEAD, and code agree."""
 
+    if type(path) is not str:
+        raise ExportConfigurationError(
+            "T20 export config path must be the exact absolute string "
+            f"{DEFAULT_CONFIG_SPELLING}"
+        )
+    if path != DEFAULT_CONFIG_SPELLING:
+        raise ExportConfigurationError(
+            "T20 accepts only the exact absolute export config spelling "
+            f"{DEFAULT_CONFIG_SPELLING}, found {path}"
+        )
     source = Path(path)
     expected_source = DEFAULT_CONFIG_PATH
     if source != expected_source:
-        raise ExportConfigurationError(
-            "T20 accepts only the fixed tracked export config "
-            f"{expected_source}, found {source}"
-        )
+        raise ExportConfigurationError("exact config spelling resolved unexpectedly")
     if source.is_symlink():
         raise ExportConfigurationError(
             f"T20 export config must not be a symlink: {source}"
@@ -466,7 +475,7 @@ def _trusted_export_config_bytes(path: Path | str) -> tuple[Path, bytes]:
     return source, raw
 
 
-def load_export_config(path: Path | str = DEFAULT_CONFIG_PATH) -> ExportConfig:
+def load_export_config(path: str = DEFAULT_CONFIG_SPELLING) -> ExportConfig:
     """Load the immutable, committed export configuration."""
 
     source, raw = _trusted_export_config_bytes(path)
@@ -689,10 +698,46 @@ def _config_primitive(config: ExportConfig) -> dict[str, Any]:
 
 
 def _canonical_config_bytes(config: ExportConfig) -> bytes:
+    return _canonical_json_bytes(_config_primitive(config), "export config")
+
+
+def _exact_json_primitive(value: Any, path: str) -> Any:
+    """Copy an exact-builtin JSON tree without invoking caller equality."""
+
+    value_type = type(value)
+    if value_type is dict:
+        normalized: dict[str, Any] = {}
+        for key, nested in value.items():
+            if type(key) is not str:
+                raise ExportConfigurationError(
+                    f"{path} key must be exact str, found {type(key).__name__}"
+                )
+            normalized[key] = _exact_json_primitive(
+                nested,
+                f"{path}.{key}",
+            )
+        return normalized
+    if value_type is list:
+        return [
+            _exact_json_primitive(nested, f"{path}[{index}]")
+            for index, nested in enumerate(value)
+        ]
+    if value_type in {str, int, bool} or value is None:
+        return value
+    if value_type is float and math.isfinite(value):
+        return value
+    raise ExportConfigurationError(
+        f"{path} must contain exact builtin JSON types, found {value_type.__name__}"
+    )
+
+
+def _canonical_json_bytes(value: Any, path: str) -> bytes:
+    primitive = _exact_json_primitive(value, path)
     return json.dumps(
-        _config_primitive(config),
+        primitive,
         sort_keys=True,
         separators=(",", ":"),
+        allow_nan=False,
     ).encode("utf-8")
 
 
@@ -1460,6 +1505,7 @@ def verify_manifest_evidence(
 ) -> None:
     """Reconstruct every deterministic field and reject any claim drift."""
 
+    actual_canonical = _canonical_json_bytes(manifest, "manifest")
     _verify_trusted_config(config)
     validate_manifest("artifact", manifest)
     created_at = manifest.get("created_at")
@@ -1476,15 +1522,10 @@ def verify_manifest_evidence(
         host_manifest_sha256=host_manifest_sha256,
         created_at=created_at,
     )
-    if manifest != expected:
-        differing_fields = sorted(
-            key
-            for key in set(manifest) | set(expected)
-            if manifest.get(key) != expected.get(key)
-        )
+    expected_canonical = _canonical_json_bytes(expected, "expected manifest")
+    if actual_canonical != expected_canonical:
         raise ExportConfigurationError(
-            f"S{prompt_length} manifest deterministic fields differ: "
-            f"{differing_fields}"
+            f"S{prompt_length} manifest deterministic fields differ"
         )
 
 
@@ -1679,7 +1720,7 @@ def run_validate(
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
+    parser.add_argument("--config", default=DEFAULT_CONFIG_SPELLING)
     subparsers = parser.add_subparsers(dest="command", required=True)
     for command in ("export", "validate"):
         subparser = subparsers.add_parser(command)

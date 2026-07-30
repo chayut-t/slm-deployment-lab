@@ -58,6 +58,8 @@ commands, contracts, versions, and content hashes.
 - [x] Enforce actual Python against the recorded export runtime.
 - [x] Replace object equality with exact-type canonical comparison.
 - [x] Reject config symlinks and lexically different path aliases.
+- [x] Canonicalize exact-builtin manifest trees before comparison.
+- [x] Check the raw absolute config spelling before `Path` construction.
 - [ ] Pass fresh independent rereview.
 
 ## Verification and acceptance
@@ -120,11 +122,19 @@ commands, contracts, versions, and content hashes.
   symlink aliases rather than resolving them to the tracked file. The loader
   now checks lexical identity before resolution and rejects a symlink at the
   fixed path.
+- 2026-07-30: Fifth rereview found that manifest equality could likewise
+  delegate to top-level or nested mapping subclasses. The verifier now first
+  requires exact builtin JSON types recursively, then compares canonical
+  serialized bytes for the actual and reconstructed primitive trees.
+- 2026-07-30: Fifth rereview required checking config spelling before
+  `Path` normalization. The public loader now accepts only an exact builtin
+  string equal to the fixed absolute path and rejects normalized-equivalent
+  spellings.
 
 ## Progress and restart instructions
 
-Both fourth-rereview findings are implemented with equality-adapter and
-symlink-alias regressions. Focused validation is green; the only
+Both fifth-rereview findings are implemented with mapping-adapter and raw-path
+spelling regressions. Focused validation is green; the only
 repository-wide failure remains the known concurrent-claim fixture baseline
 recorded in the worklog. Commit this trust-boundary fix and request another
 fresh independent rereview. Keep T20 `in_progress` with a null graph worklog

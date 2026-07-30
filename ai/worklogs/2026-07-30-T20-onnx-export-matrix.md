@@ -20,7 +20,7 @@ boundaries. No compiler, runtime-parity, accelerator-placement, or performance
 claim is made.
 
 The task remains `in_progress` and its task-graph worklog remains null while
-the fourth independent-review remediation awaits fresh rereview.
+the fifth independent-review remediation awaits fresh rereview.
 
 ## Changes
 
@@ -78,6 +78,14 @@ the fourth independent-review remediation awaits fresh rereview.
 - The fixed config boundary now rejects symlink aliases as well as any
   lexically different path. A delegated equality-adapter regression confirms
   that nested objects cannot substitute attested values.
+- Fifth-rereview remediation applies the same primitive-first boundary to
+  manifests. Every key and value must use exact builtin JSON types before
+  schema validation; actual and reconstructed manifests are then compared as
+  canonical serialized bytes without caller-defined equality.
+- Config loading now accepts only an exact builtin string containing the
+  fixed absolute spelling before any `Path` construction. `Path` objects,
+  dot segments, repeated separators, copied paths, and symlink aliases are
+  rejected explicitly.
 
 ## Verification
 
@@ -191,6 +199,27 @@ the fourth independent-review remediation awaits fresh rereview.
   PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
   -m pytest -q`
   - `200 passed, 10 skipped, 1 failed`.
+  - The sole failure remains the concurrent-claim baseline
+    `GitSnapshotTests.test_staged_graph_requires_matching_staged_status`
+    `StopIteration`; no planned task has all dependencies completed while
+    T20, T51, and T72 remain concurrently `in_progress`.
+
+### Fifth-rereview remediation verification
+
+- `HF_HOME=/Volumes/T9/slm-deployment-lab/hf-cache
+  SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src
+  /private/tmp/slm-t12-venv/bin/python -m
+  slm_lab.export.onnx_matrix validate`
+  - Passed after enforcing canonical primitive manifest comparison and the
+    raw fixed config spelling.
+- `PYTHONPATH=src /private/tmp/slm-t12-venv/bin/python -m pytest -q
+  tests/export tests/contracts`
+  - `55 passed, 1 skipped`; the skip remains the explicit real-Qwen T12
+    numerical gate already completed by T12.
+- `PATH=/Users/chayut/projects/slm-deployment-lab/.venv/bin:$PATH
+  PYTHONPATH=src /Users/chayut/projects/slm-deployment-lab/.venv/bin/python
+  -m pytest -q`
+  - `204 passed, 10 skipped, 1 failed`.
   - The sole failure remains the concurrent-claim baseline
     `GitSnapshotTests.test_staged_graph_requires_matching_staged_status`
     `StopIteration`; no planned task has all dependencies completed while

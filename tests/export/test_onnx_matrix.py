@@ -48,8 +48,15 @@ class _EqualityAdapter:
         return True
 
 
+class _CompatibleDict(dict):
+    """Dictionary fixture with permissive compatibility equality."""
+
+    def __eq__(self, other) -> bool:
+        return True
+
+
 def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
 
     assert config.contexts == (128, 512, 1024, 4096)
     assert config.opset == 18
@@ -73,33 +80,38 @@ def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     ) == config.contexts
 
 
+def test_export_config_rejects_path_object() -> None:
+    with pytest.raises(ExportConfigurationError, match="exact absolute string"):
+        load_export_config(CONFIG)
+
+
 def test_export_config_rejects_caller_supplied_path(tmp_path: Path) -> None:
     payload = json.loads(CONFIG.read_text(encoding="utf-8"))
     path = tmp_path / "copied.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
 
-    with pytest.raises(ExportConfigurationError, match="fixed tracked export config"):
-        load_export_config(path)
+    with pytest.raises(ExportConfigurationError, match="exact absolute"):
+        load_export_config(str(path))
 
 
 def test_export_config_rejects_symlink_alias(tmp_path: Path) -> None:
     alias = tmp_path / CONFIG.name
     alias.symlink_to(CONFIG)
 
-    with pytest.raises(ExportConfigurationError, match="fixed tracked export config"):
-        load_export_config(alias)
+    with pytest.raises(ExportConfigurationError, match="exact absolute"):
+        load_export_config(str(alias))
 
 
-def test_export_config_rejects_symlink_at_configured_path(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    alias = tmp_path / CONFIG.name
-    alias.symlink_to(CONFIG)
-    monkeypatch.setattr(onnx_matrix, "DEFAULT_CONFIG_PATH", alias)
-
-    with pytest.raises(ExportConfigurationError, match="must not be a symlink"):
-        load_export_config(alias)
+@pytest.mark.parametrize(
+    "path",
+    (
+        str(CONFIG).replace("/configs/", "/configs/./"),
+        str(CONFIG).replace("/configs/", "//configs/"),
+    ),
+)
+def test_export_config_rejects_noncanonical_spelling(path: str) -> None:
+    with pytest.raises(ExportConfigurationError, match="exact absolute"):
+        load_export_config(path)
 
 
 def test_export_config_rejects_configured_fixture_with_stale_token_hash(
@@ -140,7 +152,7 @@ def test_export_config_rejects_coherent_frozen_token_content_drift(
 def test_runtime_rejects_actual_python_version_drift(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
     monkeypatch.setattr(onnx_matrix.platform, "python_version", lambda: "9.9.9")
 
     with pytest.raises(ExportConfigurationError, match="Python version mismatch"):
@@ -157,7 +169,7 @@ def test_example_inputs_use_exact_fixture_and_contract() -> None:
     expected = fixture["context_workloads"][0]["token_ids"]
 
     prefill = build_prefill_contract(128)
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
     prefill_inputs = build_example_inputs(
         prefill,
         token_fixture=config.token_fixture,
@@ -187,7 +199,7 @@ def test_run_export_supplies_the_configured_token_fixture(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
     observed = []
     monkeypatch.setattr(onnx_matrix, "_verify_runtime", lambda _: None)
     monkeypatch.setattr(onnx_matrix, "_artifact_root", lambda: tmp_path)
@@ -321,7 +333,7 @@ def test_tiny_export_is_static_checked_and_external(tmp_path: Path) -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("onnx")
     config = dataclasses.replace(
-        load_export_config(CONFIG),
+        load_export_config(str(CONFIG)),
         external_data_threshold_bytes=0,
     )
     contract = build_prefill_contract(128)
@@ -353,7 +365,7 @@ def test_tiny_export_is_static_checked_and_external(tmp_path: Path) -> None:
 
 def test_existing_artifact_is_never_overwritten(tmp_path: Path) -> None:
     torch = pytest.importorskip("torch")
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
     contract = build_prefill_contract(128)
     destination = tmp_path / "prefill.onnx"
     destination.write_bytes(b"owned")
@@ -391,7 +403,7 @@ def _verify_s128_manifest(manifest, *, evidence_manifest=None) -> None:
     verify_manifest_evidence(
         manifest,
         prompt_length=128,
-        config=load_export_config(CONFIG),
+        config=load_export_config(str(CONFIG)),
         prefill=_artifact_record(evidence["artifacts"]["prefill"]),
         decode=_artifact_record(evidence["artifacts"]["decode"]),
         source_weights_sha256=evidence["source_artifact_sha256"],
@@ -422,7 +434,7 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
         provenance = manifest["export_provenance"]
         assert provenance["commit"] == manifest["git_commit"]
         assert provenance["run_attestation"] == (
-            load_export_config(CONFIG).evidence_attestation.as_dict()
+            load_export_config(str(CONFIG)).evidence_attestation.as_dict()
         )
         assert provenance["exporter_source"]["path"] == (
             "src/slm_lab/export/onnx_matrix.py"
@@ -477,6 +489,30 @@ def test_manifest_verification_accepts_untampered_evidence() -> None:
     _verify_s128_manifest(manifest)
 
 
+def test_manifest_rejects_top_level_compatibility_dict() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    adapted = _CompatibleDict(json.loads(json.dumps(manifest)))
+    adapted["exporter_version"] = "compatibility-adapter"
+
+    with pytest.raises(ExportConfigurationError, match="exact builtin JSON"):
+        _verify_s128_manifest(adapted, evidence_manifest=manifest)
+
+
+def test_manifest_rejects_nested_compatibility_dict() -> None:
+    manifest = json.loads(
+        (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
+    )
+    adapted = json.loads(json.dumps(manifest))
+    toolchain = _CompatibleDict(adapted["toolchain"])
+    toolchain["torch"] = "compatibility-adapter"
+    adapted["toolchain"] = toolchain
+
+    with pytest.raises(ExportConfigurationError, match="exact builtin JSON"):
+        _verify_s128_manifest(adapted, evidence_manifest=manifest)
+
+
 @pytest.mark.parametrize(
     "field",
     (
@@ -495,7 +531,7 @@ def test_manifest_rejects_coherent_in_memory_attestation_substitution(
         (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
     )
     tampered = json.loads(json.dumps(manifest))
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
     attestation = config.evidence_attestation
     prefill = _artifact_record(manifest["artifacts"]["prefill"])
     decode = _artifact_record(manifest["artifacts"]["decode"])
@@ -589,7 +625,7 @@ def test_manifest_rejects_modified_in_memory_export_setting() -> None:
         (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
     )
     config = dataclasses.replace(
-        load_export_config(CONFIG),
+        load_export_config(str(CONFIG)),
         external_data_threshold_bytes=0,
     )
 
@@ -610,7 +646,7 @@ def test_manifest_rejects_nested_equality_adapter() -> None:
         (ROOT / "results/manifests/onnx/S128.json").read_text(encoding="utf-8")
     )
     tampered = json.loads(json.dumps(manifest))
-    config = load_export_config(CONFIG)
+    config = load_export_config(str(CONFIG))
     substituted_attestation = dataclasses.replace(
         config.evidence_attestation,
         run_id="equality-adapter-run",
