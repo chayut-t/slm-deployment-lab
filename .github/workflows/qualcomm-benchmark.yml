@@ -1,0 +1,897 @@
+name: Qualcomm AI Hub benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Qualcomm target represented by the private request bundle
+        required: true
+        type: choice
+        options:
+          - snapdragon-x-elite
+          - dragonwing-iq-9075
+          - snapdragon-8-elite
+      context:
+        description: Static prompt/cache context length
+        required: true
+        type: choice
+        options:
+          - "128"
+          - "512"
+          - "1024"
+          - "4096"
+      precision:
+        description: Precision represented by the selected artifact
+        required: true
+        type: choice
+        options:
+          - fp16
+          - w8a16
+          - w8a8
+          - w4a8
+      stage:
+        description: One independently restartable AI Hub stage
+        required: true
+        type: choice
+        options:
+          - compile
+          - inference
+          - profile
+      request_artifact_run_id:
+        description: Successful default-branch run containing qualcomm-request-bundle
+        required: true
+        type: string
+      request_bundle_manifest_sha256:
+        description: Reviewed SHA-256 of bundle-manifest.json
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: qualcomm-ai-hub-${{ inputs.target }}-${{ inputs.context }}-${{ inputs.precision }}-${{ inputs.stage }}
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Validate trusted dispatch and bundle provenance
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' &&
+        github.event.repository.fork == false &&
+        github.ref == format(
+          'refs/heads/{0}',
+          github.event.repository.default_branch
+        )
+      }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      request-artifact-run-id: ${{ steps.provenance.outputs.run-id }}
+      request-bundle-manifest-sha256: ${{ steps.provenance.outputs.manifest-sha256 }}
+    steps:
+      - name: Validate fixed inputs and trusted artifact run
+        id: provenance
+        env:
+          API_URL: ${{ github.api_url }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EXPECTED_PRODUCER_REVISION: ${{ github.sha }}
+          EXPECTED_PRODUCER_WORKFLOW: .github/workflows/qualcomm-request-bundle.yml
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REQUEST_ARTIFACT_RUN_ID: ${{ inputs.request_artifact_run_id }}
+          REQUEST_BUNDLE_MANIFEST_SHA256: ${{ inputs.request_bundle_manifest_sha256 }}
+          TARGET: ${{ inputs.target }}
+          CONTEXT: ${{ inputs.context }}
+          PRECISION: ${{ inputs.precision }}
+          STAGE: ${{ inputs.stage }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            snapdragon-x-elite|dragonwing-iq-9075|snapdragon-8-elite) ;;
+            *) echo "unsupported target" >&2; exit 2 ;;
+          esac
+          case "$CONTEXT" in
+            128|512|1024|4096) ;;
+            *) echo "unsupported context" >&2; exit 2 ;;
+          esac
+          case "$PRECISION" in
+            fp16|w8a16|w8a8|w4a8) ;;
+            *) echo "unsupported precision" >&2; exit 2 ;;
+          esac
+          case "$STAGE" in
+            compile|inference|profile) ;;
+            *) echo "unsupported stage" >&2; exit 2 ;;
+          esac
+          case "$REQUEST_ARTIFACT_RUN_ID" in
+            ""|*[!0-9]*) echo "artifact run ID must be numeric" >&2; exit 2 ;;
+          esac
+          if [ "$REQUEST_ARTIFACT_RUN_ID" -eq 0 ]; then
+            echo "artifact run ID must be positive" >&2
+            exit 2
+          fi
+          case "$REQUEST_BUNDLE_MANIFEST_SHA256" in
+            *[!0-9a-f]*)
+              echo "bundle manifest SHA-256 must be lowercase hexadecimal" >&2
+              exit 2
+              ;;
+          esac
+          if [ "${#REQUEST_BUNDLE_MANIFEST_SHA256}" -ne 64 ]; then
+            echo "bundle manifest SHA-256 must contain 64 characters" >&2
+            exit 2
+          fi
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          url = (
+              f"{os.environ['API_URL']}/repos/{os.environ['REPOSITORY']}"
+              f"/actions/runs/{os.environ['REQUEST_ARTIFACT_RUN_ID']}"
+          )
+          request = urllib.request.Request(
+              url,
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  run = json.load(response)
+          except Exception:
+              raise SystemExit("could not validate artifact run provenance") from None
+
+          head_repository = run.get("head_repository") or {}
+          trusted = (
+              run.get("conclusion") == "success"
+              and run.get("head_branch") == os.environ["DEFAULT_BRANCH"]
+              and run.get("head_sha") == os.environ["EXPECTED_PRODUCER_REVISION"]
+              and run.get("path") == os.environ["EXPECTED_PRODUCER_WORKFLOW"]
+              and head_repository.get("full_name") == os.environ["REPOSITORY"]
+              and run.get("event") == "workflow_dispatch"
+          )
+          if not trusted:
+              raise SystemExit(
+                  "artifact run must be the successful reviewed producer "
+                  "workflow at the dispatch revision"
+              )
+          PY
+          echo "run-id=$REQUEST_ARTIFACT_RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "manifest-sha256=$REQUEST_BUNDLE_MANIFEST_SHA256" >> "$GITHUB_OUTPUT"
+
+  submit:
+    name: Run ${{ inputs.stage }} on ${{ inputs.target }}
+    needs: authorize
+    environment: qualcomm-ai-hub
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out the reviewed default-branch revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up pinned Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38
+        with:
+          python-version: "3.11.13"
+          cache: pip
+
+      - name: Install the pinned AI Hub client
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "qai-hub==0.53.0"
+          python -c \
+            'import importlib.metadata; assert importlib.metadata.version("qai-hub") == "0.53.0"'
+
+      - name: Download the trusted private request bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: qualcomm-request-bundle
+          path: artifacts/qualcomm-request-bundle
+          repository: ${{ github.repository }}
+          run-id: ${{ needs.authorize.outputs.request-artifact-run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Select the fixed local stage script and request
+        id: selection
+        env:
+          TARGET: ${{ inputs.target }}
+          CONTEXT: ${{ inputs.context }}
+          PRECISION: ${{ inputs.precision }}
+          STAGE: ${{ inputs.stage }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$STAGE" in
+            compile) script="scripts/qualcomm/compile.py" ;;
+            inference) script="scripts/qualcomm/inference.py" ;;
+            profile) script="scripts/qualcomm/profile.py" ;;
+            *) echo "unsupported stage" >&2; exit 2 ;;
+          esac
+          request_dir="artifacts/qualcomm-request-bundle"
+          request_dir="$request_dir/$TARGET/$CONTEXT/$PRECISION"
+          request="$request_dir/$STAGE-request.json"
+          if [ ! -f "$request" ]; then
+            echo "selected request is absent from the bundle" >&2
+            exit 2
+          fi
+          manifest_dir="results/qualcomm-actions"
+          manifest_dir="$manifest_dir/$TARGET/$CONTEXT/$PRECISION"
+          mkdir -p "$manifest_dir"
+          {
+            echo "script=$script"
+            echo "request=$request"
+            echo "manifest=$manifest_dir/$STAGE-manifest.json"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Validate bundle manifest request semantics digests and paths
+        env:
+          BUNDLE_ROOT: artifacts/qualcomm-request-bundle
+          CONTEXT: ${{ inputs.context }}
+          EXPECTED_BUNDLE_MANIFEST_SHA256: ${{ needs.authorize.outputs.request-bundle-manifest-sha256 }}
+          EXPECTED_PRODUCER_REVISION: ${{ github.sha }}
+          EXPECTED_PRODUCER_RUN_ID: ${{ needs.authorize.outputs.request-artifact-run-id }}
+          EXPECTED_PRODUCER_WORKFLOW: .github/workflows/qualcomm-request-bundle.yml
+          MANIFEST: ${{ steps.selection.outputs.manifest }}
+          PRECISION: ${{ inputs.precision }}
+          PRIVATE_OUTPUT_ROOT: artifacts/qualcomm-actions-private
+          PUBLIC_MANIFEST_ROOT: results/qualcomm-actions
+          REQUEST: ${{ steps.selection.outputs.request }}
+          STAGE: ${{ inputs.stage }}
+          TARGET: ${{ inputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path, PurePosixPath
+
+
+          SHA256_LENGTH = 64
+          REVISION_LENGTH = 40
+          CONTEXT_CAPACITIES = {
+              128: 160,
+              512: 576,
+              1024: 1152,
+              4096: 4224,
+          }
+          TARGET_DEVICE_SELECTORS = {
+              "snapdragon-x-elite": {
+                  "name": "Snapdragon X Elite CRD",
+                  "os": "",
+                  "attributes": [],
+              },
+              "dragonwing-iq-9075": {
+                  "name": "Dragonwing IQ-9075 EVK",
+                  "os": "",
+                  "attributes": [],
+              },
+              "snapdragon-8-elite": {
+                  "name": "Snapdragon 8 Elite QRD",
+                  "os": "",
+                  "attributes": [],
+              },
+          }
+          COMMON_REQUEST_KEYS = {
+              "schema_version",
+              "stage",
+              "client_version",
+              "device",
+              "runtime",
+              "options",
+              "job_name",
+              "timeout_seconds",
+          }
+          STAGE_REQUEST_KEYS = {
+              "compile": {
+                  "source_artifact",
+                  "output_artifact",
+                  "output_logical_name",
+                  "input_specs",
+              },
+              "inference": {
+                  "predecessor_manifest",
+                  "compiled_artifact",
+                  "input_dataset",
+                  "output_artifact",
+                  "output_logical_name",
+              },
+              "profile": {
+                  "predecessor_manifest",
+                  "compiled_artifact",
+                  "raw_profile_output",
+                  "raw_profile_logical_name",
+              },
+          }
+          INPUT_ARTIFACT_FIELDS = {
+              "compile": ("source_artifact",),
+              "inference": ("compiled_artifact", "input_dataset"),
+              "profile": ("compiled_artifact",),
+          }
+          OUTPUT_FIELDS = {
+              "compile": ("output_artifact",),
+              "inference": ("output_artifact",),
+              "profile": ("raw_profile_output",),
+          }
+
+
+          def fail(message):
+              raise SystemExit(f"bundle validation failed: {message}")
+
+
+          def load_object(path, role):
+              try:
+                  value = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                  fail(f"{role} is not readable valid JSON")
+              if not isinstance(value, dict):
+                  fail(f"{role} must be a JSON object")
+              return value
+
+
+          def sha256_file(path):
+              digest = hashlib.sha256()
+              try:
+                  with path.open("rb") as handle:
+                      for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                          digest.update(chunk)
+              except OSError:
+                  fail("bundle file could not be hashed")
+              return digest.hexdigest()
+
+
+          def exact_keys(value, required, optional=()):
+              return set(value) == set(required) | (set(value) & set(optional))
+
+
+          def canonical_relative_path(value):
+              if not isinstance(value, str) or not value or "\\" in value:
+                  return False
+              segments = value.split("/")
+              if any(segment in {"", ".", ".."} for segment in segments):
+                  return False
+              pure_path = PurePosixPath(value)
+              return (
+                  not pure_path.is_absolute()
+                  and pure_path.as_posix() == value
+              )
+
+
+          repo_root = Path.cwd().resolve()
+
+
+          def configured_root(name):
+              raw = Path(os.environ[name])
+              if raw.is_absolute():
+                  fail("runner-private roots must be repository-relative")
+              resolved = (repo_root / raw).resolve(strict=False)
+              try:
+                  resolved.relative_to(repo_root)
+              except ValueError:
+                  fail("runner-private root escaped the repository")
+              return resolved
+
+
+          bundle_root = configured_root("BUNDLE_ROOT")
+          private_output_root = configured_root("PRIVATE_OUTPUT_ROOT")
+          public_manifest_root = configured_root("PUBLIC_MANIFEST_ROOT")
+          if len({bundle_root, private_output_root, public_manifest_root}) != 3:
+              fail("runner-private roots must be distinct")
+
+
+          def resolve_repo_path(raw, root, *, must_exist):
+              if not canonical_relative_path(raw):
+                  fail("request paths must use canonical repository-relative syntax")
+              candidate = repo_root / raw
+              current = repo_root
+              for part in Path(raw).parts:
+                  current /= part
+                  if current.is_symlink():
+                      fail("request paths must not contain symbolic links")
+              try:
+                  resolved = candidate.resolve(strict=must_exist)
+              except OSError:
+                  fail("request input is missing")
+              try:
+                  resolved.relative_to(root)
+              except ValueError:
+                  fail("request path escaped its allowed runner-private root")
+              if must_exist and not resolved.is_file():
+                  fail("request input must be a regular file")
+              return resolved
+
+
+          manifest_path = bundle_root / "bundle-manifest.json"
+          if manifest_path.is_symlink() or not manifest_path.is_file():
+              fail("bundle-manifest.json is missing or unsafe")
+          expected_manifest_sha = os.environ["EXPECTED_BUNDLE_MANIFEST_SHA256"]
+          if (
+              len(expected_manifest_sha) != SHA256_LENGTH
+              or any(character not in "0123456789abcdef" for character in expected_manifest_sha)
+              or sha256_file(manifest_path) != expected_manifest_sha
+          ):
+              fail("bundle manifest digest does not match the reviewed digest")
+
+          bundle = load_object(manifest_path, "bundle manifest")
+          if not exact_keys(
+              bundle,
+              {
+                  "schema_version",
+                  "producer",
+                  "source",
+                  "selection",
+                  "request",
+                  "files",
+              },
+          ):
+              fail("bundle manifest fields do not match schema version 1")
+          if bundle["schema_version"] != 1:
+              fail("bundle manifest schema version is unsupported")
+
+          producer = bundle["producer"]
+          if not isinstance(producer, dict) or not exact_keys(
+              producer, {"workflow_path", "revision", "run_id"}
+          ):
+              fail("bundle producer fields are invalid")
+          revision = os.environ["EXPECTED_PRODUCER_REVISION"]
+          if (
+              len(revision) != REVISION_LENGTH
+              or any(character not in "0123456789abcdef" for character in revision)
+              or producer
+              != {
+                  "workflow_path": os.environ["EXPECTED_PRODUCER_WORKFLOW"],
+                  "revision": revision,
+                  "run_id": int(os.environ["EXPECTED_PRODUCER_RUN_ID"]),
+              }
+          ):
+              fail("bundle producer identity or revision does not match dispatch")
+
+          source = bundle["source"]
+          if not isinstance(source, dict) or not exact_keys(
+              source,
+              {"release_tag", "asset_name", "archive_sha256"},
+          ):
+              fail("bundle source provenance fields are invalid")
+          source_name_characters = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789._+-"
+          )
+          source_name_initial_characters = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789"
+          )
+
+
+          def valid_source_name(value):
+              return (
+                  type(value) is str
+                  and 1 <= len(value) <= 128
+                  and value[0] in source_name_initial_characters
+                  and all(
+                      character in source_name_characters
+                      for character in value
+                  )
+              )
+
+
+          for field in ("release_tag", "asset_name"):
+              value = source[field]
+              if not valid_source_name(value):
+                  fail("bundle source provenance value is unsafe")
+          source_sha = source["archive_sha256"]
+          if (
+              not isinstance(source_sha, str)
+              or len(source_sha) != SHA256_LENGTH
+              or any(
+                  character not in "0123456789abcdef"
+                  for character in source_sha
+              )
+          ):
+              fail("bundle source archive digest is invalid")
+
+          expected_selection = {
+              "target": os.environ["TARGET"],
+              "context": int(os.environ["CONTEXT"]),
+              "precision": os.environ["PRECISION"],
+              "stage": os.environ["STAGE"],
+          }
+          if bundle["selection"] != expected_selection:
+              fail("bundle selection does not match dispatch tuple")
+
+          files = bundle["files"]
+          if not isinstance(files, list) or not files:
+              fail("bundle files must be a nonempty list")
+          file_digests = {}
+          for entry in files:
+              if not isinstance(entry, dict) or not exact_keys(
+                  entry, {"path", "sha256"}
+              ):
+                  fail("bundle file entry is invalid")
+              raw_path = entry["path"]
+              digest = entry["sha256"]
+              if (
+                  not canonical_relative_path(raw_path)
+                  or raw_path == "bundle-manifest.json"
+                  or raw_path in file_digests
+              ):
+                  fail("bundle file path is unsafe or duplicated")
+              if (
+                  not isinstance(digest, str)
+                  or len(digest) != SHA256_LENGTH
+                  or any(character not in "0123456789abcdef" for character in digest)
+              ):
+                  fail("bundle file digest is invalid")
+              path = bundle_root / raw_path
+              if path.is_symlink():
+                  fail("bundle file must not be a symbolic link")
+              try:
+                  resolved = path.resolve(strict=True)
+                  resolved.relative_to(bundle_root)
+              except (OSError, ValueError):
+                  fail("bundle file escaped the private bundle root")
+              if not resolved.is_file() or sha256_file(resolved) != digest:
+                  fail("bundle file digest mismatch")
+              file_digests[raw_path] = digest
+
+          actual_files = set()
+          for path in bundle_root.rglob("*"):
+              if path.is_symlink():
+                  fail("bundle must not contain symbolic links")
+              if path.is_file():
+                  actual_files.add(path.relative_to(bundle_root).as_posix())
+              elif not path.is_dir():
+                  fail("bundle contains an unsupported filesystem entry")
+          if actual_files != set(file_digests) | {"bundle-manifest.json"}:
+              fail("bundle contains missing or unlisted files")
+
+          expected_request_relative = (
+              f"{expected_selection['target']}/{expected_selection['context']}/"
+              f"{expected_selection['precision']}/{expected_selection['stage']}"
+              "-request.json"
+          )
+          request_record = bundle["request"]
+          if not isinstance(request_record, dict) or not exact_keys(
+              request_record, {"path", "sha256"}
+          ):
+              fail("bundle request record is invalid")
+          if request_record != {
+              "path": expected_request_relative,
+              "sha256": file_digests.get(expected_request_relative),
+          }:
+              fail("bundle request record does not match selected request")
+
+          request_path = resolve_repo_path(
+              os.environ["REQUEST"], bundle_root, must_exist=True
+          )
+          if (
+              request_path != bundle_root / expected_request_relative
+              or sha256_file(request_path) != request_record["sha256"]
+          ):
+              fail("selected request digest or path does not match bundle manifest")
+          request = load_object(request_path, "selected request")
+
+          stage = expected_selection["stage"]
+          expected_keys = COMMON_REQUEST_KEYS | STAGE_REQUEST_KEYS[stage]
+          if request.get("retry") is not None:
+              expected_keys.add("retry")
+          if set(request) != expected_keys:
+              fail("selected request fields do not match the T30 stage contract")
+          if (
+              request.get("schema_version") != 2
+              or request.get("stage") != stage
+              or request.get("client_version") != "0.53.0"
+              or request.get("runtime", {}).get("name") != "QAIRT"
+              or request.get("retry", False) is not False
+          ):
+              fail("selected request base semantics do not match dispatch")
+          if request.get("device") != TARGET_DEVICE_SELECTORS[
+              expected_selection["target"]
+          ]:
+              fail("selected request full device selector conflicts with target")
+          expected_job_name = (
+              f"slm-lab-t72-{expected_selection['target']}-"
+              f"{expected_selection['context']}-{expected_selection['precision']}-"
+              f"{stage}"
+          )
+          if request.get("job_name") != expected_job_name:
+              fail("selected request job name does not bind the dispatch tuple")
+
+
+          def tensor_spec(shape, dtype):
+              return {"shape": list(shape), "dtype": dtype}
+
+
+          def t12_input_specs(graph_kind):
+              context = expected_selection["context"]
+              capacity = CONTEXT_CAPACITIES[context]
+              if graph_kind == "prefill":
+                  return {
+                      "input_ids": tensor_spec((1, context), "int64"),
+                      "attention_mask": tensor_spec((1, context), "int64"),
+                      "position_ids": tensor_spec((1, context), "int64"),
+                  }
+              specs = {
+                  "input_ids": tensor_spec((1, 1), "int64"),
+                  "attention_mask": tensor_spec((1, capacity), "int64"),
+                  "position_ids": tensor_spec((1, 1), "int64"),
+              }
+              for layer in range(28):
+                  shape = (1, 8, capacity, 128)
+                  specs[f"key_cache.{layer}"] = tensor_spec(
+                      shape, "float16"
+                  )
+                  specs[f"value_cache.{layer}"] = tensor_spec(
+                      shape, "float16"
+                  )
+              specs["valid_length"] = tensor_spec((1,), "int64")
+              return specs
+
+
+          def identify_t12_graph(input_specs):
+              if type(input_specs) is not dict:
+                  fail(
+                      "input specs must use exact builtin JSON tensor types"
+                  )
+              for name, spec in input_specs.items():
+                  if (
+                      type(name) is not str
+                      or type(spec) is not dict
+                      or set(spec) != {"shape", "dtype"}
+                      or type(spec["shape"]) is not list
+                      or not spec["shape"]
+                      or any(
+                          type(dimension) is not int or dimension <= 0
+                          for dimension in spec["shape"]
+                      )
+                      or type(spec["dtype"]) is not str
+                  ):
+                      fail(
+                          "input specs must use exact builtin JSON tensor types"
+                      )
+              matches = [
+                  graph_kind
+                  for graph_kind in ("prefill", "decode")
+                  if input_specs == t12_input_specs(graph_kind)
+              ]
+              if len(matches) != 1:
+                  fail(
+                      "input specs do not exactly match a T12 tensor/axis contract"
+                  )
+              return matches[0]
+
+
+          def expected_logical_names(graph_kind):
+              stem = (
+                  f"qwen3-0.6b-{graph_kind}-s"
+                  f"{expected_selection['context']}-"
+                  f"{expected_selection['precision']}"
+              )
+              return {
+                  "source": f"{stem}.onnx",
+                  "compiled": f"{stem}.qnn.bin",
+                  "dataset": f"{stem}.inputs.h5",
+                  "inference_output": f"{stem}.outputs.h5",
+                  "profile_output": f"{stem}.profile.json",
+              }
+
+
+          def bundle_relative(path):
+              return path.relative_to(bundle_root).as_posix()
+
+
+          def verify_artifact(field):
+              artifact = request.get(field)
+              if not isinstance(artifact, dict) or not exact_keys(
+                  artifact, {"path", "logical_name", "sha256"}
+              ):
+                  fail("request artifact record is invalid")
+              path = resolve_repo_path(
+                  artifact.get("path"), bundle_root, must_exist=True
+              )
+              relative = bundle_relative(path)
+              digest = artifact.get("sha256")
+              if (
+                  not isinstance(artifact.get("logical_name"), str)
+                  or not artifact["logical_name"]
+                  or digest != file_digests.get(relative)
+                  or sha256_file(path) != digest
+              ):
+                  fail("request artifact digest does not match bundle manifest")
+              return path, artifact
+
+
+          verified_artifacts = {
+              field: verify_artifact(field)
+              for field in INPUT_ARTIFACT_FIELDS[stage]
+          }
+          for field in OUTPUT_FIELDS[stage]:
+              resolve_repo_path(
+                  request.get(field), private_output_root, must_exist=False
+              )
+          resolve_repo_path(
+              os.environ["MANIFEST"], public_manifest_root, must_exist=False
+          )
+
+
+          if stage == "compile":
+              graph_kind = identify_t12_graph(request.get("input_specs"))
+              predecessor_artifact = None
+          else:
+              predecessor_path = resolve_repo_path(
+                  request.get("predecessor_manifest"),
+                  bundle_root,
+                  must_exist=True,
+              )
+              predecessor_relative = bundle_relative(predecessor_path)
+              if (
+                  file_digests.get(predecessor_relative)
+                  != sha256_file(predecessor_path)
+              ):
+                  fail("predecessor manifest digest is not bound by bundle")
+              predecessor = load_object(
+                  predecessor_path, "predecessor compile manifest"
+              )
+              if (
+                  predecessor.get("schema_version") != 2
+                  or predecessor.get("manifest_type")
+                  != "slm_lab.qualcomm.ai_hub.stage"
+                  or predecessor.get("stage") != "compile"
+                  or predecessor.get("status") != "success"
+              ):
+                  fail("predecessor is not a successful T30 compile manifest")
+              graph_kind = identify_t12_graph(
+                  predecessor.get("graph_contract", {}).get("input_specs")
+              )
+              compiled = verified_artifacts["compiled_artifact"][1]
+              predecessor_artifact = (
+                  predecessor.get("result", {}).get("target_artifact", {})
+              )
+              predecessor_sources = predecessor.get("lineage", {}).get(
+                  "source_artifacts"
+              )
+              if (
+                  not isinstance(predecessor_sources, list)
+                  or len(predecessor_sources) != 1
+                  or not isinstance(predecessor_sources[0], dict)
+              ):
+                  fail("predecessor source evidence is missing or ambiguous")
+              predecessor_source = predecessor_sources[0]
+              if (
+                  compiled.get("logical_name")
+                  != predecessor_artifact.get("logical_name")
+                  or compiled.get("sha256")
+                  != predecessor_artifact.get("sha256")
+              ):
+                  fail("compiled artifact does not match predecessor manifest")
+
+          logical_names = expected_logical_names(graph_kind)
+          if stage == "compile":
+              logical_metadata = {
+                  "source": request["source_artifact"].get("logical_name"),
+                  "compiled": request.get("output_logical_name"),
+              }
+              expected_logical_metadata = {
+                  "source": logical_names["source"],
+                  "compiled": logical_names["compiled"],
+              }
+          elif stage == "inference":
+              logical_metadata = {
+                  "compiled": request["compiled_artifact"].get("logical_name"),
+                  "predecessor_compiled": predecessor_artifact.get(
+                      "logical_name"
+                  ),
+                  "predecessor_source": predecessor_source.get(
+                      "logical_name"
+                  ),
+                  "dataset": request["input_dataset"].get("logical_name"),
+                  "output": request.get("output_logical_name"),
+              }
+              expected_logical_metadata = {
+                  "compiled": logical_names["compiled"],
+                  "predecessor_compiled": logical_names["compiled"],
+                  "predecessor_source": logical_names["source"],
+                  "dataset": logical_names["dataset"],
+                  "output": logical_names["inference_output"],
+              }
+          else:
+              logical_metadata = {
+                  "compiled": request["compiled_artifact"].get("logical_name"),
+                  "predecessor_compiled": predecessor_artifact.get(
+                      "logical_name"
+                  ),
+                  "predecessor_source": predecessor_source.get(
+                      "logical_name"
+                  ),
+                  "output": request.get("raw_profile_logical_name"),
+              }
+              expected_logical_metadata = {
+                  "compiled": logical_names["compiled"],
+                  "predecessor_compiled": logical_names["compiled"],
+                  "predecessor_source": logical_names["source"],
+                  "output": logical_names["profile_output"],
+              }
+          if logical_metadata != expected_logical_metadata:
+              fail(
+                  "logical metadata does not consistently bind precision label"
+              )
+
+          print("bundle validation passed")
+          PY
+
+      - name: Configure the client without printing the secret
+        env:
+          QAI_HUB_API_TOKEN: ${{ secrets.QAI_HUB_API_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python - <<'PY'
+          import configparser
+          import os
+          from pathlib import Path
+
+          from qai_hub.public_rest_api import (
+              DEFAULT_HUB_API_URL,
+              DEFAULT_HUB_WEB_URL,
+          )
+
+          token = os.environ.pop("QAI_HUB_API_TOKEN", "")
+          if not token:
+              raise SystemExit("QAI_HUB_API_TOKEN is not configured")
+          config = configparser.ConfigParser()
+          config["api"] = {
+              "api_token": token,
+              "api_url": DEFAULT_HUB_API_URL,
+              "web_url": DEFAULT_HUB_WEB_URL,
+              "verbose": "false",
+              "client_mode": "library",
+          }
+          destination = Path.home() / ".qai_hub" / "client.ini"
+          destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+          with destination.open("w", encoding="utf-8") as handle:
+              config.write(handle)
+          destination.chmod(0o600)
+          PY
+
+      - name: Execute the selected local T30 adapter
+        env:
+          MANIFEST: ${{ steps.selection.outputs.manifest }}
+          REQUEST: ${{ steps.selection.outputs.request }}
+          SCRIPT: ${{ steps.selection.outputs.script }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python "$SCRIPT" \
+            --request "$REQUEST" \
+            --manifest "$MANIFEST"
+
+      - name: Remove the ephemeral client credential
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          config_path="$HOME/.qai_hub/client.ini"
+          if [ -f "$config_path" ]; then
+            unlink "$config_path"
+          fi
+
+      - name: Upload only the sanitized stage manifest
+        if: success()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: qualcomm-${{ inputs.target }}-${{ inputs.context }}-${{ inputs.precision }}-${{ inputs.stage }}-manifest
+          path: ${{ steps.selection.outputs.manifest }}
+          if-no-files-found: error
+          retention-days: 14

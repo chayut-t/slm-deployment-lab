@@ -1,0 +1,501 @@
+name: Prepare Qualcomm request bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Qualcomm target represented by the staged source archive
+        required: true
+        type: choice
+        options:
+          - snapdragon-x-elite
+          - dragonwing-iq-9075
+          - snapdragon-8-elite
+      context:
+        description: Static prompt/cache context length
+        required: true
+        type: choice
+        options:
+          - "128"
+          - "512"
+          - "1024"
+          - "4096"
+      precision:
+        description: Precision represented by the selected artifact
+        required: true
+        type: choice
+        options:
+          - fp16
+          - w8a16
+          - w8a8
+          - w4a8
+      stage:
+        description: Independently restartable AI Hub stage
+        required: true
+        type: choice
+        options:
+          - compile
+          - inference
+          - profile
+      source_release_tag:
+        description: Same-repository release containing the pre-staged source ZIP
+        required: true
+        type: string
+      source_asset_name:
+        description: Exact release asset name for the source ZIP
+        required: true
+        type: string
+      source_archive_sha256:
+        description: Independently reviewed SHA-256 of the source ZIP
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qualcomm-request-bundle-${{ inputs.source_archive_sha256 }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate and prepare the private request bundle
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' &&
+        github.event.repository.fork == false &&
+        github.ref == format(
+          'refs/heads/{0}',
+          github.event.repository.default_branch
+        )
+      }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Validate fixed source and workload inputs
+        env:
+          CONTEXT: ${{ inputs.context }}
+          PRECISION: ${{ inputs.precision }}
+          SOURCE_ARCHIVE_SHA256: ${{ inputs.source_archive_sha256 }}
+          SOURCE_ASSET_NAME: ${{ inputs.source_asset_name }}
+          SOURCE_RELEASE_TAG: ${{ inputs.source_release_tag }}
+          STAGE: ${{ inputs.stage }}
+          TARGET: ${{ inputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            snapdragon-x-elite|dragonwing-iq-9075|snapdragon-8-elite) ;;
+            *) echo "unsupported target" >&2; exit 2 ;;
+          esac
+          case "$CONTEXT" in
+            128|512|1024|4096) ;;
+            *) echo "unsupported context" >&2; exit 2 ;;
+          esac
+          case "$PRECISION" in
+            fp16|w8a16|w8a8|w4a8) ;;
+            *) echo "unsupported precision" >&2; exit 2 ;;
+          esac
+          case "$STAGE" in
+            compile|inference|profile) ;;
+            *) echo "unsupported stage" >&2; exit 2 ;;
+          esac
+          case "$SOURCE_RELEASE_TAG" in
+            ""|[!A-Za-z0-9]*|*[!A-Za-z0-9._+-]*)
+              echo "release tag must start alphanumeric and use safe characters" >&2
+              exit 2
+              ;;
+          esac
+          if [ "${#SOURCE_RELEASE_TAG}" -gt 128 ]; then
+            echo "release tag must not exceed 128 characters" >&2
+            exit 2
+          fi
+          case "$SOURCE_ASSET_NAME" in
+            ""|[!A-Za-z0-9]*|*[!A-Za-z0-9._+-]*)
+              echo "asset name must start alphanumeric and use safe characters" >&2
+              exit 2
+              ;;
+          esac
+          if [ "${#SOURCE_ASSET_NAME}" -gt 128 ]; then
+            echo "asset name must not exceed 128 characters" >&2
+            exit 2
+          fi
+          case "$SOURCE_ARCHIVE_SHA256" in
+            *[!0-9a-f]*)
+              echo "source archive SHA-256 must be lowercase hexadecimal" >&2
+              exit 2
+              ;;
+          esac
+          if [ "${#SOURCE_ARCHIVE_SHA256}" -ne 64 ]; then
+            echo "source archive SHA-256 must contain 64 characters" >&2
+            exit 2
+          fi
+
+      - name: Download the exact same-repository release asset
+        env:
+          API_URL: ${{ github.api_url }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_ASSET_NAME: ${{ inputs.source_asset_name }}
+          SOURCE_RELEASE_TAG: ${{ inputs.source_release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p artifacts/qualcomm-release-source
+          python3 - <<'PY'
+          import json
+          import os
+          import shutil
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+
+          class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+              def redirect_request(
+                  self,
+                  request,
+                  file_pointer,
+                  code,
+                  message,
+                  headers,
+                  new_url,
+              ):
+                  redirected = super().redirect_request(
+                      request,
+                      file_pointer,
+                      code,
+                      message,
+                      headers,
+                      new_url,
+                  )
+                  if (
+                      redirected is not None
+                      and urllib.parse.urlsplit(request.full_url).netloc
+                      != urllib.parse.urlsplit(new_url).netloc
+                  ):
+                      redirected.remove_header("Authorization")
+                  return redirected
+
+
+          def fail(message):
+              raise SystemExit(f"release source download failed: {message}")
+
+
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+          tag = urllib.parse.quote(os.environ["SOURCE_RELEASE_TAG"], safe="")
+          metadata_url = (
+              f"{os.environ['API_URL']}/repos/{os.environ['REPOSITORY']}"
+              f"/releases/tags/{tag}"
+          )
+          try:
+              metadata_request = urllib.request.Request(
+                  metadata_url,
+                  headers=headers,
+              )
+              with urllib.request.urlopen(
+                  metadata_request,
+                  timeout=30,
+              ) as response:
+                  release = json.load(response)
+          except Exception:
+              fail("release metadata is unavailable")
+
+          matching_assets = [
+              asset
+              for asset in release.get("assets", [])
+              if asset.get("name") == os.environ["SOURCE_ASSET_NAME"]
+              and asset.get("state") == "uploaded"
+          ]
+          if len(matching_assets) != 1:
+              fail("release must contain one exact uploaded asset")
+          asset_url = matching_assets[0].get("url")
+          if not isinstance(asset_url, str) or not asset_url.startswith(
+              f"{os.environ['API_URL']}/repos/{os.environ['REPOSITORY']}/"
+          ):
+              fail("release asset API identity is invalid")
+
+          destination = Path(
+              "artifacts/qualcomm-release-source/source-bundle.zip"
+          )
+          download_headers = {
+              **headers,
+              "Accept": "application/octet-stream",
+          }
+          opener = urllib.request.build_opener(SafeRedirectHandler())
+          try:
+              request = urllib.request.Request(
+                  asset_url,
+                  headers=download_headers,
+              )
+              with (
+                  opener.open(request, timeout=120) as response,
+                  destination.open("wb") as output,
+              ):
+                  shutil.copyfileobj(response, output, length=1024 * 1024)
+          except Exception:
+              destination.unlink(missing_ok=True)
+              fail("release asset download did not complete")
+          PY
+
+      - name: Verify source digest and safely build the immutable bundle
+        env:
+          CONTEXT: ${{ inputs.context }}
+          PRODUCER_REVISION: ${{ github.sha }}
+          PRODUCER_RUN_ID: ${{ github.run_id }}
+          PRECISION: ${{ inputs.precision }}
+          SOURCE_ARCHIVE_SHA256: ${{ inputs.source_archive_sha256 }}
+          SOURCE_ASSET_NAME: ${{ inputs.source_asset_name }}
+          SOURCE_RELEASE_TAG: ${{ inputs.source_release_tag }}
+          STAGE: ${{ inputs.stage }}
+          TARGET: ${{ inputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import shutil
+          import stat
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+
+          MAX_FILES = 10_000
+          MAX_UNCOMPRESSED_BYTES = 8 * 1024 * 1024 * 1024
+          SHA256_LENGTH = 64
+          TARGET_DEVICE_SELECTORS = {
+              "snapdragon-x-elite": {
+                  "name": "Snapdragon X Elite CRD",
+                  "os": "",
+                  "attributes": [],
+              },
+              "dragonwing-iq-9075": {
+                  "name": "Dragonwing IQ-9075 EVK",
+                  "os": "",
+                  "attributes": [],
+              },
+              "snapdragon-8-elite": {
+                  "name": "Snapdragon 8 Elite QRD",
+                  "os": "",
+                  "attributes": [],
+              },
+          }
+          SOURCE_NAME_CHARACTERS = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789._+-"
+          )
+          SOURCE_NAME_INITIAL_CHARACTERS = set(
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789"
+          )
+
+
+          def fail(message):
+              raise SystemExit(f"source bundle validation failed: {message}")
+
+
+          def sha256_file(path):
+              digest = hashlib.sha256()
+              try:
+                  with path.open("rb") as handle:
+                      for chunk in iter(
+                          lambda: handle.read(1024 * 1024),
+                          b"",
+                      ):
+                          digest.update(chunk)
+              except OSError:
+                  fail("file could not be hashed")
+              return digest.hexdigest()
+
+
+          def valid_source_name(value):
+              return (
+                  type(value) is str
+                  and 1 <= len(value) <= 128
+                  and value[0] in SOURCE_NAME_INITIAL_CHARACTERS
+                  and all(
+                      character in SOURCE_NAME_CHARACTERS
+                      for character in value
+                  )
+              )
+
+
+          archive = Path(
+              "artifacts/qualcomm-release-source/source-bundle.zip"
+          )
+          if not all(
+              valid_source_name(os.environ[name])
+              for name in ("SOURCE_RELEASE_TAG", "SOURCE_ASSET_NAME")
+          ):
+              fail("source release tag or asset name is unsafe")
+          expected_archive_sha = os.environ["SOURCE_ARCHIVE_SHA256"]
+          if (
+              not archive.is_file()
+              or len(expected_archive_sha) != SHA256_LENGTH
+              or sha256_file(archive) != expected_archive_sha
+          ):
+              fail("source archive digest does not match reviewed SHA-256")
+
+          bundle_root = Path("artifacts/qualcomm-request-bundle")
+          bundle_root.mkdir(parents=True, exist_ok=False)
+          try:
+              source = zipfile.ZipFile(archive)
+          except (OSError, zipfile.BadZipFile):
+              fail("source asset must be a valid ZIP archive")
+          with source:
+              entries = source.infolist()
+              if not entries or len(entries) > MAX_FILES:
+                  fail("source ZIP file count is outside the safe bound")
+              if (
+                  sum(entry.file_size for entry in entries)
+                  > MAX_UNCOMPRESSED_BYTES
+              ):
+                  fail("source ZIP uncompressed size exceeds the safe bound")
+              seen = set()
+              for entry in entries:
+                  raw_name = entry.filename
+                  pure_path = PurePosixPath(raw_name)
+                  segments = raw_name.rstrip("/").split("/")
+                  mode = entry.external_attr >> 16
+                  if (
+                      not raw_name
+                      or "\\" in raw_name
+                      or pure_path.is_absolute()
+                      or any(
+                          segment in {"", ".", ".."}
+                          for segment in segments
+                      )
+                      or any(part.startswith(".") for part in pure_path.parts)
+                      or pure_path.as_posix() != raw_name.rstrip("/")
+                      or raw_name.rstrip("/") == "bundle-manifest.json"
+                      or raw_name.rstrip("/") in seen
+                      or stat.S_ISLNK(mode)
+                  ):
+                      fail("source ZIP contains an unsafe or duplicate path")
+                  relative = raw_name.rstrip("/")
+                  seen.add(relative)
+                  destination = bundle_root / relative
+                  try:
+                      destination.resolve(strict=False).relative_to(
+                          bundle_root.resolve()
+                      )
+                  except ValueError:
+                      fail("source ZIP path escaped bundle root")
+                  if entry.is_dir():
+                      destination.mkdir(parents=True, exist_ok=True)
+                      continue
+                  destination.parent.mkdir(parents=True, exist_ok=True)
+                  try:
+                      with (
+                          source.open(entry) as input_file,
+                          destination.open("xb") as output_file,
+                      ):
+                          shutil.copyfileobj(
+                              input_file,
+                              output_file,
+                              length=1024 * 1024,
+                          )
+                  except OSError:
+                      fail("source ZIP extraction failed")
+
+          selection = {
+              "target": os.environ["TARGET"],
+              "context": int(os.environ["CONTEXT"]),
+              "precision": os.environ["PRECISION"],
+              "stage": os.environ["STAGE"],
+          }
+          request_relative = (
+              f"{selection['target']}/{selection['context']}/"
+              f"{selection['precision']}/{selection['stage']}-request.json"
+          )
+          request_path = bundle_root / request_relative
+          try:
+              request = json.loads(request_path.read_text(encoding="utf-8"))
+          except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+              fail("selected request is not readable valid JSON")
+          expected_job_name = (
+              f"slm-lab-t72-{selection['target']}-{selection['context']}-"
+              f"{selection['precision']}-{selection['stage']}"
+          )
+          if (
+              not isinstance(request, dict)
+              or request.get("schema_version") != 2
+              or request.get("stage") != selection["stage"]
+              or request.get("job_name") != expected_job_name
+              or request.get("device")
+              != TARGET_DEVICE_SELECTORS[selection["target"]]
+          ):
+              fail("selected request does not match workload tuple")
+
+          files = []
+          for path in sorted(bundle_root.rglob("*")):
+              if path.is_symlink():
+                  fail("extracted bundle must not contain symbolic links")
+              if path.is_file():
+                  files.append(
+                      {
+                          "path": path.relative_to(bundle_root).as_posix(),
+                          "sha256": sha256_file(path),
+                      }
+                  )
+              elif not path.is_dir():
+                  fail("extracted bundle contains unsupported entry")
+          request_digest = next(
+              (
+                  item["sha256"]
+                  for item in files
+                  if item["path"] == request_relative
+              ),
+              None,
+          )
+          if request_digest is None:
+              fail("selected request is absent from bundle inventory")
+          manifest = {
+              "schema_version": 1,
+              "producer": {
+                  "workflow_path": (
+                      ".github/workflows/qualcomm-request-bundle.yml"
+                  ),
+                  "revision": os.environ["PRODUCER_REVISION"],
+                  "run_id": int(os.environ["PRODUCER_RUN_ID"]),
+              },
+              "source": {
+                  "release_tag": os.environ["SOURCE_RELEASE_TAG"],
+                  "asset_name": os.environ["SOURCE_ASSET_NAME"],
+                  "archive_sha256": expected_archive_sha,
+              },
+              "selection": selection,
+              "request": {
+                  "path": request_relative,
+                  "sha256": request_digest,
+              },
+              "files": files,
+          }
+          (bundle_root / "bundle-manifest.json").write_text(
+              json.dumps(manifest, sort_keys=True, separators=(",", ":"))
+              + "\n",
+              encoding="utf-8",
+          )
+          print(
+              "bundle-manifest-sha256="
+              + sha256_file(bundle_root / "bundle-manifest.json")
+          )
+          PY
+
+      - name: Upload only the validated immutable request bundle
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: qualcomm-request-bundle
+          path: artifacts/qualcomm-request-bundle
+          if-no-files-found: error
+          retention-days: 2
+          include-hidden-files: false
