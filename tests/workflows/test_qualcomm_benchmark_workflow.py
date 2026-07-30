@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
+import json
+import os
 import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import textwrap
 import unittest
+import zipfile
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 import yaml
 
@@ -13,6 +24,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "qualcomm-benchmark.yml"
 GUIDE_PATH = ROOT / "docs" / "learning" / "github_actions_for_ai_hub.md"
+PRODUCER_PATH = ROOT / ".github" / "workflows" / "qualcomm-request-bundle.yml"
 ACTION_SHA_PATTERN = re.compile(r"^actions/[a-z-]+@[0-9a-f]{40}$")
 
 
@@ -24,11 +36,36 @@ def load_workflow() -> tuple[dict[str, Any], str]:
     return value, text
 
 
+def load_producer() -> tuple[dict[str, Any], str]:
+    text = PRODUCER_PATH.read_text(encoding="utf-8")
+    value = yaml.load(text, Loader=yaml.BaseLoader)
+    if not isinstance(value, dict):
+        raise AssertionError("producer workflow must parse as a mapping")
+    return value, text
+
+
+def embedded_python(step: dict[str, Any]) -> str:
+    run = step["run"]
+    marker = "<<'PY'\n"
+    if marker not in run:
+        raise AssertionError(f"{step['name']} has no embedded Python")
+    source = run.split(marker, 1)[1].rsplit("\nPY", 1)[0]
+    return textwrap.dedent(source) + "\n"
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 class QualcommBenchmarkWorkflowTests(unittest.TestCase):
     def setUp(self) -> None:
         self.workflow, self.text = load_workflow()
         self.dispatch = self.workflow["on"]["workflow_dispatch"]
         self.jobs = self.workflow["jobs"]
+        self.authorize_steps = self.jobs["authorize"]["steps"]
+        self.submit_steps = self.jobs["submit"]["steps"]
+        self.producer, self.producer_text = load_producer()
+        self.producer_steps = self.producer["jobs"]["prepare"]["steps"]
 
     def test_only_manual_dispatch_can_trigger_the_workflow(self) -> None:
         self.assertEqual(set(self.workflow["on"]), {"workflow_dispatch"})
@@ -53,9 +90,14 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
                 self.assertEqual(definition["required"], "true")
                 self.assertEqual(definition["type"], "choice")
                 self.assertEqual(definition["options"], options)
-        run_id = inputs["request_artifact_run_id"]
-        self.assertEqual(run_id["required"], "true")
-        self.assertEqual(run_id["type"], "string")
+        for name in (
+            "request_artifact_run_id",
+            "request_bundle_manifest_sha256",
+        ):
+            with self.subTest(input=name):
+                definition = inputs[name]
+                self.assertEqual(definition["required"], "true")
+                self.assertEqual(definition["type"], "string")
 
     def test_permissions_and_authorization_are_fork_safe(self) -> None:
         self.assertEqual(
@@ -70,6 +112,74 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         self.assertNotIn("QAI_HUB_API_TOKEN", authorize_text)
         self.assertIn("head_repository", authorize_text)
         self.assertIn('run.get("conclusion") == "success"', self.text)
+        self.assertIn('run.get("head_sha") ==', self.text)
+        self.assertIn('run.get("path") ==', self.text)
+        self.assertIn(
+            "EXPECTED_PRODUCER_WORKFLOW: "
+            ".github/workflows/qualcomm-request-bundle.yml",
+            self.text,
+        )
+
+    def test_successful_default_branch_run_from_wrong_producer_is_rejected(
+        self,
+    ) -> None:
+        provenance_step = next(
+            step for step in self.authorize_steps if step.get("id") == "provenance"
+        )
+        source = embedded_python(provenance_step)
+        revision = "a" * 40
+        run = {
+            "conclusion": "success",
+            "head_branch": "main",
+            "head_sha": revision,
+            "path": ".github/workflows/unreviewed-producer.yml",
+            "head_repository": {"full_name": "owner/repository"},
+            "event": "workflow_dispatch",
+        }
+        response = io.BytesIO(json.dumps(run).encode("utf-8"))
+        environment = {
+            "API_URL": "https://api.github.invalid",
+            "DEFAULT_BRANCH": "main",
+            "EXPECTED_PRODUCER_REVISION": revision,
+            "EXPECTED_PRODUCER_WORKFLOW": (
+                ".github/workflows/qualcomm-request-bundle.yml"
+            ),
+            "GH_TOKEN": "synthetic-github-token",
+            "REPOSITORY": "owner/repository",
+            "REQUEST_ARTIFACT_RUN_ID": "42",
+        }
+        with (
+            mock.patch.dict(os.environ, environment, clear=True),
+            mock.patch("urllib.request.urlopen", return_value=response),
+            self.assertRaisesRegex(SystemExit, "reviewed producer workflow"),
+        ):
+            exec(compile(source, "<provenance>", "exec"), {})
+
+    def test_producer_is_manual_fork_safe_read_only_and_secret_free(self) -> None:
+        self.assertEqual(set(self.producer["on"]), {"workflow_dispatch"})
+        self.assertEqual(self.producer["permissions"], {"contents": "read"})
+        condition = self.producer["jobs"]["prepare"]["if"]
+        self.assertIn("github.event.repository.fork == false", condition)
+        self.assertIn("github.event.repository.default_branch", condition)
+        self.assertNotIn("QAI_HUB_API_TOKEN", self.producer_text)
+        self.assertNotIn("pull_request_target", self.producer_text)
+        inputs = self.producer["on"]["workflow_dispatch"]["inputs"]
+        for name in (
+            "source_release_tag",
+            "source_asset_name",
+            "source_archive_sha256",
+        ):
+            self.assertEqual(inputs[name]["required"], "true")
+        upload = next(
+            step
+            for step in self.producer_steps
+            if step["name"].startswith("Upload only")
+        )
+        self.assertEqual(upload["with"]["name"], "qualcomm-request-bundle")
+        self.assertEqual(
+            upload["with"]["path"],
+            "artifacts/qualcomm-request-bundle",
+        )
 
     def test_secret_is_confined_to_protected_submit_job(self) -> None:
         submit = self.jobs["submit"]
@@ -86,15 +196,13 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             "Configure the client without printing the secret",
         )
         self.assertNotIn("qai-hub configure", self.text)
-        self.assertIn('destination.chmod(0o600)', self.text)
+        self.assertIn("destination.chmod(0o600)", self.text)
         self.assertIn("if: always()", self.text)
         self.assertIn('unlink "$config_path"', self.text)
 
     def test_official_actions_and_client_are_immutably_pinned(self) -> None:
         action_uses = [
-            step["uses"]
-            for step in self.jobs["submit"]["steps"]
-            if "uses" in step
+            step["uses"] for step in self.submit_steps if "uses" in step
         ]
         self.assertGreaterEqual(len(action_uses), 4)
         for action in action_uses:
@@ -120,27 +228,27 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         self.assertNotIn("submit_profile_job", self.text)
 
     def test_embedded_python_is_syntactically_valid(self) -> None:
-        scripts = re.findall(
-            r"^\s+python(?:3)? - <<'PY'\n(.*?)^\s+PY$",
-            self.text,
-            flags=re.DOTALL | re.MULTILINE,
-        )
-        self.assertEqual(len(scripts), 2)
-        for index, script in enumerate(scripts):
-            lines = script.splitlines()
-            indentation = min(
-                len(line) - len(line.lstrip()) for line in lines if line.strip()
+        python_steps = [
+            step
+            for step in (
+                self.authorize_steps + self.submit_steps + self.producer_steps
             )
-            source = "\n".join(line[indentation:] for line in lines) + "\n"
+            if "<<'PY'" in step.get("run", "")
+        ]
+        self.assertEqual(len(python_steps), 5)
+        for index, step in enumerate(python_steps):
             with self.subTest(script=index):
-                compile(source, f"<workflow-python-{index}>", "exec")
+                compile(
+                    embedded_python(step),
+                    f"<workflow-python-{index}>",
+                    "exec",
+                )
 
     def test_private_bundle_is_not_uploaded_and_only_manifest_is_published(
         self,
     ) -> None:
-        submit_steps = self.jobs["submit"]["steps"]
         download = next(
-            step for step in submit_steps if step["name"].startswith("Download")
+            step for step in self.submit_steps if step["name"].startswith("Download")
         )
         self.assertEqual(download["with"]["name"], "qualcomm-request-bundle")
         self.assertEqual(
@@ -148,7 +256,7 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             "${{ needs.authorize.outputs.request-artifact-run-id }}",
         )
         upload = next(
-            step for step in submit_steps if step["name"].startswith("Upload")
+            step for step in self.submit_steps if step["name"].startswith("Upload")
         )
         self.assertEqual(
             upload["with"]["path"],
@@ -157,6 +265,321 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
         self.assertEqual(upload["with"]["if-no-files-found"], "error")
         self.assertEqual(upload["with"]["retention-days"], "14")
         self.assertNotIn("artifacts/qualcomm-request-bundle/**", self.text)
+
+    def make_compile_bundle(
+        self,
+        request_mutator=None,
+    ) -> tuple[Path, dict[str, str]]:
+        root = Path(tempfile.mkdtemp(prefix="slm-lab-t72-workflow-test-"))
+        self.addCleanup(shutil.rmtree, root, True)
+        bundle_root = root / "artifacts" / "qualcomm-request-bundle"
+        request_relative = Path(
+            "snapdragon-x-elite/128/fp16/compile-request.json"
+        )
+        request_path = bundle_root / request_relative
+        source_path = bundle_root / "inputs" / "model.onnx"
+        source_path.parent.mkdir(parents=True)
+        request_path.parent.mkdir(parents=True)
+        source_path.write_bytes(b"synthetic-onnx")
+        outside_path = root / "outside" / "model.onnx"
+        outside_path.parent.mkdir()
+        outside_path.write_bytes(b"synthetic-outside-onnx")
+
+        request = {
+            "schema_version": 2,
+            "stage": "compile",
+            "client_version": "0.53.0",
+            "device": {"name": "Snapdragon X Elite CRD"},
+            "runtime": {"name": "QAIRT", "version": "2.45.0.260326154327"},
+            "source_artifact": {
+                "path": "artifacts/qualcomm-request-bundle/inputs/model.onnx",
+                "logical_name": "qwen3-prefill-128-fp16.onnx",
+                "sha256": sha256(source_path),
+            },
+            "output_artifact": (
+                "artifacts/qualcomm-actions-private/snapdragon-x-elite/"
+                "128/fp16/compiled.bin"
+            ),
+            "output_logical_name": "qwen3-prefill-128-fp16.bin",
+            "input_specs": {
+                "input_ids": {"shape": [1, 128], "dtype": "int32"}
+            },
+            "options": (
+                "--target_runtime qnn_context_binary "
+                "--qairt_version 2.45.0.260326154327"
+            ),
+            "job_name": "slm-lab-t72-snapdragon-x-elite-128-fp16-compile",
+            "timeout_seconds": 3600,
+            "retry": False,
+        }
+        if request_mutator is not None:
+            request_mutator(request)
+        request_path.write_text(
+            json.dumps(request, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+        files = [
+            {
+                "path": request_relative.as_posix(),
+                "sha256": sha256(request_path),
+            },
+            {"path": "inputs/model.onnx", "sha256": sha256(source_path)},
+        ]
+        revision = "a" * 40
+        bundle_manifest = {
+            "schema_version": 1,
+            "producer": {
+                "workflow_path": (
+                    ".github/workflows/qualcomm-request-bundle.yml"
+                ),
+                "revision": revision,
+                "run_id": 42,
+            },
+            "selection": {
+                "target": "snapdragon-x-elite",
+                "context": 128,
+                "precision": "fp16",
+                "stage": "compile",
+            },
+            "request": {
+                "path": request_relative.as_posix(),
+                "sha256": sha256(request_path),
+            },
+            "files": files,
+        }
+        manifest_path = bundle_root / "bundle-manifest.json"
+        manifest_path.write_text(
+            json.dumps(bundle_manifest, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        environment = {
+            **os.environ,
+            "BUNDLE_ROOT": "artifacts/qualcomm-request-bundle",
+            "CONTEXT": "128",
+            "EXPECTED_BUNDLE_MANIFEST_SHA256": sha256(manifest_path),
+            "EXPECTED_PRODUCER_REVISION": revision,
+            "EXPECTED_PRODUCER_RUN_ID": "42",
+            "EXPECTED_PRODUCER_WORKFLOW": (
+                ".github/workflows/qualcomm-request-bundle.yml"
+            ),
+            "MANIFEST": (
+                "results/qualcomm-actions/snapdragon-x-elite/128/fp16/"
+                "compile-manifest.json"
+            ),
+            "PRECISION": "fp16",
+            "PRIVATE_OUTPUT_ROOT": "artifacts/qualcomm-actions-private",
+            "PUBLIC_MANIFEST_ROOT": "results/qualcomm-actions",
+            "REQUEST": (
+                "artifacts/qualcomm-request-bundle/"
+                f"{request_relative.as_posix()}"
+            ),
+            "STAGE": "compile",
+            "TARGET": "snapdragon-x-elite",
+        }
+        return root, environment
+
+    def run_bundle_validator(
+        self,
+        root: Path,
+        environment: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        validator = next(
+            step
+            for step in self.submit_steps
+            if step["name"].startswith("Validate bundle manifest")
+        )
+        return subprocess.run(
+            (sys.executable, "-c", embedded_python(validator)),
+            cwd=root,
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def make_source_archive(
+        self,
+        *,
+        request_mutator=None,
+        escaped_entry: bool = False,
+    ) -> tuple[Path, dict[str, str]]:
+        root = Path(tempfile.mkdtemp(prefix="slm-lab-t72-producer-test-"))
+        self.addCleanup(shutil.rmtree, root, True)
+        archive = (
+            root
+            / "artifacts"
+            / "qualcomm-release-source"
+            / "source-bundle.zip"
+        )
+        archive.parent.mkdir(parents=True)
+        request = {
+            "schema_version": 2,
+            "stage": "compile",
+            "device": {"name": "Snapdragon X Elite CRD"},
+            "job_name": "slm-lab-t72-snapdragon-x-elite-128-fp16-compile",
+        }
+        if request_mutator is not None:
+            request_mutator(request)
+        with zipfile.ZipFile(archive, "w") as source:
+            source.writestr(
+                "snapdragon-x-elite/128/fp16/compile-request.json",
+                json.dumps(request, sort_keys=True) + "\n",
+            )
+            source.writestr("inputs/model.onnx", b"synthetic-onnx")
+            if escaped_entry:
+                source.writestr("../escaped.txt", b"escape")
+        environment = {
+            **os.environ,
+            "CONTEXT": "128",
+            "PRODUCER_REVISION": "a" * 40,
+            "PRODUCER_RUN_ID": "42",
+            "PRECISION": "fp16",
+            "SOURCE_ARCHIVE_SHA256": sha256(archive),
+            "STAGE": "compile",
+            "TARGET": "snapdragon-x-elite",
+        }
+        return root, environment
+
+    def run_producer_builder(
+        self,
+        root: Path,
+        environment: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        builder = next(
+            step
+            for step in self.producer_steps
+            if step["name"].startswith("Verify source digest")
+        )
+        return subprocess.run(
+            (sys.executable, "-c", embedded_python(builder)),
+            cwd=root,
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def test_producer_builds_content_addressed_bundle(self) -> None:
+        root, environment = self.make_source_archive()
+        result = self.run_producer_builder(root, environment)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertRegex(
+            result.stdout,
+            r"^bundle-manifest-sha256=[0-9a-f]{64}\n$",
+        )
+        manifest_path = (
+            root
+            / "artifacts"
+            / "qualcomm-request-bundle"
+            / "bundle-manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            manifest["producer"]["workflow_path"],
+            ".github/workflows/qualcomm-request-bundle.yml",
+        )
+        self.assertEqual(manifest["producer"]["revision"], "a" * 40)
+        self.assertEqual(manifest["producer"]["run_id"], 42)
+
+    def test_producer_rejects_wrong_reviewed_source_digest(self) -> None:
+        root, environment = self.make_source_archive()
+        environment["SOURCE_ARCHIVE_SHA256"] = "0" * 64
+        result = self.run_producer_builder(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("does not match reviewed SHA-256", result.stderr)
+
+    def test_producer_rejects_source_archive_path_escape(self) -> None:
+        root, environment = self.make_source_archive(escaped_entry=True)
+        result = self.run_producer_builder(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unsafe or duplicate path", result.stderr)
+        self.assertFalse((root / "artifacts" / "escaped.txt").exists())
+
+    def test_producer_rejects_mislabeled_source_tuple(self) -> None:
+        def mislabel(request):
+            request["job_name"] = (
+                "slm-lab-t72-snapdragon-x-elite-128-w8a8-compile"
+            )
+
+        root, environment = self.make_source_archive(request_mutator=mislabel)
+        result = self.run_producer_builder(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("does not match workload tuple", result.stderr)
+
+    def test_valid_bundle_is_accepted_before_secret_configuration(self) -> None:
+        root, environment = self.make_compile_bundle()
+        result = self.run_bundle_validator(root, environment)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "bundle validation passed\n")
+        step_names = [step["name"] for step in self.submit_steps]
+        self.assertLess(
+            step_names.index(
+                "Validate bundle manifest request semantics digests and paths"
+            ),
+            step_names.index("Configure the client without printing the secret"),
+        )
+
+    def test_bundle_with_mislabeled_request_tuple_is_rejected(self) -> None:
+        def mislabel(request):
+            request["job_name"] = (
+                "slm-lab-t72-snapdragon-x-elite-128-w8a8-compile"
+            )
+
+        root, environment = self.make_compile_bundle(mislabel)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("job name does not bind", result.stderr)
+
+    def test_bundle_with_input_path_escape_is_rejected(self) -> None:
+        def escape(request):
+            request["source_artifact"] = {
+                "path": "outside/model.onnx",
+                "logical_name": "qwen3-prefill-128-fp16.onnx",
+                "sha256": hashlib.sha256(
+                    b"synthetic-outside-onnx"
+                ).hexdigest(),
+            }
+
+        root, environment = self.make_compile_bundle(escape)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("escaped its allowed runner-private root", result.stderr)
+
+    def test_bundle_with_wrong_artifact_digest_is_rejected(self) -> None:
+        def corrupt_digest(request):
+            request["source_artifact"]["sha256"] = "0" * 64
+
+        root, environment = self.make_compile_bundle(corrupt_digest)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("artifact digest does not match", result.stderr)
+
+    def test_bundle_manifest_digest_must_match_reviewed_input(self) -> None:
+        root, environment = self.make_compile_bundle()
+        environment["EXPECTED_BUNDLE_MANIFEST_SHA256"] = "0" * 64
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("reviewed digest", result.stderr)
+
+    def test_bundle_from_wrong_producer_revision_is_rejected(self) -> None:
+        root, environment = self.make_compile_bundle()
+        manifest_path = (
+            root
+            / "artifacts"
+            / "qualcomm-request-bundle"
+            / "bundle-manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["producer"]["revision"] = "b" * 40
+        manifest_path.write_text(
+            json.dumps(manifest, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        environment["EXPECTED_BUNDLE_MANIFEST_SHA256"] = sha256(manifest_path)
+        result = self.run_bundle_validator(root, environment)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("identity or revision", result.stderr)
 
     def test_time_and_concurrency_are_bounded(self) -> None:
         self.assertEqual(self.jobs["authorize"]["timeout-minutes"], "5")
@@ -173,9 +596,11 @@ class QualcommBenchmarkWorkflowTests(unittest.TestCase):
             "default branch",
             "protected `qualcomm-ai-hub` GitHub environment",
             "request-bundle",
+            "fixed producer workflow",
+            "path escapes",
             "service turnaround",
             "does **not** add or inspect a real secret",
-            "structurally validated but externally unverified",
+            "structurally validated but externally",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, guide)

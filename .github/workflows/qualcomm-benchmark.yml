@@ -41,6 +41,10 @@ on:
         description: Successful default-branch run containing qualcomm-request-bundle
         required: true
         type: string
+      request_bundle_manifest_sha256:
+        description: Reviewed SHA-256 of bundle-manifest.json
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -66,15 +70,19 @@ jobs:
     timeout-minutes: 5
     outputs:
       request-artifact-run-id: ${{ steps.provenance.outputs.run-id }}
+      request-bundle-manifest-sha256: ${{ steps.provenance.outputs.manifest-sha256 }}
     steps:
       - name: Validate fixed inputs and trusted artifact run
         id: provenance
         env:
           API_URL: ${{ github.api_url }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EXPECTED_PRODUCER_REVISION: ${{ github.sha }}
+          EXPECTED_PRODUCER_WORKFLOW: .github/workflows/qualcomm-request-bundle.yml
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           REQUEST_ARTIFACT_RUN_ID: ${{ inputs.request_artifact_run_id }}
+          REQUEST_BUNDLE_MANIFEST_SHA256: ${{ inputs.request_bundle_manifest_sha256 }}
           TARGET: ${{ inputs.target }}
           CONTEXT: ${{ inputs.context }}
           PRECISION: ${{ inputs.precision }}
@@ -105,6 +113,16 @@ jobs:
             echo "artifact run ID must be positive" >&2
             exit 2
           fi
+          case "$REQUEST_BUNDLE_MANIFEST_SHA256" in
+            *[!0-9a-f]*)
+              echo "bundle manifest SHA-256 must be lowercase hexadecimal" >&2
+              exit 2
+              ;;
+          esac
+          if [ "${#REQUEST_BUNDLE_MANIFEST_SHA256}" -ne 64 ]; then
+            echo "bundle manifest SHA-256 must contain 64 characters" >&2
+            exit 2
+          fi
           python3 - <<'PY'
           import json
           import os
@@ -132,16 +150,19 @@ jobs:
           trusted = (
               run.get("conclusion") == "success"
               and run.get("head_branch") == os.environ["DEFAULT_BRANCH"]
+              and run.get("head_sha") == os.environ["EXPECTED_PRODUCER_REVISION"]
+              and run.get("path") == os.environ["EXPECTED_PRODUCER_WORKFLOW"]
               and head_repository.get("full_name") == os.environ["REPOSITORY"]
-              and run.get("event") in {"push", "workflow_dispatch"}
+              and run.get("event") == "workflow_dispatch"
           )
           if not trusted:
               raise SystemExit(
-                  "artifact run must be a successful same-repository "
-                  "default-branch push or manual run"
+                  "artifact run must be the successful reviewed producer "
+                  "workflow at the dispatch revision"
               )
           PY
           echo "run-id=$REQUEST_ARTIFACT_RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "manifest-sha256=$REQUEST_BUNDLE_MANIFEST_SHA256" >> "$GITHUB_OUTPUT"
 
   submit:
     name: Run ${{ inputs.stage }} on ${{ inputs.target }}
@@ -210,6 +231,401 @@ jobs:
             echo "request=$request"
             echo "manifest=$manifest_dir/$STAGE-manifest.json"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Validate bundle manifest request semantics digests and paths
+        env:
+          BUNDLE_ROOT: artifacts/qualcomm-request-bundle
+          CONTEXT: ${{ inputs.context }}
+          EXPECTED_BUNDLE_MANIFEST_SHA256: ${{ needs.authorize.outputs.request-bundle-manifest-sha256 }}
+          EXPECTED_PRODUCER_REVISION: ${{ github.sha }}
+          EXPECTED_PRODUCER_RUN_ID: ${{ needs.authorize.outputs.request-artifact-run-id }}
+          EXPECTED_PRODUCER_WORKFLOW: .github/workflows/qualcomm-request-bundle.yml
+          MANIFEST: ${{ steps.selection.outputs.manifest }}
+          PRECISION: ${{ inputs.precision }}
+          PRIVATE_OUTPUT_ROOT: artifacts/qualcomm-actions-private
+          PUBLIC_MANIFEST_ROOT: results/qualcomm-actions
+          REQUEST: ${{ steps.selection.outputs.request }}
+          STAGE: ${{ inputs.stage }}
+          TARGET: ${{ inputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path, PurePosixPath
+
+
+          SHA256_LENGTH = 64
+          REVISION_LENGTH = 40
+          TARGET_DEVICE_NAMES = {
+              "snapdragon-x-elite": "Snapdragon X Elite CRD",
+              "dragonwing-iq-9075": "Dragonwing IQ-9075 EVK",
+              "snapdragon-8-elite": "Snapdragon 8 Elite QRD",
+          }
+          COMMON_REQUEST_KEYS = {
+              "schema_version",
+              "stage",
+              "client_version",
+              "device",
+              "runtime",
+              "options",
+              "job_name",
+              "timeout_seconds",
+          }
+          STAGE_REQUEST_KEYS = {
+              "compile": {
+                  "source_artifact",
+                  "output_artifact",
+                  "output_logical_name",
+                  "input_specs",
+              },
+              "inference": {
+                  "predecessor_manifest",
+                  "compiled_artifact",
+                  "input_dataset",
+                  "output_artifact",
+                  "output_logical_name",
+              },
+              "profile": {
+                  "predecessor_manifest",
+                  "compiled_artifact",
+                  "raw_profile_output",
+                  "raw_profile_logical_name",
+              },
+          }
+          INPUT_ARTIFACT_FIELDS = {
+              "compile": ("source_artifact",),
+              "inference": ("compiled_artifact", "input_dataset"),
+              "profile": ("compiled_artifact",),
+          }
+          OUTPUT_FIELDS = {
+              "compile": ("output_artifact",),
+              "inference": ("output_artifact",),
+              "profile": ("raw_profile_output",),
+          }
+
+
+          def fail(message):
+              raise SystemExit(f"bundle validation failed: {message}")
+
+
+          def load_object(path, role):
+              try:
+                  value = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                  fail(f"{role} is not readable valid JSON")
+              if not isinstance(value, dict):
+                  fail(f"{role} must be a JSON object")
+              return value
+
+
+          def sha256_file(path):
+              digest = hashlib.sha256()
+              try:
+                  with path.open("rb") as handle:
+                      for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                          digest.update(chunk)
+              except OSError:
+                  fail("bundle file could not be hashed")
+              return digest.hexdigest()
+
+
+          def exact_keys(value, required, optional=()):
+              return set(value) == set(required) | (set(value) & set(optional))
+
+
+          repo_root = Path.cwd().resolve()
+
+
+          def configured_root(name):
+              raw = Path(os.environ[name])
+              if raw.is_absolute():
+                  fail("runner-private roots must be repository-relative")
+              resolved = (repo_root / raw).resolve(strict=False)
+              try:
+                  resolved.relative_to(repo_root)
+              except ValueError:
+                  fail("runner-private root escaped the repository")
+              return resolved
+
+
+          bundle_root = configured_root("BUNDLE_ROOT")
+          private_output_root = configured_root("PRIVATE_OUTPUT_ROOT")
+          public_manifest_root = configured_root("PUBLIC_MANIFEST_ROOT")
+          if len({bundle_root, private_output_root, public_manifest_root}) != 3:
+              fail("runner-private roots must be distinct")
+
+
+          def resolve_repo_path(raw, root, *, must_exist):
+              if not isinstance(raw, str) or not raw or Path(raw).is_absolute():
+                  fail("request paths must be nonempty repository-relative strings")
+              candidate = repo_root / raw
+              current = repo_root
+              for part in Path(raw).parts:
+                  current /= part
+                  if current.is_symlink():
+                      fail("request paths must not contain symbolic links")
+              try:
+                  resolved = candidate.resolve(strict=must_exist)
+              except OSError:
+                  fail("request input is missing")
+              try:
+                  resolved.relative_to(root)
+              except ValueError:
+                  fail("request path escaped its allowed runner-private root")
+              if must_exist and not resolved.is_file():
+                  fail("request input must be a regular file")
+              return resolved
+
+
+          manifest_path = bundle_root / "bundle-manifest.json"
+          if manifest_path.is_symlink() or not manifest_path.is_file():
+              fail("bundle-manifest.json is missing or unsafe")
+          expected_manifest_sha = os.environ["EXPECTED_BUNDLE_MANIFEST_SHA256"]
+          if (
+              len(expected_manifest_sha) != SHA256_LENGTH
+              or any(character not in "0123456789abcdef" for character in expected_manifest_sha)
+              or sha256_file(manifest_path) != expected_manifest_sha
+          ):
+              fail("bundle manifest digest does not match the reviewed digest")
+
+          bundle = load_object(manifest_path, "bundle manifest")
+          if not exact_keys(
+              bundle,
+              {"schema_version", "producer", "selection", "request", "files"},
+          ):
+              fail("bundle manifest fields do not match schema version 1")
+          if bundle["schema_version"] != 1:
+              fail("bundle manifest schema version is unsupported")
+
+          producer = bundle["producer"]
+          if not isinstance(producer, dict) or not exact_keys(
+              producer, {"workflow_path", "revision", "run_id"}
+          ):
+              fail("bundle producer fields are invalid")
+          revision = os.environ["EXPECTED_PRODUCER_REVISION"]
+          if (
+              len(revision) != REVISION_LENGTH
+              or producer
+              != {
+                  "workflow_path": os.environ["EXPECTED_PRODUCER_WORKFLOW"],
+                  "revision": revision,
+                  "run_id": int(os.environ["EXPECTED_PRODUCER_RUN_ID"]),
+              }
+          ):
+              fail("bundle producer identity or revision does not match dispatch")
+
+          expected_selection = {
+              "target": os.environ["TARGET"],
+              "context": int(os.environ["CONTEXT"]),
+              "precision": os.environ["PRECISION"],
+              "stage": os.environ["STAGE"],
+          }
+          if bundle["selection"] != expected_selection:
+              fail("bundle selection does not match dispatch tuple")
+
+          files = bundle["files"]
+          if not isinstance(files, list) or not files:
+              fail("bundle files must be a nonempty list")
+          file_digests = {}
+          for entry in files:
+              if not isinstance(entry, dict) or not exact_keys(
+                  entry, {"path", "sha256"}
+              ):
+                  fail("bundle file entry is invalid")
+              raw_path = entry["path"]
+              digest = entry["sha256"]
+              if not isinstance(raw_path, str) or not raw_path:
+                  fail("bundle file path is invalid")
+              pure_path = PurePosixPath(raw_path)
+              if (
+                  pure_path.is_absolute()
+                  or ".." in pure_path.parts
+                  or pure_path.as_posix() != raw_path
+                  or raw_path == "bundle-manifest.json"
+                  or raw_path in file_digests
+              ):
+                  fail("bundle file path is unsafe or duplicated")
+              if (
+                  not isinstance(digest, str)
+                  or len(digest) != SHA256_LENGTH
+                  or any(character not in "0123456789abcdef" for character in digest)
+              ):
+                  fail("bundle file digest is invalid")
+              path = bundle_root / raw_path
+              if path.is_symlink():
+                  fail("bundle file must not be a symbolic link")
+              try:
+                  resolved = path.resolve(strict=True)
+                  resolved.relative_to(bundle_root)
+              except (OSError, ValueError):
+                  fail("bundle file escaped the private bundle root")
+              if not resolved.is_file() or sha256_file(resolved) != digest:
+                  fail("bundle file digest mismatch")
+              file_digests[raw_path] = digest
+
+          actual_files = set()
+          for path in bundle_root.rglob("*"):
+              if path.is_symlink():
+                  fail("bundle must not contain symbolic links")
+              if path.is_file():
+                  actual_files.add(path.relative_to(bundle_root).as_posix())
+              elif not path.is_dir():
+                  fail("bundle contains an unsupported filesystem entry")
+          if actual_files != set(file_digests) | {"bundle-manifest.json"}:
+              fail("bundle contains missing or unlisted files")
+
+          expected_request_relative = (
+              f"{expected_selection['target']}/{expected_selection['context']}/"
+              f"{expected_selection['precision']}/{expected_selection['stage']}"
+              "-request.json"
+          )
+          request_record = bundle["request"]
+          if not isinstance(request_record, dict) or not exact_keys(
+              request_record, {"path", "sha256"}
+          ):
+              fail("bundle request record is invalid")
+          if request_record != {
+              "path": expected_request_relative,
+              "sha256": file_digests.get(expected_request_relative),
+          }:
+              fail("bundle request record does not match selected request")
+
+          request_path = resolve_repo_path(
+              os.environ["REQUEST"], bundle_root, must_exist=True
+          )
+          if (
+              request_path != bundle_root / expected_request_relative
+              or sha256_file(request_path) != request_record["sha256"]
+          ):
+              fail("selected request digest or path does not match bundle manifest")
+          request = load_object(request_path, "selected request")
+
+          stage = expected_selection["stage"]
+          expected_keys = COMMON_REQUEST_KEYS | STAGE_REQUEST_KEYS[stage]
+          if request.get("retry") is not None:
+              expected_keys.add("retry")
+          if set(request) != expected_keys:
+              fail("selected request fields do not match the T30 stage contract")
+          if (
+              request.get("schema_version") != 2
+              or request.get("stage") != stage
+              or request.get("client_version") != "0.53.0"
+              or request.get("runtime", {}).get("name") != "QAIRT"
+              or request.get("retry", False) is not False
+          ):
+              fail("selected request base semantics do not match dispatch")
+          if request.get("device", {}).get("name") != TARGET_DEVICE_NAMES[
+              expected_selection["target"]
+          ]:
+              fail("selected request device does not match dispatch target")
+          expected_job_name = (
+              f"slm-lab-t72-{expected_selection['target']}-"
+              f"{expected_selection['context']}-{expected_selection['precision']}-"
+              f"{stage}"
+          )
+          if request.get("job_name") != expected_job_name:
+              fail("selected request job name does not bind the dispatch tuple")
+
+
+          def bundle_relative(path):
+              return path.relative_to(bundle_root).as_posix()
+
+
+          def verify_artifact(field):
+              artifact = request.get(field)
+              if not isinstance(artifact, dict) or not exact_keys(
+                  artifact, {"path", "logical_name", "sha256"}
+              ):
+                  fail("request artifact record is invalid")
+              path = resolve_repo_path(
+                  artifact.get("path"), bundle_root, must_exist=True
+              )
+              relative = bundle_relative(path)
+              digest = artifact.get("sha256")
+              if (
+                  not isinstance(artifact.get("logical_name"), str)
+                  or not artifact["logical_name"]
+                  or digest != file_digests.get(relative)
+                  or sha256_file(path) != digest
+              ):
+                  fail("request artifact digest does not match bundle manifest")
+              return path, artifact
+
+
+          verified_artifacts = {
+              field: verify_artifact(field)
+              for field in INPUT_ARTIFACT_FIELDS[stage]
+          }
+          for field in OUTPUT_FIELDS[stage]:
+              resolve_repo_path(
+                  request.get(field), private_output_root, must_exist=False
+              )
+          resolve_repo_path(
+              os.environ["MANIFEST"], public_manifest_root, must_exist=False
+          )
+
+
+          def specs_contain_context(specs):
+              if not isinstance(specs, dict) or not specs:
+                  return False
+              for spec in specs.values():
+                  if not isinstance(spec, dict):
+                      return False
+                  shape = spec.get("shape")
+                  if (
+                      isinstance(shape, list)
+                      and expected_selection["context"] in shape
+                  ):
+                      return True
+              return False
+
+
+          if stage == "compile":
+              if not specs_contain_context(request.get("input_specs")):
+                  fail("compile input specs do not bind the selected context")
+          else:
+              predecessor_path = resolve_repo_path(
+                  request.get("predecessor_manifest"),
+                  bundle_root,
+                  must_exist=True,
+              )
+              predecessor_relative = bundle_relative(predecessor_path)
+              if (
+                  file_digests.get(predecessor_relative)
+                  != sha256_file(predecessor_path)
+              ):
+                  fail("predecessor manifest digest is not bound by bundle")
+              predecessor = load_object(
+                  predecessor_path, "predecessor compile manifest"
+              )
+              if (
+                  predecessor.get("schema_version") != 2
+                  or predecessor.get("manifest_type")
+                  != "slm_lab.qualcomm.ai_hub.stage"
+                  or predecessor.get("stage") != "compile"
+                  or predecessor.get("status") != "success"
+                  or not specs_contain_context(
+                      predecessor.get("graph_contract", {}).get("input_specs")
+                  )
+              ):
+                  fail("predecessor compile manifest does not bind context")
+              compiled = verified_artifacts["compiled_artifact"][1]
+              predecessor_artifact = (
+                  predecessor.get("result", {}).get("target_artifact", {})
+              )
+              if (
+                  compiled.get("logical_name")
+                  != predecessor_artifact.get("logical_name")
+                  or compiled.get("sha256")
+                  != predecessor_artifact.get("sha256")
+              ):
+                  fail("compiled artifact does not match predecessor manifest")
+
+          print("bundle validation passed")
+          PY
 
       - name: Configure the client without printing the secret
         env:

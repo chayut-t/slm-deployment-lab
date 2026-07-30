@@ -1,6 +1,6 @@
 # T72: Manual GitHub Actions AI Hub workflow
 
-Status: completed
+Status: active
 Owner: Codex T72 agent
 Updated: 2026-07-30
 
@@ -18,6 +18,9 @@ hardware boundaries work without creating secrets or running external jobs.
 
 - Add `.github/workflows/qualcomm-benchmark.yml` with typed target, context,
   precision, stage, and trusted request-bundle inputs.
+- Add `.github/workflows/qualcomm-request-bundle.yml` as the fixed reviewed
+  no-Qualcomm-secret producer. Its trust terminus is a separately pre-staged
+  same-repository release asset bound by tag, asset name, and reviewed SHA-256.
 - Gate secret-bearing work to the upstream default branch and a protected
   GitHub environment.
 - Pin the Python and official GitHub actions used by the workflow.
@@ -29,6 +32,7 @@ hardware boundaries work without creating secrets or running external jobs.
 ### Out of scope
 
 - Creating or changing GitHub secrets or environment protection rules.
+- Staging, creating, or publishing a GitHub release or source asset.
 - Uploading a real request bundle, dispatching the workflow, or submitting an
   AI Hub job.
 - Changing the T30 adapters or their request contract.
@@ -51,6 +55,7 @@ hardware boundaries work without creating secrets or running external jobs.
 - Inputs: `ai/tasks/definitions/T72.yaml`, `scripts/qualcomm/README.md`,
   `src/slm_lab/deployment/qualcomm/ai_hub.py`, T03/T30 worklogs.
 - Outputs: `.github/workflows/qualcomm-benchmark.yml`,
+  `.github/workflows/qualcomm-request-bundle.yml`,
   `docs/learning/github_actions_for_ai_hub.md`, `tests/workflows/`.
 - Shared contracts: T30 schema-v2 request files and sanitized manifest
   boundary; T03 generated task status, privacy, and completion rules.
@@ -59,12 +64,13 @@ hardware boundaries work without creating secrets or running external jobs.
 
 - [x] Workflow dispatch inputs and fork/default-branch/environment gates are
   mechanically validated.
-- [x] Workflow downloads only a same-repository/default-branch request bundle,
-  configures the pinned client without printing the token, and calls exactly
-  one local T30 stage script.
+- [x] Workflow downloads only a fixed reviewed producer workflow/revision
+  request bundle, validates its manifest, request semantics, paths, and
+  digests before secret configuration, configures the pinned client without
+  printing the token, and calls exactly one local T30 stage script.
 - [x] Guide explains learner setup, request-bundle lineage, security model,
   dispatch, evidence, failure handling, and the unverified external boundary.
-- [x] Focused and repository-wide required checks pass, with a public worklog and T72
+- [ ] Focused and repository-wide required checks pass, with a public worklog and T72
   completion metadata.
 
 ## Verification and acceptance
@@ -104,9 +110,18 @@ hardware boundaries work without creating secrets or running external jobs.
 - 2026-07-30: Offline implementation and acceptance checks passed. Real secret
   setup, environment approval, bundle production, workflow dispatch, and
   Qualcomm execution remain explicitly learner-controlled and unverified.
+- 2026-07-30: Independent review found that same-repository/default-branch
+  provenance alone did not bind the bundle to a reviewed producer workflow or
+  prove tuple/path/digest semantics. T72 is reopened until those P1 findings
+  are fixed and freshly reviewed.
+- 2026-07-30: The coordinator authorized the narrow producer-workflow scope
+  expansion. The producer uses a content-addressed same-repository release
+  asset as the non-dangling source mechanism; staging that asset remains an
+  explicit learner-controlled prerequisite and is never performed by T72.
 
 ## Progress and restart instructions
 
-Implementation is complete. Resume by reading the public worklog and guide.
-The next external step is learner review and protected-environment setup; do
-not add a secret or dispatch a Qualcomm job without that explicit approval.
+Review fixes are in progress. Validate the producer, immutable bundle manifest,
+selected request semantics, source/archive safety, and runner-private paths;
+add adversarial regressions, then rerun focused/full checks. Keep T72 in
+progress with no graph worklog until fresh review accepts it.

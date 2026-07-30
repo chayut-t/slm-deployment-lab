@@ -3,15 +3,14 @@
 Date: 2026-07-30
 Task: `T72`
 Visibility: `public`
-Status: completed
+Status: in_progress
 
 ## Outcome
 
-Implemented a manually dispatched, fork-safe Qualcomm AI Hub workflow that
-selects one target/context/precision/stage tuple and delegates remote execution
-to the existing T30 local adapter for that stage. The workflow is structurally
-validated offline and teaches the full learner-controlled secret, environment,
-request-bundle, dispatch, and evidence lifecycle. No secret was created or
+Initial implementation produced a manually dispatched Qualcomm AI Hub workflow
+and offline validation. Independent review then identified incomplete producer
+identity and bundle semantic/path/digest validation, so T72 is reopened while
+those findings are addressed and freshly reviewed. No secret was created or
 inspected and no GitHub Actions or Qualcomm job was run.
 
 ## Changes
@@ -33,9 +32,10 @@ inspected and no GitHub Actions or Qualcomm job was run.
 - Kept T30's three scripts as the sole stage implementations. A fixed shell
   allowlist maps the stage to a script; no YAML submission, polling,
   normalization, or redaction logic duplicates the adapter.
-- Uploaded only the sanitized stage manifest with bounded retention. Requests,
-  models, datasets, compiled artifacts, result tensors, raw profiles, SDK
-  output, credentials, and service identity remain private.
+- The benchmark result step uploads only the sanitized stage manifest with
+  bounded retention. Its request bundle is a separate two-day producer
+  artifact; result tensors, raw profiles, SDK output, credentials, and service
+  identity are never included in the result upload.
 - Added a learning guide covering Actions concepts, the independent-stage
   contract, input meaning, immutable request-bundle layout/provenance,
   protected-environment setup, secret hygiene, approval, dispatch, evidence,
@@ -44,19 +44,34 @@ inspected and no GitHub Actions or Qualcomm job was run.
   gating, provenance, permissions, secret placement/cleanup, pinned
   dependencies, local-script delegation, private-artifact exclusion, bounds,
   embedded Python syntax, and guide coverage.
+- Independent-review fixes add the fixed
+  `.github/workflows/qualcomm-request-bundle.yml` producer. It has no Qualcomm
+  secret, reads one same-repository pre-staged release ZIP by conservative
+  tag/name, verifies its learner-reviewed SHA-256, safely extracts bounded ZIP
+  contents without `extractall`, checks the tuple, builds a complete digest
+  inventory, and uploads a two-day immutable request bundle.
+- The benchmark now binds the producer workflow path, exact current commit,
+  run ID, event/repository/default branch, and independently reviewed
+  `bundle-manifest.json` SHA-256. Before secret configuration it rejects
+  missing/extra/modified/symlinked files, tuple mismatches, wrong exact device
+  selectors, context mismatches, predecessor/compiled-artifact drift, and
+  input/output paths outside distinct runner-private roots.
+- Added executable adversarial regressions for successful wrong-producer runs,
+  wrong producer revisions, wrong source/manifest digests, mislabeled request
+  tuples, source ZIP path escapes, and request path escapes.
 
 ## Verification
 
 - Command:
   `PYTHONPATH=src python3 -m unittest discover -s tests/workflows -p 'test_*.py' -v`
-- Result: 10 focused workflow tests passed.
+- Result: 22 focused producer/benchmark workflow tests passed.
 - Command:
   `PYTHONPATH=src <project-python> -m unittest tests.deployment.qualcomm.test_ai_hub -v`
 - Result: all 21 T30 adapter contract tests passed.
 - Command: `<project-python> -m ruff check tests/workflows`
 - Result: passed.
 - Command: `PYTHONPATH=src <project-python> -m pytest -q`
-- Result: with an isolated writable uv cache, 170 tests passed and six
+- Result: with an isolated writable uv cache, 182 tests passed and six
   intentional opt-in tests skipped. One T03 repository-automation test failed:
   `test_staged_graph_requires_matching_staged_status` assumes at least one
   dependency-ready task remains `planned`, while the public parallel-work
@@ -64,11 +79,11 @@ inspected and no GitHub Actions or Qualcomm job was run.
   T72 code was not in the traceback.
 - Command:
   `UV_CACHE_DIR=<writable-temp> PYTHONPATH=src <project-python> -m pytest -q -k 'not test_staged_graph_requires_matching_staged_status'`
-- Result: 170 tests passed, six intentional opt-in tests skipped, and the one
+- Result: 182 tests passed, six intentional opt-in tests skipped, and the one
   coordination-sensitive T03 test was explicitly deselected.
 - Commands: `python3 scripts/ai/render_task_status.py --check`,
   `python3 scripts/repo/check_hygiene.py --all`, and `git diff --check`.
-- Result: all passed on the final completion snapshot.
+- Result: all passed on the current rereview snapshot.
 
 ## Decisions and evidence
 
@@ -78,9 +93,12 @@ inspected and no GitHub Actions or Qualcomm job was run.
 - Workload choices select a private request artifact; they do not prove the
   observed device, compiler support, achieved precision, placement, numerical
   quality, or latency. Those claims require the sanitized stage result.
-- The request bundle is accepted only from a successful same-repository
-  default-branch push/manual run. Protected-environment review remains the
-  final human authorization before any quota-consuming submission.
+- The request bundle is accepted only from the fixed reviewed producer
+  workflow at the benchmark dispatch's exact commit. The producer terminates
+  trust at a same-repository release asset plus a separately reviewed source
+  digest; it does not create a release or upload from a learner's machine.
+  Protected-environment review remains the final human authorization before
+  any quota-consuming submission.
 - GitHub-hosted runner time and service turnaround are orchestration evidence,
   not Qualcomm device latency.
 
@@ -89,9 +107,9 @@ inspected and no GitHub Actions or Qualcomm job was run.
 - GitHub does not provide local execution evidence for its environment
   protections. The learner must create and review the protected environment
   and secret before the first dispatch.
-- A reviewed default-branch producer workflow must create the private
-  `qualcomm-request-bundle`; that producer depends on the export/artifact lane
-  and is outside T72.
+- A learner must separately stage the source ZIP as a same-repository release
+  asset. T72 does not create that external state, and repository visibility
+  and artifact licensing must be reviewed before staging.
 - The pinned client and action commits are immutable, but a future deliberate
   upgrade must revalidate authentication configuration, request contracts,
   and official-action behavior.
@@ -100,12 +118,16 @@ inspected and no GitHub Actions or Qualcomm job was run.
 
 ## Follow-up
 
-- Newly unblocked tasks: T72 satisfies its dependency contribution to T80 and
-  T82; their other dependencies remain authoritative.
-- Recommended next action: the learner should complete the guide's security
-  checklist, create the protected environment and secret, inspect a trusted
-  default-branch request-bundle producer run, then approve one bounded free
-  compile dispatch before inference or profile.
+- Independent review status: P1 producer identity/revision and bundle
+  validation findings have implementation and adversarial regression fixes.
+  The coordinator authorized and the T72 definition records the narrow
+  producer-workflow scope expansion. This worklog remains unreferenced by the
+  task graph until a fresh reviewer accepts the fixes.
+- Newly unblocked tasks: none while T72 remains in progress.
+- Recommended next action: perform a fresh independent rereview of the
+  producer trust terminus, benchmark pre-secret validator, adversarial tests,
+  and lifecycle metadata. Only after acceptance should T72 be completed and
+  the learner proceed to external setup.
 - Learner debrief:
   - [ ] Trace a dispatch through authorization, environment approval, client
     setup, the local stage script, credential cleanup, and manifest upload in
