@@ -7,6 +7,7 @@ hardware.
 - [Project plan](project/plan.md)
 - [Architecture](architecture/README.md)
 - [Engineering learning guides](learning/README.md)
+- [Learning checkpoints](learning/checkpoints.md)
 - [Failure analyses](failures/README.md)
 - [Results](results/README.md)
 - [Agentic development case studies](agentic/README.md)

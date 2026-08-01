@@ -263,7 +263,8 @@ def main() -> int:
                         tasks,
                         index_text(plan_path),
                     )
-                    expected_status = renderer.render(graph, tasks)
+                    learning = renderer.load_learning(index_text, tasks)
+                    expected_status = renderer.render(graph, tasks, learning)
                     if index_text(status_path) != expected_status:
                         errors.append(
                             "staged ai/tasks/status.generated.md does not match "

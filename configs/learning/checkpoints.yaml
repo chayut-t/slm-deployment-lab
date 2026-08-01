@@ -1,0 +1,856 @@
+# Learning checkpoints for completed task-graph work.
+#
+# A checkpoint is a study unit, not a gate. `docs/project/plan.md` section 8.1
+# forbids mandatory learner approval, so nothing here blocks implementation;
+# the checkpoint exists so the learner can study one coherent subject instead
+# of reverse-engineering several task definitions.
+#
+# Every reading is mirrored verbatim into the rendered sheet by
+# `scripts/learning/build_learning_sheet.py`. Paths are repository-relative.
+# `slice` takes the lines from the first line starting with `from` up to but
+# excluding the first later line starting with `to`.
+#
+# Rules for adding a checkpoint:
+#   - cover only tasks whose task-graph status is `completed`;
+#   - prefer a committed guide, ADR, architecture doc, or result report as the
+#     required reading, and use a worklog only where no guide exists yet;
+#   - state what the evidence does *not* license in `boundaries`;
+#   - keep `run` commands to things that work offline unless marked otherwise.
+
+schema_version: 1
+project: SLM Deployment Lab
+model: Qwen3-0.6B
+
+checkpoints:
+  - id: LEARN-00
+    title: The evidence contract
+    subject: Why a deployment claim needs a pinned revision behind it
+    lede: >-
+      Before any graph is exported or any device is booked, this project fixes
+      what counts as evidence: one immutable model revision, one hash-verified
+      environment, one artifact envelope, and a storage preflight that refuses
+      to write when the external volume is not what it claims to be. Everything
+      measured later inherits its credibility from here.
+    tasks: [T00, T01]
+    attention: Deep study
+    outcomes:
+      - Explain why a Hugging Face repository name is not a model identity, and
+        what an immutable commit plus metadata digests add to it.
+      - State which toolchain versions are frozen in the lock, which are
+        deferred to their owning task, and why that split is deliberate.
+      - Read an artifact manifest and say which fields are claims, which are
+        measurements, and which are provenance.
+      - Describe what the storage preflight refuses to do, and what class of
+        silent corruption each refusal prevents.
+    readings:
+      - key: adr
+        label: ADR 0001
+        title: "Pin Qwen3-0.6B and require exact toolchain evidence"
+        path: docs/decisions/0001-model-and-version-pins.md
+        required: true
+        why: >-
+          The decision record the rest of the repository is built on. Read
+          "Alternatives considered" as carefully as "Decision" — each rejected
+          option is a failure mode someone would otherwise walk into.
+      - key: contracts
+        label: Model & reference levels
+        title: "Plan, sections 6.1-6.3: model pinning, context matrix, reference levels"
+        path: docs/project/plan.md
+        slice:
+          from: "### 6.1 Model pinning"
+          to: "### 6.4 Static prefill contract"
+        required: true
+        why: >-
+          The four context sizes and the reference-level ladder appear in every
+          later checkpoint. Note that a reference level is a statement about
+          provenance, not about accuracy.
+      - key: manifests
+        label: Manifest schemas
+        title: "Artifact and host manifest validation"
+        path: src/slm_lab/manifests/README.md
+        required: false
+        why: >-
+          The schema layer that turns the ADR's policy into something a test can
+          reject. Small, and worth reading beside the JSON Schemas themselves.
+      - key: worklog
+        label: T01 worklog
+        title: "T01: environments, manifests, and storage"
+        path: ai/worklogs/2026-07-24-T01-environments-manifests-storage.md
+        required: false
+        why: >-
+          How the foundation was actually assembled, including the PEP 517 build
+          constraint that sits outside the project lock.
+    labs:
+      - what: Prove the pinned model contract offline
+        run: uv run pytest tests/repo/test_model_contract.py tests/reference/test_model_contract.py
+        proves: >-
+          The committed revision, digests, and special-token facts still agree
+          with `configs/models/qwen3-0.6b.yaml` without touching the network.
+      - what: Validate a host manifest against its schema
+        run: uv run slm-lab-validate-manifest host results/hosts/apple-m4-primary.json
+        proves: >-
+          The Apple M4 evidence record is well-formed and sanitized. Then break a
+          field in a copy and watch which check catches it.
+      - what: Run the external-storage preflight
+        run: uv run slm-lab-storage-preflight --skip-write-probe
+        proves: >-
+          What the export and deployment tasks check before writing gigabytes.
+          Expect a clean refusal when T9 is unmounted — that refusal is the
+          feature.
+    notebooks:
+      - name: 00_model_shape_memory_budget.ipynb
+        status: planned
+        owner: T80
+        focus: Qwen tensor shapes, KV-cache bytes, bandwidth and artifact budgets
+    questions:
+      - Someone reports a latency number for "Qwen3-0.6B". What is the smallest
+        set of facts you need before that number is comparable to yours?
+      - Why does the ADR freeze the tokenizer revision separately from the model
+        revision, when both live in the same repository?
+      - Which fields of the artifact envelope could a well-meaning agent fill in
+        by inference rather than observation, and what would that cost later?
+    boundaries:
+      - A validated manifest proves provenance and shape, never performance.
+      - The pins prove reproducibility of the source, not that any compiler or
+        runtime accepts the model.
+
+  - id: LEARN-01
+    title: Agentic delivery
+    subject: A task graph that survives losing the conversation
+    lede: >-
+      The coordinating agent session is disposable; the repository is not. This
+      checkpoint covers the machinery that makes that true — a dependency-aware
+      task graph, generated status that cannot drift from it, one writer per
+      file set, a private session registry that never reaches a public file, and
+      hooks that reject the mistakes anyway.
+    tasks: [T03, T04]
+    attention: Review
+    outcomes:
+      - Reconstruct who owns what, and what is safe to start, from the
+        repository alone.
+      - Explain why status is generated rather than hand-edited, and what the
+        pre-commit hook rejects.
+      - Describe the public/private boundary between the committed `ai/` tree
+        and the ignored `.ai-local/` tree, and why session identifiers never
+        cross it.
+      - Say what `completed` means here, and why local or draft work does not
+        qualify.
+    readings:
+      - key: policy
+        label: Operating rules
+        title: "AGENTS.md: the canonical cross-tool policy"
+        path: AGENTS.md
+        required: true
+        why: >-
+          One file, read by both Codex and Claude Code. The tables are the part
+          to internalize — where files belong, and what is never committed.
+      - key: dual
+        label: Dual-agent setup
+        title: "Codex and Claude Code setup"
+        path: docs/agentic/dual-agent-setup.md
+        required: true
+        why: >-
+          The operational half: fresh-clone setup, claiming a task, the shared
+          registry, parallel work, and recovery when a worktree is abandoned.
+      - key: model
+        label: Operating model
+        title: "Plan, section 11: multi-agent and Git operating model"
+        path: docs/project/plan.md
+        slice:
+          from: "## 11. Multi-agent and Git operating model"
+          to: "## 12. Six-week schedule"
+        required: true
+        why: >-
+          Why autonomy is the default, how threads are allowed to be reshaped,
+          and the branch/worktree convention the graph coordinates through.
+      - key: worklog
+        label: T03 worklog
+        title: "T03: agent workflow completion"
+        path: ai/worklogs/2026-07-24-T03-agent-workflow-completion.md
+        required: false
+        why: >-
+          The acceptance criteria as executable regressions, including the hook
+          behaviour on graph/status drift and deleted worklogs.
+    labs:
+      - what: Check the generated task status against the graph
+        run: uv run python scripts/ai/render_task_status.py --check
+        proves: >-
+          The file `ai/tasks/status.generated.md` is a pure function of
+          `ai/tasks/task_graph.yaml`. Edit the generated file and watch it fail.
+      - what: Run the privacy, secret, and size hygiene sweep
+        run: uv run python scripts/repo/check_hygiene.py --all
+        proves: >-
+          What the pre-commit hook enforces on staged changes, over the whole
+          working tree instead.
+      - what: Exercise the workflow regressions
+        run: uv run pytest tests/repo/test_task_automation.py tests/repo/test_session_registry.py
+        proves: >-
+          Completion refuses incomplete dependencies, private worklogs, and
+          mismatched worklog references; registry mutations stay atomic.
+    notebooks:
+      - name: Markdown lab (E09, agentic delivery)
+        status: planned
+        owner: T80
+        focus: >-
+          Git, DAGs, worktrees, and handoffs are exercised as real repository
+          workflows rather than in Jupyter.
+    questions:
+      - A new agent session starts with no conversation history. Walk through
+        exactly what it reads, in order, before touching a file.
+      - Two tasks want the same file. What in the repository stops them, and at
+        which moment does it stop them?
+      - Why is a real session ID private when the branch name it maps to is
+        public?
+    boundaries:
+      - Workflow regressions prove the coordination rules, not that any
+        deployment result is correct.
+
+  - id: LEARN-02
+    title: Fixtures as a contract
+    subject: Frozen prompts, exact token IDs, and the limits of "same input"
+    lede: >-
+      Two runs are only comparable if they consumed the same tokens, not the
+      same text. This checkpoint covers the three fixture layers — authored
+      source, generated token bundle, workload manifest — the canonical hashes
+      that chain them, and the licensing boundary that decides what may be
+      committed at all.
+    tasks: [T10]
+    attention: Deep study
+    outcomes:
+      - Explain why both the text and the token IDs are committed, and what each
+        one alone would fail to prove.
+      - Reproduce the 128, 512, 1,024, and 4,096-token workloads and say where
+        their exact lengths come from.
+      - Distinguish a canary from a benchmark workload from a quality case.
+      - State why licensed or private evaluation rows are named but never
+        committed.
+    readings:
+      - key: guide
+        label: Fixture guide
+        title: "Token and prompt fixtures as a deployment contract"
+        path: docs/learning/token_prompt_fixtures.md
+        required: true
+        why: >-
+          The primary guide. It ends with its own hands-on section and its own
+          questions — do those before the ones on this sheet.
+      - key: behaviour
+        label: Tokenizer policy
+        title: "ADR 0001: model and tokenizer behavior"
+        path: docs/decisions/0001-model-and-version-pins.md
+        slice:
+          from: "### Model and tokenizer behavior"
+          to: "### Toolchain-version policy"
+        required: false
+        why: >-
+          Where the non-thinking chat policy, greedy decoding, and tie-breaking
+          rule are frozen. Fixtures are meaningless without them.
+      - key: worklog
+        label: T10 worklog
+        title: "T10: token, prompt, and evaluation fixtures"
+        path: ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md
+        required: false
+        why: >-
+          The build order, the optional tokenizer environment, and the decision
+          to name WikiText-2, HellaSwag, ARC Easy, and PIQA without committing
+          any dataset rows.
+    labs:
+      - what: Check the committed fixture chain without a network
+        run: uv run slm-lab-fixtures check
+        proves: >-
+          Source hash, bundle hash, workload manifest, and the four exact token
+          counts agree — with no tokenizer and no model weights loaded.
+      - what: Regenerate the token IDs from the pinned tokenizer
+        run: uv run --extra tokenizer slm-lab-fixtures verify --offline
+        proves: >-
+          The committed IDs are exactly what the immutable tokenizer revision
+          produces. Requires the tokenizer extra and a warm local cache.
+      - what: Run the fixture regressions
+        run: uv run pytest tests/repo/test_t10_fixtures.py
+        proves: Structural, canary, and workload invariants in one pass.
+    notebooks:
+      - name: 00_model_shape_memory_budget.ipynb
+        status: planned
+        owner: T80
+        focus: Token budgets alongside tensor and KV-cache byte budgets
+    questions:
+      - A benchmark reports "a 512-token prompt". Name three ways that could
+        mean different work on two machines.
+      - Why does a canary belong in the same fixture set as a benchmark
+        workload, given that it measures nothing?
+      - What breaks first if the tokenizer revision floats while the model
+        revision stays pinned?
+    boundaries:
+      - Fixtures make comparisons legitimate; they produce no performance or
+        quality evidence themselves.
+
+  - id: LEARN-03
+    title: Static graphs and the KV-cache contract
+    subject: What a compiler-facing graph family has to promise
+    lede: >-
+      An accelerator wants fixed shapes; autoregressive decoding wants a growing
+      cache. The resolution is a frozen family of prefill and one-token decode
+      graphs with named tensors, static capacities, and explicit indexed-update
+      semantics — validated against a deterministic PyTorch oracle before any
+      exporter or compiler is involved.
+    tasks: [T11, T12]
+    attention: Deep study
+    outcomes:
+      - Draw the prefill and decode tensor boundaries from memory, with names,
+        dtypes, and layouts.
+      - Compute KV-cache bytes for two context sizes and explain the GQA factor
+        that keeps eight physical K/V heads instead of sixteen.
+      - Explain why cache capacity exceeds prompt length, and what would fail if
+        it did not.
+      - Say how a numerical oracle is built, and what "byte-identical logits"
+        does and does not certify.
+    readings:
+      - key: contract
+        label: Cache contract
+        title: "Qwen3-0.6B static prefill, decode, and KV-cache contract"
+        path: docs/architecture/static-cache-contract.md
+        required: true
+        why: >-
+          The frozen contract itself, including byte accounting and the
+          conformance rules the exporter is checked against. Its closing learner
+          debrief is the short version of this checkpoint.
+      - key: plan
+        label: Graph & numerics
+        title: "Plan, sections 6.4-6.8: prefill, decode, artifact stages, validation"
+        path: docs/project/plan.md
+        slice:
+          from: "### 6.4 Static prefill contract"
+          to: "## 7. Quantization plan"
+        required: true
+        why: >-
+          The project-level statement of the same contract, plus the artifact
+          stages and the numerical-validation policy that later backends are
+          judged by.
+      - key: reference
+        label: T11 worklog
+        title: "T11: deterministic PyTorch reference"
+        path: ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md
+        required: false
+        why: >-
+          How the oracle is made deterministic, and the canary that every later
+          backend must reproduce — token IDs 576, 8356, 3950.
+      - key: module
+        label: Contracts module
+        title: "The contracts package"
+        path: src/slm_lab/contracts/README.md
+        required: false
+        why: The code boundary the document above is serialized into.
+    labs:
+      - what: Validate the four prefill/decode graph pairs
+        run: uv run pytest tests/contracts/test_static_cache_contract.py
+        proves: >-
+          Names, dtypes, static shapes, capacity reservations, and indexed cache
+          updates for all 28 layers and all four contexts.
+      - what: Reproduce the deterministic reference
+        run: uv run pytest tests/reference/test_pytorch_reference.py
+        proves: >-
+          Full-forward and cached decode agree step by step against the
+          committed fixture, without downloading weights.
+    notebooks:
+      - name: 01_prefill_decode_cache_contracts.ipynb
+        status: planned
+        owner: T80
+        focus: Static prefill/decode boundaries and cache-update cost
+      - name: 00_model_shape_memory_budget.ipynb
+        status: planned
+        owner: T80
+        focus: KV bytes, bandwidth, and artifact budget arithmetic
+    questions:
+      - Why is the decode graph a separate graph rather than the prefill graph
+        with a sequence length of one?
+      - The cache capacities are 160, 576, 1,152, and 4,224 for prompts of 128,
+        512, 1,024, and 4,096. Derive each number.
+      - Full-forward and cached logits are byte-identical. Name two real
+        deployment bugs that would survive that check.
+    boundaries:
+      - The contract is runtime-neutral. Passing it says nothing about ONNX,
+        QNN, MLX, or CUDA acceptance.
+
+  - id: LEARN-04
+    title: Benchmarking without false equivalence
+    subject: Where a timer starts, and what a median is allowed to claim
+    lede: >-
+      Most published inference numbers are incomparable for boring reasons:
+      unsynchronized timers, warm-up folded into the measurement, a mean over a
+      bimodal distribution, or a scope mismatch between a graph latency and a
+      request round-trip. T13 froze a protocol that names five timing classes
+      and refuses to average across them.
+    tasks: [T13]
+    attention: Deep study
+    outcomes:
+      - Name the five timing classes and place any measurement into one of them.
+      - Explain why synchronization is part of the timer on a GPU or NPU, and
+        what an unsynchronized TTFT actually measures.
+      - Defend a median with a bootstrap interval over a mean with a standard
+        deviation for decode latency.
+      - Separate a system comparison from a software comparison in a
+        cross-platform table.
+    readings:
+      - key: guide
+        label: Benchmark guide
+        title: "Deployment benchmarking without false equivalence"
+        path: docs/learning/deployment_benchmarking.md
+        required: true
+        why: >-
+          The protocol in prose, with the workload matrix, metric boundaries,
+          statistics policy, and its own offline hands-on check at the end.
+      - key: module
+        label: Protocol module
+        title: "The benchmark package"
+        path: src/slm_lab/benchmark/README.md
+        required: false
+        why: The validator that makes the protocol machine-checkable.
+      - key: worklog
+        label: T13 worklog
+        title: "T13: benchmark and evaluation protocol"
+        path: ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md
+        required: false
+        why: >-
+          The statistics choices — Hyndman-Fan type-7 quantiles, MAD, IQR, a
+          seeded 10,000-resample bootstrap — and the pinned evaluation harness.
+    labs:
+      - what: Validate the frozen protocol and a metric record
+        run: uv run pytest tests/repo/test_t13_benchmark_protocol.py
+        proves: >-
+          Protocol digest, workload linkage, timing scope, units, sample
+          accounting, recomputed summaries, and the headline interval.
+      - what: Read the protocol as data
+        run: uv run python -m json.tool configs/workloads/benchmark-protocol-v1.json
+        proves: >-
+          Every rule in the guide has a machine-readable counterpart. Find the
+          timing classes and the invalid-series handling.
+    notebooks:
+      - name: 11_cross_platform_benchmark.ipynb
+        status: planned
+        owner: T80
+        focus: Fair system comparisons and the statistics that support them
+    questions:
+      - Your TTFT median is 39 ms and your p95 is 210 ms over ten runs. What do
+        you do before publishing either number?
+      - A hosted service reports 8 ms of graph latency and 45 s of turnaround.
+        Which one belongs in a benchmark table, and what is the other one for?
+      - Why does the protocol keep raw samples rather than only summaries?
+    boundaries:
+      - T13 created no measurements. It is the contract that later measurements
+        are judged against.
+
+  - id: LEARN-05
+    title: ONNX export as a compiler contract
+    subject: Eight graphs, four manifests, and one very narrow claim
+    lede: >-
+      The export matrix turns the T12 contract into eight reference ONNX graphs
+      — prefill and one-token decode at each of the four contexts — with
+      initializers forced into external data, ONNX-checker validation, exact
+      name/dtype/shape conformance, and manifests that re-hash everything they
+      assert. The claim it earns is deliberately small.
+    tasks: [T20]
+    attention: Deep study
+    outcomes:
+      - Explain why model weights become external data, and what that means for
+        hashing and transport.
+      - Trace one decode graph's cache update from the contract through the
+        exported graph.
+      - Read an export manifest and separate recorded fact from derived claim.
+      - State precisely what export success does not establish.
+    readings:
+      - key: module
+        label: Exporter
+        title: "The export package"
+        path: src/slm_lab/export/README.md
+        required: true
+        why: >-
+          The exporter's own description of what it does and, at the end, what
+          its evidence is worth. Note that `validate` is stronger than schema
+          validation: it reconstructs the manifest and rejects drift.
+      - key: worklog
+        label: T20 worklog
+        title: "T20: four-context ONNX export matrix"
+        path: ai/worklogs/2026-07-30-T20-onnx-export-matrix.md
+        required: true
+        why: >-
+          No standalone guide exists yet — T80 owns `onnx_for_hardware_compilers.md`
+          — so this worklog is the narrative of record for the export decisions.
+      - key: contract
+        label: Conformance rules
+        title: "The conformance section of the T12 contract"
+        path: docs/architecture/static-cache-contract.md
+        slice:
+          from: "## Conformance and numerical validation"
+          to: "## Learner debrief"
+        required: false
+        why: The exact checks the exported graphs are held to.
+    labs:
+      - what: Run the exporter regressions
+        run: uv run pytest tests/export/test_onnx_matrix.py
+        proves: >-
+          Conformance, manifest reconstruction, and drift rejection, without
+          exporting a real 0.6B graph.
+      - what: Read a committed export manifest
+        run: uv run python -m json.tool results/manifests/onnx/S128.json
+        proves: >-
+          Which hashes are recorded, which revisions are attested, and where the
+          evidence boundary is stated in the artifact itself.
+      - what: "Export one context (heavy; needs weights and the artifact root)"
+        run: |
+          HF_HOME=$SLM_LAB_ARTIFACT_ROOT/hf-cache TRANSFORMERS_OFFLINE=1 \
+          PYTHONPATH=src python -m slm_lab.export.onnx_matrix export --context 128
+        proves: >-
+          The real export path. Graphs and data shards stay under the
+          `SLM_LAB_ARTIFACT_ROOT` tree; nothing large enters Git.
+    notebooks:
+      - name: 02_onnx_export_and_shapes.ipynb
+        status: planned
+        owner: T80
+        focus: Export constraints, external data, and compiler-facing shapes
+      - name: 03_graph_inspection.ipynb
+        status: planned
+        owner: T21
+        focus: Graph risks and rewrites — the checkpoint after this one
+    questions:
+      - The exporter refuses to accept a manifest whose exporter commit is not
+        in the current branch ancestry. What attack or accident does that
+        prevent?
+      - Which of these does a passing ONNX checker rule out — a dynamic shape, a
+        wrong cache layout, an unsupported operator on the NPU, a numerical
+        regression?
+      - Why is the decode cache update a dynamic index into a fixed-shape
+        tensor rather than a concatenation?
+    boundaries:
+      - Export evidence proves the pinned host toolchain produced valid graphs
+        matching T12. It is not evidence of compiler acceptance, accelerator
+        placement, or performance.
+      - Runtime parity is T21. Compiler-oriented rewrites are T22.
+
+  - id: LEARN-06
+    title: The Qualcomm public pipeline
+    subject: Authentication, a bounded toy lifecycle, and real NPU placement
+    lede: >-
+      The first Qualcomm work produced two things worth studying: a documented
+      authentication failure with a safe credential procedure, and one free,
+      bounded compile → inference → profile lifecycle on a physical Snapdragon X
+      Elite. Alongside them sit the adapters that make each stage independently
+      runnable from content-addressed local artifacts.
+    tasks: [T02, T30]
+    attention: Hands-on and deep study
+    hands_on: >-
+      Re-running the lifecycle needs your Qualcomm AI Hub credentials and
+      consumes free device minutes. The study below is entirely offline.
+    outcomes:
+      - Separate service turnaround from measured graph latency, and say which
+        one a benchmark table may contain.
+      - Read an NPU profile record — placement, units, memory — and say what an
+        "unknown" field means when it appears.
+      - Explain how compile, inference, and profile restart from a manifest
+        rather than from an in-memory job.
+      - Describe the privacy boundary — what is sanitized, and why SDK output is
+        discarded rather than logged.
+    readings:
+      - key: access
+        label: Access report
+        title: "Public platform access observation"
+        path: docs/results/access/2026-07-24-public-platform-access.md
+        required: true
+        why: >-
+          What the public services actually offer, including the free NVIDIA
+          options and the paid fallback that was documented but never launched.
+      - key: lifecycle
+        label: Toy lifecycle
+        title: "Workbench toy lifecycle on a physical X Elite"
+        path: docs/results/access/2026-07-25-workbench-toy-lifecycle.md
+        required: true
+        why: >-
+          The first real hardware evidence in this repository. Small enough to
+          hold in your head, and explicit about what it does not prove.
+      - key: failure
+        label: Auth blocker
+        title: "T02 blocker: Qualcomm authentication unavailable"
+        path: docs/failures/access/2026-07-24-t02-qualcomm-authentication.md
+        required: true
+        why: >-
+          A reproducible failure analysis, kept as historical truth after it was
+          resolved. The safe credential procedure at the end is operational.
+      - key: adapters
+        label: Adapter scripts
+        title: "Qualcomm stage scripts"
+        path: scripts/qualcomm/README.md
+        required: false
+        why: The three independently runnable entry points.
+      - key: worklog
+        label: T30 worklog
+        title: "T30: Workbench compile, inference, and profile adapters"
+        path: ai/worklogs/2026-07-25-T30-ai-hub-adapters.md
+        required: false
+        why: >-
+          Fail-closed design, bounded waits, sanitized errors, and why
+          unobserved execution runtime is recorded as null rather than inferred.
+    labs:
+      - what: Run the AI Hub adapter regressions
+        run: uv run pytest tests/deployment/qualcomm/test_ai_hub.py
+        proves: >-
+          Lineage validation, manifest shape, and that no job ID, URL, or
+          credential can reach a public manifest — with the SDK injected, not
+          called.
+      - what: Check the published access evidence
+        run: uv run pytest tests/repo/test_access_evidence.py
+        proves: >-
+          Exact versions, numeric validation, profile units, NPU placement, zero
+          paid-resource use, and the privacy assertions in the reports above.
+    notebooks:
+      - name: 04_ai_hub_pipeline.ipynb
+        status: planned
+        owner: T80
+        focus: Upload, compile, infer, profile as one traceable pipeline
+      - name: 05_qnn_profile_analysis.ipynb
+        status: planned
+        owner: T31
+        focus: NPU placement and profile interpretation at Qwen scale
+    questions:
+      - The toy compiled, ran, and profiled on a real X Elite. What does that
+        license you to say about Qwen3-0.6B on the same device?
+      - Why must inference and profile restart from a compile manifest instead
+        of a live job handle?
+      - The command `qai-hub configure` can print the credential. What does the repository
+        do about that, and what would the naive alternative have leaked?
+    boundaries:
+      - A toy graph proves the lifecycle works, not that a 0.6B transformer
+        compiles, places on the NPU, or performs.
+      - Three-target Qwen evidence is T31; the integrated floating-point
+        milestone is T33.
+
+  - id: LEARN-07
+    title: A real generation loop on a real device
+    subject: What a persistent device-side loop measures that a graph benchmark cannot
+    lede: >-
+      A Workbench profile times one graph submission. A Device Cloud session runs
+      a full generation loop on a physical Snapdragon and lets you separate
+      artifact access, model loading, tokenization, prefill, first decode,
+      remaining decode, generation total, and complete request wall time. The
+      ready-made GenieX route proves the device; it does not prove the custom
+      QNN path.
+    tasks: [T32]
+    attention: Hands-on and deep study
+    hands_on: >-
+      A live session needs Device Cloud authentication and free-minute
+      activation. The published record below is complete enough to study
+      without one.
+    outcomes:
+      - Name every timing boundary in the published record and say what sits
+        between each pair.
+      - Explain why load and tokenization are excluded from decode throughput
+        but not from request wall time.
+      - State the difference between what GenieX/llama.cpp demonstrates and what
+        the project's own QNN path must still demonstrate.
+      - Describe why the allocated-device evidence stayed private while the
+        latency aggregate was published.
+    readings:
+      - key: result
+        label: Device Cloud result
+        title: "Device Cloud Qwen3-0.6B baseline"
+        path: docs/results/qualcomm/device-cloud.md
+        required: true
+        why: >-
+          The published record: setup, single-run latency with its boundaries,
+          the reproducible route, and a learner checkpoint at the end.
+      - key: capture
+        label: Capture tooling
+        title: "Device Cloud capture and boundary probes"
+        path: scripts/qualcomm/device_cloud/README.md
+        required: false
+        why: >-
+          The Windows-native probe and the strict normalizer that turns a raw
+          private capture into a publishable record.
+      - key: worklog
+        label: T32 worklog
+        title: "T32: Device Cloud Qwen GenieX baseline"
+        path: ai/worklogs/2026-07-28-T32-device-cloud-baseline.md
+        required: false
+        why: >-
+          What was withheld and why — the public/private evidence split is the
+          transferable part.
+    labs:
+      - what: Run the Device Cloud record regressions
+        run: uv run pytest tests/deployment/qualcomm/test_device_cloud.py
+        proves: >-
+          Timing-source semantics, provenance checks, and evidence digests on
+          the normalized record.
+    notebooks:
+      - name: 04_ai_hub_pipeline.ipynb
+        status: planned
+        owner: T80
+        focus: Where a hosted job ends and a device-side loop begins
+    questions:
+      - Given the published boundaries, compute decode tokens per second, then
+        say which of the reported totals you may not divide by token count.
+      - Why is a single run published as a single run rather than as a median?
+      - If the custom QNN path later produces slower decode than GenieX, what
+        would that tell you — and what would it not?
+    boundaries:
+      - GenieX/llama.cpp evidence is about the device and a ready-made runtime,
+        not about this project's exported graphs.
+      - One session, one run. It is a baseline, not a benchmark series.
+
+  - id: LEARN-08
+    title: Apple Silicon and MLX
+    subject: From a packaged baseline to a runtime you wrote yourself
+    lede: >-
+      T50 pinned MLX-LM as a versioned baseline on the M4 Mac mini and made it
+      reproduce the PyTorch oracle exactly. T51 then replaced it with a custom
+      Qwen3 runtime: explicit prefill and decode boundaries, fixed-capacity FP16
+      caches in two layouts, and eight physical K/V heads handed straight to
+      MLX's grouped-query SDPA without ever tiling them to sixteen.
+    tasks: [T50, T51]
+    attention: Deep study
+    outcomes:
+      - Explain what a fixed-capacity cache buys on unified memory, and what it
+        costs.
+      - Compare head-major and sequence-major K/V layouts and predict which
+        loses on bandwidth.
+      - Say why repeating K/V heads to match query heads is the obvious
+        implementation and the wrong one.
+      - Place a timer correctly around lazy evaluation — where the fence goes,
+        and what is measured without one.
+    readings:
+      - key: baseline
+        label: T50 worklog
+        title: "T50: MLX-LM baseline"
+        path: ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md
+        required: true
+        why: >-
+          The measured baseline and, more usefully, the timer discipline: pre and
+          post fences on the generation stream, and TTFT taken without
+          scheduling a later decode.
+      - key: runtime
+        label: T51 worklog
+        title: "T51: custom MLX runtime"
+        path: ai/worklogs/2026-07-30-T51-custom-mlx-runtime.md
+        required: true
+        why: >-
+          The runtime that replaces the package: cache allocation, indexed
+          updates, GQA attention, and exact reproduction of the T11 oracle
+          through both layouts.
+      - key: env
+        label: M4 environment
+        title: "The macOS M4 environment"
+        path: environments/macos-m4/README.md
+        required: false
+        why: The pinned host and MLX baseline environment the numbers belong to.
+      - key: backends
+        label: Backends package
+        title: "Runtime backends"
+        path: src/slm_lab/backends/README.md
+        required: false
+        why: Where the MLX runtime sits among the other backends.
+    labs:
+      - what: Run the MLX runtime unit tests
+        run: uv run pytest tests/mlx/test_cache_runtime.py tests/mlx/test_config.py
+        proves: >-
+          Cache allocation, indexed updates, and both layouts on small
+          configurations — no weights required.
+      - what: "Reproduce the oracle on real weights (Apple Silicon, needs the checkpoint)"
+        run: uv run pytest tests/mlx/test_real_qwen.py
+        proves: >-
+          The custom runtime generates 576, 8356, 3950 through both cache
+          layouts, matching PyTorch/BF16 exactly.
+      - what: Run the MLX-LM baseline regressions
+        run: uv run pytest tests/backends/test_mlx_baseline.py
+        proves: Checksum verification, canary validation, and drift rejection.
+    notebooks:
+      - name: 08_mlx_gqa_kv_layout.ipynb
+        status: planned
+        owner: T80
+        focus: GQA-efficient cache layouts and their memory behaviour
+      - name: 09_mlx_compile_and_profile.ipynb
+        status: planned
+        owner: T52
+        focus: mx.compile, Instruments, thermal drift — the checkpoint after this
+    questions:
+      - The runtime stores eight K/V heads and passes them to SDPA unchanged.
+        Compute the cache bytes saved at 4,096 tokens versus tiling to sixteen.
+      - MLX is lazy. Where exactly must a timer fence go, and what does a
+        forgotten fence make TTFT look like?
+      - Peak memory was reported identically for every measured region. What are
+        two explanations, and how would you tell them apart?
+    boundaries:
+      - The T50 canary is an 18-token prompt and three output tokens. It is a
+        correctness and smoke-performance baseline, not the four-context sweep.
+      - Neither task claims ANE use. Profiling and the context sweep are T52.
+
+  - id: LEARN-09
+    title: CI as a deployment surface
+    subject: A manually dispatched workflow that can touch a paid service
+    lede: >-
+      The last completed task is the one where a mistake costs money or leaks a
+      token. A manual `workflow_dispatch` workflow drives Qualcomm AI Hub with
+      typed target, context, precision, and stage inputs, behind an
+      authorization job that refuses fork dispatches, a protected environment,
+      minimal permissions, pinned actions, and an ephemeral credential file.
+    tasks: [T72]
+    attention: Hands-on and deep study
+    hands_on: >-
+      Adding the repository secret and dispatching the workflow are yours alone.
+      The guide deliberately stops before the secret step.
+    outcomes:
+      - Read a workflow file as a program — triggers, jobs, needs, steps,
+        inputs, secrets, environments, permissions.
+      - Explain why one dispatch runs one stage rather than the whole pipeline.
+      - Describe the fork-safety model and what `pull_request_target`-style
+        mistakes it avoids.
+      - Say what the workflow verifies before it is allowed to spend anything.
+    readings:
+      - key: guide
+        label: Actions guide
+        title: "GitHub Actions for Qualcomm AI Hub"
+        path: docs/learning/github_actions_for_ai_hub.md
+        required: true
+        why: >-
+          The full guide, including the request-bundle contract, the setup
+          section that stops before the secret, the dispatch checklist, and
+          failure interpretation.
+      - key: workflows
+        label: Workflow index
+        title: "The repository's workflows"
+        path: .github/workflows/README.md
+        required: false
+        why: What each workflow is for, and which ones can cost money.
+      - key: worklog
+        label: T72 worklog
+        title: "T72: manual GitHub Actions AI Hub workflow"
+        path: ai/worklogs/2026-07-30-T72-qualcomm-actions.md
+        required: false
+        why: >-
+          Three rounds of security findings and their remediation — the most
+          instructive part is what the first draft got wrong.
+    labs:
+      - what: Validate the workflow offline
+        run: uv run pytest tests/workflows/test_qualcomm_benchmark_workflow.py
+        proves: >-
+          Typed choices, authorization gating, permission scope, action pinning,
+          timeouts, and credential handling — without running Actions.
+      - what: Read the workflow beside the guide
+        run: uv run python -c "import pathlib,sys; sys.stdout.write(pathlib.Path('.github/workflows/qualcomm-benchmark.yml').read_text())"
+        proves: >-
+          Every claim in the guide maps to a line you can point at. Find the
+          authorization job first.
+    notebooks:
+      - name: Markdown workflow lab (E10)
+        status: planned
+        owner: T80
+        focus: >-
+          CI concepts are exercised against the real repository rather than in
+          Jupyter.
+    questions:
+      - A fork opens a pull request that edits the workflow. Trace every gate
+        that stops it from reaching the secret.
+      - Why is the AI Hub client configured through a mode-600 ephemeral file
+        instead of an environment variable?
+      - The workflow can be dispatched with a precision label the pipeline
+        cannot yet produce. Is that a bug? Argue both sides.
+    boundaries:
+      - Nothing has been dispatched and no secret exists. This is a reviewed,
+        offline-validated workflow, not evidence of a CI-run job.
+      - Local scripts remain the implementation source; the workflow is an
+        operator surface over them.

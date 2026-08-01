@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "generated_by": "scripts/learning/build_learning_sheet.py --record",
+  "config": "configs/learning/checkpoints.yaml",
+  "checkpoints": [
+    {
+      "id": "LEARN-00",
+      "title": "The evidence contract",
+      "subject": "Why a deployment claim needs a pinned revision behind it",
+      "covers": [
+        "T00",
+        "T01"
+      ],
+      "sheet": "build/learning/learn-00.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-24-T01-environments-manifests-storage.md": "07b998fd905d",
+        "docs/decisions/0001-model-and-version-pins.md": "61d880d3d709",
+        "docs/project/plan.md": "462df32555e3",
+        "src/slm_lab/manifests/README.md": "a864eac6bf3d"
+      }
+    },
+    {
+      "id": "LEARN-01",
+      "title": "Agentic delivery",
+      "subject": "A task graph that survives losing the conversation",
+      "covers": [
+        "T03",
+        "T04"
+      ],
+      "sheet": "build/learning/learn-01.html",
+      "built": "2026-08-01",
+      "sources": {
+        "AGENTS.md": "3ccd54da05c5",
+        "ai/worklogs/2026-07-24-T03-agent-workflow-completion.md": "d92f3f3aa949",
+        "docs/agentic/dual-agent-setup.md": "9aadcabfc21d",
+        "docs/project/plan.md": "462df32555e3"
+      }
+    },
+    {
+      "id": "LEARN-02",
+      "title": "Fixtures as a contract",
+      "subject": "Frozen prompts, exact token IDs, and the limits of \"same input\"",
+      "covers": [
+        "T10"
+      ],
+      "sheet": "build/learning/learn-02.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md": "7fd8db71d102",
+        "docs/decisions/0001-model-and-version-pins.md": "61d880d3d709",
+        "docs/learning/token_prompt_fixtures.md": "51fa07d854d7"
+      }
+    },
+    {
+      "id": "LEARN-03",
+      "title": "Static graphs and the KV-cache contract",
+      "subject": "What a compiler-facing graph family has to promise",
+      "covers": [
+        "T11",
+        "T12"
+      ],
+      "sheet": "build/learning/learn-03.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md": "31be265ede1b",
+        "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
+        "docs/project/plan.md": "462df32555e3",
+        "src/slm_lab/contracts/README.md": "1e1a551f8989"
+      }
+    },
+    {
+      "id": "LEARN-04",
+      "title": "Benchmarking without false equivalence",
+      "subject": "Where a timer starts, and what a median is allowed to claim",
+      "covers": [
+        "T13"
+      ],
+      "sheet": "build/learning/learn-04.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md": "1d26054e7195",
+        "docs/learning/deployment_benchmarking.md": "343d6d511b43",
+        "src/slm_lab/benchmark/README.md": "5fece5a67d80"
+      }
+    },
+    {
+      "id": "LEARN-05",
+      "title": "ONNX export as a compiler contract",
+      "subject": "Eight graphs, four manifests, and one very narrow claim",
+      "covers": [
+        "T20"
+      ],
+      "sheet": "build/learning/learn-05.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md": "b669b244ab2f",
+        "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
+        "src/slm_lab/export/README.md": "5fc2d1e3edb1"
+      }
+    },
+    {
+      "id": "LEARN-06",
+      "title": "The Qualcomm public pipeline",
+      "subject": "Authentication, a bounded toy lifecycle, and real NPU placement",
+      "covers": [
+        "T02",
+        "T30"
+      ],
+      "sheet": "build/learning/learn-06.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-25-T30-ai-hub-adapters.md": "4466591ce3c3",
+        "docs/failures/access/2026-07-24-t02-qualcomm-authentication.md": "3ecd12828d94",
+        "docs/results/access/2026-07-24-public-platform-access.md": "a8df8a169fb2",
+        "docs/results/access/2026-07-25-workbench-toy-lifecycle.md": "5784f0629f88",
+        "scripts/qualcomm/README.md": "4265418487f7"
+      }
+    },
+    {
+      "id": "LEARN-07",
+      "title": "A real generation loop on a real device",
+      "subject": "What a persistent device-side loop measures that a graph benchmark cannot",
+      "covers": [
+        "T32"
+      ],
+      "sheet": "build/learning/learn-07.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-28-T32-device-cloud-baseline.md": "c2f64fe9b6d0",
+        "docs/results/qualcomm/device-cloud.md": "74b9be4a509a",
+        "scripts/qualcomm/device_cloud/README.md": "75fc1273158b"
+      }
+    },
+    {
+      "id": "LEARN-08",
+      "title": "Apple Silicon and MLX",
+      "subject": "From a packaged baseline to a runtime you wrote yourself",
+      "covers": [
+        "T50",
+        "T51"
+      ],
+      "sheet": "build/learning/learn-08.html",
+      "built": "2026-08-01",
+      "sources": {
+        "ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md": "84c450e57669",
+        "ai/worklogs/2026-07-30-T51-custom-mlx-runtime.md": "4d5d94aca668",
+        "environments/macos-m4/README.md": "38267a14e2e8",
+        "src/slm_lab/backends/README.md": "06ba12427eff"
+      }
+    },
+    {
+      "id": "LEARN-09",
+      "title": "CI as a deployment surface",
+      "subject": "A manually dispatched workflow that can touch a paid service",
+      "covers": [
+        "T72"
+      ],
+      "sheet": "build/learning/learn-09.html",
+      "built": "2026-08-01",
+      "sources": {
+        ".github/workflows/README.md": "37d6699eb421",
+        "ai/worklogs/2026-07-30-T72-qualcomm-actions.md": "9546b4c0ad79",
+        "docs/learning/github_actions_for_ai_hub.md": "40647ae4bb86"
+      }
+    }
+  ]
+}

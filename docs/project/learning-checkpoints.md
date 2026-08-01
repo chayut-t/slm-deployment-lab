@@ -1,6 +1,23 @@
 # Learner attention and study checkpoints
 
-Updated: 2026-07-25
+Updated: 2026-08-01
+
+## Where to study
+
+This file records **when** the learner should pay attention and what hands-on
+action a task needs. It is not the study material.
+
+The study material is the `LEARN-NN` checkpoint series in
+[`docs/learning/checkpoints.md`](../learning/checkpoints.md). Each checkpoint
+groups completed task-graph work into one subject and renders a self-contained
+HTML sheet that mirrors its source documents verbatim, with lab commands,
+self-check questions, and an explicit statement of what the evidence does not
+license. Study the checkpoint for a subject rather than reading its tasks one
+at a time.
+
+Checkpoints exist only for completed tasks. When a task below completes, add
+it to `configs/learning/checkpoints.yaml` in the same change; the learning
+tests fail otherwise.
 
 ## Purpose
 
@@ -471,18 +488,38 @@ learner to study them alongside their underlying implementation tasks.
 
 ## Completed-task review
 
-The following completed foundations should be reviewed once, with T02 receiving
-the most technical attention:
+Completed work is studied through the `LEARN-NN` sheets rather than task by
+task. Every completed task belongs to exactly one checkpoint:
 
-- [ ] **T00:** Review the model/version ADR and understand why immutable
-  revisions and artifact fields are required.
-- [ ] **T01:** Review the pinned environment, artifact schemas, host manifests,
-  and storage preflight.
-- [ ] **T02:** Review the successful Workbench compile → inference → profile
-  report, numerical output, NPU placement, latency/memory units, privacy
-  boundary, and the distinction between service turnaround and graph latency.
-- [ ] **T03:** Review the task graph, dependency gates, worktree rules, privacy
-  boundary, and completion/worklog contract.
+| Checkpoint | Subject | Completed tasks |
+|---|---|---|
+| `LEARN-00` | The evidence contract | T00, T01 |
+| `LEARN-01` | Agentic delivery | T03, T04 |
+| `LEARN-02` | Fixtures as a contract | T10 |
+| `LEARN-03` | Static graphs and the KV-cache contract | T11, T12 |
+| `LEARN-04` | Benchmarking without false equivalence | T13 |
+| `LEARN-05` | ONNX export as a compiler contract | T20 |
+| `LEARN-06` | The Qualcomm public pipeline | T02, T30 |
+| `LEARN-07` | A real generation loop on a real device | T32 |
+| `LEARN-08` | Apple Silicon and MLX | T50, T51 |
+| `LEARN-09` | CI as a deployment surface | T72 |
+
+Study progress:
+
+- [ ] `LEARN-00` — evidence contract, pins, manifests, storage preflight.
+- [ ] `LEARN-01` — task graph, dependency gates, worktrees, privacy boundary.
+- [ ] `LEARN-02` — frozen prompts, exact token IDs, workload manifest.
+- [ ] `LEARN-03` — prefill/decode contract, GQA cache bytes, numerical oracle.
+- [ ] `LEARN-04` — timing classes, synchronization, statistics policy.
+- [ ] `LEARN-05` — ONNX export matrix, external data, manifest reconstruction.
+- [ ] `LEARN-06` — Workbench lifecycle, NPU placement, turnaround versus
+  graph latency, sanitization.
+- [ ] `LEARN-07` — Device Cloud timing boundaries, GenieX versus custom QNN.
+- [ ] `LEARN-08` — MLX baseline, custom runtime, GQA layouts, timer fences.
+- [ ] `LEARN-09` — manual dispatch, fork safety, secret handling.
+
+The per-task study checkboxes above remain the record of learner confirmation
+for an individual task; these entries track the study units built from them.
 
 ## Reminder template for agents
 

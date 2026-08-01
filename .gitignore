@@ -31,6 +31,9 @@ node_modules/
 dist/
 /site/
 
+# Generated learning sheets and other build output
+/build/
+
 # Large local artifacts. The root entry may be a symlink to external storage.
 /artifacts
 /models/

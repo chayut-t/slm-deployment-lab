@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -15,6 +16,7 @@ from typing import Callable
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GRAPH_PATH = REPO_ROOT / "ai" / "tasks" / "task_graph.yaml"
 OUTPUT_PATH = REPO_ROOT / "ai" / "tasks" / "status.generated.md"
+LANE_PATH = "ai/tasks/learning_lane.yaml"
 ReadText = Callable[[str], str]
 
 
@@ -61,7 +63,9 @@ def validate_graph_text(
     try:
         graph = json.loads(graph_text)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"task_graph.yaml is not valid JSON-compatible YAML: {exc}") from exc
+        raise ValueError(
+            f"task_graph.yaml is not valid JSON-compatible YAML: {exc}"
+        ) from exc
 
     tasks = graph.get("tasks")
     if not isinstance(tasks, list):
@@ -93,9 +97,7 @@ def validate_graph_text(
         resource_locks = task.get("resource_locks")
         if not isinstance(resource_locks, list):
             raise ValueError(f"{task_id}: resource_locks must be a list")
-        invalid_locks = [
-            lock for lock in resource_locks if lock not in known_locks
-        ]
+        invalid_locks = [lock for lock in resource_locks if lock not in known_locks]
         if invalid_locks:
             raise ValueError(
                 f"{task_id}: unknown resource locks: {', '.join(invalid_locks)}"
@@ -115,9 +117,13 @@ def validate_graph_text(
         try:
             definition_data = json.loads(read_text(definition))
         except FileNotFoundError as exc:
-            raise ValueError(f"{task_id}: definition does not exist: {definition}") from exc
+            raise ValueError(
+                f"{task_id}: definition does not exist: {definition}"
+            ) from exc
         except json.JSONDecodeError as exc:
-            raise ValueError(f"{task_id}: invalid definition {definition}: {exc}") from exc
+            raise ValueError(
+                f"{task_id}: invalid definition {definition}: {exc}"
+            ) from exc
 
         matching_fields = {
             "id": task_id,
@@ -206,8 +212,7 @@ def validate_graph_text(
                     flags=re.MULTILINE,
                 ):
                     raise ValueError(
-                        f"{task_id}: worklog must contain "
-                        f"{label}: {expected}"
+                        f"{task_id}: worklog must contain {label}: {expected}"
                     )
         elif task.get("worklog") is not None:
             raise ValueError(
@@ -277,7 +282,95 @@ def validate_plan_parity(graph: dict, tasks: list[dict], plan_text: str) -> None
         )
 
 
-def load_and_validate() -> tuple[dict, list[dict]]:
+def load_learning(read_text: ReadText, tasks: list[dict]) -> list[dict]:
+    """Load the learning lane: checkpoints that depend on completed tasks.
+
+    The lane is generated from `configs/learning/checkpoints.yaml` by
+    `scripts/learning/build_learning_sheet.py --record`. It is projected into a
+    JSON-compatible file so this script stays dependency-free and reads the
+    same bytes from a staged snapshot as from the working tree.
+
+    Checkpoints are terminal: tasks never depend on them, so a missing or
+    stale checkpoint never blocks implementation work.
+    """
+
+    try:
+        lane_text = read_text(LANE_PATH)
+    except FileNotFoundError:
+        return []
+    try:
+        lane = json.loads(lane_text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"{LANE_PATH} is not valid JSON-compatible YAML: {exc}"
+        ) from exc
+
+    entries = lane.get("checkpoints")
+    if not isinstance(entries, list):
+        raise ValueError(f"{LANE_PATH} must contain a checkpoints list")
+
+    task_map = {task["id"]: task for task in tasks}
+    completed = {task["id"] for task in tasks if task["status"] == "completed"}
+    claimed: dict[str, str] = {}
+    seen: set[str] = set()
+    loaded: list[dict] = []
+
+    for entry in entries:
+        checkpoint_id = entry.get("id")
+        if not isinstance(checkpoint_id, str) or not re.fullmatch(
+            r"LEARN-\d{2}", checkpoint_id
+        ):
+            raise ValueError(f"invalid checkpoint ID: {checkpoint_id!r}")
+        if checkpoint_id in seen:
+            raise ValueError(f"duplicate checkpoint ID: {checkpoint_id}")
+        seen.add(checkpoint_id)
+
+        covers = entry.get("covers")
+        if not isinstance(covers, list) or not covers:
+            raise ValueError(f"{checkpoint_id}: covers must be a non-empty list")
+        for task_id in covers:
+            if task_id not in task_map:
+                raise ValueError(f"{checkpoint_id}: unknown task {task_id}")
+            if task_map[task_id]["status"] != "completed":
+                raise ValueError(
+                    f"{checkpoint_id}: covers {task_id}, which is "
+                    f"{task_map[task_id]['status']!r}; checkpoints cover "
+                    "completed work only"
+                )
+            if task_id in claimed:
+                raise ValueError(
+                    f"{task_id} is covered by both {claimed[task_id]} and "
+                    f"{checkpoint_id}"
+                )
+            claimed[task_id] = checkpoint_id
+
+        sources = entry.get("sources")
+        if not isinstance(sources, dict) or not sources:
+            raise ValueError(f"{checkpoint_id}: sources must be a non-empty mapping")
+        changed = []
+        for path, stamp in sorted(sources.items()):
+            try:
+                current = hashlib.sha256(read_text(path).encode("utf-8")).hexdigest()[
+                    :12
+                ]
+            except FileNotFoundError:
+                changed.append(path)
+                continue
+            if current != stamp:
+                changed.append(path)
+
+        loaded.append({**entry, "changed": changed})
+
+    uncovered = sorted(completed - set(claimed))
+    if uncovered:
+        raise ValueError(
+            "completed tasks without a learning checkpoint: "
+            f"{', '.join(uncovered)}; add them to configs/learning/checkpoints.yaml"
+        )
+    return loaded
+
+
+def load_and_validate() -> tuple[dict, list[dict], list[dict]]:
     try:
         graph_text = GRAPH_PATH.read_text(encoding="utf-8")
     except OSError as exc:
@@ -293,7 +386,8 @@ def load_and_validate() -> tuple[dict, list[dict]]:
     except FileNotFoundError as exc:
         raise ValueError(f"project plan does not exist: {plan_path}") from exc
     validate_plan_parity(graph, tasks, plan_text)
-    return graph, tasks
+    learning = load_learning(working_text, tasks)
+    return graph, tasks, learning
 
 
 def effective_status(task: dict, task_map: dict[str, dict]) -> str:
@@ -306,7 +400,58 @@ def effective_status(task: dict, task_map: dict[str, dict]) -> str:
     return "blocked"
 
 
-def render(graph: dict, tasks: list[dict]) -> str:
+def render_learning(learning: list[dict]) -> list[str]:
+    """Render the learning lane: terminal study nodes over completed tasks."""
+
+    if not learning:
+        return []
+
+    lines = [
+        "",
+        "## Learning checkpoints",
+        "",
+        "Study units built from completed tasks. They depend on tasks; no task "
+        "depends on them, so they never gate implementation work. Source: "
+        f"`{LANE_PATH}`.",
+        "",
+        "```mermaid",
+        "graph LR",
+    ]
+    for entry in learning:
+        subject = entry["subject"].replace('"', "'")
+        node = entry["id"].replace("-", "_")
+        lines.append(f'    {node}{{{{"{entry["id"]}: {subject}"}}}}')
+    for entry in learning:
+        node = entry["id"].replace("-", "_")
+        for task_id in entry["covers"]:
+            lines.append(f"    {task_id} --> {node}")
+    lines.extend(["```", ""])
+
+    lines.append("| Checkpoint | Subject | Covers | Built | Sheet |")
+    lines.append("|---|---|---|---|---|")
+    for entry in learning:
+        state = entry["built"]
+        if entry["changed"]:
+            state = f"{entry['built']} (stale: {len(entry['changed'])})"
+        lines.append(
+            f"| {entry['id']} — {entry['title']} | {entry['subject']} | "
+            f"{', '.join(entry['covers'])} | {state} | `{entry['sheet']}` |"
+        )
+
+    stale = [entry for entry in learning if entry["changed"]]
+    if stale:
+        lines.extend(["", "Rebuild and republish these sheets:", ""])
+        for entry in stale:
+            changed = ", ".join(f"`{path}`" for path in entry["changed"])
+            lines.append(
+                f"- {entry['id']}: {changed} changed since {entry['built']}. "
+                f"Run `scripts/learning/build_learning_sheet.py {entry['id']} "
+                "--record` after republishing."
+            )
+    return lines
+
+
+def render(graph: dict, tasks: list[dict], learning: list[dict] | None = None) -> str:
     task_map = {task["id"]: task for task in tasks}
     lines = [
         "<!-- Generated by scripts/ai/render_task_status.py; do not edit. -->",
@@ -326,7 +471,7 @@ def render(graph: dict, tasks: list[dict]) -> str:
         lines.append(f'    {task["id"]}["{task["id"]}: {title}"]')
     for task in tasks:
         for dependency in task.get("depends_on", []):
-            lines.append(f'    {dependency} --> {task["id"]}')
+            lines.append(f"    {dependency} --> {task['id']}")
     lines.extend(["```", "", "## Status", ""])
     lines.append("| Task | Status | Dependencies | Resource locks | Worklog |")
     lines.append("|---|---|---|---|---|")
@@ -337,7 +482,7 @@ def render(graph: dict, tasks: list[dict]) -> str:
         worklog = task.get("worklog") or "—"
         status = effective_status(task, task_map)
         lines.append(
-            f'| {task["id"]} — {task["title"]} | {status} | '
+            f"| {task['id']} — {task['title']} | {status} | "
             f"{deps} | {locks} | {worklog} |"
         )
 
@@ -356,7 +501,9 @@ def render(graph: dict, tasks: list[dict]) -> str:
             approval = "required only for paid fallback"
         else:
             approval = "no"
-        lines.append(f'| {name} | {resource.get("capacity", 1)} | {approval} |')
+        lines.append(f"| {name} | {resource.get('capacity', 1)} | {approval} |")
+
+    lines.extend(render_learning(learning or []))
 
     return "\n".join(lines) + "\n"
 
@@ -364,15 +511,17 @@ def render(graph: dict, tasks: list[dict]) -> str:
 def main() -> int:
     args = parse_args()
     try:
-        graph, tasks = load_and_validate()
-        rendered = render(graph, tasks)
+        graph, tasks, learning = load_and_validate()
+        rendered = render(graph, tasks, learning)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
     if args.check:
         if not OUTPUT_PATH.is_file():
-            print(f"error: missing {OUTPUT_PATH.relative_to(REPO_ROOT)}", file=sys.stderr)
+            print(
+                f"error: missing {OUTPUT_PATH.relative_to(REPO_ROOT)}", file=sys.stderr
+            )
             return 1
         if OUTPUT_PATH.read_text(encoding="utf-8") != rendered:
             print(
@@ -381,7 +530,10 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
-        print(f"task graph valid; {len(tasks)} tasks; generated status is current")
+        print(
+            f"task graph valid; {len(tasks)} tasks; "
+            f"{len(learning)} learning checkpoints; generated status is current"
+        )
         return 0
 
     OUTPUT_PATH.write_text(rendered, encoding="utf-8")

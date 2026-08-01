@@ -1,0 +1,615 @@
+/* Learning-checkpoint sheet.
+ *
+ * Identity: a hardware spec sheet that opens into a reader. The chrome —
+ * ids, labels, chips, commands, hashes — is set in monospace because it is
+ * machine state. The mirrored repository prose is set in a serif because it
+ * is meant to be read, not scanned. Cobalt marks the checkpoint's own voice,
+ * verdigris marks something proven, ochre marks a boundary or a hands-on step.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --ground:      #F2F4F8;
+  --panel:       #FFFFFF;
+  --sunken:      #E6EAF2;
+  --ink:         #111524;
+  --ink-soft:    #464E66;
+  --ink-faint:   #727B96;
+  --rule:        #D9DEEA;
+  --rule-firm:   #BEC6D8;
+  --accent:      #2B4ACB;
+  --accent-wash: #E6EAFB;
+  --proven:      #0C6B4F;
+  --proven-wash: #DFF0E8;
+  --bound:       #8C5A06;
+  --bound-wash:  #F8EEDC;
+
+  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --serif: ui-serif, "New York", Charter, "Iowan Old Style", Georgia, serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --measure: 66ch;
+  --page: 74rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground:      #0D1017;
+    --panel:       #141924;
+    --sunken:      #1A2030;
+    --ink:         #E4E8F2;
+    --ink-soft:    #9EA7BF;
+    --ink-faint:   #6E7794;
+    --rule:        #232B3C;
+    --rule-firm:   #354056;
+    --accent:      #8AA0FF;
+    --accent-wash: #171E38;
+    --proven:      #4FBF95;
+    --proven-wash: #10261F;
+    --bound:       #DCA84A;
+    --bound-wash:  #2A2113;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #0D1017;
+  --panel:       #141924;
+  --sunken:      #1A2030;
+  --ink:         #E4E8F2;
+  --ink-soft:    #9EA7BF;
+  --ink-faint:   #6E7794;
+  --rule:        #232B3C;
+  --rule-firm:   #354056;
+  --accent:      #8AA0FF;
+  --accent-wash: #171E38;
+  --proven:      #4FBF95;
+  --proven-wash: #10261F;
+  --bound:       #DCA84A;
+  --bound-wash:  #2A2113;
+}
+
+:root[data-theme="light"] {
+  --ground:      #F2F4F8;
+  --panel:       #FFFFFF;
+  --sunken:      #E6EAF2;
+  --ink:         #111524;
+  --ink-soft:    #464E66;
+  --ink-faint:   #727B96;
+  --rule:        #D9DEEA;
+  --rule-firm:   #BEC6D8;
+  --accent:      #2B4ACB;
+  --accent-wash: #E6EAFB;
+  --proven:      #0C6B4F;
+  --proven-wash: #DFF0E8;
+  --bound:       #8C5A06;
+  --bound-wash:  #F8EEDC;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* iOS inflates text when a page rotates; the type scale is already sized. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-wrap: break-word;
+}
+
+.sheet {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 max(1.5rem, env(safe-area-inset-right)) 6rem
+    max(1.5rem, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+/* -- sticky identification bar ---------------------------------------- */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.8rem 0;
+  margin-bottom: -1.25rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--ground);
+  background: color-mix(in srgb, var(--ground) 92%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.bar .id { color: var(--accent); }
+.bar .sep { color: var(--rule-firm); }
+.bar #progress b { color: var(--ink); font-weight: 500; }
+.bar #progress.is-done { color: var(--proven); }
+.bar #progress.is-done b { color: var(--proven); }
+
+/* -- section frame ----------------------------------------------------- */
+
+.sec { display: flex; flex-direction: column; gap: 1.25rem; }
+.sec > .head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+}
+.sec > .head .kicker {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.sec > .head .kicker b { color: var(--accent); font-weight: 500; }
+.sec > .head p { color: var(--ink-soft); font-size: 0.95rem; max-width: var(--measure); }
+
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 {
+  font-size: clamp(2.2rem, 5.5vw, 3.2rem);
+  line-height: 1.06;
+  letter-spacing: -0.028em;
+  font-weight: 680;
+}
+h2 { font-size: 1.35rem; line-height: 1.25; letter-spacing: -0.014em; font-weight: 650; }
+h3 { font-size: 1rem; font-weight: 650; letter-spacing: -0.005em; }
+p { margin: 0; }
+
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.855em;
+  background: var(--sunken);
+  padding: 0.1em 0.34em;
+  border-radius: 3px;
+  word-break: break-word;
+}
+pre {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  margin: 0;
+}
+pre code { background: none; padding: 0; font-size: 1em; }
+
+/* -- masthead ---------------------------------------------------------- */
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-top: 3.5rem;
+}
+.masthead .stamp {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.masthead .subject {
+  font-family: var(--serif);
+  font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+  line-height: 1.4;
+  color: var(--ink-soft);
+  max-width: 48ch;
+}
+.masthead .lede {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.72;
+  max-width: var(--measure);
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.chip {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.26rem 0.55rem;
+  border: 1px solid var(--rule-firm);
+  border-radius: 3px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.chip.is-accent { color: var(--accent); border-color: var(--accent); background: var(--accent-wash); }
+.chip.is-proven { color: var(--proven); border-color: var(--proven); background: var(--proven-wash); }
+.chip.is-bound { color: var(--bound); border-color: var(--bound); background: var(--bound-wash); }
+.chip.is-quiet { text-transform: none; letter-spacing: 0; color: var(--ink-faint); border-color: var(--rule); }
+
+/* -- covered tasks: a parts list --------------------------------------- */
+
+.parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.part {
+  background: var(--panel);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.part .no {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+.part .what { font-size: 0.92rem; line-height: 1.4; }
+.part .ev { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-faint); }
+
+/* -- plain lists ------------------------------------------------------- */
+
+.bullets {
+  margin: 0;
+  padding-left: 1.1rem;
+  max-width: var(--measure);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.bullets li::marker { color: var(--ink-faint); }
+.bullets.is-bound li::marker { color: var(--bound); }
+
+/* -- the reader: stacked reading cards --------------------------------- */
+
+.readings { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.readbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.readbar button {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid var(--rule-firm);
+  border-radius: 3px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  min-height: 2.25rem;
+}
+.readbar button:hover { border-color: var(--accent); color: var(--accent); }
+
+.reading {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule-firm);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.reading.is-read { border-left-color: var(--proven); }
+.reading[open] { border-left-color: var(--accent); }
+.reading[open].is-read { border-left-color: var(--proven); }
+
+.reading > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 1.35rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem 1.25rem;
+  align-items: baseline;
+}
+.reading > summary::-webkit-details-marker { display: none; }
+.reading > summary:hover { background: var(--sunken); }
+.reading .rlabel {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  grid-column: 1 / -1;
+}
+.reading .rtitle { font-size: 1.02rem; font-weight: 620; line-height: 1.35; }
+.reading .rmeta {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  text-align: right;
+  white-space: nowrap;
+}
+.reading .rmeta .state { color: var(--accent); }
+.reading[open] .rmeta .state::after { content: "close"; }
+.reading:not([open]) .rmeta .state::after { content: "open"; }
+.reading.is-read .rmeta .state { color: var(--proven); }
+
+.rbody {
+  padding: 0 1.35rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.1rem;
+}
+.rwhy {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  border-left: 2px solid var(--accent);
+  padding-left: 0.85rem;
+}
+.rfoot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  align-items: center;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.9rem;
+}
+.readmark {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.readmark input { width: 0.95rem; height: 0.95rem; accent-color: var(--proven); cursor: pointer; }
+
+/* -- mirrored repository prose ----------------------------------------- */
+
+.doc {
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.72;
+  max-width: 70ch;
+  min-width: 0;
+}
+.doc > * + * { margin-top: 1.05rem; }
+.doc h1, .doc h2, .doc h3, .doc h4 { font-family: var(--sans); letter-spacing: -0.01em; }
+.doc h1 { font-size: 1.4rem; margin-top: 2.4rem; }
+.doc h2 { font-size: 1.18rem; margin-top: 2.2rem; }
+.doc h3 { font-size: 1rem; margin-top: 1.8rem; }
+.doc h4 { font-size: 0.9rem; margin-top: 1.5rem; }
+.doc h1:first-child, .doc h2:first-child, .doc h3:first-child { margin-top: 0; }
+.doc ul, .doc ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.doc li::marker { color: var(--ink-faint); }
+.doc li > ul, .doc li > ol { margin-top: 0.4rem; }
+.doc blockquote {
+  border-left: 2px solid var(--rule-firm);
+  padding-left: 1rem;
+  margin-left: 0;
+  color: var(--ink-soft);
+}
+.doc hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
+.doc strong { font-weight: 650; }
+.doc code, .doc pre { font-family: var(--mono); }
+.doc .reflink {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  border-bottom: 1px dotted var(--rule-firm);
+}
+.doc .scroller { overflow-x: auto; }
+.doc table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 24rem;
+  font-family: var(--sans);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+.doc th, .doc td {
+  text-align: left;
+  padding: 0.5rem 1.1rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.doc th {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.doc pre.mermaid {
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* -- labs -------------------------------------------------------------- */
+
+.labs { display: flex; flex-direction: column; gap: 1.1rem; }
+.lab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 1.05rem 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+.lab .what { font-weight: 620; font-size: 0.98rem; }
+.lab .proves { font-size: 0.9rem; color: var(--ink-soft); max-width: var(--measure); }
+
+.nb {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.7rem;
+}
+.nbi {
+  border: 1px dashed var(--rule-firm);
+  border-radius: 4px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.nbi .name { font-family: var(--mono); font-size: 0.78rem; word-break: break-word; }
+.nbi .focus { font-size: 0.86rem; color: var(--ink-soft); }
+
+/* -- questions --------------------------------------------------------- */
+
+.asks { display: flex; flex-direction: column; gap: 1.1rem; max-width: var(--measure); }
+.ask { display: flex; gap: 0.9rem; align-items: baseline; }
+.ask .n {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  flex: none;
+}
+.ask .q { font-family: var(--serif); font-size: 1.06rem; line-height: 1.5; }
+
+/* -- boundary panel ---------------------------------------------------- */
+
+.boundary {
+  background: var(--bound-wash);
+  border: 1px solid var(--bound);
+  border-radius: 4px;
+  padding: 1.1rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-width: 72ch;
+}
+.boundary h3 { color: var(--bound); }
+.boundary .bullets { gap: 0.45rem; font-size: 0.93rem; }
+
+.handson {
+  border-left: 3px solid var(--bound);
+  background: var(--bound-wash);
+  padding: 0.85rem 1.1rem;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.93rem;
+  max-width: 72ch;
+}
+
+/* -- provenance -------------------------------------------------------- */
+
+.prov { overflow-x: auto; }
+.prov table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 30rem;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+.prov th, .prov td {
+  text-align: left;
+  padding: 0.45rem 1.1rem 0.45rem 0;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.prov th {
+  font-weight: 500;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.prov td.num { text-align: right; padding-right: 2rem; color: var(--ink-soft); }
+.prov td.path { white-space: normal; word-break: break-all; }
+
+.foot {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.foot .series { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.foot .series .self { color: var(--accent); }
+
+/* -- reading on a tablet or phone -------------------------------------- */
+
+@media (max-width: 1000px) {
+  /* Tablet portrait: the sheet is the whole screen, so the page gutter can
+     shrink and the prose gets the width instead. */
+  .sheet { gap: 2.75rem; }
+  .masthead { padding-top: 3rem; }
+  .doc { max-width: none; }
+  .lab .proves, .rwhy, .bullets, .asks, .sec > .head p { max-width: none; }
+}
+
+@media (max-width: 700px) {
+  .sheet {
+    padding: 0 max(1.1rem, env(safe-area-inset-right)) 4rem
+      max(1.1rem, env(safe-area-inset-left));
+    gap: 2.5rem;
+  }
+  .masthead { padding-top: 2.5rem; }
+  .reading > summary { padding: 0.9rem 1rem; }
+  .rbody { padding-left: 1rem; padding-right: 1rem; }
+  .reading .rmeta { text-align: left; }
+  .bar { font-size: 0.66rem; padding: 0.7rem 0; }
+  /* A command you cannot read is worse than a command that wraps. */
+  .lab pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .doc { font-size: 1.02rem; }
+  .doc table { font-size: 0.82rem; }
+}
+
+@media (pointer: coarse) {
+  /* Touch targets: the checkbox and the disclosure row are the two controls
+     that get used on every reading. */
+  .readmark { padding: 0.35rem 0; }
+  .readmark input { width: 1.35rem; height: 1.35rem; }
+  .reading > summary { padding-top: 1.1rem; padding-bottom: 1.1rem; }
+  .rfoot { padding-top: 1.1rem; }
+}
+
+.doc .scroller,
+.prov,
+.doc pre,
+.lab pre {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

@@ -28,7 +28,16 @@ Before substantial work:
    concrete study or hands-on checkpoints during the work, and provide a
    linked study/debrief checklist at completion. Do not block implementation
    unless the checkpoint requires user authentication, hardware interaction,
-   spending approval, or a subjective/public decision.
+   spending approval, or a subjective/public decision. Completed work is
+   studied through the `LEARN-NN` sheets described in
+   `docs/learning/checkpoints.md`. When a task completes, add it to
+   `configs/learning/checkpoints.yaml`, then refresh the generated learning
+   lane and task status:
+
+   ```bash
+   python3 scripts/learning/build_learning_sheet.py --all --record
+   python3 scripts/ai/render_task_status.py
+   ```
 3. Inspect `git status` and preserve unrelated user or agent changes.
 4. Check dependencies in `ai/tasks/task_graph.yaml`. Do not start a blocked
    task unless the work is explicitly a dependency-breaking investigation.

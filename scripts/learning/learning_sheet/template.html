@@ -1,0 +1,152 @@
+<title><!--TITLE--></title>
+<!--STYLE-->
+
+<div class="sheet">
+
+  <div class="bar">
+    <span><span class="id"><!--ID--></span> <span class="sep">/</span> SLM Deployment Lab</span>
+    <span id="progress"><b>0</b> of <!--REQUIRED--> required readings marked</span>
+  </div>
+
+  <header class="masthead">
+    <div class="stamp">Learning checkpoint · <!--ID--> · <!--ATTENTION--></div>
+    <h1><!--HEADLINE--></h1>
+    <p class="subject"><!--SUBJECT--></p>
+    <p class="lede"><!--LEDE--></p>
+    <div class="chips"><!--CHIPS--></div>
+  </header>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>01</b> &nbsp;What this checkpoint covers</div>
+      <h2>Completed work behind this sheet</h2>
+      <p>These task-graph nodes are already complete. Study the subject here rather than reading the task definitions one at a time.</p>
+    </div>
+    <div class="parts"><!--PARTS--></div>
+  </section>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>02</b> &nbsp;Outcomes</div>
+      <h2>What you should be able to do afterwards</h2>
+      <p>Out loud, in your own words, without the sheet open.</p>
+    </div>
+    <ul class="bullets"><!--OUTCOMES--></ul>
+    <!--HANDSON-->
+  </section>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>03</b> &nbsp;Readings</div>
+      <h2>Mirrored from the repository, not summarized</h2>
+      <p>Each panel below is the committed document itself, converted but not rewritten. Read marks are stored in this browser only — they are not repository state.</p>
+      <div class="readbar">
+        <button type="button" id="open-all">Open all</button>
+        <button type="button" id="close-all">Close all</button>
+      </div>
+    </div>
+    <div class="readings"><!--READINGS--></div>
+  </section>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>04</b> &nbsp;Lab</div>
+      <h2>Run it yourself</h2>
+      <p>From a clean checkout at the repository root. Commands marked heavy need model weights or the external artifact root.</p>
+    </div>
+    <div class="labs"><!--LABS--></div>
+    <!--NOTEBOOKS-->
+  </section>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>05</b> &nbsp;Self-check</div>
+      <h2>Questions worth failing</h2>
+      <p>If an answer comes out thin, that is the part of the reading to go back to.</p>
+    </div>
+    <div class="asks"><!--QUESTIONS--></div>
+  </section>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>06</b> &nbsp;Boundary</div>
+      <h2>What this evidence does not license</h2>
+      <p>The most transferable habit in this project: knowing which claim a result cannot support.</p>
+    </div>
+    <div class="boundary">
+      <h3>Not proven by this checkpoint</h3>
+      <ul class="bullets is-bound"><!--BOUNDARIES--></ul>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="head">
+      <div class="kicker"><b>07</b> &nbsp;Provenance</div>
+      <h2>Exactly what this page mirrors</h2>
+      <p>The Markdown files are the source of truth; this page is a view of them. If a source changes, rebuild and republish.</p>
+    </div>
+    <div class="prov">
+      <table>
+        <thead><tr><th>Source</th><th class="num">Lines</th><th>sha256 (12)</th></tr></thead>
+        <tbody><!--PROVENANCE--></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="series"><!--SERIES--></div>
+    <div><!--BUILT--></div>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var STORE = 'slmlab.<!--SLUG-->.read.v1';
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.reading'));
+    var progress = document.getElementById('progress');
+    var state = {};
+
+    try { state = JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { state = {}; }
+
+    function save() {
+      try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* unavailable */ }
+    }
+
+    function refresh() {
+      var required = cards.filter(function (card) { return card.dataset.required === '1'; });
+      var done = required.filter(function (card) { return state[card.dataset.key]; }).length;
+      cards.forEach(function (card) {
+        card.classList.toggle('is-read', !!state[card.dataset.key]);
+      });
+      if (progress) {
+        progress.querySelector('b').textContent = String(done);
+        progress.classList.toggle('is-done', required.length > 0 && done === required.length);
+      }
+    }
+
+    function setAll(open) {
+      cards.forEach(function (card) { card.open = open; });
+    }
+    var openAll = document.getElementById('open-all');
+    var closeAll = document.getElementById('close-all');
+    if (openAll) { openAll.addEventListener('click', function () { setAll(true); }); }
+    if (closeAll) {
+      closeAll.addEventListener('click', function () {
+        setAll(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    document.querySelectorAll('[data-read]').forEach(function (box) {
+      box.checked = !!state[box.dataset.read];
+      box.addEventListener('change', function () {
+        state[box.dataset.read] = box.checked;
+        save();
+        refresh();
+      });
+    });
+
+    refresh();
+  })();
+</script>

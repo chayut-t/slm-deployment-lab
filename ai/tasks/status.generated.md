@@ -142,3 +142,49 @@ graph TD
 | qai_hub_submission | 1 | no |
 | device_cloud_x_elite | 1 | no |
 | linux_nvidia_gpu | 1 | required only for paid fallback |
+
+## Learning checkpoints
+
+Study units built from completed tasks. They depend on tasks; no task depends on them, so they never gate implementation work. Source: `ai/tasks/learning_lane.yaml`.
+
+```mermaid
+graph LR
+    LEARN_00{{"LEARN-00: Why a deployment claim needs a pinned revision behind it"}}
+    LEARN_01{{"LEARN-01: A task graph that survives losing the conversation"}}
+    LEARN_02{{"LEARN-02: Frozen prompts, exact token IDs, and the limits of 'same input'"}}
+    LEARN_03{{"LEARN-03: What a compiler-facing graph family has to promise"}}
+    LEARN_04{{"LEARN-04: Where a timer starts, and what a median is allowed to claim"}}
+    LEARN_05{{"LEARN-05: Eight graphs, four manifests, and one very narrow claim"}}
+    LEARN_06{{"LEARN-06: Authentication, a bounded toy lifecycle, and real NPU placement"}}
+    LEARN_07{{"LEARN-07: What a persistent device-side loop measures that a graph benchmark cannot"}}
+    LEARN_08{{"LEARN-08: From a packaged baseline to a runtime you wrote yourself"}}
+    LEARN_09{{"LEARN-09: A manually dispatched workflow that can touch a paid service"}}
+    T00 --> LEARN_00
+    T01 --> LEARN_00
+    T03 --> LEARN_01
+    T04 --> LEARN_01
+    T10 --> LEARN_02
+    T11 --> LEARN_03
+    T12 --> LEARN_03
+    T13 --> LEARN_04
+    T20 --> LEARN_05
+    T02 --> LEARN_06
+    T30 --> LEARN_06
+    T32 --> LEARN_07
+    T50 --> LEARN_08
+    T51 --> LEARN_08
+    T72 --> LEARN_09
+```
+
+| Checkpoint | Subject | Covers | Built | Sheet |
+|---|---|---|---|---|
+| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-01 | `build/learning/learn-00.html` |
+| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-01 | `build/learning/learn-01.html` |
+| LEARN-02 — Fixtures as a contract | Frozen prompts, exact token IDs, and the limits of "same input" | T10 | 2026-08-01 | `build/learning/learn-02.html` |
+| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-01 | `build/learning/learn-03.html` |
+| LEARN-04 — Benchmarking without false equivalence | Where a timer starts, and what a median is allowed to claim | T13 | 2026-08-01 | `build/learning/learn-04.html` |
+| LEARN-05 — ONNX export as a compiler contract | Eight graphs, four manifests, and one very narrow claim | T20 | 2026-08-01 | `build/learning/learn-05.html` |
+| LEARN-06 — The Qualcomm public pipeline | Authentication, a bounded toy lifecycle, and real NPU placement | T02, T30 | 2026-08-01 | `build/learning/learn-06.html` |
+| LEARN-07 — A real generation loop on a real device | What a persistent device-side loop measures that a graph benchmark cannot | T32 | 2026-08-01 | `build/learning/learn-07.html` |
+| LEARN-08 — Apple Silicon and MLX | From a packaged baseline to a runtime you wrote yourself | T50, T51 | 2026-08-01 | `build/learning/learn-08.html` |
+| LEARN-09 — CI as a deployment surface | A manually dispatched workflow that can touch a paid service | T72 | 2026-08-01 | `build/learning/learn-09.html` |
