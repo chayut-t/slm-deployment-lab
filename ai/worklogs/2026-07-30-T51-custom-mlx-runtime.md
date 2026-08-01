@@ -109,12 +109,14 @@ layouts.
 
 ## Learner debrief checklist
 
-- [ ] Walk through
+The learner explicitly confirmed these study items on 2026-08-01:
+
+- [x] Walk through
   `src/slm_lab/backends/mlx/model.py::Qwen3Attention.__call__` and explain why
   16 query heads can consume eight physical K/V heads without repeated K/V
   storage.
-- [ ] Compare the head-major and sequence-major update/view logic in
+- [x] Compare the head-major and sequence-major update/view logic in
   `src/slm_lab/backends/mlx/cache.py` and calculate cache traffic for one
   decode position.
-- [ ] Reproduce the focused tests in `tests/mlx/` and inspect the future
+- [x] Reproduce the focused tests in `tests/mlx/` and inspect the future
   `08_mlx_gqa_kv_layout.ipynb` alongside T52 evidence.

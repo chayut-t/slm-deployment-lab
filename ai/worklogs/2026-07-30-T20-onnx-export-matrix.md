@@ -315,3 +315,12 @@ task now unblocks T21 for ONNX Runtime parity and graph-risk inspection.
   external hash before loading, run multi-position decode parity in ONNX
   Runtime CPU, and inspect whether `valid_length` remains a live internal
   slice/scatter dependency rather than a traced constant.
+
+## Learner debrief checklist
+
+The learner explicitly confirmed this study checkpoint on 2026-08-01:
+
+- [x] Inspect one prefill and one decode export and trace their tensor names,
+  shapes, dtypes, cache layout, and capacity to the frozen T12 contract.
+- [x] Explain why artifact hashes and external-data validation establish export
+  provenance but do not establish runtime, compiler, or hardware success.

@@ -159,7 +159,7 @@ Attention: Deep study
 
 Study checkpoint:
 
-- [ ] Inspect at least one prefill and decode export and trace their shapes to
+- [x] Inspect at least one prefill and decode export and trace their shapes to
   the T12 contract.
 
 Related notebook: `02_onnx_export_and_shapes.ipynb`
@@ -319,7 +319,7 @@ Attention: Deep study
 
 Study checkpoint:
 
-- [ ] Walk through one layer's GQA/cache implementation and explain its memory
+- [x] Walk through one layer's GQA/cache implementation and explain its memory
   behavior.
 
 Related notebook: `08_mlx_gqa_kv_layout.ipynb`
@@ -405,7 +405,7 @@ Learn:
 
 Study checkpoint:
 
-- [ ] Review the workflow security model before adding the secret or running
+- [x] Review the workflow security model before adding the secret or running
   the workflow.
 
 ### T80 — Integrated guides, notebooks, and MkDocs

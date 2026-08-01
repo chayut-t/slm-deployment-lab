@@ -160,13 +160,14 @@ secret was created or inspected and no GitHub Actions or Qualcomm job was run.
   the security checklist, provision the protected environment/secret, stage a
   licensed source archive, and authorize service quota/cost.
 - Learner debrief:
-  - [ ] Trace a dispatch through authorization, environment approval, client
+  - The learner explicitly confirmed these study items on 2026-08-01.
+  - [x] Trace a dispatch through authorization, environment approval, client
     setup, the local stage script, credential cleanup, and manifest upload in
     [`qualcomm-benchmark.yml`](../../.github/workflows/qualcomm-benchmark.yml).
-  - [ ] Explain why a successful workflow run is not a device-latency result.
-  - [ ] Review every item under “Learner setup: stop before adding the secret”
+  - [x] Explain why a successful workflow run is not a device-latency result.
+  - [x] Review every item under “Learner setup: stop before adding the secret”
     in the [Actions guide](../../docs/learning/github_actions_for_ai_hub.md).
-  - [ ] Inspect the selected request and predecessor hashes before approving
+  - [x] Inspect the selected request and predecessor hashes before approving
     the first real run.
-  - [ ] Do not mark the T72 learning checkpoint complete until the learner has
-    personally reviewed the security model.
+  - [x] Confirm personal review of the workflow security model before any
+    secret provisioning or real workflow run.
