@@ -20,6 +20,7 @@ graph TD
     T20["T20: Four-context ONNX export matrix"]
     T21["T21: ONNX Runtime CPU parity and graph inspection"]
     T22["T22: QNN candidates and packaging"]
+    T23["T23: Prefill re-export promotion and evidence refresh"]
     T30["T30: Workbench compile, inference, and profile adapters"]
     T31["T31: Qwen Workbench results on three Qualcomm targets"]
     T32["T32: Device Cloud Qwen GenieX baseline and generation loop"]
@@ -49,6 +50,9 @@ graph TD
     T12 --> T20
     T20 --> T21
     T21 --> T22
+    T23 --> T22
+    T20 --> T23
+    T21 --> T23
     T01 --> T30
     T02 --> T30
     T22 --> T31
@@ -106,7 +110,8 @@ graph TD
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
 | T20 — Four-context ONNX export matrix | completed | T12 | t9_heavy_io | ai/worklogs/2026-07-30-T20-onnx-export-matrix.md |
 | T21 — ONNX Runtime CPU parity and graph inspection | completed | T20 | — | ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md |
-| T22 — QNN candidates and packaging | ready | T21 | t9_heavy_io | — |
+| T22 — QNN candidates and packaging | blocked | T21, T23 | t9_heavy_io | — |
+| T23 — Prefill re-export promotion and evidence refresh | ready | T20, T21 | t9_heavy_io | — |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
@@ -130,7 +135,7 @@ graph TD
 
 - ready: 4
 - in_progress: 0
-- blocked: 9
+- blocked: 10
 - completed: 17
 
 ## Resource capacities
@@ -182,10 +187,10 @@ graph LR
 
 | Checkpoint | Subject | Covers | Built | Sheet |
 |---|---|---|---|---|
-| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-02 | `build/learning/learn-00.html` |
-| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-02 | `build/learning/learn-01.html` |
+| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-02 (stale: 1) | `build/learning/learn-00.html` |
+| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-02 (stale: 1) | `build/learning/learn-01.html` |
 | LEARN-02 — Fixtures as a contract | Frozen prompts, exact token IDs, and the limits of "same input" | T10 | 2026-08-02 | `build/learning/learn-02.html` |
-| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-02 | `build/learning/learn-03.html` |
+| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-02 (stale: 1) | `build/learning/learn-03.html` |
 | LEARN-04 — Benchmarking without false equivalence | Where a timer starts, and what a median is allowed to claim | T13 | 2026-08-02 | `build/learning/learn-04.html` |
 | LEARN-05 — ONNX export as a compiler contract | Eight graphs, four manifests, and one very narrow claim | T20 | 2026-08-02 | `build/learning/learn-05.html` |
 | LEARN-06 — The Qualcomm public pipeline | Authentication, a bounded toy lifecycle, and real NPU placement | T02, T30 | 2026-08-02 | `build/learning/learn-06.html` |
@@ -194,3 +199,9 @@ graph LR
 | LEARN-09 — CI as a deployment surface | A manually dispatched workflow that can touch a paid service | T72 | 2026-08-02 | `build/learning/learn-09.html` |
 | LEARN-10 — Reading a graph before a compiler does | What an exported graph tells you, and what only a measurement can | T21 | 2026-08-02 | `build/learning/learn-10.html` |
 | LEARN-11 — Calibration data as a contract | Freezing the inputs to quantization before quantizing anything | T40 | 2026-08-02 | `build/learning/learn-11.html` |
+
+Rebuild and republish these sheets:
+
+- LEARN-00: `docs/project/plan.md` changed since 2026-08-02. Run `scripts/learning/build_learning_sheet.py LEARN-00 --record` after republishing.
+- LEARN-01: `docs/project/plan.md` changed since 2026-08-02. Run `scripts/learning/build_learning_sheet.py LEARN-01 --record` after republishing.
+- LEARN-03: `docs/project/plan.md` changed since 2026-08-02. Run `scripts/learning/build_learning_sheet.py LEARN-03 --record` after republishing.

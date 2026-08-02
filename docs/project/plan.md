@@ -846,6 +846,7 @@ flowchart TD
     T20["T20 Static ONNX export matrix"]
     T21["T21 ORT CPU parity and graph inspector"]
     T22["T22 QNN candidate packaging"]
+    T23["T23 Prefill re-export and evidence refresh"]
 
     T30["T30 AI Hub adapters"]
     T31["T31 Qwen Workbench compile/infer/profile"]
@@ -882,6 +883,9 @@ flowchart TD
     T12 --> T20
     T20 --> T21
     T21 --> T22
+    T20 --> T23
+    T21 --> T23
+    T23 --> T22
 
     T01 --> T30
     T02 --> T30
@@ -945,7 +949,8 @@ flowchart TD
 | T13 | Benchmark/evaluation protocol | T10 | T11, T12 |
 | T20 | Four-context ONNX export matrix | T12 | T30, T50 |
 | T21 | ORT CPU parity and graph inspection | T20 | T30, T50 |
-| T22 | QNN candidates and packaging | T21 | T32, T40, T51 |
+| T22 | QNN candidates and packaging | T21, T23 | T32, T40, T51 |
+| T23 | Promoted prefill export and refreshed evidence | T20, T21 | T41, T52 |
 | T30 | Workbench compile/infer/profile adapters | T01, T02 | T11–T22 |
 | T31 | Qwen Workbench results on three targets | T22, T30 | T32, T40, T51 |
 | T32 | Device Cloud Qwen/GenieX and generation loop | T02 | T20–T31 |

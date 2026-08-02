@@ -254,16 +254,16 @@
 
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
-      <div class="stat"><div class="num">17<span style="color:var(--ink-3);font-size:1.1rem;">/30</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
+      <div class="stat"><div class="num">17<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
       <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
-      <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
+      <div class="stat"><div class="num">10</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
       <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 17 completed, 4 ready, 9 blocked, of 30 tasks">
+    <div class="bar" role="img" aria-label="Task progress: 17 completed, 4 ready, 10 blocked, of 31 tasks">
       <span style="flex:17;background:var(--bar-done)"></span>
       <span style="flex:4;background:var(--bar-ready)"></span>
-      <span style="flex:9;background:var(--bar-blocked)"></span>
+      <span style="flex:10;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
     <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection and the CPU-parity machinery (T21),
@@ -296,7 +296,7 @@
         </div>
         <div class="arrow">→</div>
         <div class="node here">
-          <span class="chip ready">Ready</span> <span class="here-tag">← you are here</span>
+          <span class="chip blocked">Blocked</span> <span class="here-tag">← you are here</span>
           <div class="t">T22 · Package QNN candidates</div>
           <div style="font-size:0.8rem;color:var(--ink-2);">Compiler-friendly rewrites</div>
         </div>
@@ -398,9 +398,9 @@
     </div>
 
     <div class="next priority">
-      <h3><span class="tid">T22</span> · QNN candidate packaging</h3>
+      <h3><span class="tid">T23</span> · Prefill re-export &amp; evidence refresh</h3>
       <span class="prio-tag">Priority 1 · critical path</span>
-      <div class="why">Turn the inspected reference graphs into candidates Qualcomm's compiler will accept — the compiler-friendly rewrites the LEARN-10 findings (computed shape inputs, the 33.5 MB baked-in mask, the 37 MB decode I/O boundary) point straight at. This is now the only task between today and compiling Qwen3 on the NPU (T31 → T33).</div>
+      <div class="why">The four reference prefill graphs cannot be loaded by ONNX Runtime's CPU provider at all: they zero-extend the KV cache with a float16 <code>Pad</code>, and ORT registers no float16 <code>Pad</code> kernel. The fix — writing the reserve with <code>Concat</code>, as decode already does — is measured and committed, but the attested artifacts still carry the defect. Promoting it means re-exporting the graphs and bringing every committed digest, count and size back into agreement. T22 is blocked behind this: there is no point building QNN candidates out of bytes we are about to replace.</div>
     </div>
 
     <div class="next priority">
@@ -422,7 +422,8 @@
     </div>
 
     <p style="color:var(--ink-2);font-size:0.95rem;">
-      After those: <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
+      After those: <strong>T22</strong> (QNN candidate packaging, unblocked once T23 lands) →
+      <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
       <strong>T33</strong> (the Qualcomm floating-point milestone) → <strong>T42–T43</strong> (W4/LPBQ/LiteMP and quantized NPU deployment),
       then the demo (T70/T71) and release (T80–T82).
     </p>

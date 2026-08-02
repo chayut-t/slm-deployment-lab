@@ -1,7 +1,7 @@
 {
   "id": "T22",
   "title": "QNN candidates and packaging",
-  "depends_on": ["T21"],
+  "depends_on": ["T21", "T23"],
   "resource_locks": ["t9_heavy_io"],
   "objective": "Transform reference exports into compiler-oriented QNN candidates without obscuring source parity.",
   "owned_paths": ["src/slm_lab/graph/qnn/", "src/slm_lab/deployment/qualcomm/", "results/manifests/qnn/"],
