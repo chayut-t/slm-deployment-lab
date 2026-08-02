@@ -14,7 +14,11 @@ from slm_lab.contracts import (
     build_prefill_contract,
     validate_tensor_mapping,
 )
-from slm_lab.contracts.static_cache import NUM_LAYERS
+from slm_lab.contracts.static_cache import (
+    HEAD_DIM,
+    NUM_KEY_VALUE_HEADS,
+    NUM_LAYERS,
+)
 from slm_lab.export.onnx_matrix import (
     DecodeWrapper,
     ExternalDataRecord,
@@ -349,6 +353,97 @@ def test_tiny_export_is_static_checked_and_external(tmp_path: Path) -> None:
         "dtype": "int64",
         "shape": [1, 128],
     }
+
+
+def test_prefill_cache_write_lowers_to_concat_and_never_pad(tmp_path: Path) -> None:
+    """Pin the operator the prefill zero-extension lowers to, and its operand.
+
+    ONNX Runtime's CPU execution provider registers no float16 ``Pad`` kernel.
+    An earlier export expressed the zero-extension with
+    ``torch.nn.functional.pad``, and the resulting float16 prefill graphs could
+    not be loaded at all at ``ORT_DISABLE_ALL``: the ``CastFloat16Transformer``
+    inserted a precision-free cast around the unsupported node and then failed
+    type inference on it. Higher optimization levels hid this -- not by folding
+    the cast away, which survives in the optimized graph, but by hoisting the
+    ``Pad`` above it so the pad runs in float32. So the defect is invisible to
+    any test that merely loads a graph at the default level, and nothing short
+    of asserting the lowering catches a regression here.
+
+    Asserting only the operator would leave the semantics free: a reserve of
+    ones, or of the wrong length, still concatenates. So the reserve operand is
+    checked too -- exact dtype, exact shape, and all-zero.
+
+    Checking that the reserve is a ``Constant`` *node* also pins the mechanism
+    that keeps it out of external data. This export runs with
+    ``external_data_threshold_bytes=0``, so every graph *initializer* is
+    externalized; the reserve survives inline only because torch emits it as a
+    node attribute and ``export_onnx_graph`` saves with
+    ``convert_attribute=False``. If either changed, the reserve would become an
+    external initializer, prefill's ``.onnx.data`` would stop matching
+    decode's, and the single shared ``external_data_sha256`` the T20
+    attestation records would break. This assertion is what notices.
+
+    S128 only, deliberately. ``_tiny_causal_model`` materialises vocab-sized
+    logits at every prompt position, so the same export at S4096 would allocate
+    ``4096 x 151,936`` float16 -- 1.24 GB for the logits alone, plus 470 MB of
+    cache -- which is not a unit test. The reserve length is the only
+    context-dependent quantity here, and it is derived from
+    ``CONTEXT_VARIANTS``, which
+    ``test_artifact_subdirectory_covers_every_capacity`` pins for all four.
+    """
+
+    torch = pytest.importorskip("torch")
+    onnx = pytest.importorskip("onnx")
+    from onnx import numpy_helper
+
+    config = dataclasses.replace(
+        load_export_config(str(CONFIG)),
+        external_data_threshold_bytes=0,
+    )
+    contract = build_prefill_contract(128)
+    destination = tmp_path / "S128/prefill.onnx"
+    export_onnx_graph(
+        PrefillWrapper(_tiny_causal_model(torch), prompt_length=128),
+        build_example_inputs(contract),
+        contract,
+        destination,
+        config,
+    )
+
+    graph = onnx.load_model(destination, load_external_data=False).graph
+    assert [node.op_type for node in graph.node if node.op_type == "Pad"] == []
+
+    producers = {output: node for node in graph.node for output in node.output}
+    cache_outputs = [
+        tensor.name
+        for tensor in contract.outputs
+        if tensor.name.startswith(("key_cache.", "value_cache."))
+    ]
+    assert len(cache_outputs) == 2 * NUM_LAYERS
+    expected_reserve_shape = [
+        1,
+        NUM_KEY_VALUE_HEADS,
+        contract.cache_capacity - contract.prompt_length,
+        HEAD_DIM,
+    ]
+    for name in cache_outputs:
+        node = producers[name]
+        assert node.op_type == "Reshape", name
+        concat = producers[node.input[0]]
+        assert concat.op_type == "Concat", name
+
+        # The prompt prefix first, then the reserve, along cache_position.
+        assert len(concat.input) == 2, name
+        assert {attribute.name: attribute.i for attribute in concat.attribute}[
+            "axis"
+        ] == 2, name
+
+        reserve_node = producers[concat.input[1]]
+        assert reserve_node.op_type == "Constant", name
+        reserve = numpy_helper.to_array(reserve_node.attribute[0].t)
+        assert reserve.dtype == "float16", name
+        assert list(reserve.shape) == expected_reserve_shape, name
+        assert not reserve.any(), name
 
 
 def test_existing_artifact_is_never_overwritten(tmp_path: Path) -> None:
