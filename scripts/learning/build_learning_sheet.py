@@ -77,6 +77,8 @@ class Reading:
     why: str
     text: str
     stamp: str
+    verbatim: bool = False
+    """True when the source is not Markdown and must not be rendered as prose."""
 
     @property
     def lines(self) -> int:
@@ -128,11 +130,17 @@ def load_reading(spec: dict) -> Reading:
 
     text = path.read_text(encoding="utf-8")
     source = spec["path"]
+    # Markdown is prose to be rendered. Anything else — YAML, JSON, a lockfile —
+    # is a literal artifact whose indentation carries meaning, so it is escaped
+    # into a code block instead. Rendering it as Markdown would reflow it, fire
+    # inline syntax inside it, and let a token such as <think> through as markup.
+    verbatim = path.suffix.lower() not in {".md", ".markdown"}
     if "slice" in spec:
         bounds = spec["slice"]
         text = slice_between(text, bounds["from"], bounds["to"], source)
         source = f"{source} ({bounds['from'].lstrip('# ')} …)"
-    else:
+    elif not verbatim:
+        # A comment line in a config file is not a document title.
         text = drop_title(text)
 
     return Reading(
@@ -144,6 +152,7 @@ def load_reading(spec: dict) -> Reading:
         why=spec["why"],
         text=text,
         stamp=digest(path),
+        verbatim=verbatim,
     )
 
 
@@ -170,6 +179,12 @@ def to_html(text: str) -> str:
     # Wide tables scroll inside their own container so the page body never does.
     rendered = rendered.replace("<table>", '<div class="scroller"><table>')
     return rendered.replace("</table>", "</table></div>")
+
+
+def to_verbatim_html(text: str) -> str:
+    """Escape a non-Markdown source into a code block, byte for byte."""
+
+    return f'<pre class="verbatim"><code>{html.escape(text)}</code></pre>'
 
 
 def inline(text: str) -> str:
@@ -256,7 +271,9 @@ def render_readings(readings: list[Reading]) -> str:
             f'<span class="chip is-quiet">{html.escape(item.source)}</span>'
             f'<span class="chip is-quiet">sha {item.stamp}</span></div>'
             f'<p class="rwhy">{inline(item.why)}</p>'
-            f'<article class="doc">{to_html(item.text)}</article>'
+            f'<article class="doc">'
+            f"{to_verbatim_html(item.text) if item.verbatim else to_html(item.text)}"
+            f"</article>"
             '<div class="rfoot">'
             f'<label class="readmark"><input type="checkbox" data-read="{item.key}" />'
             "<span>Read in full</span></label>"

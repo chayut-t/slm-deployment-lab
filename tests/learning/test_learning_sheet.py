@@ -250,6 +250,10 @@ def visible_text(page: str) -> str:
 @pytest.mark.parametrize("checkpoint", CHECKPOINTS, ids=IDS)
 def test_every_source_token_survives(checkpoint):
     page = visible_text(rendered(checkpoint))
+    # Compare token to token rather than by substring. A substring test passes
+    # when a lost token happens to sit inside an unrelated longer word, which
+    # is exactly how a swallowed `<think>` once survived this assertion.
+    present = set(TOKEN.findall(page))
     for spec in checkpoint["readings"]:
         reading = builder.load_reading(spec)
         # Two things are markup rather than prose: link targets, which are
@@ -257,9 +261,49 @@ def test_every_source_token_survives(checkpoint):
         # a class attribute on the code block.
         source = FENCE_INFO.sub(r"\1", LINK_TARGET.sub(" ", reading.text))
         missing = sorted(
-            {token for token in TOKEN.findall(source) if token not in page}
+            {token for token in TOKEN.findall(source) if token not in present}
         )
         assert not missing, (
             f"{checkpoint['id']} / {spec['path']} lost "
             f"{len(missing)} token(s): {missing[:12]}"
         )
+
+
+@pytest.mark.parametrize("checkpoint", CHECKPOINTS, ids=IDS)
+def test_page_markup_is_balanced(checkpoint):
+    """An unclosed element is how mirrored source escapes into markup."""
+
+    from html.parser import HTMLParser
+
+    void = {"area", "br", "col", "hr", "img", "input", "link", "meta", "source"}
+
+    class Balance(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.open: list[str] = []
+            self.mismatched: list[str] = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag not in void:
+                self.open.append(tag)
+
+        def handle_startendtag(self, tag, attrs):
+            """`<input />` is closed where it opens; it needs no bookkeeping."""
+
+        def handle_endtag(self, tag):
+            if tag in void:
+                return
+            if self.open and self.open[-1] == tag:
+                self.open.pop()
+            else:
+                self.mismatched.append(tag)
+
+    parser = Balance()
+    parser.feed(rendered(checkpoint))
+    assert not parser.open, (
+        f"{checkpoint['id']} leaves {len(parser.open)} element(s) unclosed: "
+        f"{parser.open[:8]} — a mirrored source is probably being parsed as HTML"
+    )
+    assert not parser.mismatched, (
+        f"{checkpoint['id']} closes {parser.mismatched[:8]} without opening them"
+    )
