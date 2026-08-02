@@ -12,7 +12,7 @@ this page is the study surface those reminders point at.
 
 ## The series
 
-Ten checkpoints cover the fifteen completed tasks. Every completed task
+The checkpoints below cover every completed task. Every completed task
 belongs to exactly one of them, and
 `tests/learning/test_learning_sheet.py` fails when a newly completed task has
 no checkpoint.
@@ -29,6 +29,7 @@ no checkpoint.
 | `LEARN-07` | A real generation loop on a real device | T32 | Hands-on and deep study |
 | `LEARN-08` | Apple Silicon and MLX | T50, T51 | Deep study |
 | `LEARN-09` | CI as a deployment surface | T72 | Hands-on and deep study |
+| `LEARN-10` | Reading a graph before a compiler does | T21 | Deep study |
 
 Tasks that are still `planned` have no checkpoint. Add one when the task
 completes, in the same change that flips its status.

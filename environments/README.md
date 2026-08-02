@@ -44,9 +44,11 @@ Environment-specific setup and compatibility evidence belongs in:
 - `macos-m4/`
 - `linux-cuda/`
 - `linux-aimet/`
+- `onnx-cpu/`
 
 T01 deliberately does not choose untested versions for MLX, CUDA, AIMET,
-QAIRT, or hosted runtimes. Their owning platform tasks must pin exact package,
+QAIRT, ONNX Runtime, or hosted runtimes. Their owning platform tasks must pin
+exact package,
 SDK, driver, and operating-system versions after a compatibility smoke test,
 then record them in a host manifest. Floating labels such as `latest` are not
 reproducible evidence.
