@@ -222,13 +222,13 @@
       "id": "T40",
       "title": "AIMET and calibration environment",
       "definition": "ai/tasks/definitions/T40.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T10", "T20"],
       "resource_locks": ["t9_heavy_io"],
       "owner": "Claude t40-main agent",
       "branch": "task/T40-aimet-calibration",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md"
     },
     {
       "id": "T41",

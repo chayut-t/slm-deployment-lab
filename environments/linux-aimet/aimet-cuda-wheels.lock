@@ -1,0 +1,48 @@
+# AIMET 2.36.0 CUDA-variant wheels, installed by URL as an overlay.
+#
+# These `+cu126` local-version wheels are NOT published to PyPI. They are
+# published only as GitHub release assets, so `uv pip compile` cannot discover
+# them and they cannot appear in aimet-requirements.lock. The AIMET
+# installation page names exactly these URLs as the validated CUDA 12.x path:
+#   https://qualcomm.github.io/aimet-pages/releases/latest/overview/install/index.html
+#
+# Digests below were read from the GitHub releases API on 2026-08-02:
+#   curl -sS https://api.github.com/repos/qualcomm/aimet/releases/tags/2.36.0 \
+#     | python3 -c 'import json,sys; [print(a["name"], a["size"], a["digest"]) for a in json.load(sys.stdin)["assets"]]'
+#
+# Apply AFTER environments/linux-aimet/aimet-requirements.lock, with --no-deps,
+# so the overlay swaps only the two AIMET distributions and leaves the locked
+# transitive set untouched:
+#   uv pip install --python "${AIMET_VENV}/bin/python" \
+#     --require-hashes -r environments/linux-aimet/aimet-requirements.lock
+#   uv pip install --python "${AIMET_VENV}/bin/python" --no-deps \
+#     --require-hashes -r environments/linux-aimet/aimet-cuda-wheels.lock
+#   uv pip install --python "${AIMET_VENV}/bin/python" onnxruntime-gpu
+#
+# The +cu126 aimet-onnx wheel is 68864490 bytes against 778078 bytes for the
+# +cpu wheel of the same version: the CUDA kernels ship inside the aimet-onnx
+# wheel itself. aimet-torch is pure Python in every variant (~792 KB), so its
+# +cu126 wheel carries no CUDA code. Diffing all 380 entries of the two wheels
+# on 2026-08-02 showed they differ in exactly two places: the four
+# dist-info/* files, and the shipped source file aimet_torch/common/_version.py,
+# which records __version__ = '2.36.0+cu126' / '2.36.0+cpu' and the AIMET-side
+# torch build string torch = '2.13.0+cu126' / '2.13.0+cpu'. Neither wheel
+# contains a compiled extension: zero .so/.pyd entries in either.
+#
+# onnxruntime-gpu is intentionally NOT hash-pinned here. The AIMET docs list it
+# as an optional accelerator and the correct build depends on the host CUDA and
+# cuDNN minor versions, which are unverified from the macOS primary. Pin it in
+# this file once the real host is provisioned and its version observed.
+
+aimet-onnx @ https://github.com/qualcomm/aimet/releases/download/2.36.0/aimet_onnx-2.36.0+cu126-cp310-abi3-manylinux_2_34_x86_64.whl \
+    --hash=sha256:4e45182503ea659d2bfb6b86c7c408045b3924c37cb2d321696a29dc8e53e7cb
+aimet-torch @ https://github.com/qualcomm/aimet/releases/download/2.36.0/aimet_torch-2.36.0+cu126-py310-none-any.whl \
+    --hash=sha256:c659e35192561e6cdd7a41fa84395f1b5f91155e08537faf2f9db4b31c46a18d
+
+# CPU-only variants of the same release, for a calibration host without a GPU.
+# Uncomment exactly one pair; the +cpu and +cu126 wheels are mutually exclusive.
+#
+# aimet-onnx @ https://github.com/qualcomm/aimet/releases/download/2.36.0/aimet_onnx-2.36.0+cpu-cp310-abi3-manylinux_2_34_x86_64.whl \
+#     --hash=sha256:6d91b581da9e22f332c78d7e127cfb4ac4928bf950cc74409bb97e4d28c6dc70
+# aimet-torch @ https://github.com/qualcomm/aimet/releases/download/2.36.0/aimet_torch-2.36.0+cpu-py310-none-any.whl \
+#     --hash=sha256:9d0f9c2945e58f3931cb184b208ac7be35a25fbd990b987f7612ff264cf50e7c

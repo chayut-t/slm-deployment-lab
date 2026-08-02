@@ -1,0 +1,308 @@
+{
+  "artifact_identity": {
+    "checks": [
+      {
+        "detail": {
+          "contexts": [
+            128,
+            512,
+            1024,
+            4096
+          ],
+          "export_config": "configs/models/qwen3-0.6b-onnx-export.json",
+          "exporter_commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+          "manifest_directory": "results/manifests/onnx",
+          "run_id": "T20-qwen3-0.6b-reference-onnx-2026-07-30"
+        },
+        "name": "attestation_manifest_agreement",
+        "status": "passed",
+        "summary": "4 committed T20 manifest(s) checked against the export attestation"
+      },
+      {
+        "detail": {
+          "expected_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+          "model_contract": "configs/models/qwen3-0.6b.yaml",
+          "model_id": "Qwen/Qwen3-0.6B",
+          "revision_source": "slm_lab.contracts.static_cache.MODEL_REVISION"
+        },
+        "name": "model_revision_agreement",
+        "status": "passed",
+        "summary": "model and tokenizer revision agreement across the T00 contract, the T20 export config, the T20 manifests, and slm_lab.contracts"
+      },
+      {
+        "detail": {
+          "compared": [
+            "tensor names",
+            "tensor order",
+            "dtypes",
+            "static shapes"
+          ],
+          "contexts": [
+            128,
+            512,
+            1024,
+            4096
+          ],
+          "contract_source": "slm_lab.contracts.static_cache"
+        },
+        "name": "t12_contract_conformance",
+        "status": "passed",
+        "summary": "8 recorded graph boundary set(s) checked against the frozen T12 prefill/decode contracts"
+      },
+      {
+        "detail": {
+          "artifact_directory": "/Volumes/T9/slm-deployment-lab/onnx/reference/T20",
+          "command": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.quantization.parity verify",
+          "file_count": 16,
+          "files": [
+            {
+              "matched": true,
+              "measured_sha256": "4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759",
+              "measured_size_bytes": 1759947,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759",
+              "recorded_size_bytes": 1759947,
+              "relative_path": "S1024/decode.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S1024/decode.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6",
+              "measured_size_bytes": 3653613,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6",
+              "recorded_size_bytes": 3653613,
+              "relative_path": "S1024/prefill.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S1024/prefill.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2",
+              "measured_size_bytes": 1759947,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2",
+              "recorded_size_bytes": 1759947,
+              "relative_path": "S128/decode.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S128/decode.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1",
+              "measured_size_bytes": 1560358,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1",
+              "recorded_size_bytes": 1560358,
+              "relative_path": "S128/prefill.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S128/prefill.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd",
+              "measured_size_bytes": 1759947,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd",
+              "recorded_size_bytes": 1759947,
+              "relative_path": "S4096/decode.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S4096/decode.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988",
+              "measured_size_bytes": 35209213,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988",
+              "recorded_size_bytes": 35209213,
+              "relative_path": "S4096/prefill.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S4096/prefill.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "ed2c8b52bd284685a6c549b7ebadd4db257c93e17ec7cae6b09c5b7561e36c8f",
+              "measured_size_bytes": 1759947,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "ed2c8b52bd284685a6c549b7ebadd4db257c93e17ec7cae6b09c5b7561e36c8f",
+              "recorded_size_bytes": 1759947,
+              "relative_path": "S512/decode.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S512/decode.onnx.data"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e",
+              "measured_size_bytes": 2064360,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e",
+              "recorded_size_bytes": 2064360,
+              "relative_path": "S512/prefill.onnx"
+            },
+            {
+              "matched": true,
+              "measured_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "measured_size_bytes": 1192085504,
+              "measurement": "recomputed_sha256",
+              "recorded_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+              "recorded_size_bytes": 1192085504,
+              "relative_path": "S512/prefill.onnx.data"
+            }
+          ],
+          "measured_file_count": 16,
+          "measured_total_bytes": 9586211364,
+          "measurement": "recomputed_sha256",
+          "missing": [],
+          "recorded_total_bytes": 9586211364
+        },
+        "name": "artifact_byte_identity",
+        "status": "passed",
+        "summary": "16 recorded file(s) re-hashed and matched the committed T20 digests and sizes"
+      }
+    ],
+    "verdict": "verified"
+  },
+  "artifact_root": {
+    "artifact_directory": "/Volumes/T9/slm-deployment-lab/onnx/reference/T20",
+    "available": true,
+    "command": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.quantization.parity verify",
+    "environment_variable": "SLM_LAB_ARTIFACT_ROOT",
+    "requested": "/Volumes/T9/slm-deployment-lab",
+    "resolved": "/Volumes/T9/slm-deployment-lab",
+    "source": "storage_config_default:configs/storage/external-ssd.example.yaml"
+  },
+  "baseline": {
+    "contexts": [
+      128,
+      512,
+      1024,
+      4096
+    ],
+    "export_config": "configs/models/qwen3-0.6b-onnx-export.json",
+    "manifest_directory": "results/manifests/onnx",
+    "model_contract": "configs/models/qwen3-0.6b.yaml",
+    "task_id": "T20"
+  },
+  "claim_boundary": {
+    "does_not_establish": [
+      "pytorch_versus_onnx_numerical_logit_parity",
+      "onnxruntime_execution_or_multi_step_cache_correctness",
+      "quantized_quality_delta",
+      "compiler_acceptance_or_accelerator_placement",
+      "latency_or_memory_performance"
+    ],
+    "establishes": [
+      "committed_T20_attestation_and_manifests_still_agree",
+      "recorded_model_and_tokenizer_revision_still_matches_T12",
+      "recorded_graph_boundaries_still_satisfy_the_frozen_T12_contract",
+      "on_disk_graph_and_external_data_bytes_still_hash_to_the_recorded_digests"
+    ]
+  },
+  "commands": {
+    "record": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.quantization.parity record",
+    "verify": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.quantization.parity verify"
+  },
+  "generated_at": "2026-08-02T14:28:09Z",
+  "numerical_parity": {
+    "blocked_by": {
+      "host_class": "primary macOS development host",
+      "missing_dependencies": [
+        "torch",
+        "onnxruntime"
+      ],
+      "reason": "torch and onnxruntime are absent from the primary macOS project environment and T40 installs no heavy dependency."
+    },
+    "commands": [
+      {
+        "command": "HF_HOME=<local-cache> TRANSFORMERS_OFFLINE=1 PYTHONPATH=src <python-with-torch-2.7.1-and-transformers-4.51.3> -m slm_lab.generation.reference --fixture raw_ascii --device cpu --dtype float32 --max-new-tokens 8",
+        "establishes": "the T11 PyTorch oracle only, not ONNX agreement",
+        "id": "pytorch_reference_logits",
+        "status": "implemented_at_this_commit"
+      },
+      {
+        "command": "SLM_LAB_ARTIFACT_ROOT=<external-root> HF_HOME=<local-cache> TRANSFORMERS_OFFLINE=1 PYTHONPATH=src <python-with-torch-and-onnxruntime> -m pytest -q tests/onnx",
+        "delivered_by": "T21",
+        "establishes": "the missing half: PyTorch-versus-ONNX logit agreement under a frozen export-parity tolerance",
+        "id": "onnx_runtime_parity",
+        "status": "not_implemented_at_this_commit"
+      }
+    ],
+    "consumer_tasks": [
+      "T41",
+      "T42",
+      "T43"
+    ],
+    "measurement": "declared_requirement_not_executed",
+    "owner_scope": "T21 owns ONNX Runtime CPU parity under src/slm_lab/backends/ and tests/onnx/; T40 neither implements nor duplicates it.",
+    "owner_task": "T21",
+    "requirement": "Logit-level agreement between the T11 deterministic PyTorch reference and the T20 float16 ONNX export, for the prefill and decode graphs at every frozen context.",
+    "status": "not_run",
+    "tolerance_policy": {
+      "export_parity_policy_status": "not_frozen_at_this_commit",
+      "note": "DEFAULT_TOLERANCE bounds full-forward versus cached decode drift for one model, dtype, and device. A distinct export-parity tolerance must be frozen by T21 before any PyTorch-versus-ONNX pass or fail claim is made.",
+      "requirement_source": "docs/project/plan.md",
+      "same_model_reference_source": "src/slm_lab/generation/reference.py::DEFAULT_TOLERANCE"
+    }
+  },
+  "record_type": "baseline_parity_preflight",
+  "released_for_calibration_on_artifact_identity": true,
+  "repository": {
+    "git_commit": "bda66e2424805e85e2ae36f723b7336babb26928",
+    "git_tree_clean": false
+  },
+  "schema_version": 1,
+  "task_id": "T40",
+  "verdict": "partial",
+  "verdict_scope": "artifact_identity_only"
+}

@@ -1,0 +1,607 @@
+# T40 calibration corpus contract for Qwen3-0.6B post-training quantization.
+#
+# GENERATED FILE. Do not hand-edit. Regenerate with:
+#   uv run python -m slm_lab.quantization.calibration generate
+# and verify with:
+#   uv run python -m slm_lab.quantization.calibration check
+#
+# What a reader should take away
+# ------------------------------
+# 1. This file freezes the *inputs* to quantization, not any quantized result.
+#    No weight is quantized here; AIMET is Linux + CUDA only and is specified
+#    in environments/linux-aimet/, not executed on the development host.
+# 2. Tier 1 (`calibration_corpus`) is the only tier that is committed and
+#    required. Every one of its samples is derived deterministically from the
+#    CC0-1.0 T10 token fixtures, so the corpus regenerates byte-for-byte from
+#    material already in this repository with no heavy dependency and no
+#    network access.
+# 3. Coverage is argued, not assumed - and the arguments are bounded by
+#    measurements. Every sample carries a `rationale` saying which deployment
+#    behaviour it is there to expose: all four exported prefill shapes
+#    (128/512/1024/4096) because activation ranges at 128 tokens do not bound
+#    those at 4096; the four raw canaries because ASCII, whitespace, Unicode
+#    byte-fallback, and structured punctuation are token classes that do not
+#    substitute for one another; the chat canary because the chat template
+#    emits control tokens the raw-completion path never produces; and the CC0
+#    quality subset because that is what the quality delta is measured on.
+#    Read `calibration_corpus.coverage` first: it is computed from the emitted
+#    token IDs and states how narrow the corpus really is, including that the
+#    four context workloads are nested prefixes of one repeated T10 seed. No
+#    rationale here claims embedding-table or vocabulary coverage, and none may.
+# 4. No sample is padded. The T12 prefill contract states that
+#    `attention_mask` is "One for every real prompt token; padding is not
+#    permitted." Short fixtures are therefore tiled to an exact frozen prompt
+#    length instead of padded - see `calibration_corpus.preprocessing.padding`
+#    and `.tiling` for the full argument.
+# 5. Tier 2 is declared, never committed. The three public corpora below carry
+#    their real repository revisions and their real card licences, fetched from
+#    the Hugging Face dataset API. Their share-alike and attribution
+#    obligations are why no row of them is in this repository, and why the
+#    repository stays Apache-2.0 clean.
+#
+# The value T41+ must copy into every artifact manifest (plan section 17.4) is
+# `calibration_dataset_revision`.
+
+schema_version: 1
+task_id: T40
+title: Qwen3-0.6B post-training-quantization calibration contract
+summary: Frozen calibration inputs for the Lane B W8/W4/LPBQ/LiteMP experiments
+  (plan section 7.2, Q1-Q5). Tier 1 is committed, CC0-1.0, and regenerates offline
+  from the T10 token fixtures; tier 2 is a declared, revision-pinned candidate
+  list that is never committed. No quantized result is claimed here.
+model:
+  id: Qwen/Qwen3-0.6B
+  revision: c1899de289a04d12100db370d81485cdf75e47ca
+  license: Apache-2.0
+  reference_dtype: bfloat16
+  vocab_size: 151936
+  num_hidden_layers: 28
+  num_key_value_heads: 8
+tokenizer:
+  id: Qwen/Qwen3-0.6B
+  revision: c1899de289a04d12100db370d81485cdf75e47ca
+  class: Qwen2Tokenizer
+  add_bos_token: false
+  pad_id: 151643
+  eos_id: 151645
+  chat_template_sha256: a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8
+graph_contract:
+  owner_task: T12
+  module: slm_lab.contracts.static_cache
+  graph_kind: prefill
+  prompt_length_to_cache_capacity:
+    S128: 160
+    S512: 576
+    S1024: 1152
+    S4096: 4224
+  note: Calibration only exercises the prefill graph. The decode graph consumes
+    a materialized KV cache, so its activation ranges are a function of the prefill
+    ranges plus the decode step itself; T41 owns whether a decode-side observer
+    pass is needed.
+inputs:
+- path: tests/fixtures/t10/token-fixtures-v1.json
+  role: tier-1 calibration source (T10 token fixtures)
+  canonical_json_sha256: 9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745
+- path: configs/workloads/t10-token-fixtures.json
+  role: T10 workload manifest; pins the bundle hash
+  canonical_json_sha256: 84bdc8ca43d451f2b6e28ed4c08a3bfe1644e4108ef3908d6a28af82bf390a0f
+- path: configs/models/qwen3-0.6b.yaml
+  role: T00 model/tokenizer identity and vocabulary size
+  canonical_json_sha256: ae8469c770d8e7b2b23dd4ad2248dd6ca5f6f0263c111e30ecf1164ec1e07ae5
+- path: configs/models/qwen3-0.6b-onnx-export.json
+  role: T20 ONNX export pins; fixes the shapes calibrated here
+  canonical_json_sha256: e9b47945c8adac5b84e0d43ef4e14dd55c298e95ee4b169964af0e5f8f8ce5c6
+calibration_corpus:
+  schema_version: 1
+  task_id: T40
+  corpus_id: t40-qwen3-0.6b-t10-derived
+  corpus_version: v1
+  tier: t10_derived
+  status: required_and_committed
+  license: CC0-1.0
+  source_bundle:
+    path: tests/fixtures/t10/token-fixtures-v1.json
+    canonical_json_sha256: 9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745
+    license: CC0-1.0
+  preprocessing:
+    contract_module: slm_lab.contracts.static_cache
+    graph_kind: prefill
+    batch_size: 1
+    batches: one sample per batch; no sample is concatenated with another
+    input_tensors:
+    - input_ids
+    - attention_mask
+    - position_ids
+    dtypes:
+      input_ids: int64
+      attention_mask: int64
+      position_ids: int64
+    frozen_prompt_lengths:
+    - 128
+    - 512
+    - 1024
+    - 4096
+    ordering:
+      rule: ascending lexicographic sort of sample_id
+      declared_emission_order:
+      - context_workloads ascending by context_length
+      - raw_canaries ascending by T10 fixture id
+      - chat_canary
+      - quality_subset ascending by T10 fixture id
+      sample_id_format: cal-{two-digit emission index}-{T10 fixture id}
+      note: The numeric prefix makes the lexicographic sort identical to the declared
+        emission order, so the ordering rule is one rule rather than two that
+        can disagree.
+    context_assignment:
+      rule: Every sample is emitted at exactly one frozen T12 prompt length. A
+        T10 context workload is already an exact frozen length and is used verbatim.
+        Every shorter fixture is assigned to the smallest frozen prompt length,
+        128.
+      short_fixture_target_length: 128
+      long_fixture_rule: verbatim; token count already equals the shape
+      no_committed_fixture_exceeds: 4096
+    padding:
+      policy: forbidden
+      attention_mask_value: 1
+      reason: The T12 prefill contract defines attention_mask as 'One for every
+        real prompt token; padding is not permitted.' Padding a calibration sample
+        would therefore emit a tensor the exported graph does not accept, and
+        would additionally teach the range observers the activation statistics
+        of the pad embedding, which never occurs at inference.
+      pad_id_recorded_for_provenance_only: 151643
+      eos_id_recorded_for_provenance_only: 151645
+    tiling:
+      rule: Repeat the source T10 token-ID sequence end to end and truncate to
+        the target length. Operates on token IDs, never on text, so no tokenizer
+        is required to reproduce it.
+      applies_to:
+      - raw_canaries
+      - chat_canary
+      - quality_subset
+      precedent: 'T10 also reached its exact prompt lengths by repetition, but
+        not by this construction. `_exact_context_record` in src/slm_lab/evaluation/fixtures.py
+        joins copies of the authored seed *text* with a blank-line separator,
+        tokenizes the joined text, truncates the IDs, decodes them back to text,
+        re-encodes that text, and raises unless the round trip reproduces every
+        ID. T40 deliberately drops both halves: it repeats token IDs directly,
+        with no separator, and performs no decode/re-encode round trip. That is
+        acceptable here because a calibration sample only has to present the range
+        observers with real token IDs at a legal prefill shape, whereas a T10
+        fixture must be a prompt a tokenizer would actually emit. The cost is
+        that a seam between two repeats may be an ID adjacency no string tokenizes
+        to, which is exactly why a tiled sample is a calibration input only -
+        see `boundary_note`.'
+      boundary_note: Tiling makes a self-similar sequence. That is acceptable
+        for fitting activation *ranges*, which depend on which token classes appear
+        rather than on how natural the sequence reads, and it is the price of
+        the no-padding rule. A tiled sample is a calibration input only; it must
+        never be reused as a quality-evaluation prompt or as a latency workload.
+    position_ids:
+      rule: zero-based ascending [0, prompt_length)
+    not_done:
+    - 'no shuffling: the emission order is fixed and declared'
+    - 'no random sampling: every committed T10 fixture is used'
+    - 'no seed: there is no randomness to seed'
+    - 'no padding: forbidden by the T12 prefill contract'
+    - no concatenation or packing of separate samples into one sequence
+    - 'no text-level preprocessing: the corpus is built from token IDs'
+    - no third-party dataset row is read, downloaded, or committed
+  token_budget:
+    sample_count: 13
+    total_calibration_tokens: 6912
+    tokens_per_prompt_shape:
+      S128: 1280
+      S512: 512
+      S1024: 1024
+      S4096: 4096
+    tokens_per_source_group:
+      chat_canary: 128
+      context_workloads: 5760
+      quality_subset: 512
+      raw_canaries: 512
+    note: 'Token budget is the number of token positions the range observers see,
+      not a wall-clock cost. It is small on purpose: the corpus is a coverage
+      argument over deployment shapes and token classes, not a statistical sample
+      of natural text. Widening it is tier-2 work owned by T41.'
+  coverage:
+    measured_from: the emitted tier-1 token IDs in this file
+    distinct_token_ids: 175
+    model_vocabulary_size: 151936
+    vocabulary_fraction: 0.001152
+    distinct_token_ids_per_source_group:
+      chat_canary: 25
+      context_workloads: 80
+      quality_subset: 66
+      raw_canaries: 61
+    token_share_per_source_group:
+      chat_canary: 0.0185
+      context_workloads: 0.8333
+      quality_subset: 0.0741
+      raw_canaries: 0.0741
+    context_workloads_are_nested_prefixes: true
+    context_workload_chain:
+    - S128
+    - S512
+    - S1024
+    - S4096
+    note: Read this block before reading any `rationale`. Two facts limit what
+      the corpus can support. First, the four context workloads are token-ID prefixes
+      of one another in ascending length order, because T10 built all four by
+      repeating one authored seed; they are four *shape* arguments over one body
+      of text, not four independent content arguments, and `token_share_per_source_group`
+      shows how much of the token budget that one body of text consumes. Second,
+      the corpus touches `distinct_token_ids` of the 151936 embedding rows in
+      the model. No sample selection here should be read as covering the embedding
+      table, the vocabulary, or any activation distribution; the only coverage
+      argued is over deployment shapes and over the presence of a few named token
+      classes. Widening it is tier-2 work owned by T41.
+  samples:
+  - id: cal-00-S128
+    tier: t10_derived
+    source_group: context_workloads
+    source_fixture_id: S128
+    interface: raw_completion
+    construction: verbatim
+    source_token_count: 128
+    tile_repeats: 1
+    truncated: false
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 80
+    source_token_ids_sha256: 52d8283880b465f99406bcf64f0460f421b3ebe508a347b40eefa20b29d1e5fa
+    token_ids_sha256: 52d8283880b465f99406bcf64f0460f421b3ebe508a347b40eefa20b29d1e5fa
+    rationale: 'Shortest exported prefill shape (T20 S128, T12 cache capacity
+      160). Range observers must see the activations produced when the prompt
+      matmuls are at their smallest sequence dimension and the KV cache is almost
+      empty; a scale fitted only on long prompts over-covers this case and throws
+      away INT8 resolution on the shape that decodes most often. This is a shape
+      argument only: the four context workloads are nested token-ID prefixes of
+      one another, so this sample adds no token class the longer three do not
+      already carry.'
+  - id: cal-01-S512
+    tier: t10_derived
+    source_group: context_workloads
+    source_fixture_id: S512
+    interface: raw_completion
+    construction: verbatim
+    source_token_count: 512
+    tile_repeats: 1
+    truncated: false
+    context_length: 512
+    cache_capacity: 576
+    token_count: 512
+    distinct_token_ids: 80
+    source_token_ids_sha256: a17f17b9de442a6cab929c0c6f40d12a823d4ec0141fc3725e42dd8066cd2c5d
+    token_ids_sha256: a17f17b9de442a6cab929c0c6f40d12a823d4ec0141fc3725e42dd8066cd2c5d
+    rationale: Mid-length exported prefill shape (cache capacity 576). Covers
+      the regime between the short- and long-prompt extremes so that per-tensor
+      scales are fitted on observed data rather than interpolated across an unobserved
+      gap. Shape argument only; it is the S128 token IDs plus a continuation of
+      the same repeated T10 seed.
+  - id: cal-02-S1024
+    tier: t10_derived
+    source_group: context_workloads
+    source_fixture_id: S1024
+    interface: raw_completion
+    construction: verbatim
+    source_token_count: 1024
+    tile_repeats: 1
+    truncated: false
+    context_length: 1024
+    cache_capacity: 1152
+    token_count: 1024
+    distinct_token_ids: 80
+    source_token_ids_sha256: 024451cc29696f85e8fcdd067b638490f75aab0419214189a06c11e77e8b1ba5
+    token_ids_sha256: 024451cc29696f85e8fcdd067b638490f75aab0419214189a06c11e77e8b1ba5
+    rationale: Long exported prefill shape (cache capacity 1152). Attention-score
+      and residual-stream magnitudes grow with sequence length, and this is the
+      last shape before the 4096-token extreme. Shape argument only; it is the
+      S512 token IDs plus a continuation of the same repeated seed.
+  - id: cal-03-S4096
+    tier: t10_derived
+    source_group: context_workloads
+    source_fixture_id: S4096
+    interface: raw_completion
+    construction: verbatim
+    source_token_count: 4096
+    tile_repeats: 1
+    truncated: false
+    context_length: 4096
+    cache_capacity: 4224
+    token_count: 4096
+    distinct_token_ids: 80
+    source_token_ids_sha256: 5a2a2dfcb10b80d0991ca44588bdbd89efc665a3070e051c4932a1ef5a6749d9
+    token_ids_sha256: 5a2a2dfcb10b80d0991ca44588bdbd89efc665a3070e051c4932a1ef5a6749d9
+    rationale: Longest exported prefill shape (cache capacity 4224) and the worst
+      case for activation range. Ranges fitted at 128 tokens do not bound the
+      4096-token case, so omitting it would guarantee clipping on exactly the
+      shape T13 benchmarks hardest. Shape argument only; it is the S1024 token
+      IDs plus a continuation of the same repeated seed, and it supplies 4096
+      of the corpus's token positions without widening the set of token IDs observed.
+  - id: cal-04-raw_ascii
+    tier: t10_derived
+    source_group: raw_canaries
+    source_fixture_id: raw_ascii
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 18
+    tile_repeats: 8
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 18
+    source_token_ids_sha256: 81b597522a946de54faac98150566348e7167fb7f862e0726eed93501a587093
+    token_ids_sha256: 7919d4da252c08f3de8643f61adf575fad0a9a627cdd3f42c90d051b08e6116f
+    rationale: 'ASCII letters and punctuation: the token class every deployed
+      prompt contains. It puts that class in front of the range observers at the
+      S128 shape. This is a presence claim about one token class, not a claim
+      about vocabulary breadth; see coverage.distinct_token_ids for how few embedding
+      rows the whole corpus actually touches.'
+  - id: cal-05-raw_structured
+    tier: t10_derived
+    source_group: raw_canaries
+    source_fixture_id: raw_structured
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 28
+    tile_repeats: 5
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 25
+    source_token_ids_sha256: 8267d7621912955d60bfeba56f6b45392eeb95cc36feff696af04ec637936666
+    token_ids_sha256: e273fcbced937327826737433a3e62a20a9ecbe4503cc39716d56ee7a7c6efb3
+    rationale: JSON-like delimiters and quoted field names are the structured-output
+      path the deployment actually serves. They concentrate on a small set of
+      punctuation tokens that repeat at high frequency, which is expected to produce
+      a different activation histogram from prose - expected, because no histogram
+      has been measured anywhere in T40.
+  - id: cal-06-raw_unicode
+    tier: t10_derived
+    source_group: raw_canaries
+    source_fixture_id: raw_unicode
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 19
+    tile_repeats: 7
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 18
+    source_token_ids_sha256: 3d963e85204c15472c7f369f8a28ee6a545c5cf67aa1538d6654edc8227b8e81
+    token_ids_sha256: 192d8b56224d6a3ab9f539f38d3c0838904f3a4df98a95b476280b06a5c1d3da
+    rationale: Multilingual and non-Latin text drives multi-byte UTF-8 byte-fallback
+      tokens, a token class the ASCII, whitespace, and structured canaries never
+      produce. It is here so that class is present when the early-layer ranges
+      are fitted. No claim is made about where its embedding rows sit or how large
+      its activations are; neither has been measured.
+  - id: cal-07-raw_whitespace
+    tier: t10_derived
+    source_group: raw_canaries
+    source_fixture_id: raw_whitespace
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 24
+    tile_repeats: 6
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 16
+    source_token_ids_sha256: fd047fbc19bc2d2d1660eda3b22efc4f99a84180363a39766a40e20affadf410
+    token_ids_sha256: 0f292f3dcb29477caf69ddc4e074d0c08b3f92245e50636935ec6634885b2de9
+    rationale: Newlines, indentation, and runs of spaces tokenize into merged
+      whitespace tokens that no prose sample in this corpus emits. Including them
+      means the early-layer ranges are fitted with that token class present rather
+      than on a prose-only distribution. Whether their activations differ, and
+      by how much, is unmeasured until T41 runs an observer.
+  - id: cal-08-chat_non_thinking
+    tier: t10_derived
+    source_group: chat_canary
+    source_fixture_id: chat_non_thinking
+    interface: chat_template
+    construction: tiled_then_truncated
+    source_token_count: 34
+    tile_repeats: 4
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 25
+    source_token_ids_sha256: 89ef9f8e06b9176341d1c96270a820139ff07f896e7496672278e749181306d4
+    token_ids_sha256: 61e72e0bce5f499b3d7a28e91baca5a6b483989b6774ea0a3bfc39cc306a4ebe
+    rationale: The chat path renders control tokens (<|im_start|>, <|im_end|>,
+      and the explicitly empty <think> block) that never appear on the raw-completion
+      path. Their embeddings and the attention pattern around them are only observed
+      if the chat canary is calibrated.
+  - id: cal-09-quality_arithmetic_sequence
+    tier: t10_derived
+    source_group: quality_subset
+    source_fixture_id: quality_arithmetic_sequence
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 19
+    tile_repeats: 7
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 13
+    source_token_ids_sha256: f63da1a0fc50b09bdf2f43b35fd00b13e34c5e0c8a70c1417b2634d5c4601678
+    token_ids_sha256: 173a2e660a38234c718b71608a2a3391d7748aa8143598d8cb06967af5a3e20f
+    rationale: One of the four CC0 prompts the W8/W4 quality delta is measured
+      on in T41-T43. Calibration and evaluation inputs therefore overlap by design;
+      see licensing.evaluation_overlap for why that is declared rather than hidden.
+  - id: cal-10-quality_cache_definition
+    tier: t10_derived
+    source_group: quality_subset
+    source_fixture_id: quality_cache_definition
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 20
+    tile_repeats: 7
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 20
+    source_token_ids_sha256: 09fd4116a9e9be97aa68cd21cb431a70a1c1d16ca3f346c8376ca587d4114b70
+    token_ids_sha256: 4e4f1ff0284cb0016e495019c58788dcb8053c5f4c28e52c98e57d601a1ce8d4
+    rationale: One of the four CC0 prompts the W8/W4 quality delta is measured
+      on in T41-T43. Calibration and evaluation inputs therefore overlap by design;
+      see licensing.evaluation_overlap for why that is declared rather than hidden.
+  - id: cal-11-quality_json_contract
+    tier: t10_derived
+    source_group: quality_subset
+    source_fixture_id: quality_json_contract
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 27
+    tile_repeats: 5
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 21
+    source_token_ids_sha256: 5adebceeb9c9074df8d4ad5176b5f48aa8610cf551399d1b2b7aef6cd57ebfaf
+    token_ids_sha256: eec953f2ede5335f1814ead7eeba79dd663c2e5f1e15cdb525cc689fa2c58849
+    rationale: One of the four CC0 prompts the W8/W4 quality delta is measured
+      on in T41-T43. Calibration and evaluation inputs therefore overlap by design;
+      see licensing.evaluation_overlap for why that is declared rather than hidden.
+  - id: cal-12-quality_timing_boundary
+    tier: t10_derived
+    source_group: quality_subset
+    source_fixture_id: quality_timing_boundary
+    interface: raw_completion
+    construction: tiled_then_truncated
+    source_token_count: 22
+    tile_repeats: 6
+    truncated: true
+    context_length: 128
+    cache_capacity: 160
+    token_count: 128
+    distinct_token_ids: 22
+    source_token_ids_sha256: 0f0491d82f80bcfd57714362899b045ce0ca4a2c3c58c83183934122e1d66355
+    token_ids_sha256: fab1ffb784b6c0c98ed0502d040e9b227f40e5e1f5b27a57b26ed66b0bcf7d7c
+    rationale: One of the four CC0 prompts the W8/W4 quality delta is measured
+      on in T41-T43. Calibration and evaluation inputs therefore overlap by design;
+      see licensing.evaluation_overlap for why that is declared rather than hidden.
+calibration_corpus_canonical_json_sha256: d2b749e15dd5d98789305e06fbe164bfea7c4ce5cb87b2189e1a8374adbfe8f0
+calibration_dataset_revision: t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987
+external_diversity_candidates:
+  tier: external_diversity
+  status: declared_candidate
+  selection_owner: T41
+  data_committed: false
+  purpose: Widen activation coverage beyond the single authored T10 seed and remove
+    the tier-1 overlap between calibration and evaluation prompts. None of these
+    is used by T40; they are recorded so that T41 chooses from a revision-pinned,
+    licence-checked list instead of an ad-hoc download.
+  verification:
+    api_url_template: https://huggingface.co/api/datasets/{dataset_id}
+    verified_at: '2026-08-02'
+    command: uv run python -m slm_lab.quantization.calibration verify --online
+    fields_verified:
+    - sha
+    - cardData.license
+  candidates:
+  - id: Salesforce/wikitext
+    homepage: https://huggingface.co/datasets/Salesforce/wikitext
+    revision: b08601e04326c79dfdd32d625aee71d232d685c3
+    license:
+    - cc-by-sa-3.0
+    - gfdl
+    license_obligations: CC-BY-SA-3.0 requires attribution and is share-alike,
+      so any committed derivative would have to be relicensed away from the repository's
+      Apache-2.0 terms; GFDL adds invariant-section and copy-of-licence obligations.
+    data_committed: false
+    assessment: Best-value candidate. Curated encyclopedic prose at the length
+      scale the S1024 and S4096 workloads use, small enough to stream without
+      a data pipeline, and already the de-facto reference for the perplexity T13
+      will report. Widens activation coverage beyond the single repeated seed
+      T10 authored.
+    risk: Narrow register. Wikipedia-style prose alone under-covers the structured-output
+      and chat control-token paths that tier 1 keeps.
+  - id: allenai/c4
+    homepage: https://huggingface.co/datasets/allenai/c4
+    revision: 1588ec454efa1a09f29cd18ddd04fe05fc8653a2
+    license:
+    - odc-by
+    license_obligations: ODC-BY requires attribution to the database producer
+      and notice of the licence on any redistributed database or derivative database;
+      it does not impose share-alike on the contents.
+    data_committed: false
+    assessment: 'Widest register of the three: scraped web text carries markup
+      residue, code fragments, and mixed scripts, which is the closest public
+      proxy for the byte-fallback and punctuation-heavy token classes the raw
+      canaries probe. The least burdensome licence of the three if a derivative
+      ever had to be redistributed.'
+    risk: Unfiltered quality and very large shard set. Selecting a reproducible
+      slice needs its own pinned selection rule, which is T41 work, not T40 work.
+  - id: wikimedia/wikipedia
+    homepage: https://huggingface.co/datasets/wikimedia/wikipedia
+    revision: b04c8d1ceb2f5cd4588862100d08de323dccfbaa
+    license:
+    - cc-by-sa-3.0
+    - gfdl
+    license_obligations: Same CC-BY-SA-3.0 attribution and share-alike obligations
+      as wikitext, plus GFDL; a committed derivative could not stay Apache-2.0.
+    data_committed: false
+    assessment: 'Only useful if multilingual coverage is wanted: the pre-parsed
+      per-language configurations would exercise the multi-byte UTF-8 embedding
+      rows the raw_unicode canary only samples. Largely redundant with wikitext
+      for English-only calibration.'
+    risk: Adds tens of gigabytes and the same share-alike obligations for coverage
+      that overlaps wikitext; pick it only for a deliberate multilingual experiment.
+licensing:
+  repository_license: Apache-2.0
+  model_license: Apache-2.0
+  tier_1_license: CC0-1.0
+  tier_1_basis: Tier 1 is a deterministic token-ID transformation of the T10 fixtures,
+    which were authored for this repository and released CC0-1.0. No third-party
+    text enters the corpus, so the derived corpus inherits CC0-1.0 and is compatible
+    with the Apache-2.0 repository.
+  tier_2_obligations:
+  - 'CC-BY-SA-3.0 (Salesforce/wikitext, wikimedia/wikipedia) requires attribution
+    and is share-alike: a committed derivative would have to be relicensed away
+    from Apache-2.0.'
+  - GFDL (Salesforce/wikitext, wikimedia/wikipedia) adds copy-of-licence and invariant-section
+    obligations on redistribution.
+  - ODC-BY (allenai/c4) requires attribution to the database producer and a notice
+    of the licence on any redistributed database or derivative database.
+  third_party_rows_committed: false
+  third_party_rows_statement: No row, excerpt, or tokenization of any tier-2 dataset
+    is committed to this repository. Only dataset identifiers, repository revisions,
+    and licence metadata are recorded. That is why the repository remains Apache-2.0
+    clean while still pinning exactly what a future calibration run would read.
+  evaluation_overlap:
+    overlaps: true
+    scope: quality_subset (4 of 13 tier-1 samples)
+    statement: The four CC0 quality prompts are both calibrated on and evaluated
+      on. This is deliberate - the observers should see the distribution the delta
+      is measured on - but it biases the measured quality delta optimistically,
+      because the quantized model's ranges were fitted on the evaluation inputs.
+      T41-T43 must report this overlap alongside any quality number, and must
+      not present the delta as evidence of generalization. Admitting a tier-2
+      corpus is the way to remove the overlap.
+artifact_manifest_contract:
+  plan_section: '17.4'
+  field: calibration_dataset_revision
+  value: t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987
+  instruction: Every T41+ artifact manifest that reports a quantized result must
+    carry this exact string. A manifest whose calibration_dataset_revision does
+    not match the value this file regenerates was produced against a different
+    corpus and its quality delta is not comparable.
+commands:
+  generate: uv run python -m slm_lab.quantization.calibration generate
+  verify: uv run python -m slm_lab.quantization.calibration verify
+  verify_online: uv run python -m slm_lab.quantization.calibration verify --online
+  check: uv run python -m slm_lab.quantization.calibration check
+  recompute_corpus_hash: python3 -c "import hashlib,json,yaml; c=yaml.safe_load(open('configs/quantization/calibration.yaml'))['calibration_corpus'];
+    b=json.dumps(c,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode('utf-8');
+    print(hashlib.sha256(b).hexdigest())"
+  tests: uv run pytest tests/quantization
