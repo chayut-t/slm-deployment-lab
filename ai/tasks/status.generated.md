@@ -105,13 +105,13 @@ graph TD
 | T12 — Static cache and tensor contract | completed | T11 | — | ai/worklogs/2026-07-27-T12-static-cache-contract.md |
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
 | T20 — Four-context ONNX export matrix | completed | T12 | t9_heavy_io | ai/worklogs/2026-07-30-T20-onnx-export-matrix.md |
-| T21 — ONNX Runtime CPU parity and graph inspection | ready | T20 | — | — |
+| T21 — ONNX Runtime CPU parity and graph inspection | in_progress | T20 | — | — |
 | T22 — QNN candidates and packaging | blocked | T21 | t9_heavy_io | — |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
-| T40 — AIMET and calibration environment | ready | T10, T20 | t9_heavy_io | — |
+| T40 — AIMET and calibration environment | in_progress | T10, T20 | t9_heavy_io | — |
 | T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
@@ -128,8 +128,8 @@ graph TD
 
 ## Summary
 
-- ready: 4
-- in_progress: 0
+- ready: 2
+- in_progress: 2
 - blocked: 11
 - completed: 15
 
