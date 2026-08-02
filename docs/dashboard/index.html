@@ -1,0 +1,812 @@
+<title>SLM Lab — Project Dashboard</title>
+<style>
+  :root {
+    --page: #F6F7F5;
+    --card: #FFFFFF;
+    --ink: #18222C;
+    --ink-2: #4E5B67;
+    --ink-3: #7A8692;
+    --hairline: #E2E5E1;
+    --copper: #B4551C;
+    --copper-soft: #F6E9DF;
+    --done: #0B7A0B;
+    --done-bg: #E4F3E4;
+    --ready: #8A5F00;
+    --ready-bg: #FBEFD2;
+    --blocked: #5B6570;
+    --blocked-bg: #EAEDEF;
+    --bar-done: #0ca30c;
+    --bar-ready: #fab219;
+    --bar-blocked: #A8B1BA;
+    --code-bg: #EFF1EE;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0F141A;
+      --card: #161D25;
+      --ink: #DCE3E9;
+      --ink-2: #97A4B0;
+      --ink-3: #6E7B87;
+      --hairline: #263039;
+      --copper: #E08A4C;
+      --copper-soft: #2B2119;
+      --done: #6FCE6F;
+      --done-bg: #14290F;
+      --ready: #E9BE55;
+      --ready-bg: #2E2510;
+      --blocked: #9AA5AF;
+      --blocked-bg: #222A32;
+      --bar-blocked: #4E5964;
+      --code-bg: #1E2630;
+    }
+  }
+  :root[data-theme="light"] {
+    --page: #F6F7F5; --card: #FFFFFF; --ink: #18222C; --ink-2: #4E5B67;
+    --ink-3: #7A8692; --hairline: #E2E5E1; --copper: #B4551C; --copper-soft: #F6E9DF;
+    --done: #0B7A0B; --done-bg: #E4F3E4; --ready: #8A5F00; --ready-bg: #FBEFD2;
+    --blocked: #5B6570; --blocked-bg: #EAEDEF; --bar-done: #0ca30c; --bar-ready: #fab219;
+    --bar-blocked: #A8B1BA; --code-bg: #EFF1EE;
+  }
+  :root[data-theme="dark"] {
+    --page: #0F141A; --card: #161D25; --ink: #DCE3E9; --ink-2: #97A4B0;
+    --ink-3: #6E7B87; --hairline: #263039; --copper: #E08A4C; --copper-soft: #2B2119;
+    --done: #6FCE6F; --done-bg: #14290F; --ready: #E9BE55; --ready-bg: #2E2510;
+    --blocked: #9AA5AF; --blocked-bg: #222A32; --bar-done: #0ca30c; --bar-ready: #fab219;
+    --bar-blocked: #4E5964; --code-bg: #1E2630;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Charter", "Iowan Old Style", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 80px;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+  .reading { max-width: 760px; }
+
+  h1, h2, h3, h4 {
+    font-family: "Avenir Next", "Avenir", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: 2.3rem; font-weight: 700; line-height: 1.15; }
+  h2 { font-size: 1.5rem; font-weight: 650; margin: 0 0 6px; }
+  h3 { font-size: 1.12rem; font-weight: 650; }
+  p { margin: 0.55em 0; }
+
+  .mono, .chip, .tid, .eyebrow, .stat .num, .metric b, .minutes {
+    font-family: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--copper);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  section { margin-top: 64px; }
+  .section-head { border-left: 3px solid var(--copper); padding-left: 16px; margin-bottom: 24px; }
+  .section-head .sub { color: var(--ink-2); font-size: 1rem; margin-top: 4px; }
+
+  header.hero { padding: 56px 0 8px; }
+  .hero .meta { color: var(--ink-2); margin-top: 14px; font-size: 1.02rem; max-width: 68ch; }
+  .hero .stamp { color: var(--ink-3); font-size: 0.85rem; margin-top: 18px; }
+
+  /* Stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin: 26px 0 18px; }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 14px 16px 12px;
+  }
+  .stat .num { font-size: 2rem; font-weight: 600; line-height: 1.1; }
+  .stat .lbl { font-size: 0.82rem; color: var(--ink-2); margin-top: 2px;
+    font-family: "Avenir Next", "Helvetica Neue", sans-serif; }
+  .stat .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; }
+
+  /* Progress bar */
+  .bar { display: flex; gap: 2px; height: 14px; border-radius: 7px; overflow: hidden; margin: 6px 0 10px; }
+  .bar span { display: block; height: 100%; }
+  .bar-note { color: var(--ink-2); font-size: 0.88rem; font-family: "Avenir Next", "Helvetica Neue", sans-serif; }
+
+  /* Status chips */
+  .chip {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .chip.done { color: var(--done); background: var(--done-bg); }
+  .chip.ready { color: var(--ready); background: var(--ready-bg); }
+  .chip.blocked { color: var(--blocked); background: var(--blocked-bg); }
+
+  .tid { font-size: 0.82rem; color: var(--copper); font-weight: 600; }
+
+  /* Critical path rail */
+  .rail-scroll { overflow-x: auto; padding-bottom: 6px; }
+  .rail { display: flex; align-items: stretch; gap: 0; min-width: 720px; margin-top: 8px; }
+  .rail .node {
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 12px 14px;
+    min-width: 128px;
+    flex: 1;
+  }
+  .rail .node.here { border-color: var(--copper); box-shadow: 0 0 0 1px var(--copper); }
+  .rail .node .t { font-family: "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 600; font-size: 0.88rem; margin: 6px 0 8px; line-height: 1.3; }
+  .rail .arrow { align-self: center; color: var(--ink-3); padding: 0 6px; font-size: 1.1rem; flex: 0 0 auto; }
+  .here-tag { font-size: 0.68rem; color: var(--copper); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* Done groups */
+  .lane { background: var(--card); border: 1px solid var(--hairline); border-radius: 10px; padding: 20px 24px; margin-bottom: 16px; }
+  .lane h3 { margin-bottom: 4px; }
+  .lane .lane-sub { color: var(--ink-2); font-size: 0.92rem; margin-bottom: 12px; }
+  .tasklist { list-style: none; margin: 0; padding: 0; }
+  .tasklist li { display: grid; grid-template-columns: 48px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--hairline); }
+  .tasklist li:first-child { border-top: none; }
+  .tasklist .desc { color: var(--ink); }
+  .tasklist .desc .why { color: var(--ink-2); font-size: 0.94rem; }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 18px; }
+  .metric { background: var(--copper-soft); border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; color: var(--ink-2);
+    font-family: "Avenir Next", "Helvetica Neue", sans-serif; }
+  .metric b { display: block; color: var(--ink); font-size: 1.25rem; font-weight: 600; margin-bottom: 2px; }
+  .metric .src { font-size: 0.78rem; color: var(--ink-3); display: block; margin-top: 4px; }
+
+  /* Next list */
+  .next { background: var(--card); border: 1px solid var(--hairline); border-radius: 10px; padding: 18px 24px; margin-bottom: 14px;
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: start; }
+  .next h3 { margin-bottom: 2px; }
+  .next .why { grid-column: 1 / -1; color: var(--ink-2); font-size: 0.98rem; }
+  .next.priority { border-left: 4px solid var(--copper); }
+  .prio-tag { font-size: 0.7rem; color: var(--copper); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* Learning digest */
+  .learn {
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 26px 30px 22px;
+    margin-bottom: 22px;
+  }
+  .learn-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .learn-head .ln { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--copper); font-weight: 700; font-size: 0.95rem; }
+  .minutes { color: var(--ink-3); font-size: 0.8rem; margin-left: auto; }
+  .learn .covers { color: var(--ink-3); font-size: 0.85rem; font-family: "Avenir Next", "Helvetica Neue", sans-serif; margin-bottom: 12px; }
+  .learn h4 { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 18px 0 6px; }
+  .learn ul { margin: 6px 0; padding-left: 22px; }
+  .learn li { margin: 5px 0; }
+  .npu-note {
+    border-left: 3px solid var(--copper);
+    padding: 4px 0 4px 14px;
+    margin-top: 16px;
+    color: var(--ink);
+    font-size: 0.98rem;
+  }
+  .npu-note .k { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--copper); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .toc { background: var(--card); border: 1px solid var(--hairline); border-radius: 10px; padding: 18px 24px; margin-bottom: 28px; }
+  .toc table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .toc td { padding: 6px 8px 6px 0; border-top: 1px solid var(--hairline); vertical-align: baseline; }
+  .toc tr:first-child td { border-top: none; }
+  .toc a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--ink-3); }
+  .toc a:hover { color: var(--copper); border-bottom-color: var(--copper); }
+
+  /* Alignment */
+  .align-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .align-col { background: var(--card); border: 1px solid var(--hairline); border-radius: 10px; padding: 20px 24px; }
+  .align-col ul { padding-left: 20px; margin: 8px 0 0; }
+  .align-col li { margin: 7px 0; }
+
+  /* Glossary */
+  .glossary { columns: 2; column-gap: 40px; }
+  @media (max-width: 720px) { .glossary { columns: 1; } }
+  .glossary dl { margin: 0; }
+  .gterm { break-inside: avoid; margin-bottom: 14px; }
+  .gterm dt { font-family: "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 650; font-size: 0.95rem; }
+  .gterm dd { margin: 2px 0 0; color: var(--ink-2); font-size: 0.92rem; line-height: 1.5; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.86em; background: var(--code-bg);
+    padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--copper); }
+  em.term { font-style: normal; border-bottom: 1px dotted var(--ink-3); }
+  .footer-note { margin-top: 70px; color: var(--ink-3); font-size: 0.85rem; border-top: 1px solid var(--hairline); padding-top: 18px; }
+  :focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">SLM Deployment Lab · Qwen3-0.6B · Status Report</div>
+    <h1>From a model checkpoint to a Qualcomm NPU</h1>
+    <p class="meta">
+      One small language model, three kinds of hardware. The goal of this project is for
+      <strong>you</strong> to learn SLM deployment end to end — and to come out an expert at
+      running small models on <strong>Qualcomm NPUs</strong>. Apple&nbsp;M4 and NVIDIA CUDA are
+      the comparison platforms; Qualcomm is the protected priority.
+    </p>
+    <p class="stamp">Dashboard updated 2026-08-02 (adds T21, T40, LEARN-10, LEARN-11) · from <code>ai/tasks/task_graph.yaml</code>, worklogs, and the LEARN sheets · target finish before 2026-09-14</p>
+  </header>
+
+  <!-- ============ STATUS ============ -->
+  <section id="status">
+    <div class="section-head">
+      <h2>Where the project stands</h2>
+      <div class="sub">End of week 2 of the six-week plan. Counts below are generated from <code>ai/tasks/task_graph.yaml</code>.</div>
+    </div>
+
+    <!-- BEGIN GENERATED: status -->
+    <div class="tiles">
+      <div class="stat"><div class="num">17<span style="color:var(--ink-3);font-size:1.1rem;">/30</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
+      <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
+      <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
+    </div>
+
+    <div class="bar" role="img" aria-label="Task progress: 17 completed, 4 ready, 9 blocked, of 30 tasks">
+      <span style="flex:17;background:var(--bar-done)"></span>
+      <span style="flex:4;background:var(--bar-ready)"></span>
+      <span style="flex:9;background:var(--bar-blocked)"></span>
+    </div>
+    <!-- END GENERATED: status -->
+    <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection and the CPU-parity machinery (T21),
+      and the quantization lane has opened (T40). The project is now entering Phase 2: getting <strong>your own</strong>
+      Qwen3 graphs compiled and profiled on Qualcomm hardware.</div>
+
+    <p style="margin-top:22px;">
+      In plain terms: the lab has a pinned model, a trustworthy measurement rulebook, frozen graph
+      contracts, exported and <em>inspected</em> ONNX graphs, a frozen calibration corpus, working
+      Qualcomm cloud tooling, a real baseline run on a physical Snapdragon&nbsp;X&nbsp;Elite, and a
+      hand-written Apple/MLX runtime. What it does <em>not</em> have yet is the headline act:
+      <strong>your own Qwen3 graphs running on the Hexagon NPU</strong>, and the quantization
+      measurements that follow. The very next task, T22, is the NPU packaging work itself.
+    </p>
+
+    <h3 style="margin-top:30px;">The road to the NPU <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">(critical path)</span></h3>
+    <div class="rail-scroll">
+      <!-- BEGIN GENERATED: critical-path -->
+      <div class="rail">
+        <div class="node">
+          <span class="chip done">Done</span>
+          <div class="t">T20 · Export 8 ONNX graphs</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">Prefill + decode at 4 context sizes</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <span class="chip done">Done</span>
+          <div class="t">T21 · Inspect graphs + parity machinery</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">Graph inspection + ORT parity runner</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node here">
+          <span class="chip ready">Ready</span> <span class="here-tag">← you are here</span>
+          <div class="t">T22 · Package QNN candidates</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">Compiler-friendly rewrites</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <span class="chip blocked">Blocked</span>
+          <div class="t">T31 · Compile &amp; profile on 3 Qualcomm targets</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">X Elite, IQ-9075, 8 Elite</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <span class="chip blocked">Blocked</span>
+          <div class="t">T33 · Qualcomm floating-point milestone</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">End-to-end NPU generation</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <span class="chip blocked">Blocked</span>
+          <div class="t">T43 · Quantized NPU deployment</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">W8 / W4 on device</div>
+        </div>
+      </div>
+      <!-- END GENERATED: critical-path -->
+    </div>
+  </section>
+
+  <!-- ============ DONE ============ -->
+  <section id="done">
+    <div class="section-head">
+      <h2>What has been done</h2>
+      <div class="sub">Completed tasks, grouped by what they built. Every one has a public worklog in <code>ai/worklogs/</code>.</div>
+    </div>
+
+    <div class="lane">
+      <h3>Foundations &amp; process <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">5 tasks</span></h3>
+      <div class="lane-sub">The rules that make every later number trustworthy and every session replaceable.</div>
+      <ul class="tasklist">
+        <li><span class="tid">T00</span><div class="desc">Pinned the exact Qwen3-0.6B model revision, tokenizer, and toolchain versions in an ADR. <span class="why">No result is comparable without this.</span></div></li>
+        <li><span class="tid">T01</span><div class="desc">Set up the repo, environments, artifact manifests, and the external-SSD storage preflight. <span class="why">Big files live on the T9 drive, never in Git.</span></div></li>
+        <li><span class="tid">T02</span><div class="desc">Confirmed real access to Qualcomm AI&nbsp;Hub and Device Cloud, and ran toy jobs. <span class="why">Access was proven, not assumed — including one documented auth failure.</span></div></li>
+        <li><span class="tid">T03</span><div class="desc">Built the machine-readable task graph, generated status page, and worktree conventions. <span class="why">A new agent session can resume from the repo alone.</span></div></li>
+        <li><span class="tid">T04</span><div class="desc">Made the repo work identically for Codex and Claude Code. <span class="why">One policy file, two tools.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="lane">
+      <h3>Model reference &amp; graph contracts <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">6 tasks</span></h3>
+      <div class="lane-sub">The shared "ground truth" every platform is judged against.</div>
+      <ul class="tasklist">
+        <li><span class="tid">T10</span><div class="desc">Froze prompt and token fixtures — exact token IDs for 128/512/1,024/4,096-token workloads. <span class="why">Two runs only compare if they ate the same tokens.</span></div></li>
+        <li><span class="tid">T11</span><div class="desc">Built a deterministic PyTorch reference (the "oracle"), with a canary output every backend must reproduce: tokens <code>576, 8356, 3950</code>.</div></li>
+        <li><span class="tid">T12</span><div class="desc">Froze the static prefill/decode graph contract with explicit fixed-size KV caches. <span class="why">This is the shape the NPU compiler will see.</span></div></li>
+        <li><span class="tid">T13</span><div class="desc">Froze the benchmark protocol: five timing classes, warm-up rules, medians with bootstrap intervals. <span class="why">Stops false comparisons before any number exists.</span></div></li>
+        <li><span class="tid">T20</span><div class="desc">Exported the full ONNX matrix: 8 graphs (prefill + decode × 4 context sizes) with hash-verified manifests.</div></li>
+        <li><span class="tid">T21</span><div class="desc">Inspected the real exported graphs with a dependency-free reader and built the ONNX Runtime CPU parity runner. <span class="why">The inspection found the compiler risks (see LEARN-10); the parity runner is fault-tested but the first real parity measurement is still to be run.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="lane">
+      <h3>Qualcomm lane <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">3 tasks + T02 above</span></h3>
+      <div class="lane-sub">The priority platform. Cloud tooling works, real-device evidence exists, and the quantization lane has opened.</div>
+      <ul class="tasklist">
+        <li><span class="tid">T30</span><div class="desc">Built compile / inference / profile adapters for AI&nbsp;Hub Workbench. <span class="why">Each stage restarts from a saved manifest, never from a live session; job IDs and URLs are kept private.</span></div></li>
+        <li><span class="tid">T32</span><div class="desc">Ran Qwen3-0.6B on a physical Snapdragon&nbsp;X&nbsp;Elite in Device Cloud using Qualcomm's ready-made GenieX route, with a full timing breakdown of a real generation loop.</div></li>
+        <li><span class="tid">T40</span><div class="desc">Pinned the AIMET quantization environment and froze the calibration corpus with an exact revision, hash, and license trail. <span class="why">No weight quantized yet — this is the frozen input contract that T41's W8 evidence will consume (see LEARN-11).</span></div></li>
+      </ul>
+      <div class="metrics">
+        <div class="metric"><b>NPU placement ✓</b>Toy graph compiled, ran, and profiled on a physical X Elite<span class="src">T02 · Workbench lifecycle, single toy graph</span></div>
+        <div class="metric"><b>363.3 ms</b>Generation total for the Device Cloud baseline (prefill 69.9 ms)<span class="src">T32 · single run, GenieX/llama.cpp route, real X Elite</span></div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <h3>Apple M4 lane <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">2 tasks</span></h3>
+      <div class="lane-sub">The comparison platform you own. Baseline first, then a runtime written from scratch.</div>
+      <ul class="tasklist">
+        <li><span class="tid">T50</span><div class="desc">Pinned MLX-LM as a measured baseline on the Mac mini, reproducing the PyTorch oracle exactly.</div></li>
+        <li><span class="tid">T51</span><div class="desc">Wrote a custom MLX runtime: explicit prefill/decode, fixed-capacity FP16 caches in two layouts, and GQA attention that never copies K/V heads. <span class="why">Matches the oracle token-for-token.</span></div></li>
+      </ul>
+      <div class="metrics">
+        <div class="metric"><b>38.3 tok/s</b>MLX-LM baseline throughput incl. prefill (18-token prompt, small smoke run)<span class="src">T50 · real measurement, M4 Mac mini</span></div>
+        <div class="metric"><b>≈1.26 GB</b>Peak memory reported by MLX for the baseline run<span class="src">T50 · real measurement, M4 Mac mini</span></div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <h3>Automation lane <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">1 task</span></h3>
+      <ul class="tasklist">
+        <li><span class="tid">T72</span><div class="desc">Built a manually-dispatched GitHub Actions workflow that can drive AI&nbsp;Hub jobs safely — fork-blocking, pinned actions, minimal permissions, ephemeral credentials. <span class="why">Reviewed and offline-tested; nothing dispatched yet, no secret stored yet.</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ NEXT ============ -->
+  <section id="next">
+    <div class="section-head">
+      <h2>What to do next</h2>
+      <div class="sub">The tasks that are ready right now. Priority follows the plan: Qualcomm first.</div>
+    </div>
+
+    <div class="next priority">
+      <h3><span class="tid">T22</span> · QNN candidate packaging</h3>
+      <span class="prio-tag">Priority 1 · critical path</span>
+      <div class="why">Turn the inspected reference graphs into candidates Qualcomm's compiler will accept — the compiler-friendly rewrites the LEARN-10 findings (computed shape inputs, the 33.5 MB baked-in mask, the 37 MB decode I/O boundary) point straight at. This is now the only task between today and compiling Qwen3 on the NPU (T31 → T33).</div>
+    </div>
+
+    <div class="next priority">
+      <h3><span class="tid">T41</span> · W8 quantization evidence</h3>
+      <span class="prio-tag">Priority 2 · quantization lane</span>
+      <div class="why">Produce the first real quantization results (W8A16 / W8A8) on top of the calibration corpus T40 froze. The first task in the project that actually quantizes a weight.</div>
+    </div>
+
+    <div class="next">
+      <h3><span class="tid">T52</span> · Apple profiling &amp; context sweep</h3>
+      <span class="prio-tag">Parallel</span>
+      <div class="why">Run the 128→4,096 context sweep on the custom MLX runtime with proper profiling (TTFT, decode rate, memory, thermals). Good parallel work when Qualcomm jobs are waiting.</div>
+    </div>
+
+    <div class="next">
+      <h3><span class="tid">T60</span> · ONNX Runtime CUDA context sweep</h3>
+      <span class="prio-tag">Parallel · lowest priority</span>
+      <div class="why">The NVIDIA lane on free Colab/Kaggle. First to be cut if Qualcomm needs the time — the plan protects the NPU outcome.</div>
+    </div>
+
+    <p style="color:var(--ink-2);font-size:0.95rem;">
+      After those: <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
+      <strong>T33</strong> (the Qualcomm floating-point milestone) → <strong>T42–T43</strong> (W4/LPBQ/LiteMP and quantized NPU deployment),
+      then the demo (T70/T71) and release (T80–T82).
+    </p>
+  </section>
+
+  <!-- ============ LEARNING DIGEST ============ -->
+  <section id="learning" class="reading" style="max-width:820px;">
+    <div class="section-head">
+      <h2>The learning digest — LEARN-00 to LEARN-11</h2>
+      <div class="sub">Everything the completed work teaches, in ~35 minutes of reading. Each checkpoint below
+      summarizes one full study sheet; the deep versions live in <code>build/learning/learn-NN.html</code>.</div>
+    </div>
+
+    <div class="toc">
+      <table>
+        <tr><td class="mono" style="color:var(--copper);">00</td><td><a href="#l00">The evidence contract</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">01</td><td><a href="#l01">Agentic delivery</a></td><td class="minutes">2 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">02</td><td><a href="#l02">Fixtures as a contract</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">03</td><td><a href="#l03">Static graphs &amp; the KV-cache contract</a></td><td class="minutes">4 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">04</td><td><a href="#l04">Benchmarking without false equivalence</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">05</td><td><a href="#l05">ONNX export as a compiler contract</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">06</td><td><a href="#l06">The Qualcomm public pipeline</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">07</td><td><a href="#l07">A real generation loop on a real device</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">08</td><td><a href="#l08">Apple Silicon &amp; MLX</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">09</td><td><a href="#l09">CI as a deployment surface</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">10</td><td><a href="#l10">Reading a graph before a compiler does</a> <span class="chip ready" style="margin-left:6px;">New</span></td><td class="minutes">4 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">11</td><td><a href="#l11">Calibration data as a contract</a> <span class="chip ready" style="margin-left:6px;">New</span></td><td class="minutes">3 min</td></tr>
+      </table>
+    </div>
+
+    <article class="learn" id="l00">
+      <div class="learn-head"><span class="ln">LEARN-00</span><h3>The evidence contract</h3><span class="chip done">Deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T00 + T01 · why a deployment claim needs a pinned revision behind it</div>
+      <p><strong>In plain words:</strong> before measuring anything, the project decided what counts as
+      evidence. A model name like "Qwen3-0.6B" is not an identity — the same name can point to
+      different weights over time. So the lab pins one immutable model revision (an exact commit
+      hash), one hash-verified environment, and wraps every produced file in a
+      <em class="term">manifest</em> that records where it came from. A storage preflight even refuses
+      to write large files when the external drive is not what it claims to be.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>A manifest field is either a <em>claim</em>, a <em>measurement</em>, or <em>provenance</em> — and you should be able to say which.</li>
+        <li>Pins prove the source is reproducible; they say nothing about whether any compiler accepts the model.</li>
+        <li>Refusing to run (the preflight) is a feature: it prevents silent corruption.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      NPU results are extremely version-sensitive: compiler, runtime, and device firmware all change the numbers.
+      An NPU expert's first reflex is "which exact versions produced this?" — this checkpoint installs that reflex.</div>
+    </article>
+
+    <article class="learn" id="l01">
+      <div class="learn-head"><span class="ln">LEARN-01</span><h3>Agentic delivery</h3><span class="chip blocked">Review</span><span class="minutes">~2 min</span></div>
+      <div class="covers">Covers T03 + T04 · a task graph that survives losing the conversation</div>
+      <p><strong>In plain words:</strong> the AI agent session doing the work is disposable; the repository is not.
+      All coordination lives in a dependency-aware <em class="term">task graph</em> (YAML), a status page that is
+      <em>generated</em> from it (so it can never drift), one-writer-per-file-set rules, and a strict
+      public/private split: the committed <code>ai/</code> tree is public, the ignored <code>.ai-local/</code>
+      tree holds session IDs and raw output. Git hooks reject the common mistakes automatically.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>"Completed" is a strong word here: dependencies done, outputs delivered, worklog published, changes integrated.</li>
+        <li>A new agent (or you, months later) can reconstruct who owns what from the repo alone.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      Indirectly: it is what lets the Qualcomm work proceed across many sessions without losing evidence.
+      Review-level attention is enough.</div>
+    </article>
+
+    <article class="learn" id="l02">
+      <div class="learn-head"><span class="ln">LEARN-02</span><h3>Fixtures as a contract</h3><span class="chip done">Deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T10 · frozen prompts, exact token IDs, and the limits of "same input"</div>
+      <p><strong>In plain words:</strong> two runs are only comparable if they consumed the same
+      <em>tokens</em>, not the same <em>text</em> — tokenizers can differ, chat templates can differ,
+      and "a 512-token prompt" can mean different work on two machines. So the lab commits three
+      layers: the authored text, the generated token-ID bundle, and the workload manifest, all
+      chained by hashes. A <em class="term">canary</em> (a tiny prompt with a known exact output) sits beside
+      the benchmark workloads: it measures nothing, but instantly catches a broken backend.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>Both text and token IDs are committed, because each alone proves too little.</li>
+        <li>Canary ≠ benchmark workload ≠ quality case — three different jobs.</li>
+        <li>Licensed datasets (WikiText-2, HellaSwag…) are named and pinned but never committed.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      When your NPU output differs from the reference, the first question is "did it even receive the same
+      tokens?" Frozen fixtures make that question answerable in seconds instead of days.</div>
+    </article>
+
+    <article class="learn" id="l03">
+      <div class="learn-head"><span class="ln">LEARN-03</span><h3>Static graphs &amp; the KV-cache contract</h3><span class="chip done">Deep study</span><span class="minutes">~4 min</span></div>
+      <div class="covers">Covers T11 + T12 · what a compiler-facing graph family has to promise · the most important checkpoint so far</div>
+      <p><strong>In plain words:</strong> this is the heart of NPU deployment. An accelerator wants
+      <em>fixed</em> tensor shapes it can plan memory for; autoregressive decoding wants a cache that
+      <em>grows</em> one token at a time. The resolution: split generation into two frozen graphs —
+      a <em class="term">prefill</em> graph that processes the whole prompt once and fills the
+      <em class="term">KV cache</em>, and a <em class="term">decode</em> graph that takes exactly one token plus the fixed-size
+      cache and returns the next token plus the updated cache. The cache is a fixed-capacity buffer
+      updated by index, never by concatenation. A deterministic PyTorch <em>oracle</em> (T11) defines
+      correct output; the contract (T12) is validated against it before any exporter or compiler is involved.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>Cache shape per layer: <code>[1, 8, C, 128]</code> — 8 physical K/V heads, not 16, because of
+        <em class="term">GQA</em>. That halves cache bytes: FP16 cache ≈ 112 MiB at context 1,024, ≈ 448 MiB at 4,096.</li>
+        <li>Cache capacity exceeds prompt length (160/576/1,152/4,224 for prompts of 128/512/1,024/4,096) so decoding has room to write.</li>
+        <li>"Byte-identical logits" certifies the math path — but not shapes-on-device, placement, or speed.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      This <em>is</em> the Qualcomm skill. Hexagon/HTP compiles static graphs; every LLM-on-NPU deployment in
+      industry uses exactly this prefill/decode split with an explicit cache contract. Know this cold —
+      shapes, dtypes, and why each number is what it is.</div>
+    </article>
+
+    <article class="learn" id="l04">
+      <div class="learn-head"><span class="ln">LEARN-04</span><h3>Benchmarking without false equivalence</h3><span class="chip done">Deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T13 · where a timer starts, and what a median is allowed to claim</div>
+      <p><strong>In plain words:</strong> most published inference numbers are incomparable for boring
+      reasons: timers that never waited for the GPU to finish, warm-up folded into the measurement,
+      a mean over a lopsided distribution, or mixing a single-graph latency with a full request
+      round-trip. The frozen protocol names <strong>five timing classes</strong> and forbids averaging
+      across them. Statistics policy: medians with bootstrap confidence intervals, raw samples kept,
+      p90/p95 reported with dispersion.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>On a GPU/NPU, synchronization is <em>part of the timer</em> — an unsynchronized <em class="term">TTFT</em> measures only kernel <em>launch</em>.</li>
+        <li>Hosted-job turnaround (e.g. 45 s) and measured graph latency (e.g. 8 ms) are different classes; only one belongs in a benchmark table.</li>
+        <li>T13 produced no numbers — it is the rulebook later numbers are judged by.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      AI Hub gives you single-graph profile latencies; Device Cloud gives you end-to-end loop timings.
+      An NPU expert never confuses the two — this protocol is the discipline that keeps your Qualcomm
+      claims honest and defensible.</div>
+    </article>
+
+    <article class="learn" id="l05">
+      <div class="learn-head"><span class="ln">LEARN-05</span><h3>ONNX export as a compiler contract</h3><span class="chip done">Deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T20 · eight graphs, four manifests, and one very narrow claim</div>
+      <p><strong>In plain words:</strong> the T12 contract became eight real <em class="term">ONNX</em> graphs —
+      prefill + decode at each of the four context sizes. Model weights are forced into
+      <em class="term">external data</em> files (kept out of Git, hashed separately), every graph passes the ONNX
+      checker and exact name/dtype/shape conformance, and each manifest re-hashes everything it asserts.
+      The claim earned is deliberately small: <em>the pinned toolchain produced valid graphs that match
+      the contract</em>. Nothing more.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>Export success ≠ compiler acceptance ≠ NPU placement ≠ performance. Four separate hurdles.</li>
+        <li>The decode cache update is a dynamic <em>index</em> into a fixed-shape tensor — concatenation would break the static-shape promise.</li>
+        <li>A passing ONNX checker does <em>not</em> rule out an unsupported operator on the NPU.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      ONNX is the doorway format into Qualcomm's toolchain. Knowing exactly what an export does and does not
+      prove is what separates "it exported fine!" from an engineer who predicts where the QNN compiler will complain.</div>
+    </article>
+
+    <article class="learn" id="l06">
+      <div class="learn-head"><span class="ln">LEARN-06</span><h3>The Qualcomm public pipeline</h3><span class="chip ready">Hands-on + deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T02 + T30 · authentication, a bounded toy lifecycle, and real NPU placement</div>
+      <p><strong>In plain words:</strong> the first Qualcomm contact produced two things worth studying.
+      First, a documented authentication failure — kept as a failure analysis with a safe credential
+      procedure (the credential is never printed or logged). Second, one complete free
+      <strong>compile → inference → profile</strong> lifecycle of a toy graph on a <em>physical</em>
+      Snapdragon&nbsp;X&nbsp;Elite through <em class="term">AI Hub Workbench</em>, with confirmed NPU placement.
+      The T30 adapters wrap each stage so it can restart from a saved, content-addressed manifest
+      rather than a live job handle, and so no job ID, URL, or credential can leak into a public file.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>Service <em>turnaround</em> (queue + scheduling) is not device <em>latency</em>.</li>
+        <li>Unobserved values are recorded as <code>null</code>, never inferred — an "unknown" in a profile is honest data.</li>
+        <li>A toy proving the lifecycle says nothing about whether a 0.6B transformer compiles or places on the NPU.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      This is your primary toolchain. The hands-on part (re-running the lifecycle with your own credentials)
+      is worth doing once yourself — it burns the compile/infer/profile mental model in, and it is the
+      exact loop T31 will run at Qwen scale.</div>
+    </article>
+
+    <article class="learn" id="l07">
+      <div class="learn-head"><span class="ln">LEARN-07</span><h3>A real generation loop on a real device</h3><span class="chip ready">Hands-on + deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T32 · what a persistent device-side loop measures that a graph benchmark cannot</div>
+      <p><strong>In plain words:</strong> a Workbench profile times one graph submission. A
+      <em class="term">Device Cloud</em> session runs a <em>persistent generation loop</em> on a physical Snapdragon
+      and lets you separate every stage: artifact access, model load, tokenization, prefill, first
+      decode, remaining decode, generation total, and full request wall time. The published single
+      run (Qwen3-0.6B via Qualcomm's ready-made <em class="term">GenieX</em>/llama.cpp route): prefill 69.9 ms,
+      first decode 0.55 ms, remaining decode 292.8 ms, generation total 363.3 ms. It is published as
+      one run — not a median — because one sample licenses no statistics.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>Load and tokenization are excluded from decode throughput but included in request wall time — both are real, they answer different questions.</li>
+        <li>GenieX proves the <em>device</em> works; it proves nothing about <em>this project's</em> custom QNN graphs. That gap is exactly what T31–T33 must close.</li>
+        <li>Device identity evidence stayed private; only the sanitized latency aggregate was published.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      End-to-end loops on real Snapdragon hardware are the deliverable of your target role. Knowing which
+      timing boundary each number sits inside is what makes your device claims credible.</div>
+    </article>
+
+    <article class="learn" id="l08">
+      <div class="learn-head"><span class="ln">LEARN-08</span><h3>Apple Silicon &amp; MLX</h3><span class="chip done">Deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T50 + T51 · from a packaged baseline to a runtime you wrote yourself</div>
+      <p><strong>In plain words:</strong> first pin the packaged thing (<em class="term">MLX</em>-LM as a versioned
+      baseline on the M4, reproducing the oracle exactly, 38.3 tok/s on the smoke prompt), then
+      replace it with your own runtime: explicit prefill and one-token decode, fixed-capacity FP16
+      caches in two layouts (head-major and sequence-major), and — the key move — handing the
+      8 physical K/V heads straight to MLX's grouped-query attention <em>without ever tiling them
+      to 16</em>. The obvious implementation (repeat K/V to match query heads) doubles cache traffic
+      and is simply wrong on a bandwidth-limited machine.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>The same T12 cache contract drove a second, completely different backend — proof the contract is real, not ONNX-flavored.</li>
+        <li>MLX is lazy: without an explicit evaluation fence, your timer measures graph <em>construction</em>, not compute.</li>
+        <li>Fixed-capacity caches trade a little memory for zero reallocation on <em class="term">unified memory</em>.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      Cache layout, GQA-aware attention, and memory-bandwidth thinking transfer directly to Hexagon — the
+      NPU is even more bandwidth- and layout-sensitive than the M4. This is the same problem in a friendlier gym.</div>
+    </article>
+
+    <article class="learn" id="l09">
+      <div class="learn-head"><span class="ln">LEARN-09</span><h3>CI as a deployment surface</h3><span class="chip ready">Hands-on + deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T72 · a manually dispatched workflow that can touch a paid service</div>
+      <p><strong>In plain words:</strong> the one place where a mistake costs money or leaks a token.
+      A manual <code>workflow_dispatch</code> GitHub Actions workflow drives AI&nbsp;Hub with typed
+      inputs (target device, context, precision, stage), behind layered defenses: an authorization
+      job that refuses fork dispatches, a protected environment, minimal permissions, pinned
+      actions, and a mode-600 ephemeral credential file (never an environment variable). One
+      dispatch runs one stage — never the whole pipeline. Status: reviewed and offline-tested;
+      <strong>no secret stored, nothing dispatched</strong>. The worklog's best part is the three rounds of
+      security findings the first draft needed.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>The GitHub runner is only an orchestrator — Qualcomm hardware runs the model.</li>
+        <li>Local scripts stay the implementation; the workflow is an operator surface over them.</li>
+        <li>Adding the secret and first dispatch are deliberately left to you (hands-on).</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      Real NPU teams run their compile/profile fleets through CI. Being able to build — and security-review —
+      an automation layer over AI Hub is a differentiating, role-relevant skill.</div>
+    </article>
+
+    <article class="learn" id="l10">
+      <div class="learn-head"><span class="ln">LEARN-10</span><h3>Reading a graph before a compiler does</h3><span class="chip done">Deep study</span><span class="minutes">~4 min</span></div>
+      <div class="covers">Covers T21 · what an exported graph tells you, and what only a measurement can</div>
+      <p><strong>In plain words:</strong> T20 proved the eight graphs export and match the contract.
+      T21 asked the next question: <em>what will a static-shape compiler think of them?</em> A
+      dependency-free protobuf reader (no torch, no onnx, no numpy) walked the real graphs and found
+      that a graph can be fully static at its boundary and still be hostile inside. The findings,
+      ranked by consequence for T22: <strong>1,231 computed shape inputs</strong> (shapes recomputed
+      at runtime even though every answer is a known constant), <strong>56 scatter-based cache
+      writes</strong>, a <strong>37 MB per-token I/O boundary</strong> on the long-context decode
+      graph, and a <strong>33.5 MB causal mask baked into a single node</strong>. Alongside it, an
+      ONNX Runtime parity runner was built and fault-tested (17 injected faults caught) — but its
+      report says in its first line that it has <em>never executed a real graph</em>. The headline
+      parity number does not exist yet, and the write-up refuses to pretend otherwise.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>"Every dimension is static" and "compiler-friendly" are different claims — computed shapes must be folded to constants before QNN sees them.</li>
+        <li>A cache-corruption bug can pass decode step one perfectly and only show at step three; that is why cache prefix checks are exact, never tolerant.</li>
+        <li>Every severity in the report is a structural judgment about a stated target, not a compile result. No compiler or device was run.</li>
+        <li>An absent finding is read carefully: "we looked and it is clean" is different from "there was nothing to look at".</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      This is exactly the skill of predicting where the QNN compiler will complain before spending a
+      submission on it. The findings list is literally the work order for T22 — the next task on the
+      critical path.</div>
+    </article>
+
+    <article class="learn" id="l11">
+      <div class="learn-head"><span class="ln">LEARN-11</span><h3>Calibration data as a contract</h3><span class="chip done">Deep study</span><span class="minutes">~3 min</span></div>
+      <div class="covers">Covers T40 · freezing the inputs to quantization before quantizing anything</div>
+      <p><strong>In plain words:</strong> post-training quantization reads activation ranges off a
+      handful of sample inputs and turns them into scales and zero-points. Change the inputs and you
+      change the deployed model. So the calibration corpus gets the same treatment the tokenizer got
+      in T10: an exact revision, a frozen preprocessing rule, a hash that breaks if either moves,
+      and a license trail. Two honest design calls stand out: short fixtures were <em>tiled</em>
+      rather than padded to reach the fixed prefill length (padding would distort the activation
+      statistics the quantizer learns from), and the coverage argument states exactly where it stops
+      — the corpus touches only 175 of 151,936 embedding rows, and the docs say so instead of hiding
+      it. The AIMET environment is pinned but honestly labeled: verified as a dependency
+      <em>resolution</em>, not as a working installation.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>No weight was quantized and AIMET never ran — this is a frozen input contract, not quantization evidence. T41 produces the first real numbers.</li>
+        <li>Calibrating and evaluating on the same four samples would flatter any quality delta; T41 has to report around that.</li>
+        <li>A parity gate can exit 0 with a verdict of <code>partial</code> — reading the scope field is part of reading the result.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      Quantization is the deepest Qualcomm-specific skill in this project, and its most common failure
+      mode in practice is sloppy calibration. Knowing why the corpus is a contract — and where its
+      coverage argument stops — is what makes your W8/W4 claims in weeks 3–4 defensible.</div>
+    </article>
+  </section>
+
+  <!-- ============ ALIGNMENT ============ -->
+  <section id="alignment">
+    <div class="section-head">
+      <h2>Is the learning on track for the goal?</h2>
+      <div class="sub">Goal: expert-level SLM deployment on Qualcomm NPUs by the end of the project.</div>
+    </div>
+    <p style="max-width:76ch;">
+      <strong>Yes — with one honest caveat.</strong> The first two weeks built the part experts are
+      actually judged on: contracts, evidence, and measurement discipline. But the NPU-specific core —
+      compiling <em>your own</em> Qwen3 graphs onto Hexagon, reading real profiles, and the whole
+      quantization study — is still ahead. That is by design (weeks 3–4 in the plan), and the plan
+      protects it: if time runs short, NVIDIA and polish get cut first, never the Qualcomm pipeline.
+      The single most important thing for the goal right now is to keep T22 → T31 → T33 moving.
+    </p>
+    <div class="align-grid" style="margin-top:18px;">
+      <div class="align-col">
+        <h3 style="color:var(--done);">✓ Expert skills you already have evidence for</h3>
+        <ul>
+          <li>Static prefill/decode graph design with explicit KV-cache contracts — <em>the</em> core LLM-on-NPU technique (LEARN-03)</li>
+          <li>The AI Hub compile → infer → profile lifecycle, run on a physical X Elite (LEARN-06)</li>
+          <li>Reading device timing boundaries on real Snapdragon hardware (LEARN-07)</li>
+          <li>ONNX export for hardware compilers, and what it does not prove (LEARN-05)</li>
+          <li>Honest benchmarking: timing classes, sync, statistics (LEARN-04)</li>
+          <li>Version pinning, manifests, and evidence discipline (LEARN-00, -02)</li>
+          <li>GQA-aware cache layout and bandwidth thinking, proven in a second backend (LEARN-08)</li>
+          <li>Reading a graph the way a compiler will — finding NPU-hostile structure before spending a submission (LEARN-10)</li>
+          <li>Calibration data as a frozen, hash-verified contract for quantization (LEARN-11)</li>
+        </ul>
+      </div>
+      <div class="align-col">
+        <h3 style="color:var(--ready);">→ The NPU-expert core still ahead</h3>
+        <ul>
+          <li><strong>Compile Qwen3 on Hexagon</strong> — QNN candidate packaging, compiler errors, operator boundaries (T22, T31)</li>
+          <li><strong>Read real NPU profiles at model scale</strong> — placement, memory, per-op behavior (T31, T33)</li>
+          <li><strong>Quantization for the NPU</strong> — W8A16/W8A8/W4A8, AIMET, LPBQ, LiteMP, sensitivity maps (T41–T43; the inputs are frozen, no weight quantized yet). The deepest Qualcomm-specific skill in the project.</li>
+          <li><strong>End-to-end custom generation loop on device</strong> — replacing GenieX with your own graphs (T33)</li>
+          <li>Hands-on checkpoints you can do today: re-run the Workbench toy lifecycle (LEARN-06) and study the Device Cloud record (LEARN-07)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GLOSSARY ============ -->
+  <section id="glossary" class="reading" style="max-width:920px;">
+    <div class="section-head">
+      <h2>Glossary</h2>
+      <div class="sub">The jargon used above, in one place.</div>
+    </div>
+    <div class="glossary"><dl>
+      <div class="gterm"><dt>SLM</dt><dd>Small Language Model — a compact LLM (here Qwen3-0.6B, 0.6 billion parameters) small enough to run on phones, laptops, and edge devices.</dd></div>
+      <div class="gterm"><dt>NPU</dt><dd>Neural Processing Unit — a chip block specialized for neural-network math at low power. On Snapdragon it is the Hexagon processor; its tensor engine is called HTP.</dd></div>
+      <div class="gterm"><dt>Hexagon / HTP</dt><dd>Qualcomm's NPU and its Tensor Processor. Runs compiled static graphs; the main deployment target of this project.</dd></div>
+      <div class="gterm"><dt>Snapdragon X Elite</dt><dd>Qualcomm's laptop chip and the project's primary device target. Dragonwing IQ-9075 (edge/IoT) and Snapdragon 8 Elite (mobile) are the comparison targets.</dd></div>
+      <div class="gterm"><dt>Prefill</dt><dd>The phase that processes the whole prompt in one pass and fills the KV cache. Compute-heavy.</dd></div>
+      <div class="gterm"><dt>Decode</dt><dd>The phase that generates one token at a time using the cache. Memory-bandwidth-heavy. Repeated once per output token.</dd></div>
+      <div class="gterm"><dt>KV cache</dt><dd>Stored Key/Value attention tensors for every past token, so each new token doesn't recompute the whole history. Its size and layout dominate LLM inference engineering.</dd></div>
+      <div class="gterm"><dt>GQA</dt><dd>Grouped-Query Attention — several query heads share one K/V head. Qwen3-0.6B has 16 query heads but only 8 K/V heads, halving cache size — if the runtime doesn't naively copy them back.</dd></div>
+      <div class="gterm"><dt>Static graph</dt><dd>A computation graph with all tensor shapes fixed at compile time. NPU compilers require this; it's why the prefill/decode split and fixed-capacity caches exist.</dd></div>
+      <div class="gterm"><dt>ONNX</dt><dd>An open interchange format for model graphs. The project's doorway from PyTorch into hardware toolchains.</dd></div>
+      <div class="gterm"><dt>External data (ONNX)</dt><dd>Model weights stored in files beside the graph instead of inside it — required for large models, hashed and transported separately.</dd></div>
+      <div class="gterm"><dt>ONNX Runtime (ORT)</dt><dd>Microsoft's engine that executes ONNX graphs on CPU, CUDA, and other backends. Used for CPU parity checks (T21) and the NVIDIA lane (T60).</dd></div>
+      <div class="gterm"><dt>QNN</dt><dd>Qualcomm's neural-network SDK/format family. A "QNN candidate" is a graph rewritten and packaged to be acceptable to Qualcomm's compiler.</dd></div>
+      <div class="gterm"><dt>AI Hub Workbench</dt><dd>Qualcomm's free public cloud service: upload a model, then quantize, compile, run inference, and profile it on real hosted devices.</dd></div>
+      <div class="gterm"><dt>Device Cloud</dt><dd>Qualcomm's service giving interactive sessions on real Snapdragon machines — used for the end-to-end generation loop, not just single-graph jobs.</dd></div>
+      <div class="gterm"><dt>GenieX</dt><dd>Qualcomm's ready-made on-device LLM runtime route (paired with llama.cpp). Used as a device baseline; it does not exercise the project's own graphs.</dd></div>
+      <div class="gterm"><dt>llama.cpp</dt><dd>A popular portable C/C++ LLM runtime. Powers the ready-made baseline route on Device Cloud.</dd></div>
+      <div class="gterm"><dt>Quantization</dt><dd>Storing weights/activations in fewer bits (8-bit, 4-bit) to shrink memory and speed up inference, at some quality cost. Core NPU skill.</dd></div>
+      <div class="gterm"><dt>W8A16 / W8A8 / W4A8</dt><dd>Quantization recipes: W = weight bits, A = activation bits. W4A8 = 4-bit weights, 8-bit activations.</dd></div>
+      <div class="gterm"><dt>Calibration</dt><dd>Running sample data through a model to choose good quantization scales. The calibration set is frozen in T40 so results are reproducible.</dd></div>
+      <div class="gterm"><dt>AIMET</dt><dd>Qualcomm's open-source quantization toolkit — simulation, calibration, and export of quantized models.</dd></div>
+      <div class="gterm"><dt>LPBQ</dt><dd>Low-Power Block Quantization — an AIMET technique using per-block scales to keep 4-bit weights accurate.</dd></div>
+      <div class="gterm"><dt>LiteMP</dt><dd>Mixed-precision quantization: keep sensitive layers in higher precision, quantize the rest harder, guided by sensitivity analysis.</dd></div>
+      <div class="gterm"><dt>Sensitivity analysis</dt><dd>Measuring how much each layer's quantization hurts output quality, to decide which layers deserve more bits.</dd></div>
+      <div class="gterm"><dt>MLX</dt><dd>Apple's array/ML framework for Apple Silicon. Lazy by default — work runs only when a result is forced, which matters for timing.</dd></div>
+      <div class="gterm"><dt>Unified memory</dt><dd>Apple Silicon design where CPU and GPU share one memory pool (M4: 16 GB at 120 GB/s). No copies between devices — bandwidth becomes the limit.</dd></div>
+      <div class="gterm"><dt>TTFT</dt><dd>Time To First Token — how long from request until the first output token. Dominated by prefill.</dd></div>
+      <div class="gterm"><dt>Canary</dt><dd>A tiny fixed prompt whose exact output (here token IDs 576, 8356, 3950) every backend must reproduce. A correctness tripwire, not a benchmark.</dd></div>
+      <div class="gterm"><dt>Fixture</dt><dd>Frozen test input — committed prompts and exact token IDs — so every platform measures identical work.</dd></div>
+      <div class="gterm"><dt>Manifest</dt><dd>A small JSON record attached to every artifact: hashes, versions, commands, and provenance. What makes a result reproducible and comparable.</dd></div>
+      <div class="gterm"><dt>Oracle</dt><dd>The deterministic pinned PyTorch reference (T11) that defines "correct output" for every other backend.</dd></div>
+      <div class="gterm"><dt>workflow_dispatch</dt><dd>A GitHub Actions trigger that runs a workflow only when a human presses "Run workflow" — used so cloud jobs can never fire by accident.</dd></div>
+    </dl></div>
+  </section>
+
+  <div class="footer-note">
+    Sources: <code>ai/tasks/status.generated.md</code> (2026-08-02 build) · <code>configs/learning/checkpoints.yaml</code> ·
+    <code>docs/project/plan.md</code> · worklogs T00–T72 · <code>docs/results/qualcomm/device-cloud.md</code> ·
+    <code>docs/results/onnx/graph-inspection.md</code>.
+    All numbers above are labeled real measurements from those records; single runs are marked as single runs.
+    Full study sheets: <code>build/learning/learn-00.html</code> … <code>learn-11.html</code>.
+    Status regions of this page are generated in place by <code>scripts/dashboard/build_dashboard.py</code>;
+    the prose is authored and cross-checked against the task graph by the same script.
+  </div>
+
+</div>
