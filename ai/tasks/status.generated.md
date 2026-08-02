@@ -111,8 +111,8 @@ graph TD
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
-| T40 — AIMET and calibration environment | in_progress | T10, T20 | t9_heavy_io | — |
-| T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
+| T40 — AIMET and calibration environment | completed | T10, T20 | t9_heavy_io | ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md |
+| T41 — W8 quantization evidence | ready | T40 | qai_hub_submission | — |
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
 | T50 — MLX-LM baseline | completed | T11 | apple_m4_heavy | ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md |
@@ -128,10 +128,10 @@ graph TD
 
 ## Summary
 
-- ready: 2
-- in_progress: 2
-- blocked: 11
-- completed: 15
+- ready: 3
+- in_progress: 1
+- blocked: 10
+- completed: 16
 
 ## Resource capacities
 
@@ -159,6 +159,7 @@ graph LR
     LEARN_07{{"LEARN-07: What a persistent device-side loop measures that a graph benchmark cannot"}}
     LEARN_08{{"LEARN-08: From a packaged baseline to a runtime you wrote yourself"}}
     LEARN_09{{"LEARN-09: A manually dispatched workflow that can touch a paid service"}}
+    LEARN_11{{"LEARN-11: Freezing the inputs to quantization before quantizing anything"}}
     T00 --> LEARN_00
     T01 --> LEARN_00
     T03 --> LEARN_01
@@ -174,17 +175,19 @@ graph LR
     T50 --> LEARN_08
     T51 --> LEARN_08
     T72 --> LEARN_09
+    T40 --> LEARN_11
 ```
 
 | Checkpoint | Subject | Covers | Built | Sheet |
 |---|---|---|---|---|
-| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-01 | `build/learning/learn-00.html` |
-| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-01 | `build/learning/learn-01.html` |
-| LEARN-02 — Fixtures as a contract | Frozen prompts, exact token IDs, and the limits of "same input" | T10 | 2026-08-01 | `build/learning/learn-02.html` |
-| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-01 | `build/learning/learn-03.html` |
-| LEARN-04 — Benchmarking without false equivalence | Where a timer starts, and what a median is allowed to claim | T13 | 2026-08-01 | `build/learning/learn-04.html` |
-| LEARN-05 — ONNX export as a compiler contract | Eight graphs, four manifests, and one very narrow claim | T20 | 2026-08-01 | `build/learning/learn-05.html` |
-| LEARN-06 — The Qualcomm public pipeline | Authentication, a bounded toy lifecycle, and real NPU placement | T02, T30 | 2026-08-01 | `build/learning/learn-06.html` |
-| LEARN-07 — A real generation loop on a real device | What a persistent device-side loop measures that a graph benchmark cannot | T32 | 2026-08-01 | `build/learning/learn-07.html` |
-| LEARN-08 — Apple Silicon and MLX | From a packaged baseline to a runtime you wrote yourself | T50, T51 | 2026-08-01 | `build/learning/learn-08.html` |
-| LEARN-09 — CI as a deployment surface | A manually dispatched workflow that can touch a paid service | T72 | 2026-08-01 | `build/learning/learn-09.html` |
+| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-02 | `build/learning/learn-00.html` |
+| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-02 | `build/learning/learn-01.html` |
+| LEARN-02 — Fixtures as a contract | Frozen prompts, exact token IDs, and the limits of "same input" | T10 | 2026-08-02 | `build/learning/learn-02.html` |
+| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-02 | `build/learning/learn-03.html` |
+| LEARN-04 — Benchmarking without false equivalence | Where a timer starts, and what a median is allowed to claim | T13 | 2026-08-02 | `build/learning/learn-04.html` |
+| LEARN-05 — ONNX export as a compiler contract | Eight graphs, four manifests, and one very narrow claim | T20 | 2026-08-02 | `build/learning/learn-05.html` |
+| LEARN-06 — The Qualcomm public pipeline | Authentication, a bounded toy lifecycle, and real NPU placement | T02, T30 | 2026-08-02 | `build/learning/learn-06.html` |
+| LEARN-07 — A real generation loop on a real device | What a persistent device-side loop measures that a graph benchmark cannot | T32 | 2026-08-02 | `build/learning/learn-07.html` |
+| LEARN-08 — Apple Silicon and MLX | From a packaged baseline to a runtime you wrote yourself | T50, T51 | 2026-08-02 | `build/learning/learn-08.html` |
+| LEARN-09 — CI as a deployment surface | A manually dispatched workflow that can touch a paid service | T72 | 2026-08-02 | `build/learning/learn-09.html` |
+| LEARN-11 — Calibration data as a contract | Freezing the inputs to quantization before quantizing anything | T40 | 2026-08-02 | `build/learning/learn-11.html` |

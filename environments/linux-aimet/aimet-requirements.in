@@ -1,0 +1,30 @@
+# Direct dependencies for the T40 AIMET calibration/quantization host.
+#
+# Target platform (from the AIMET 2.36.0 installation docs): Linux x86-64,
+# glibc >= 2.34 (Ubuntu 22.04 or newer), CPython 3.10+ (this lab uses the
+# repository-pinned 3.11.13), NVIDIA compute capability >= 5.2, driver >= 455.
+#
+# torch, onnx, and transformers are held at the exact versions T20 used for the
+# reference ONNX export (configs/models/qwen3-0.6b-onnx-export.json) so that
+# the calibration host reproduces the exported graph's numerics. AIMET declares
+# `torch` and `onnx` without an upper bound, so holding them here is legal;
+# see environments/linux-aimet/README.md for the divergence rule if a future
+# AIMET release forces a different torch.
+#
+# numpy is deliberately not pinned here: no committed repository contract
+# owns a numpy version. The lock file freezes whatever the resolver selected.
+#
+# Compile with (uv 0.11.32; the explicit --python-platform makes the resolution
+# reproducible from any host, including the arm64 macOS primary):
+#   uv pip compile environments/linux-aimet/aimet-requirements.in \
+#     --python-platform x86_64-manylinux_2_34 \
+#     --python-version 3.11 \
+#     --generate-hashes \
+#     --no-build \
+#     --custom-compile-command "uv pip compile environments/linux-aimet/aimet-requirements.in --python-platform x86_64-manylinux_2_34 --python-version 3.11 --generate-hashes --no-build --output-file environments/linux-aimet/aimet-requirements.lock" \
+#     --output-file environments/linux-aimet/aimet-requirements.lock
+aimet-onnx==2.36.0
+aimet-torch==2.36.0
+onnx==1.18.0
+torch==2.7.1
+transformers==4.51.3

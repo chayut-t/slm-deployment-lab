@@ -854,3 +854,105 @@ checkpoints:
         offline-validated workflow, not evidence of a CI-run job.
       - Local scripts remain the implementation source; the workflow is an
         operator surface over them.
+
+  - id: LEARN-11
+    title: Calibration data as a contract
+    subject: Freezing the inputs to quantization before quantizing anything
+    lede: >-
+      Post-training quantization reads activation ranges off a handful of
+      sample inputs and turns them into scales and zero-points. Change the
+      inputs and you change the deployed model. So the calibration corpus gets
+      the same treatment T10 gave the tokenizer: an exact revision, a frozen
+      preprocessing rule, a hash that breaks when either moves, and a licence
+      trail. This checkpoint is also where an honest coverage argument is
+      separated from a flattering one.
+    tasks: [T40]
+    attention: Deep study
+    outcomes:
+      - Explain why calibration inputs are a contract rather than a
+        convenience, and what a W8 quality delta means if they are not frozen.
+      - Argue why this corpus represents the target workloads, and state
+        precisely where that argument stops.
+      - Describe why padding was rejected and short fixtures tiled, and what
+        the frozen T12 prefill contract had to do with it.
+      - Say what "baseline parity checked before quantization" established
+        here, and what it deliberately did not.
+      - Read a pinned environment and separate what was verified from what was
+        merely resolved.
+    readings:
+      - key: guide
+        label: Calibration guide
+        title: "Calibration data as a quantization contract"
+        path: docs/learning/calibration_and_aimet.md
+        required: true
+        why: >-
+          The full argument, including the coverage limits. Read "What this
+          corpus does not license" as carefully as the rationales - it is the
+          part that makes the rationales trustworthy.
+      - key: contract
+        label: The frozen corpus
+        title: "T40 calibration corpus contract"
+        path: configs/quantization/calibration.yaml
+        required: true
+        why: >-
+          The artifact T41 actually consumes. Read the header, then
+          `calibration_corpus.coverage`, and only then the per-sample
+          rationales - that order is deliberate.
+      - key: environment
+        label: AIMET environment
+        title: "Linux AIMET environment"
+        path: environments/linux-aimet/README.md
+        required: false
+        why: >-
+          A pinned environment for a platform the author could not run. Note
+          how "verified" and "unverified" are kept apart, and that every
+          unverified row carries the command that would settle it.
+      - key: worklog
+        label: T40 worklog
+        title: "T40: AIMET and calibration environment"
+        path: ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md
+        required: false
+        why: >-
+          The decisions and their costs, including why the first draft's
+          coverage rationales had to be rewritten.
+    labs:
+      - what: Prove the corpus is a fixed point
+        run: uv run python -m slm_lab.quantization.calibration check
+        proves: >-
+          The committed contract regenerates byte-for-byte from the T10
+          fixtures. Then change one token count in a copy and watch which
+          guard rejects it.
+      - what: Re-verify the floating baseline
+        run: uv run python -m slm_lab.quantization.parity verify
+        proves: >-
+          The T20 export is still the artifact its manifests claim. Read the
+          verdict carefully - exit 0 is not full parity, and the scope field
+          says why.
+      - what: Recompute the corpus revision by hand
+        run: uv run python -c "import hashlib,json,yaml; c=yaml.safe_load(open('configs/quantization/calibration.yaml'))['calibration_corpus']; print(hashlib.sha256(json.dumps(c,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest())"
+        proves: >-
+          The revision is over exactly the block that determines the inputs, so
+          a prose edit cannot silently change it.
+    notebooks:
+      - name: 06_w8_w4_calibration.ipynb
+        status: planned
+        owner: T80
+        focus: >-
+          Calibration and W8/W4 behaviour, built on the corpus frozen here.
+    questions:
+      - The corpus touches 175 of 151,936 embedding rows. Why is that not
+        automatically a defect, and what would make it one?
+      - Padding a short prompt is the obvious way to reach a fixed length.
+        Give both the mechanical and the statistical reason it was rejected.
+      - Four samples are calibrated on and evaluated on. What does that do to a
+        reported quality delta, and how should T41 report it?
+      - The parity gate exits 0 while its verdict reads `partial`. Argue that
+        this is correct, then argue that it is a trap.
+    boundaries:
+      - No weight was quantized and AIMET was never executed. This is a frozen
+        input contract and a pinned environment, not quantization evidence.
+      - The environment is verified as a dependency resolution, not as a
+        working installation; no wheel was installed on any host.
+      - Only artifact-identity parity was measured. Numerical logit parity
+        between the PyTorch reference and the ONNX export remains unrun and is
+        owned by T21.

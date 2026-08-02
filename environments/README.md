@@ -50,3 +50,11 @@ QAIRT, or hosted runtimes. Their owning platform tasks must pin exact package,
 SDK, driver, and operating-system versions after a compatibility smoke test,
 then record them in a host manifest. Floating labels such as `latest` are not
 reproducible evidence.
+
+`linux-aimet/` is a partial exception whose limits are stated in its own
+README. AIMET's compiled wheel is published for Linux x86-64 and Windows, with
+no macOS or Apple-silicon build and a CUDA build only for Linux x86-64, so its
+package pins and hash-locked resolution were produced and verified from package
+metadata on the macOS primary, while every host fact (OS, driver, CUDA, GPU)
+and every runtime smoke-test result remains explicitly unverified until a real
+Linux CUDA host runs the commands that file records.

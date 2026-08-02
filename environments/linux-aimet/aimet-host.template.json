@@ -1,0 +1,125 @@
+{
+  "_template": [
+    "TEMPLATE ONLY - NOT EVIDENCE. This file deliberately FAILS",
+    "`slm-lab-validate-manifest host` while the <REPLACE: ...> placeholders",
+    "remain, because host-v1.schema.json requires an exact version for the four",
+    "version-typed platform_details.nvidia fields (compute_capability,",
+    "driver_version, cuda_version, cudnn_version) and no truthful 'not yet",
+    "provisioned' value exists. platform_details.nvidia.gpu_name is only a",
+    "non-empty string, so the validator will NOT flag its placeholder: run the",
+    "grep for '<REPLACE:' as a second, mandatory check.",
+    "Fill it on the real Linux CUDA host with the capture commands in",
+    "environments/linux-aimet/README.md, delete this _template key, then move",
+    "the result to results/hosts/<host_id>.json. results/hosts/ is owned by the",
+    "task that captures the evidence, not by this environment directory."
+  ],
+  "schema_version": 1,
+  "host_id": "<REPLACE: lowercase-hyphenated host id, e.g. linux-aimet-primary>",
+  "captured_at": "<REPLACE: date -u +%Y-%m-%dT%H:%M:%SZ>",
+  "platform": "linux_nvidia",
+  "operating_system": {
+    "name": "Ubuntu",
+    "version": "<REPLACE: . /etc/os-release && echo $VERSION_ID>",
+    "build": "<REPLACE: . /etc/os-release && echo $VERSION_CODENAME, or null>",
+    "kernel": "<REPLACE: uname -r>",
+    "architecture": "x86_64"
+  },
+  "hardware": {
+    "product": "<REPLACE: machine or cloud instance type>",
+    "model_identifier": null,
+    "chip": null,
+    "cpu": {
+      "cores": "<REPLACE: nproc, as an integer>"
+    },
+    "gpu": {
+      "count": "<REPLACE: nvidia-smi --list-gpus | wc -l, as an integer>"
+    },
+    "memory_bytes": "<REPLACE: getconf _PHYS_PAGES and getconf PAGE_SIZE, product as an integer>"
+  },
+  "platform_details": {
+    "nvidia": {
+      "gpu_name": "<REPLACE: nvidia-smi --query-gpu=name --format=csv,noheader>",
+      "compute_capability": "<REPLACE: nvidia-smi --query-gpu=compute_cap --format=csv,noheader ; AIMET requires >= 5.2>",
+      "driver_version": "<REPLACE: nvidia-smi --query-gpu=driver_version --format=csv,noheader ; AIMET requires >= 455>",
+      "cuda_version": "<REPLACE: nvcc --version ; AIMET 2.36.0 validates CUDA 12.x via its +cu126 wheels>",
+      "cudnn_version": "<REPLACE: python -c 'import torch; print(torch.backends.cudnn.version())'>"
+    }
+  },
+  "project_environment": {
+    "python_version": "3.11.13",
+    "package_lock": "uv.lock",
+    "package_lock_sha256": "<REPLACE: sha256sum uv.lock>",
+    "build_constraints": "environments/build-requirements.lock",
+    "build_constraints_sha256": "1ef5d81f189b606ad1246cde4a59c996825360a15e50a564197dc4f9af83bcaa",
+    "build_command": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"
+  },
+  "tools": {
+    "uv": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "uv --version",
+      "reason": "Not yet provisioned: no Linux CUDA host has been captured for T40."
+    },
+    "nvidia_driver": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "nvidia-smi --query-gpu=driver_version --format=csv,noheader",
+      "reason": "Not yet provisioned: no Linux CUDA host has been captured for T40."
+    },
+    "cuda_toolkit": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "nvcc --version",
+      "reason": "Not yet provisioned: no Linux CUDA host has been captured for T40."
+    },
+    "torch": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import torch; print(torch.__version__)'",
+      "reason": "Expected 2.7.1 from aimet-requirements.lock; unverified until installed on the real host."
+    },
+    "onnx": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import onnx; print(onnx.__version__)'",
+      "reason": "Expected 1.18.0 from aimet-requirements.lock; unverified until installed on the real host."
+    },
+    "onnxruntime": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import onnxruntime; print(onnxruntime.__version__, onnxruntime.get_available_providers())'",
+      "reason": "Expected 1.28.0 CPU, or an onnxruntime-gpu build if the CUDA overlay is applied; unverified until installed."
+    },
+    "aimet_torch": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import aimet_torch; print(aimet_torch.__version__)'",
+      "reason": "Expected 2.36.0, or 2.36.0+cu126 with the CUDA overlay; unverified until installed."
+    },
+    "aimet_onnx": {
+      "version": null,
+      "status": "deferred",
+      "capture_command": "python -c 'import aimet_onnx; print(aimet_onnx.__version__)'",
+      "reason": "Expected 2.36.0, or 2.36.0+cu126 with the CUDA overlay; unverified until installed."
+    }
+  },
+  "artifact_storage": {
+    "storage_kind": "local_external",
+    "artifact_root_env": "SLM_LAB_ARTIFACT_ROOT",
+    "root": "<REPLACE: absolute artifact root on the AIMET host>",
+    "mount_point": "<REPLACE: df --output=target <root> | tail -1>",
+    "volume_name": null,
+    "filesystem": "<REPLACE: df --output=fstype <root> | tail -1>",
+    "minimum_free_bytes": "<REPLACE: required free bytes for calibration artifacts, as an integer>"
+  },
+  "privacy": {
+    "sanitized": true,
+    "excluded_fields": [
+      "account names",
+      "cloud instance identifiers",
+      "hardware serial numbers",
+      "credentials",
+      "private paths"
+    ]
+  }
+}
