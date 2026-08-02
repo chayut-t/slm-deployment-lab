@@ -179,9 +179,7 @@ def load_pinned_config(
         "rope_theta": 1_000_000,
         "tie_word_embeddings": True,
     }
-    actual_dimensions = {
-        name: getattr(config, name) for name in expected_dimensions
-    }
+    actual_dimensions = {name: getattr(config, name) for name in expected_dimensions}
     if actual_dimensions != expected_dimensions:
         raise MlxRuntimeConfigurationError(
             "model dimensions differ from the frozen Qwen3-0.6B contract"

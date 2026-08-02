@@ -55,9 +55,7 @@ class ModelContractTests(unittest.TestCase):
         self.assertIn(self.contract["model"]["revision"], self.adr)
 
     def test_special_tokens_preserve_model_tokenizer_distinction(self) -> None:
-        model_tokens = self.contract["model"][
-            "special_token_ids_from_model_config"
-        ]
+        model_tokens = self.contract["model"]["special_token_ids_from_model_config"]
         tokenizer = self.contract["tokenizer"]
         tokenizer_tokens = tokenizer["tokens"]
         self.assertFalse(tokenizer["add_bos_token"])
@@ -139,18 +137,22 @@ class ModelContractTests(unittest.TestCase):
             self.assertLessEqual(required, set(fields[platform]))
 
     def test_artifact_manifest_fields_match_project_plan(self) -> None:
-        manifest_block = self.plan.split("### 17.4 Artifact manifest", 1)[1].split(
-            "```yaml",
-            1,
-        )[1].split("```", 1)[0]
+        manifest_block = (
+            self.plan.split("### 17.4 Artifact manifest", 1)[1]
+            .split(
+                "```yaml",
+                1,
+            )[1]
+            .split("```", 1)[0]
+        )
         plan_fields = re.findall(
             r"^([a-z][a-z0-9_]*):\s*$",
             manifest_block,
             flags=re.MULTILINE,
         )
-        contract_fields = self.contract["toolchain_version_policy"][
-            "required_fields"
-        ]["artifact_manifest"]
+        contract_fields = self.contract["toolchain_version_policy"]["required_fields"][
+            "artifact_manifest"
+        ]
         self.assertEqual(contract_fields, plan_fields)
 
     @unittest.skipUnless(

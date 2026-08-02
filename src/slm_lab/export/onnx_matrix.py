@@ -45,15 +45,9 @@ from slm_lab.models import load_model_contract, load_reference_model
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "configs/models/qwen3-0.6b-onnx-export.json"
 DEFAULT_CONFIG_SPELLING = DEFAULT_CONFIG_PATH.as_posix()
-DEFAULT_TOKEN_FIXTURE_PATH = (
-    PROJECT_ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
-)
-DEFAULT_T10_CONTRACT_PATH = (
-    PROJECT_ROOT / "configs/workloads/t10-token-fixtures.json"
-)
-DEFAULT_T10_SOURCE_PATH = (
-    PROJECT_ROOT / "tests/fixtures/t10/source-prompts-v1.json"
-)
+DEFAULT_TOKEN_FIXTURE_PATH = PROJECT_ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
+DEFAULT_T10_CONTRACT_PATH = PROJECT_ROOT / "configs/workloads/t10-token-fixtures.json"
+DEFAULT_T10_SOURCE_PATH = PROJECT_ROOT / "tests/fixtures/t10/source-prompts-v1.json"
 DEFAULT_HOST_MANIFEST_PATH = PROJECT_ROOT / "results/hosts/apple-m4-primary.json"
 DEFAULT_MANIFEST_DIRECTORY = PROJECT_ROOT / "results/manifests/onnx"
 ARTIFACT_SUBDIRECTORY = Path("onnx/reference/T20")
@@ -273,20 +267,19 @@ def _load_token_fixture(path: Path, configured_path: str) -> TokenFixtureBundle:
         fixture_id = record.get("id", "<unknown>")
         token_ids = record.get("token_ids")
         if not isinstance(token_ids, list) or not all(
-            isinstance(token_id, int) and token_id >= 0
-            for token_id in token_ids
+            isinstance(token_id, int) and token_id >= 0 for token_id in token_ids
         ):
             raise ExportConfigurationError(
                 f"{fixture_id}: token IDs must be nonnegative integers"
             )
         if record.get("token_ids_sha256") != canonical_json_sha256(token_ids):
-            raise ExportConfigurationError(
-                f"{fixture_id}: token ID hash drift"
-            )
+            raise ExportConfigurationError(f"{fixture_id}: token ID hash drift")
         prompt = record.get("prompt")
-        if not isinstance(prompt, str) or record.get(
-            "prompt_sha256"
-        ) != hashlib.sha256(prompt.encode("utf-8")).hexdigest():
+        if (
+            not isinstance(prompt, str)
+            or record.get("prompt_sha256")
+            != hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        ):
             raise ExportConfigurationError(f"{fixture_id}: prompt hash drift")
 
     source = _load_json_document(DEFAULT_T10_SOURCE_PATH, "T10 source fixture")
@@ -380,9 +373,7 @@ def _load_export_attestation(value: Any) -> ExportAttestation:
         r"[0-9]+\.[0-9]+\.[0-9]+",
         python_version,
     ):
-        raise ExportConfigurationError(
-            "attested runtime_python_version must be exact"
-        )
+        raise ExportConfigurationError("attested runtime_python_version must be exact")
     for field in ("source_artifact_sha256", "external_data_sha256"):
         digest = value[field]
         if not isinstance(digest, str) or not re.fullmatch(
@@ -451,7 +442,9 @@ def _trusted_export_config_bytes(path: str) -> tuple[Path, bytes]:
     try:
         raw = source.read_bytes()
     except OSError as exc:
-        raise ExportConfigurationError(f"invalid export config {source}: {exc}") from exc
+        raise ExportConfigurationError(
+            f"invalid export config {source}: {exc}"
+        ) from exc
     digest = hashlib.sha256(raw).hexdigest()
     if digest != FROZEN_EXPORT_CONFIG_SHA256:
         raise ExportConfigurationError(
@@ -485,7 +478,9 @@ def load_export_config(path: str = DEFAULT_CONFIG_SPELLING) -> ExportConfig:
         packages = payload["packages"]
         contexts = tuple(payload["contexts"])
     except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
-        raise ExportConfigurationError(f"invalid export config {source}: {exc}") from exc
+        raise ExportConfigurationError(
+            f"invalid export config {source}: {exc}"
+        ) from exc
 
     if payload.get("schema_version") != 1 or payload.get("task_id") != TASK_ID:
         raise ExportConfigurationError("export config identity must be schema 1 / T20")
@@ -493,9 +488,10 @@ def load_export_config(path: str = DEFAULT_CONFIG_SPELLING) -> ExportConfig:
         payload.get("model_contract"),
         "model_contract",
     )
-    if model_contract_path != DEFAULT_CONFIG_PATH.with_name(
-        "qwen3-0.6b.yaml"
-    ).resolve():
+    if (
+        model_contract_path
+        != DEFAULT_CONFIG_PATH.with_name("qwen3-0.6b.yaml").resolve()
+    ):
         raise ExportConfigurationError(
             "export must use the frozen Qwen3-0.6B model contract"
         )
@@ -507,9 +503,7 @@ def load_export_config(path: str = DEFAULT_CONFIG_SPELLING) -> ExportConfig:
         token_fixture_path,
         configured_token_fixture,
     )
-    evidence_attestation = _load_export_attestation(
-        payload.get("evidence_attestation")
-    )
+    evidence_attestation = _load_export_attestation(payload.get("evidence_attestation"))
     if contexts != tuple(CONTEXT_VARIANTS):
         raise ExportConfigurationError(
             f"contexts must exactly match {tuple(CONTEXT_VARIANTS)}, found {contexts}"
@@ -863,18 +857,14 @@ class DecodeWrapper:
                 valid_length = cache_and_length[-1]
                 cache_pairs = tuple(
                     (
-                        torch.narrow(
-                            cache_values[2 * layer], 2, 0, valid_length[0]
-                        ),
+                        torch.narrow(cache_values[2 * layer], 2, 0, valid_length[0]),
                         torch.narrow(
                             cache_values[2 * layer + 1], 2, 0, valid_length[0]
                         ),
                     )
                     for layer in range(len(cache_values) // 2)
                 )
-                active_mask = torch.narrow(
-                    attention_mask, 1, 0, valid_length[0] + 1
-                )
+                active_mask = torch.narrow(attention_mask, 1, 0, valid_length[0] + 1)
                 model_cache = DynamicCache.from_legacy_cache(cache_pairs)
                 output = self.model(
                     input_ids=input_ids,
@@ -1059,9 +1049,7 @@ def _safe_external_path(onnx_path: Path, location: str) -> Path:
         )
     candidate = onnx_path.parent.joinpath(*pure.parts)
     if not candidate.is_file():
-        raise ExportConfigurationError(
-            f"missing ONNX external-data file {location!r}"
-        )
+        raise ExportConfigurationError(f"missing ONNX external-data file {location!r}")
     return candidate
 
 
@@ -1201,9 +1189,7 @@ def _repository_relative(path: Path, label: str) -> str:
         check=False,
     )
     if tracked.returncode != 0:
-        raise ExportConfigurationError(
-            f"{label} is not tracked by Git: {relative}"
-        )
+        raise ExportConfigurationError(f"{label} is not tracked by Git: {relative}")
     return relative
 
 
@@ -1334,18 +1320,18 @@ def _export_provenance(
                 "configured token fixture",
                 require_current_match=True,
             ),
-            "canonical_json_sha256": (
-                config.token_fixture.canonical_json_sha256
-            ),
+            "canonical_json_sha256": (config.token_fixture.canonical_json_sha256),
         },
         "workload": workload.provenance(),
     }
 
 
 def _utc_now() -> str:
-    return dt.datetime.now(dt.timezone.utc).isoformat(
-        timespec="seconds"
-    ).replace("+00:00", "Z")
+    return (
+        dt.datetime.now(dt.timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z")
+    )
 
 
 def _validate_attested_artifacts(
@@ -1510,9 +1496,7 @@ def verify_manifest_evidence(
     validate_manifest("artifact", manifest)
     created_at = manifest.get("created_at")
     if not isinstance(created_at, str):
-        raise ExportConfigurationError(
-            f"S{prompt_length} manifest lacks creation time"
-        )
+        raise ExportConfigurationError(f"S{prompt_length} manifest lacks creation time")
     expected = _manifest_payload(
         prompt_length=prompt_length,
         config=config,
@@ -1606,9 +1590,7 @@ def run_export(contexts: Iterable[int], config: ExportConfig) -> None:
             ),
         ):
             destination = (
-                artifact_directory
-                / f"S{prompt_length}"
-                / f"{contract.graph_kind}.onnx"
+                artifact_directory / f"S{prompt_length}" / f"{contract.graph_kind}.onnx"
             )
             if destination.exists():
                 inspect_onnx_artifact(
@@ -1657,17 +1639,13 @@ def run_validate(
             build_decode_contract(prompt_length),
         ):
             path = (
-                artifact_directory
-                / f"S{prompt_length}"
-                / f"{contract.graph_kind}.onnx"
+                artifact_directory / f"S{prompt_length}" / f"{contract.graph_kind}.onnx"
             )
             records[contract.graph_kind] = inspect_onnx_artifact(
                 path,
                 contract,
                 artifact_directory=artifact_directory,
-                inline_initializer_limit_bytes=(
-                    config.external_data_threshold_bytes
-                ),
+                inline_initializer_limit_bytes=(config.external_data_threshold_bytes),
             )
         destination = DEFAULT_MANIFEST_DIRECTORY / f"S{prompt_length}.json"
         if write_manifests:

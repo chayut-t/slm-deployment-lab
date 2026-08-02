@@ -65,7 +65,6 @@ def validate_manifest(kind: str, document: Any) -> None:
     )
     if errors:
         details = "; ".join(
-            f"{_display_path(error.absolute_path)}: {error.message}"
-            for error in errors
+            f"{_display_path(error.absolute_path)}: {error.message}" for error in errors
         )
         raise ManifestValidationError(f"{kind} manifest is invalid: {details}")

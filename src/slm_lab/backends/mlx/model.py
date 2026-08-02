@@ -48,9 +48,7 @@ def validate_gqa_attention_shapes(
             "attention requires Q/K/V rank-four tensors and matching K/V shapes"
         )
     if q_shape[0] != k_shape[0] or q_shape[3] != k_shape[3]:
-        raise MlxRuntimeConfigurationError(
-            "Q/K/V batch and head dimensions must match"
-        )
+        raise MlxRuntimeConfigurationError("Q/K/V batch and head dimensions must match")
     if q_shape[1] % k_shape[1]:
         raise MlxRuntimeConfigurationError(
             "query heads must be divisible by physical K/V heads"
@@ -201,9 +199,7 @@ class Qwen3DecoderLayer(nn.Module):
         super().__init__()
         self.self_attn = Qwen3Attention(config)
         self.mlp = Qwen3MLP(config)
-        self.input_layernorm = nn.RMSNorm(
-            config.hidden_size, eps=config.rms_norm_eps
-        )
+        self.input_layernorm = nn.RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = nn.RMSNorm(
             config.hidden_size, eps=config.rms_norm_eps
         )
@@ -271,9 +267,7 @@ class CustomQwen3ForCausalLM(nn.Module):
         self.config = config
         self.model = Qwen3Model(config)
         if not config.tie_word_embeddings:
-            self.lm_head = nn.Linear(
-                config.hidden_size, config.vocab_size, bias=False
-            )
+            self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
     def __call__(
         self,

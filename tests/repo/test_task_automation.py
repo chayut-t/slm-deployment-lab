@@ -198,7 +198,7 @@ class GitSnapshotTests(unittest.TestCase):
         venv_python = venv_bin / "python"
         venv_python.unlink(missing_ok=True)
         venv_python.write_text(
-            f"#!/bin/sh\nexec {shlex.quote(sys.executable)} \"$@\"\n",
+            f'#!/bin/sh\nexec {shlex.quote(sys.executable)} "$@"\n',
             encoding="utf-8",
         )
         venv_python.chmod(0o755)

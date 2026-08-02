@@ -545,9 +545,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     print(
         json.dumps(
-            _json_safe_evidence(
-                evidence, reference.runtime.as_dict(), args.fixture
-            ),
+            _json_safe_evidence(evidence, reference.runtime.as_dict(), args.fixture),
             indent=2,
             sort_keys=True,
             allow_nan=False,

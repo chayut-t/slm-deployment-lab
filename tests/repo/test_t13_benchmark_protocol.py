@@ -351,9 +351,7 @@ class T13BenchmarkProtocolTests(unittest.TestCase):
 
     def _quality_result(self) -> dict[str, Any]:
         task = next(
-            item
-            for item in self.academic["tasks"]
-            if item["id"] == "hellaswag_1000"
+            item for item in self.academic["tasks"] if item["id"] == "hellaswag_1000"
         )
         result = self._result(
             timing_class=None,

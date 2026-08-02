@@ -41,9 +41,7 @@ def test_real_qwen_canary_and_layout_parity() -> None:
             else len(fixture["generated_token_ids"]),
             capacity=len(fixture["prompt_token_ids"])
             + len(fixture["generated_token_ids"]),
-            eos_token_id=fixture["eos_token_id"]
-            if "eos_token_id" in fixture
-            else None,
+            eos_token_id=fixture["eos_token_id"] if "eos_token_id" in fixture else None,
             layout=layout,
         )
         for layout in CacheLayout

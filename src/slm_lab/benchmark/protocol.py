@@ -175,9 +175,7 @@ def _validate_protocol_semantics(protocol: Mapping[str, Any]) -> None:
         raise BenchmarkProtocolError("non-timing measurement set differs from v1")
     for kind, scope in EXPECTED_NON_TIMING_SCOPES.items():
         if non_timing[kind].get("scope") != scope:
-            raise BenchmarkProtocolError(
-                f"{kind} scope differs from the frozen policy"
-            )
+            raise BenchmarkProtocolError(f"{kind} scope differs from the frozen policy")
         if non_timing[kind].get("warmup_repetitions") != 0:
             raise BenchmarkProtocolError(
                 f"{kind} must not use performance warm-up repetitions"
@@ -249,10 +247,7 @@ def _validate_academic_contract(academic: Mapping[str, Any]) -> None:
     harness = academic.get("harness", {})
     if harness.get("release") != "v0.4.12":
         raise BenchmarkProtocolError("academic harness release differs from v1")
-    if (
-        harness.get("release_commit")
-        != "6d642546f4688648fced259eb3302efd36ece5af"
-    ):
+    if harness.get("release_commit") != "6d642546f4688648fced259eb3302efd36ece5af":
         raise BenchmarkProtocolError("academic harness commit differs from v1")
 
     tasks = academic.get("tasks")
@@ -410,19 +405,16 @@ def _validate_synchronization(
     method_policy = protocol["synchronization"]["methods"][backend]
     if evidence["method_id"] != method_policy["method_id"]:
         raise BenchmarkProtocolError(
-            f"{backend} must use synchronization method "
-            f"{method_policy['method_id']!r}"
+            f"{backend} must use synchronization method {method_policy['method_id']!r}"
         )
-    if (
-        method_policy["requires_pre_timer_action"]
-        and not _nonempty_action(evidence["pre_timer_action"])
+    if method_policy["requires_pre_timer_action"] and not _nonempty_action(
+        evidence["pre_timer_action"]
     ):
         raise BenchmarkProtocolError(
             f"{backend} requires an explicit pre-timer synchronization action"
         )
-    if (
-        method_policy["requires_post_timer_action"]
-        and not _nonempty_action(evidence["post_timer_action"])
+    if method_policy["requires_post_timer_action"] and not _nonempty_action(
+        evidence["post_timer_action"]
     ):
         raise BenchmarkProtocolError(
             f"{backend} requires an explicit post-timer synchronization action"
@@ -618,9 +610,7 @@ def _validate_result_semantics(
 
     expected_unit = EXPECTED_UNITS.get(metric)
     if expected_unit is not None and measurement["unit"] != expected_unit:
-        raise BenchmarkProtocolError(
-            f"{metric} must use base unit {expected_unit!r}"
-        )
+        raise BenchmarkProtocolError(f"{metric} must use base unit {expected_unit!r}")
     method_requirements = {
         "peak_memory": "memory_method",
         "average_power": "power_thermal_method",
@@ -630,9 +620,7 @@ def _validate_result_semantics(
     }
     required_method = method_requirements.get(metric)
     if required_method and required_method not in measurement:
-        raise BenchmarkProtocolError(
-            f"{metric} requires measurement.{required_method}"
-        )
+        raise BenchmarkProtocolError(f"{metric} requires measurement.{required_method}")
     expected_kinds = {
         "peak_memory": "memory",
         "average_power": "power_thermal",
@@ -676,9 +664,7 @@ def _validate_result_semantics(
         metric in prompt_denominator_metrics
         and measurement.get("actual_prompt_tokens", 0) < 1
     ):
-        raise BenchmarkProtocolError(
-            f"{metric} requires positive actual_prompt_tokens"
-        )
+        raise BenchmarkProtocolError(f"{metric} requires positive actual_prompt_tokens")
     if (
         metric in generated_denominator_metrics
         and measurement.get("actual_generated_tokens", 0) < 1
@@ -696,10 +682,7 @@ def _validate_result_semantics(
     )
     if workload is not None:
         actual_prompt = measurement.get("actual_prompt_tokens")
-        if (
-            actual_prompt is not None
-            and actual_prompt != workload["prompt_tokens"]
-        ):
+        if actual_prompt is not None and actual_prompt != workload["prompt_tokens"]:
             raise BenchmarkProtocolError(
                 "actual_prompt_tokens differs from the frozen workload"
             )
@@ -716,9 +699,7 @@ def _validate_result_semantics(
 
     samples = result["samples"]
     if len(samples) != measurement["measured_repetitions"]:
-        raise BenchmarkProtocolError(
-            "raw sample count must equal measured_repetitions"
-        )
+        raise BenchmarkProtocolError("raw sample count must equal measured_repetitions")
     indexes = [sample["sample_index"] for sample in samples]
     if indexes != list(range(len(samples))):
         raise BenchmarkProtocolError(

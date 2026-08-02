@@ -75,9 +75,7 @@ def test_qwen_golden_fixture_is_bound_to_t10_and_exact_runtime() -> None:
         "trust_remote_code": False,
         "attention_implementation": "eager",
     }
-    assert golden["source_fixture"]["token_ids_sha256"] == raw_ascii[
-        "token_ids_sha256"
-    ]
+    assert golden["source_fixture"]["token_ids_sha256"] == raw_ascii["token_ids_sha256"]
     assert golden["prompt_token_ids"] == raw_ascii["token_ids"]
     assert golden["runtime"] == {
         "python_version": "3.11.13",

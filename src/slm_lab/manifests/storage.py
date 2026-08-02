@@ -96,8 +96,7 @@ def run_preflight(
     actual_mount = find_mount(root)
     if actual_mount != required_mount:
         raise StoragePreflightError(
-            f"artifact root resolves to mount {actual_mount}, "
-            f"expected {required_mount}"
+            f"artifact root resolves to mount {actual_mount}, expected {required_mount}"
         )
 
     expected_directories = config["expected_directories"]
@@ -158,8 +157,7 @@ def run_preflight(
     minimum_free = int(config["minimum_free_bytes"])
     if usage.free < minimum_free:
         raise StoragePreflightError(
-            f"artifact root has {usage.free} free bytes; "
-            f"{minimum_free} required"
+            f"artifact root has {usage.free} free bytes; {minimum_free} required"
         )
 
     return {

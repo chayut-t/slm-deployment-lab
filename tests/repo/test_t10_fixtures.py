@@ -30,9 +30,7 @@ PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 class T10FixtureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.model_contract = json.loads(
-            MODEL_CONTRACT_PATH.read_text(encoding="utf-8")
-        )
+        cls.model_contract = json.loads(MODEL_CONTRACT_PATH.read_text(encoding="utf-8"))
         cls.source = json.loads(SOURCE_PATH.read_text(encoding="utf-8"))
         cls.bundle = json.loads(BUNDLE_PATH.read_text(encoding="utf-8"))
         cls.config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))

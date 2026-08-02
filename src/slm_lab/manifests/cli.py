@@ -6,7 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from .validation import SCHEMAS, ManifestValidationError, load_document, validate_manifest
+from .validation import (
+    SCHEMAS,
+    ManifestValidationError,
+    load_document,
+    validate_manifest,
+)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

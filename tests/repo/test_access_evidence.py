@@ -17,18 +17,10 @@ EVIDENCE_PATH = (
     REPO_ROOT / "results" / "hosts" / "workbench-toy-lifecycle-2026-07-25.json"
 )
 HISTORICAL_REPORT_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "results"
-    / "access"
-    / "2026-07-24-public-platform-access.md"
+    REPO_ROOT / "docs" / "results" / "access" / "2026-07-24-public-platform-access.md"
 )
 REPORT_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "results"
-    / "access"
-    / "2026-07-25-workbench-toy-lifecycle.md"
+    REPO_ROOT / "docs" / "results" / "access" / "2026-07-25-workbench-toy-lifecycle.md"
 )
 FAILURE_PATH = (
     REPO_ROOT
@@ -107,9 +99,7 @@ class PublicPlatformAccessEvidenceTests(unittest.TestCase):
         self.assertEqual(lifecycle["compile_evidence"]["hexagon_version"], "v73")
 
     def test_inference_is_numerically_validated(self) -> None:
-        inference = self.evidence["workbench"]["toy_lifecycle"][
-            "inference_evidence"
-        ]
+        inference = self.evidence["workbench"]["toy_lifecycle"]["inference_evidence"]
         self.assertTrue(inference["allclose"]["result"])
         self.assertLess(inference["max_abs_error"], 1e-6)
         self.assertEqual(inference["allclose"]["rtol"], 1e-5)

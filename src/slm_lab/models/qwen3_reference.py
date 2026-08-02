@@ -117,8 +117,7 @@ def load_model_contract(path: Path | str = DEFAULT_CONTRACT_PATH) -> ModelContra
         )
     if revision != EXPECTED_MODEL_REVISION:
         raise ReferenceConfigurationError(
-            f"expected immutable revision {EXPECTED_MODEL_REVISION}, "
-            f"found {revision!r}"
+            f"expected immutable revision {EXPECTED_MODEL_REVISION}, found {revision!r}"
         )
     if trust_remote_code is not False:
         raise ReferenceConfigurationError("trust_remote_code must remain false")

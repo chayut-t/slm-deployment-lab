@@ -80,8 +80,7 @@ def test_config_rejects_non_integral_gqa_group() -> None:
 
 def test_attention_implementation_has_no_repeat_or_tile_materialization() -> None:
     source_path = (
-        Path(__file__).resolve().parents[2]
-        / "src/slm_lab/backends/mlx/model.py"
+        Path(__file__).resolve().parents[2] / "src/slm_lab/backends/mlx/model.py"
     )
     tree = ast.parse(source_path.read_text(encoding="utf-8"))
     calls = [

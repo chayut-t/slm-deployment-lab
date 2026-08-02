@@ -75,9 +75,10 @@ def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     assert config.token_fixture.canonical_json_sha256 == (
         "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745"
     )
-    assert tuple(
-        workload.context_length for workload in config.token_fixture.workloads
-    ) == config.contexts
+    assert (
+        tuple(workload.context_length for workload in config.token_fixture.workloads)
+        == config.contexts
+    )
 
 
 def test_export_config_rejects_path_object() -> None:
@@ -118,9 +119,7 @@ def test_export_config_rejects_configured_fixture_with_stale_token_hash(
     tmp_path: Path,
 ) -> None:
     fixture = json.loads(
-        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(
-            encoding="utf-8"
-        )
+        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(encoding="utf-8")
     )
     fixture["context_workloads"][0]["token_ids"][0] += 1
     fixture_path = tmp_path / "tampered-token-fixtures.json"
@@ -133,9 +132,7 @@ def test_export_config_rejects_coherent_frozen_token_content_drift(
     tmp_path: Path,
 ) -> None:
     fixture = json.loads(
-        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(
-            encoding="utf-8"
-        )
+        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(encoding="utf-8")
     )
     record = fixture["context_workloads"][0]
     record["token_ids"][0] += 1
@@ -162,9 +159,7 @@ def test_runtime_rejects_actual_python_version_drift(
 def test_example_inputs_use_exact_fixture_and_contract() -> None:
     torch = pytest.importorskip("torch")
     fixture = json.loads(
-        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(
-            encoding="utf-8"
-        )
+        (ROOT / "tests/fixtures/t10/token-fixtures-v1.json").read_text(encoding="utf-8")
     )
     expected = fixture["context_workloads"][0]["token_ids"]
 
@@ -254,20 +249,11 @@ def _tiny_causal_model(torch):
         ):
             del use_cache, return_dict
             batch, sequence = input_ids.shape
-            token_signal = (
-                input_ids
-                + attention_mask[:, -sequence:]
-                + position_ids
-            )
-            logits = (
-                self.logit_bias.reshape(1, 1, -1).expand(
-                    batch, sequence, -1
-                )
-                + token_signal.to(torch.float16).reshape(batch, sequence, 1)
-            )
-            value = token_signal.to(torch.float16).reshape(
-                batch, 1, sequence, 1
-            )
+            token_signal = input_ids + attention_mask[:, -sequence:] + position_ids
+            logits = self.logit_bias.reshape(1, 1, -1).expand(
+                batch, sequence, -1
+            ) + token_signal.to(torch.float16).reshape(batch, sequence, 1)
+            value = token_signal.to(torch.float16).reshape(batch, 1, sequence, 1)
             current = value.expand(batch, 8, sequence, 128)
             if past_key_values is None:
                 cache = tuple((current, current + 1) for _ in range(NUM_LAYERS))
@@ -318,7 +304,9 @@ def test_prefill_and_decode_wrappers_implement_t12_cache_transition() -> None:
         ),
         decode_contract.outputs,
     )
-    assert torch.equal(decode_outputs[1][:, :, :128, :], decode_inputs[3][:, :, :128, :])
+    assert torch.equal(
+        decode_outputs[1][:, :, :128, :], decode_inputs[3][:, :, :128, :]
+    )
     expected_signal = (
         decode_inputs[0].item()
         + decode_inputs[1][:, -1].item()
@@ -442,9 +430,7 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
         assert provenance["export_config"]["path"] == (
             "configs/models/qwen3-0.6b-onnx-export.json"
         )
-        assert provenance["token_fixture_bundle"][
-            "canonical_json_sha256"
-        ] == (
+        assert provenance["token_fixture_bundle"]["canonical_json_sha256"] == (
             "9f9268ae4a366faa4325271492ec52f035bbf3ba0973d2de61f63382e6302745"
         )
         assert provenance["workload"]["id"] == f"S{prompt_length}"
@@ -454,9 +440,7 @@ def test_committed_manifests_cover_real_matrix_and_exact_public_shapes() -> None
         ):
             artifact = manifest["artifacts"][kind]
             assert artifact["graph_kind"] == kind
-            assert artifact["relative_path"] == (
-                f"S{prompt_length}/{kind}.onnx"
-            )
+            assert artifact["relative_path"] == (f"S{prompt_length}/{kind}.onnx")
             assert artifact["size_bytes"] > 0
             assert len(artifact["sha256"]) == 64
             assert artifact["input_tensors"] == [
@@ -651,9 +635,7 @@ def test_manifest_rejects_nested_equality_adapter() -> None:
         config.evidence_attestation,
         run_id="equality-adapter-run",
     )
-    tampered["export_provenance"]["run_attestation"] = (
-        substituted_attestation.as_dict()
-    )
+    tampered["export_provenance"]["run_attestation"] = substituted_attestation.as_dict()
     adapted_config = dataclasses.replace(
         config,
         evidence_attestation=_EqualityAdapter(substituted_attestation),
@@ -749,9 +731,7 @@ def test_manifest_rejects_paired_runtime_python_tampering() -> None:
     )
     tampered = json.loads(json.dumps(manifest))
     tampered["toolchain"]["python"] = "9.9.9"
-    tampered["export_provenance"]["run_attestation"][
-        "runtime_python_version"
-    ] = "9.9.9"
+    tampered["export_provenance"]["run_attestation"]["runtime_python_version"] = "9.9.9"
 
     with pytest.raises(ExportConfigurationError, match="manifest"):
         _verify_s128_manifest(tampered, evidence_manifest=manifest)

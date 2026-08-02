@@ -368,12 +368,8 @@ def build_workload_config(
             bundle["chat_canary"]["id"],
         ],
         "quality_subset_ids": [item["id"] for item in bundle["quality_subset"]],
-        "generation_command": (
-            "uv run --extra tokenizer slm-lab-fixtures generate"
-        ),
-        "verification_command": (
-            "uv run --extra tokenizer slm-lab-fixtures verify"
-        ),
+        "generation_command": ("uv run --extra tokenizer slm-lab-fixtures generate"),
+        "verification_command": ("uv run --extra tokenizer slm-lab-fixtures verify"),
     }
 
 
@@ -458,9 +454,7 @@ def _validate_source_alignment(
                 f"{source_record['id']}: references differ from authored source"
             )
 
-    if bundle["external_quality_candidates"] != (
-        source["external_quality_candidates"]
-    ):
+    if bundle["external_quality_candidates"] != (source["external_quality_candidates"]):
         raise FixtureValidationError(
             "external candidate metadata differs from authored source"
         )
@@ -576,9 +570,7 @@ def validate_documents(
         raise FixtureValidationError("static context coverage differs from T00")
     for record in bundle["context_workloads"]:
         if record["token_count"] != record["context_length"]:
-            raise FixtureValidationError(
-                f"{record['id']}: context length is not exact"
-            )
+            raise FixtureValidationError(f"{record['id']}: context length is not exact")
         if record["generated_tokens"] != GENERATED_TOKENS[record["context_length"]]:
             raise FixtureValidationError(
                 f"{record['id']}: generated-token contract drift"
@@ -649,9 +641,7 @@ def load_pinned_tokenizer(
     """Load the immutable T00 tokenizer without importing model code."""
 
     if importlib.metadata.version("transformers") != TRANSFORMERS_VERSION:
-        raise FixtureValidationError(
-            f"expected transformers {TRANSFORMERS_VERSION}"
-        )
+        raise FixtureValidationError(f"expected transformers {TRANSFORMERS_VERSION}")
     if importlib.metadata.version("tokenizers") != TOKENIZERS_VERSION:
         raise FixtureValidationError(f"expected tokenizers {TOKENIZERS_VERSION}")
     if importlib.metadata.version("jinja2") != JINJA2_VERSION:

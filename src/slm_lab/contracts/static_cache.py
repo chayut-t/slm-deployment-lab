@@ -61,8 +61,7 @@ class TensorSpec:
         if self.dtype not in DTYPE_BYTES:
             raise CacheContractError(f"{self.name}: unsupported dtype {self.dtype!r}")
         if not self.shape or any(
-            not isinstance(dimension, int) or dimension < 1
-            for dimension in self.shape
+            not isinstance(dimension, int) or dimension < 1 for dimension in self.shape
         ):
             raise CacheContractError(
                 f"{self.name}: shape must contain positive static dimensions"

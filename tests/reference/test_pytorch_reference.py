@@ -27,9 +27,7 @@ from slm_lab.models.qwen3_reference import (  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURE_PATH = (
-    ROOT / "tests/reference/fixtures/deterministic-causal-reference-v1.json"
-)
+FIXTURE_PATH = ROOT / "tests/reference/fixtures/deterministic-causal-reference-v1.json"
 QWEN_FIXTURE_PATH = (
     ROOT / "tests/reference/fixtures/qwen3-0.6b-raw-ascii-bf16-cpu-v1.json"
 )
@@ -66,9 +64,9 @@ class DeterministicCausalModel(torch.nn.Module):
             1, full_prefix.shape[1] + 1, device=input_ids.device
         ).unsqueeze(0)
         targets = (cumulative + 3 * positions) % self.vocabulary_size
-        vocabulary = torch.arange(
-            self.vocabulary_size, device=input_ids.device
-        ).view(1, 1, -1)
+        vocabulary = torch.arange(self.vocabulary_size, device=input_ids.device).view(
+            1, 1, -1
+        )
         full_logits = -(vocabulary - targets.unsqueeze(-1)).abs().to(torch.float64)
         logits = full_logits[:, -input_ids.shape[1] :, :]
         cache = full_prefix.detach().clone() if use_cache else None
@@ -160,9 +158,7 @@ def test_eos_is_included_and_stops_both_paths() -> None:
     model = DeterministicCausalModel()
     input_ids = torch.tensor([[2, 5, 1]], dtype=torch.long)
 
-    full = generate_full_forward(
-        model, input_ids, max_new_tokens=6, eos_token_id=3
-    )
+    full = generate_full_forward(model, input_ids, max_new_tokens=6, eos_token_id=3)
     cached = generate_cached(model, input_ids, max_new_tokens=6, eos_token_id=3)
     evidence = compare_full_and_cached(
         model, input_ids, max_new_tokens=6, eos_token_id=3
@@ -276,9 +272,7 @@ def test_loader_records_requested_and_actual_eager_attention(
 
     class FakeLoadedModel:
         def __init__(self, actual_attention: str) -> None:
-            self.config = SimpleNamespace(
-                _attn_implementation=actual_attention
-            )
+            self.config = SimpleNamespace(_attn_implementation=actual_attention)
 
         def eval(self) -> FakeLoadedModel:
             return self

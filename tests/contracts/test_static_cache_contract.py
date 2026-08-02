@@ -37,9 +37,9 @@ def test_contract_family_covers_all_contexts_without_dynamic_dimensions() -> Non
     family = build_contract_family()
 
     assert tuple(family) == (128, 512, 1024, 4096)
-    assert {length: pair["prefill"].cache_capacity for length, pair in family.items()} == (
-        CONTEXT_VARIANTS
-    )
+    assert {
+        length: pair["prefill"].cache_capacity for length, pair in family.items()
+    } == (CONTEXT_VARIANTS)
     for prompt_length, pair in family.items():
         assert set(pair) == {"prefill", "decode"}
         for graph_kind, contract in pair.items():
@@ -140,15 +140,16 @@ class _TensorStub:
 
 def test_tensor_mapping_rejects_name_shape_and_dtype_drift() -> None:
     specs = build_prefill_contract(128).inputs
-    tensors = {
-        spec.name: _TensorStub(spec.shape, spec.dtype)
-        for spec in specs
-    }
+    tensors = {spec.name: _TensorStub(spec.shape, spec.dtype) for spec in specs}
     validate_tensor_mapping(tensors, specs)
 
     with pytest.raises(CacheContractError, match="missing=.*position_ids"):
         validate_tensor_mapping(
-            {name: tensor for name, tensor in tensors.items() if name != "position_ids"},
+            {
+                name: tensor
+                for name, tensor in tensors.items()
+                if name != "position_ids"
+            },
             specs,
         )
     tensors["input_ids"] = _TensorStub((1, 127), "int64")
@@ -181,11 +182,7 @@ class _TinyGQAReference:
         assert return_dict is True
         batch, sequence = input_ids.shape
         assert batch == 1
-        prior = (
-            0
-            if past_key_values is None
-            else past_key_values[0][0].shape[2]
-        )
+        prior = 0 if past_key_values is None else past_key_values[0][0].shape[2]
         positions = self.torch.arange(
             prior,
             prior + sequence,
@@ -276,8 +273,7 @@ def test_decode_update_rejects_overflow() -> None:
     )
     state = materialize_reference_cache(prompt_pairs, prompt_length=128)
     updates = tuple(
-        torch.zeros((1, 8, 1, 128), dtype=torch.float16)
-        for _ in range(NUM_LAYERS)
+        torch.zeros((1, 8, 1, 128), dtype=torch.float16) for _ in range(NUM_LAYERS)
     )
 
     for _ in range(32):
@@ -294,9 +290,7 @@ def test_decode_update_rejects_overflow() -> None:
 def test_real_qwen_static_updates_reproduce_t11_reference() -> None:
     torch = _torch_or_skip()
     bundle = json.loads(TOKEN_FIXTURES.read_text(encoding="utf-8"))
-    fixture = next(
-        item for item in bundle["context_workloads"] if item["id"] == "S128"
-    )
+    fixture = next(item for item in bundle["context_workloads"] if item["id"] == "S128")
     input_ids = torch.tensor([fixture["token_ids"]], dtype=torch.int64)
     loaded = load_reference_model(
         device="cpu",

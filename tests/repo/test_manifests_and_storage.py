@@ -22,9 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "manifests"
 HOST_MANIFEST = REPO_ROOT / "results" / "hosts" / "apple-m4-primary.json"
 MODEL_CONTRACT = REPO_ROOT / "configs" / "models" / "qwen3-0.6b.yaml"
-STORAGE_CONFIG = (
-    REPO_ROOT / "configs" / "storage" / "external-ssd.example.yaml"
-)
+STORAGE_CONFIG = REPO_ROOT / "configs" / "storage" / "external-ssd.example.yaml"
 TOOLCHAIN_CONFIG = REPO_ROOT / "environments" / "common-toolchain.json"
 
 
