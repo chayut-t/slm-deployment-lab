@@ -855,6 +855,113 @@ checkpoints:
       - Local scripts remain the implementation source; the workflow is an
         operator surface over them.
 
+  - id: LEARN-10
+    title: Reading a graph before a compiler does
+    subject: What an exported graph tells you, and what only a measurement can
+    lede: >-
+      T20 proved the eight Qwen3 graphs export and match the frozen contract.
+      T21 asks the next two questions and answers them at very different
+      evidence tiers. A dependency-free protobuf reader walks the real graphs
+      and finds a fully static, branch-free, single-domain boundary hiding
+      1,231 computed shape inputs, 56 scatter-based cache writes, a 37 MB
+      per-token I/O boundary, and a 33.5 MB causal mask baked into one node.
+      The ONNX Runtime parity runner, by contrast, has never executed a graph —
+      and the report says so in its first line.
+    tasks: [T21]
+    attention: Deep study
+    outcomes:
+      - Explain how a graph can be fully static at its boundary and still be
+        hostile to a static-shape compiler.
+      - Distinguish a numerical-tolerance failure from a cache state-update
+        failure, and say why the second cannot be found by checking one decode
+        step.
+      - Say why a cache prefix check must be exact rather than tolerant.
+      - Read an absent finding correctly, telling "we looked and it is clean"
+        apart from "there was nothing to look at".
+      - State what a validated mechanism plus a recorded command is worth, and
+        what it is not worth, compared to a measurement.
+    readings:
+      - key: inspection
+        label: Graph inspection report
+        title: "ONNX graph inspection: the T20 static reference graphs"
+        path: docs/results/onnx/graph-inspection.md
+        required: true
+        why: >-
+          The measured report: provenance, method, eight graphs, findings
+          ranked by consequence for T22, the rules that stayed silent, and an
+          explicit list of what none of it licenses.
+      - key: parity
+        label: ORT CPU parity report
+        title: "ONNX Runtime CPU parity for the T20 reference graphs"
+        path: docs/results/onnx/ort-cpu-parity.md
+        required: true
+        why: >-
+          How to write up work whose headline result does not exist yet:
+          tolerances argued and labelled unvalidated, invariants named, faults
+          injected, and the exact command that would produce the real number.
+      - key: catalogue
+        label: Risk catalogue
+        title: "The ONNX deployment-risk rule catalogue"
+        path: configs/graph/README.md
+        required: false
+        why: >-
+          What a severity means, which target it is relative to, and why it is
+          a review judgement rather than a compiler result.
+      - key: worklog
+        label: T21 worklog
+        title: "T21: ONNX Runtime CPU parity and graph inspection"
+        path: ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md
+        required: false
+        why: >-
+          The decisions, including why no ONNX Runtime extra was added to the
+          root lock and what the first real parity run must do to the
+          tolerances.
+    labs:
+      - what: Run the graph inspection and parity unit tests
+        run: uv run pytest tests/onnx
+        proves: >-
+          The protobuf reader, every detector, and all nine static-cache
+          invariants — including seventeen injected faults — with no torch,
+          onnx, onnxruntime, or numpy installed.
+      - what: Reproduce the committed inspection reports from the real graphs
+        run: SLM_LAB_ARTIFACT_ROOT=<external-root> uv run python -m slm_lab.graph.inspection --all-manifests --check
+        proves: >-
+          Every committed number re-derives from graphs whose SHA-256 matches
+          the T20 manifest. Needs the artifact root; exits 0 when current.
+      - what: Read the risk catalogue beside the report
+        run: uv run python -c "import json,pathlib;d=json.loads(pathlib.Path('configs/graph/onnx-risk-rules-v1.json').read_text());print('\n'.join(f\"{r['id']:32} {r['severity']:14} {r['detector']}\" for r in d['rules']))"
+        proves: >-
+          Which rule produced which finding, and that severity is carried by
+          the catalogue rather than invented per report.
+    notebooks:
+      - name: 03_graph_inspection.ipynb
+        status: planned
+        owner: T80
+        focus: >-
+          Graph risks and rewrites, with the folding experiment this report
+          recommends running first.
+    questions:
+      - Every dimension in all eight graphs is static, yet the top-ranked
+        finding is in the dynamic_shape category. Reconcile those two facts,
+        then say what a compiler does about it.
+      - A decode graph passes step one perfectly and corrupts the cache at step
+        three. Name the invariant that catches it and explain why a tolerant
+        comparison would not.
+      - R-INTERNAL-DYNAMIC-SHAPE did not fire. Argue that this is good news,
+        then argue it is no news, and say which is right.
+      - Compute the useful fraction of the S4096 decode boundary traffic and
+        explain why that ratio decides long-context viability before any kernel
+        question does.
+      - The parity tolerances are looser than T11's. Justify each relaxation
+        from the two error sources the comparison admits, then say what would
+        make you tighten one.
+    boundaries:
+      - No compiler, converter, quantizer, or device was run. Every severity is
+        a structural judgement about a stated target, not a compile result.
+      - No ONNX Runtime measurement exists. The parity tolerances are proposed
+        and unvalidated, and the runner has never executed a real graph.
+      - The reader is a structural decoder, not a validator; T20's onnx.checker
+        acceptance remains the evidence that the graphs are valid ONNX.
   - id: LEARN-11
     title: Calibration data as a contract
     subject: Freezing the inputs to quantization before quantizing anything

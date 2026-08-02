@@ -150,13 +150,13 @@
       "id": "T21",
       "title": "ONNX Runtime CPU parity and graph inspection",
       "definition": "ai/tasks/definitions/T21.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T20"],
       "resource_locks": [],
       "owner": "Claude t21-main agent",
       "branch": "task/T21-ort-cpu-parity",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md"
     },
     {
       "id": "T22",

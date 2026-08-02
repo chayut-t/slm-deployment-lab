@@ -165,6 +165,22 @@
       }
     },
     {
+      "id": "LEARN-10",
+      "title": "Reading a graph before a compiler does",
+      "subject": "What an exported graph tells you, and what only a measurement can",
+      "covers": [
+        "T21"
+      ],
+      "sheet": "build/learning/learn-10.html",
+      "built": "2026-08-02",
+      "sources": {
+        "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "3ceb076a04ad",
+        "configs/graph/README.md": "d7257839030c",
+        "docs/results/onnx/graph-inspection.md": "192e1f6fc92f",
+        "docs/results/onnx/ort-cpu-parity.md": "e873fbf16c85"
+      }
+    },
+    {
       "id": "LEARN-11",
       "title": "Calibration data as a contract",
       "subject": "Freezing the inputs to quantization before quantizing anything",

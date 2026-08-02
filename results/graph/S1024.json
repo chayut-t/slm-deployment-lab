@@ -1,0 +1,427 @@
+{
+  "artifact_root_template": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20",
+  "cache_capacity": 1152,
+  "catalogue_id": "onnx-deployment-risk-v1",
+  "claim_boundary": {
+    "does_not_establish": [
+      "compiler_acceptance",
+      "operator_support_by_any_vendor_toolchain",
+      "accelerator_placement",
+      "onnxruntime_numerical_parity",
+      "latency_or_memory_performance",
+      "severity_derived_from_an_executed_compile_or_conversion_job",
+      "onnx_model_validity_beyond_structural_decoding"
+    ],
+    "establishes": [
+      "onnx_file_sha256_matches_the_committed_T20_manifest",
+      "structural_inventory_of_the_onnx_protobuf",
+      "declared_public_boundary_shapes_and_dtypes",
+      "risk_rule_matches_against_the_committed_catalogue"
+    ]
+  },
+  "context_length": 1024,
+  "generated_by": {
+    "module": "slm_lab.graph.inspection",
+    "rules_path": "configs/graph/onnx-risk-rules-v1.json",
+    "rules_sha256": "21f0cf537c8aef98691cdbd26c11f1f21c530d9e97cbf2e54d0c83d40cb412dc",
+    "schema_version": 1
+  },
+  "graphs": {
+    "decode": {
+      "catalogue_id": "onnx-deployment-risk-v1",
+      "dynamic_dimensions": [],
+      "external_initializer_count": 254,
+      "finding_count": 7,
+      "findings": [
+        {
+          "category": "dynamic_shape",
+          "count": 1231,
+          "detail": "1231 of 1326 shape-defining operator inputs are produced by another node rather than by an initializer, a graph input, or one of ['Constant', 'ConstantOfShape']; watched operators: Expand[1], Reshape[1], Slice[1, 2, 3, 4], Tile[1].",
+          "locations": [
+            "node[11] ai.onnx.Slice /Slice input[1]=/Unsqueeze_1_output_0",
+            "node[11] ai.onnx.Slice /Slice input[2]=/Unsqueeze_2_output_0",
+            "node[11] ai.onnx.Slice /Slice input[3]=/Unsqueeze_output_0",
+            "node[20] ai.onnx.Slice /Slice_1 input[1]=/Unsqueeze_4_output_0",
+            "node[20] ai.onnx.Slice /Slice_1 input[2]=/Unsqueeze_5_output_0",
+            "node[20] ai.onnx.Slice /Slice_1 input[3]=/Unsqueeze_3_output_0",
+            "node[29] ai.onnx.Slice /Slice_2 input[1]=/Unsqueeze_7_output_0",
+            "node[29] ai.onnx.Slice /Slice_2 input[2]=/Unsqueeze_8_output_0"
+          ],
+          "mitigation": "Run constant folding, or rewrite the export wrapper so shapes come from Python integers rather than from tensor arithmetic on Shape outputs. Re-inspect afterwards to confirm the chain collapsed.",
+          "rationale": "Reshape, Slice, Expand, and Tile take their target shape or bounds as a tensor input. When that input is an initializer or a Constant node the resulting shape is fixed and a static compiler can plan around it. When it is produced by another node, the output shape is only known once the graph runs, which is the classic Shape to Gather to Reshape pattern left behind by tracing frameworks. This is the most common reason an otherwise static export still refuses to compile to a fixed command stream. The detector reports where the pattern occurs; it does not prove the value actually varies, because a computed input can still be constant in practice and removable by constant folding.",
+          "rule_id": "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "severity": "high",
+          "title": "Shape-defining operator input is computed rather than constant"
+        },
+        {
+          "category": "memory_traffic",
+          "count": 118,
+          "detail": "graph boundary carries 60 input tensors (limit 16) and 58 output tensors (limit 16); 60/60 inputs size to 132129816 bytes and 58/58 outputs size to 132728328 bytes, so at least 264858144 bytes cross the boundary per invocation.",
+          "locations": [
+            "input: input_ids int64 [1, 1]",
+            "input: attention_mask int64 [1, 1152]",
+            "input: position_ids int64 [1, 1]",
+            "input: key_cache.0 float16 [1, 8, 1152, 128]",
+            "input: value_cache.0 float16 [1, 8, 1152, 128]",
+            "input: key_cache.1 float16 [1, 8, 1152, 128]",
+            "input: value_cache.1 float16 [1, 8, 1152, 128]",
+            "input: key_cache.2 float16 [1, 8, 1152, 128]"
+          ],
+          "mitigation": "Prefer runtime-managed or in-place cache state if the target runtime exposes it, or stack per-layer tensors into fewer larger buffers to cut descriptor count. Measure before and after; plan 6.6 is explicit that a reduced tensor or node count is not by itself evidence of an optimization.",
+          "rationale": "The decode graph takes the entire fixed-capacity KV cache in as explicit per-layer tensors and returns the entire updated cache out again, so the full cache is copied across the graph boundary on every single generated token even though one token writes only one position per layer. That is the dominant memory-traffic term in the decode step and it grows linearly with cache capacity, which plan 6.5 estimates at roughly 112 MiB at context 1024 and 448 MiB at 4096 in float16. Separate input and output buffers also roughly double live memory. The detector reports the observed boundary tensor counts and, where every shape is static, the exact byte total crossing the boundary per invocation.",
+          "rule_id": "R-WIDE-IO-BOUNDARY",
+          "severity": "high",
+          "title": "Graph boundary carries an unusually large number of tensors"
+        },
+        {
+          "category": "operator_support",
+          "count": 57,
+          "detail": "57 of 10191 nodes match the watched operator set (ScatterElements=56, ScatterND=1); watched operators: GatherElements, GatherND, ScatterElements, ScatterND.",
+          "locations": [
+            "node[707] ai.onnx.ScatterND /model/model/ScatterND",
+            "node[9016] ai.onnx.ScatterElements /ScatterElements",
+            "node[9027] ai.onnx.ScatterElements /ScatterElements_1",
+            "node[9059] ai.onnx.ScatterElements /ScatterElements_2",
+            "node[9070] ai.onnx.ScatterElements /ScatterElements_3",
+            "node[9102] ai.onnx.ScatterElements /ScatterElements_4",
+            "node[9113] ai.onnx.ScatterElements /ScatterElements_5",
+            "node[9145] ai.onnx.ScatterElements /ScatterElements_6"
+          ],
+          "mitigation": "Consider alternatives evaluated in plan 6.5: a shift buffer, a bucketed or growing cache, a mask-and-blend write using Where against a position-comparison mask, or runtime-managed state if the target runtime exposes it. Any replacement must be validated numerically against the reference before it is adopted.",
+          "rationale": "The fixed-capacity KV-cache write in the decode graph is expressed as an indexed scatter at the current valid_length, so these operators are load-bearing rather than incidental: if the backend cannot lower them, the decode graph loses its whole reason to exist. They are also awkward for accelerators because the write address is a runtime value, which defeats static DMA descriptor generation and, in a quantized pipeline, requires the scattered update and the destination buffer to share one encoding. This repository has not yet run a QNN conversion of these nodes, so the severity reflects how central and how structurally awkward they are, not a measured failure.",
+          "rule_id": "R-SCATTER-GATHER-INDEXING",
+          "severity": "high",
+          "title": "Indexed scatter or gather operator present"
+        },
+        {
+          "category": "graph_scale",
+          "count": 10191,
+          "detail": "graph holds 10191 nodes across 29 distinct operator types, above the review threshold of 2000; busiest operators: Constant=3399, Unsqueeze=2083, Mul=571, Cast=464, Shape=459.",
+          "locations": [
+            "graph: main_graph"
+          ],
+          "mitigation": "Treat this as a budget to track across the reference, QNN-candidate, and quantized stages. Constant folding and operator fusion should reduce it; record the count at each stage so that a change in compile behaviour can be attributed.",
+          "rationale": "An unfolded 28-layer transformer exported with constant folding disabled and eager attention produces a long flat node list. Node count drives converter and compiler wall-clock time, the size of the partitioning search, and how many small operators can end up stranded on the host between accelerator partitions. The threshold is a review convention chosen so that the T20 reference graphs are compared against a fixed line across variants, not a supported limit published by any toolchain.",
+          "rule_id": "R-GRAPH-NODE-COUNT",
+          "severity": "medium",
+          "title": "Graph node count is large"
+        },
+        {
+          "category": "precision",
+          "count": 367,
+          "detail": "367 of 10191 nodes match the watched operator set (Pow=113, ReduceMean=113, Softmax=28, Sqrt=113); watched operators: Erf, Exp, Log, Pow, Reciprocal, ReduceMean, Softmax, Sqrt.",
+          "locations": [
+            "node[745] ai.onnx.Pow /model/model/layers.0/input_layernorm/Pow",
+            "node[747] ai.onnx.ReduceMean /model/model/layers.0/input_layernorm/ReduceMean",
+            "node[750] ai.onnx.Sqrt /model/model/layers.0/input_layernorm/Sqrt",
+            "node[791] ai.onnx.Pow /model/model/layers.0/self_attn/q_norm/Pow",
+            "node[793] ai.onnx.ReduceMean /model/model/layers.0/self_attn/q_norm/ReduceMean",
+            "node[796] ai.onnx.Sqrt /model/model/layers.0/self_attn/q_norm/Sqrt",
+            "node[808] ai.onnx.Pow /model/model/layers.0/self_attn/k_norm/Pow",
+            "node[810] ai.onnx.ReduceMean /model/model/layers.0/self_attn/k_norm/ReduceMean"
+          ],
+          "mitigation": "Keep normalization and softmax in higher precision when the backend allows a mixed-precision partition, and treat these nodes as the first candidates for per-tensor error inspection in the numerical validation report.",
+          "rationale": "Softmax, Erf, Exp, and Log are transcendental and are usually implemented on fixed-point accelerators by piecewise approximation or lookup, so they are the operators where a quantized graph diverges from the float reference first. ReduceMean, Pow, Sqrt, and Reciprocal are the decomposition of RMSNorm; the reduction accumulates across the hidden dimension and the reciprocal square root has a large dynamic range, which makes this the other classic place low-precision error is introduced. The severity is a precision-review flag, not a claim that any specific backend implements these poorly.",
+          "rule_id": "R-FLOAT-SENSITIVE-ELEMENTWISE",
+          "severity": "medium",
+          "title": "Numerically sensitive elementwise or reduction operator present"
+        },
+        {
+          "category": "precision",
+          "count": 285,
+          "detail": "285 of 464 Cast nodes cross or may cross the float16/float32 boundary: float16->float32=142, float32->float16=143.",
+          "locations": [
+            "node[741] ai.onnx.Cast /model/model/rotary_emb/Cast_4 float32->float16",
+            "node[742] ai.onnx.Cast /model/model/rotary_emb/Cast_5 float32->float16",
+            "node[743] ai.onnx.Cast /model/model/layers.0/input_layernorm/Cast float16->float32",
+            "node[754] ai.onnx.Cast /model/model/layers.0/input_layernorm/Cast_1 float32->float16",
+            "node[789] ai.onnx.Cast /model/model/layers.0/self_attn/q_norm/Cast float16->float32",
+            "node[800] ai.onnx.Cast /model/model/layers.0/self_attn/q_norm/Cast_1 float32->float16",
+            "node[806] ai.onnx.Cast /model/model/layers.0/self_attn/k_norm/Cast float16->float32",
+            "node[817] ai.onnx.Cast /model/model/layers.0/self_attn/k_norm/Cast_1 float32->float16"
+          ],
+          "mitigation": "Keep the number of crossings small and deliberate. Confirm each one against the contract, and record per-tensor error at the crossings during the T21 numerical comparison rather than only at the graph output. Casts whose source dtype could not be resolved from the graph are counted separately and should be confirmed by hand.",
+          "rationale": "The T12 contract stores the KV cache in float16 but returns logits in float32, so casts between the two widths are expected by design and are not a defect. They matter because each one is a real precision boundary: a float32 to float16 cast is where overflow and underflow enter, and a float16 to float32 cast is where a later quantizer must decide which side of the boundary it owns. Counting them by direction tells the reader how many such boundaries a numerical comparison has to account for, and whether any appear in places the contract did not intend.",
+          "rule_id": "R-FLOAT-PRECISION-CAST",
+          "severity": "medium",
+          "title": "Cast crosses the float16 and float32 boundary"
+        },
+        {
+          "category": "dynamic_shape",
+          "count": 556,
+          "detail": "556 of 10191 nodes match the watched operator set (ConstantOfShape=91, Range=6, Shape=459); watched operators: ConstantOfShape, Range, Shape, Size.",
+          "locations": [
+            "node[521] ai.onnx.Shape /model/model/Shape",
+            "node[530] ai.onnx.Range /model/model/Range",
+            "node[531] ai.onnx.Shape /model/model/Shape_1",
+            "node[540] ai.onnx.ConstantOfShape /model/model/ConstantOfShape",
+            "node[544] ai.onnx.Range /model/model/Range_1",
+            "node[567] ai.onnx.Shape /model/model/Shape_2",
+            "node[568] ai.onnx.ConstantOfShape /model/model/ConstantOfShape_1",
+            "node[613] ai.onnx.Shape /model/model/Shape_3"
+          ],
+          "mitigation": "None required on its own. If the count is large, run constant folding and compare the count before and after to see how much of it is residue rather than real computation.",
+          "rationale": "Shape, Size, Range, and ConstantOfShape compute metadata rather than activations. Their presence is normal in a traced export and is not itself a fault, but they are the raw material of the data-dependent shape chains flagged by R-DATA-DEPENDENT-SHAPE-INPUT, and they add small host-side operators that a compiler must either fold away or partition around. This rule is deliberately low severity: it exists to give the reader the population count that the higher-severity shape rules should be read against.",
+          "rule_id": "R-SHAPE-COMPUTATION-CHAIN",
+          "severity": "low",
+          "title": "Shape-arithmetic operator present in the graph"
+        }
+      ],
+      "graph_kind": "decode",
+      "highest_severity": "high",
+      "initializer_count": 310,
+      "input_count": 60,
+      "ir_version": 8,
+      "largest_inline_initializer_bytes": 256,
+      "node_count": 10191,
+      "op_histogram": {
+        "Add": 317,
+        "Cast": 464,
+        "Concat": 370,
+        "Constant": 3399,
+        "ConstantOfShape": 91,
+        "Cos": 1,
+        "Div": 167,
+        "Equal": 91,
+        "Expand": 91,
+        "Gather": 369,
+        "Greater": 1,
+        "MatMul": 254,
+        "Mul": 571,
+        "Neg": 56,
+        "Pow": 113,
+        "Range": 6,
+        "ReduceMean": 113,
+        "Reshape": 261,
+        "ScatterElements": 56,
+        "ScatterND": 1,
+        "Shape": 459,
+        "Sigmoid": 28,
+        "Sin": 1,
+        "Slice": 258,
+        "Softmax": 28,
+        "Sqrt": 113,
+        "Transpose": 338,
+        "Unsqueeze": 2083,
+        "Where": 91
+      },
+      "opset_imports": [
+        [
+          "",
+          18
+        ]
+      ],
+      "output_count": 58,
+      "producer": "pytorch 2.7.1",
+      "schema_version": 1,
+      "source_relative_path": "S1024/decode.onnx",
+      "source_sha256": "4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759",
+      "variant_id": "S1024"
+    },
+    "prefill": {
+      "catalogue_id": "onnx-deployment-risk-v1",
+      "dynamic_dimensions": [],
+      "external_initializer_count": 254,
+      "finding_count": 8,
+      "findings": [
+        {
+          "category": "dynamic_shape",
+          "count": 804,
+          "detail": "804 of 1258 shape-defining operator inputs are produced by another node rather than by an initializer, a graph input, or one of ['Constant', 'ConstantOfShape']; watched operators: Expand[1], Reshape[1], Slice[1, 2, 3, 4], Tile[1].",
+          "locations": [
+            "node[27] ai.onnx.Expand /model/model/Expand input[1]=/model/model/Where_output_0",
+            "node[36] ai.onnx.Slice /model/model/Slice input[1]=/model/model/Unsqueeze_5_output_0",
+            "node[36] ai.onnx.Slice /model/model/Slice input[2]=/model/model/Unsqueeze_6_output_0",
+            "node[36] ai.onnx.Slice /model/model/Slice input[3]=/model/model/Unsqueeze_4_output_0",
+            "node[36] ai.onnx.Slice /model/model/Slice input[4]=/model/model/Unsqueeze_7_output_0",
+            "node[54] ai.onnx.Slice /model/model/Slice_1 input[1]=/model/model/Unsqueeze_11_output_0",
+            "node[54] ai.onnx.Slice /model/model/Slice_1 input[2]=/model/model/Unsqueeze_12_output_0",
+            "node[54] ai.onnx.Slice /model/model/Slice_1 input[3]=/model/model/Unsqueeze_10_output_0"
+          ],
+          "mitigation": "Run constant folding, or rewrite the export wrapper so shapes come from Python integers rather than from tensor arithmetic on Shape outputs. Re-inspect afterwards to confirm the chain collapsed.",
+          "rationale": "Reshape, Slice, Expand, and Tile take their target shape or bounds as a tensor input. When that input is an initializer or a Constant node the resulting shape is fixed and a static compiler can plan around it. When it is produced by another node, the output shape is only known once the graph runs, which is the classic Shape to Gather to Reshape pattern left behind by tracing frameworks. This is the most common reason an otherwise static export still refuses to compile to a fixed command stream. The detector reports where the pattern occurs; it does not prove the value actually varies, because a computed input can still be constant in practice and removable by constant folding.",
+          "rule_id": "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "severity": "high",
+          "title": "Shape-defining operator input is computed rather than constant"
+        },
+        {
+          "category": "memory_traffic",
+          "count": 58,
+          "detail": "graph boundary carries 3 input tensors (limit 16) and 58 output tensors (limit 16); 3/3 inputs size to 24576 bytes and 58/58 outputs size to 132728328 bytes, so at least 132752904 bytes cross the boundary per invocation.",
+          "locations": [
+            "output: last_logits float32 [1, 151936]",
+            "output: key_cache.0 float16 [1, 8, 1152, 128]",
+            "output: value_cache.0 float16 [1, 8, 1152, 128]",
+            "output: key_cache.1 float16 [1, 8, 1152, 128]",
+            "output: value_cache.1 float16 [1, 8, 1152, 128]",
+            "output: key_cache.2 float16 [1, 8, 1152, 128]",
+            "output: value_cache.2 float16 [1, 8, 1152, 128]",
+            "output: key_cache.3 float16 [1, 8, 1152, 128]"
+          ],
+          "mitigation": "Prefer runtime-managed or in-place cache state if the target runtime exposes it, or stack per-layer tensors into fewer larger buffers to cut descriptor count. Measure before and after; plan 6.6 is explicit that a reduced tensor or node count is not by itself evidence of an optimization.",
+          "rationale": "The decode graph takes the entire fixed-capacity KV cache in as explicit per-layer tensors and returns the entire updated cache out again, so the full cache is copied across the graph boundary on every single generated token even though one token writes only one position per layer. That is the dominant memory-traffic term in the decode step and it grows linearly with cache capacity, which plan 6.5 estimates at roughly 112 MiB at context 1024 and 448 MiB at 4096 in float16. Separate input and output buffers also roughly double live memory. The detector reports the observed boundary tensor counts and, where every shape is static, the exact byte total crossing the boundary per invocation.",
+          "rule_id": "R-WIDE-IO-BOUNDARY",
+          "severity": "high",
+          "title": "Graph boundary carries an unusually large number of tensors"
+        },
+        {
+          "category": "operator_support",
+          "count": 1,
+          "detail": "1 of 8755 nodes match the watched operator set (ScatterND=1); watched operators: GatherElements, GatherND, ScatterElements, ScatterND.",
+          "locations": [
+            "node[125] ai.onnx.ScatterND /model/model/ScatterND"
+          ],
+          "mitigation": "Consider alternatives evaluated in plan 6.5: a shift buffer, a bucketed or growing cache, a mask-and-blend write using Where against a position-comparison mask, or runtime-managed state if the target runtime exposes it. Any replacement must be validated numerically against the reference before it is adopted.",
+          "rationale": "The fixed-capacity KV-cache write in the decode graph is expressed as an indexed scatter at the current valid_length, so these operators are load-bearing rather than incidental: if the backend cannot lower them, the decode graph loses its whole reason to exist. They are also awkward for accelerators because the write address is a runtime value, which defeats static DMA descriptor generation and, in a quantized pipeline, requires the scattered update and the destination buffer to share one encoding. This repository has not yet run a QNN conversion of these nodes, so the severity reflects how central and how structurally awkward they are, not a measured failure.",
+          "rule_id": "R-SCATTER-GATHER-INDEXING",
+          "severity": "high",
+          "title": "Indexed scatter or gather operator present"
+        },
+        {
+          "category": "graph_scale",
+          "count": 8755,
+          "detail": "graph holds 8755 nodes across 28 distinct operator types, above the review threshold of 2000; busiest operators: Constant=3178, Unsqueeze=1568, Mul=542, Cast=460, Reshape=396.",
+          "locations": [
+            "graph: main_graph"
+          ],
+          "mitigation": "Treat this as a budget to track across the reference, QNN-candidate, and quantized stages. Constant folding and operator fusion should reduce it; record the count at each stage so that a change in compile behaviour can be attributed.",
+          "rationale": "An unfolded 28-layer transformer exported with constant folding disabled and eager attention produces a long flat node list. Node count drives converter and compiler wall-clock time, the size of the partitioning search, and how many small operators can end up stranded on the host between accelerator partitions. The threshold is a review convention chosen so that the T20 reference graphs are compared against a fixed line across variants, not a supported limit published by any toolchain.",
+          "rule_id": "R-GRAPH-NODE-COUNT",
+          "severity": "medium",
+          "title": "Graph node count is large"
+        },
+        {
+          "category": "precision",
+          "count": 367,
+          "detail": "367 of 8755 nodes match the watched operator set (Pow=113, ReduceMean=113, Softmax=28, Sqrt=113); watched operators: Erf, Exp, Log, Pow, Reciprocal, ReduceMean, Softmax, Sqrt.",
+          "locations": [
+            "node[163] ai.onnx.Pow /model/model/layers.0/input_layernorm/Pow",
+            "node[165] ai.onnx.ReduceMean /model/model/layers.0/input_layernorm/ReduceMean",
+            "node[168] ai.onnx.Sqrt /model/model/layers.0/input_layernorm/Sqrt",
+            "node[209] ai.onnx.Pow /model/model/layers.0/self_attn/q_norm/Pow",
+            "node[211] ai.onnx.ReduceMean /model/model/layers.0/self_attn/q_norm/ReduceMean",
+            "node[214] ai.onnx.Sqrt /model/model/layers.0/self_attn/q_norm/Sqrt",
+            "node[226] ai.onnx.Pow /model/model/layers.0/self_attn/k_norm/Pow",
+            "node[228] ai.onnx.ReduceMean /model/model/layers.0/self_attn/k_norm/ReduceMean"
+          ],
+          "mitigation": "Keep normalization and softmax in higher precision when the backend allows a mixed-precision partition, and treat these nodes as the first candidates for per-tensor error inspection in the numerical validation report.",
+          "rationale": "Softmax, Erf, Exp, and Log are transcendental and are usually implemented on fixed-point accelerators by piecewise approximation or lookup, so they are the operators where a quantized graph diverges from the float reference first. ReduceMean, Pow, Sqrt, and Reciprocal are the decomposition of RMSNorm; the reduction accumulates across the hidden dimension and the reciprocal square root has a large dynamic range, which makes this the other classic place low-precision error is introduced. The severity is a precision-review flag, not a claim that any specific backend implements these poorly.",
+          "rule_id": "R-FLOAT-SENSITIVE-ELEMENTWISE",
+          "severity": "medium",
+          "title": "Numerically sensitive elementwise or reduction operator present"
+        },
+        {
+          "category": "precision",
+          "count": 285,
+          "detail": "285 of 460 Cast nodes cross or may cross the float16/float32 boundary: float16->float32=142, float32->float16=143.",
+          "locations": [
+            "node[159] ai.onnx.Cast /model/model/rotary_emb/Cast_4 float32->float16",
+            "node[160] ai.onnx.Cast /model/model/rotary_emb/Cast_5 float32->float16",
+            "node[161] ai.onnx.Cast /model/model/layers.0/input_layernorm/Cast float16->float32",
+            "node[172] ai.onnx.Cast /model/model/layers.0/input_layernorm/Cast_1 float32->float16",
+            "node[207] ai.onnx.Cast /model/model/layers.0/self_attn/q_norm/Cast float16->float32",
+            "node[218] ai.onnx.Cast /model/model/layers.0/self_attn/q_norm/Cast_1 float32->float16",
+            "node[224] ai.onnx.Cast /model/model/layers.0/self_attn/k_norm/Cast float16->float32",
+            "node[235] ai.onnx.Cast /model/model/layers.0/self_attn/k_norm/Cast_1 float32->float16"
+          ],
+          "mitigation": "Keep the number of crossings small and deliberate. Confirm each one against the contract, and record per-tensor error at the crossings during the T21 numerical comparison rather than only at the graph output. Casts whose source dtype could not be resolved from the graph are counted separately and should be confirmed by hand.",
+          "rationale": "The T12 contract stores the KV cache in float16 but returns logits in float32, so casts between the two widths are expected by design and are not a defect. They matter because each one is a real precision boundary: a float32 to float16 cast is where overflow and underflow enter, and a float16 to float32 cast is where a later quantizer must decide which side of the boundary it owns. Counting them by direction tells the reader how many such boundaries a numerical comparison has to account for, and whether any appear in places the contract did not intend.",
+          "rule_id": "R-FLOAT-PRECISION-CAST",
+          "severity": "medium",
+          "title": "Cast crosses the float16 and float32 boundary"
+        },
+        {
+          "category": "memory_traffic",
+          "count": 1,
+          "detail": "1 inline constant tensors exceed 262144 bytes; the largest is 2097152 bytes and they total 2097152 bytes stored inside the graph protobuf rather than in external data.",
+          "locations": [
+            "node[6] ai.onnx.Constant /model/model/Constant_4 attribute value float16 [1, 1, 1024, 1024] 2097152 bytes"
+          ],
+          "mitigation": "Rebuild the mask from a small constant plus broadcasting, supply it as a graph input, or at minimum move it to external data. Confirm the protobuf size drops and the numerical result is unchanged. Note that the same tensor is absent from the decode graphs, which attend over the full fixed capacity with a boundary attention_mask instead.",
+          "rationale": "The T20 export pushes every tensor above 1024 bytes into external data, so a large tensor still living inside the protobuf is one the exporter materialized during tracing rather than a model weight. In the committed reports this rule identifies exactly one such tensor per prefill graph, the float16 Constant attribute at /model/model/Constant_4 with shape [1, 1, S, S]: 0.5 MB at S512, 2 MB at S1024, and 33.5 MB at S4096, which accounts for essentially all of the growth in prefill protobuf size across variants while the external weight file stays byte-identical. That is a fully materialized quadratic attention mask baked into the graph. It costs constant memory and load time on every target, it must be re-materialized rather than derived if the graph is ever re-shaped, and in a quantized pipeline it becomes one more tensor needing an encoding.",
+          "rule_id": "R-LARGE-INLINE-CONSTANT",
+          "severity": "medium",
+          "title": "Large constant tensor stored inline in the graph protobuf"
+        },
+        {
+          "category": "dynamic_shape",
+          "count": 239,
+          "detail": "239 of 8755 nodes match the watched operator set (ConstantOfShape=118, Shape=121); watched operators: ConstantOfShape, Range, Shape, Size.",
+          "locations": [
+            "node[21] ai.onnx.Shape /model/model/Shape",
+            "node[22] ai.onnx.ConstantOfShape /model/model/ConstantOfShape",
+            "node[67] ai.onnx.Shape /model/model/Shape_1",
+            "node[80] ai.onnx.Shape /model/model/Shape_2",
+            "node[81] ai.onnx.Shape /model/model/Shape_3",
+            "node[82] ai.onnx.ConstantOfShape /model/model/ConstantOfShape_1",
+            "node[90] ai.onnx.Shape /model/model/Shape_4",
+            "node[91] ai.onnx.ConstantOfShape /model/model/ConstantOfShape_2"
+          ],
+          "mitigation": "None required on its own. If the count is large, run constant folding and compare the count before and after to see how much of it is residue rather than real computation.",
+          "rationale": "Shape, Size, Range, and ConstantOfShape compute metadata rather than activations. Their presence is normal in a traced export and is not itself a fault, but they are the raw material of the data-dependent shape chains flagged by R-DATA-DEPENDENT-SHAPE-INPUT, and they add small host-side operators that a compiler must either fold away or partition around. This rule is deliberately low severity: it exists to give the reader the population count that the higher-severity shape rules should be read against.",
+          "rule_id": "R-SHAPE-COMPUTATION-CHAIN",
+          "severity": "low",
+          "title": "Shape-arithmetic operator present in the graph"
+        }
+      ],
+      "graph_kind": "prefill",
+      "highest_severity": "high",
+      "initializer_count": 310,
+      "input_count": 3,
+      "ir_version": 8,
+      "largest_inline_initializer_bytes": 256,
+      "node_count": 8755,
+      "op_histogram": {
+        "Add": 257,
+        "Cast": 460,
+        "Concat": 341,
+        "Constant": 3178,
+        "ConstantOfShape": 118,
+        "Cos": 1,
+        "Div": 113,
+        "Equal": 63,
+        "Expand": 63,
+        "Gather": 58,
+        "MatMul": 254,
+        "Mul": 542,
+        "Neg": 56,
+        "Pad": 56,
+        "Pow": 113,
+        "ReduceMean": 113,
+        "Reshape": 396,
+        "ScatterND": 1,
+        "Shape": 121,
+        "Sigmoid": 28,
+        "Sin": 1,
+        "Slice": 200,
+        "Softmax": 28,
+        "Sqrt": 113,
+        "Sub": 56,
+        "Transpose": 394,
+        "Unsqueeze": 1568,
+        "Where": 63
+      },
+      "opset_imports": [
+        [
+          "",
+          18
+        ]
+      ],
+      "output_count": 58,
+      "producer": "pytorch 2.7.1",
+      "schema_version": 1,
+      "source_relative_path": "S1024/prefill.onnx",
+      "source_sha256": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6",
+      "variant_id": "S1024"
+    }
+  },
+  "opset": 18,
+  "precision": "float16",
+  "schema_version": 1,
+  "source_manifest": {
+    "path": "results/manifests/onnx/S1024.json",
+    "sha256": "9280bf9d8845bd1a57db75e441d781cd39971888ef9910d689f53c23de6cac67"
+  },
+  "task_id": "T21",
+  "variant_id": "S1024"
+}
