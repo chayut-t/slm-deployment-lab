@@ -255,14 +255,15 @@
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
       <div class="stat"><div class="num">17<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
-      <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
       <div class="stat"><div class="num">10</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
-      <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
+      <div class="stat"><div class="num">1</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 17 completed, 4 ready, 10 blocked, of 31 tasks">
+    <div class="bar" role="img" aria-label="Task progress: 17 completed, 1 in progress, 3 ready, 10 blocked, of 31 tasks">
       <span style="flex:17;background:var(--bar-done)"></span>
-      <span style="flex:4;background:var(--bar-ready)"></span>
+      <span style="flex:1;background:var(--copper)"></span>
+      <span style="flex:3;background:var(--bar-ready)"></span>
       <span style="flex:10;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
@@ -397,10 +398,10 @@
       <div class="sub">The tasks that are ready right now. Priority follows the plan: Qualcomm first.</div>
     </div>
 
-    <div class="next priority">
-      <h3><span class="tid">T23</span> · Prefill re-export &amp; evidence refresh</h3>
-      <span class="prio-tag">Priority 1 · critical path</span>
-      <div class="why">The four reference prefill graphs cannot be loaded by ONNX Runtime's CPU provider at all: they zero-extend the KV cache with a float16 <code>Pad</code>, and ORT registers no float16 <code>Pad</code> kernel. The fix — writing the reserve with <code>Concat</code>, as decode already does — is measured and committed, but the attested artifacts still carry the defect. Promoting it means re-exporting the graphs and bringing every committed digest, count and size back into agreement. T22 is blocked behind this: there is no point building QNN candidates out of bytes we are about to replace.</div>
+    <div class="next priority" style="border-style:dashed;">
+      <h3><strong>T23</strong> · Prefill re-export &amp; evidence refresh — <em>in flight</em></h3>
+      <span class="prio-tag">Complete on its branch · awaiting merge</span>
+      <div class="why">Not listed as ready, because it is neither. The four reference prefill graphs could not be loaded by ONNX Runtime's CPU provider at all: they zero-extended the KV cache with a float16 <code>Pad</code>, and ORT registers no float16 <code>Pad</code> kernel. The fix — writing the reserve with <code>Concat</code>, as decode already does — has now been promoted into the attested export, and every committed digest, count and size has been brought back into agreement. All four prefill graphs load on the CPU EP, parity is measured at <code>ORT_DISABLE_ALL</code>, and the numeric-claim audit reports zero disagreements. The work sits on <code>task/T23-prefill-reexport-promotion</code> and has <strong>not been merged</strong>, so the task is still <code>in_progress</code>: nothing downstream can build on it yet. <strong>T22</strong> unblocks when it merges, not before.</div>
     </div>
 
     <div class="next priority">
@@ -422,7 +423,7 @@
     </div>
 
     <p style="color:var(--ink-2);font-size:0.95rem;">
-      After those: <strong>T22</strong> (QNN candidate packaging, unblocked once T23 lands) →
+      After those: <strong>T22</strong> (QNN candidate packaging, unblocked once the T23 branch merges) →
       <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
       <strong>T33</strong> (the Qualcomm floating-point milestone) → <strong>T42–T43</strong> (W4/LPBQ/LiteMP and quantized NPU deployment),
       then the demo (T70/T71) and release (T80–T82).
