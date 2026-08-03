@@ -2,23 +2,101 @@
 
 Task: `T21`
 Date: 2026-08-02
-Status: **no measurement**
+Measured: 2026-08-02
+Status: **measured; the numerical criterion is open**
 
-> **No real ONNX Runtime measurement has been taken.** There is no parity
-> number in this repository, and none is claimed here. `onnxruntime`, `torch`,
-> `numpy`, `onnx`, and `transformers` are all absent from the environment in
-> which this work was done, so the runner has never executed a real graph. What
-> follows documents validated comparison machinery, a set of *proposed and
-> unvalidated* tolerances, and the exact command a host with the runtime must
-> run to produce the real result. Every number the machinery can currently
-> produce comes from injected fake sessions and is labelled
-> `evidence_tier="fake_session_self_test"` in its own evidence record.
+> **A real ONNX Runtime measurement now exists.** All four context variants
+> were run against the committed T20 reference graphs on the CPU execution
+> provider, and the records are committed under `results/graph/parity/`. Each
+> carries `evidence_tier="real_onnxruntime_cpu"`, a tier derived from the
+> session objects that a caller cannot assert.
+>
+> Two qualifications, both load-bearing. The runs were taken at
+> `ORT_ENABLE_BASIC`, **not** at the runner's `ORT_DISABLE_ALL` default,
+> because the float16 reference prefill graphs cannot be loaded at that level
+> at all; see
+> [`docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md`](../../failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md).
+> And the tolerances remain `proposed_unvalidated`: the measurement did not
+> meet them, and they have deliberately **not** been widened to fit it.
 
-The T21 acceptance criteria "ORT outputs satisfy numerical tolerances" and
-"Multiple decode steps update cache correctly" are therefore **not yet
-satisfied by measurement**. They are satisfied by construction: the criteria
-are encoded as executable, fault-injected checks, and the run that evaluates
-them is a single recorded command away.
+Against the two T21 acceptance criteria:
+
+- **"Multiple decode steps update cache correctly" is now satisfied by
+  measurement.** Every static-cache invariant held on all 20 recorded steps
+  across the four contexts. `cache_report.passed` is true in every record and
+  no state-update failure class appears in any `failure_kinds`.
+- **"ORT outputs satisfy numerical tolerances" is not.** The logits do not meet
+  the proposed thresholds. Whether that is a parity problem or a thresholds
+  problem is unresolved, and resolving it belongs to `T23`, together with the
+  re-export that makes an `ORT_DISABLE_ALL` baseline possible in the first
+  place.
+
+The machinery described in the rest of this document — the invariants, the
+failure taxonomy, the fault-injection evidence, the evidence tiers — is
+unchanged by the measurement and remains the reason its output can be trusted.
+
+## The first real measurement
+
+One invocation per context; the full form is in *Reproducing the real
+measurement* below.
+
+```bash
+SLM_LAB_ARTIFACT_ROOT=<artifact-root> HF_HOME=<local-hf-cache> \
+TRANSFORMERS_OFFLINE=1 PYTHONPATH=src \
+  <parity-env-python> -m slm_lab.backends.onnx_cpu \
+  --manifest results/manifests/onnx/S128.json --steps 4 --reference torch \
+  --graph-optimization-level ORT_ENABLE_BASIC \
+  --output results/graph/parity/S128-ort-cpu.json
+```
+
+Every record carries the same runtime block: `onnxruntime` 1.28.0, CPython
+3.11.13, `macOS-15.7.7-arm64`, `CPUExecutionProvider` alone, `ORT_SEQUENTIAL`,
+`intra_op_num_threads=1`, `inter_op_num_threads=1`, and
+`graph_optimization_level=ORT_ENABLE_BASIC`.
+
+| Record | `cosine_similarity` | `max_absolute_error` | worst rel. | worst top-5 | top-1 | cache |
+|---|---|---|---|---|---|---|
+| `S128` | 0.999756 – 0.999904 | 0.2930 – 0.4609 | 0.3602 | 1.00 | 5/5 | pass |
+| `S512` | 0.999784 – 0.999942 | 0.1855 – 0.5781 | 0.4878 | 1.00 | 5/5 | pass |
+| `S1024` | 0.999840 – 0.999967 | 0.2188 – 0.5547 | 0.4531 | 1.00 | 5/5 | pass |
+| `S4096` | 0.999942 – 0.999965 | 0.2266 – 0.3828 | 0.3038 | 0.80 | 5/5 | pass |
+
+Aggregated over all 20 steps — one prefill and four decode steps per context:
+
+| Metric | Observed | Threshold | Verdict |
+|---|---|---|---|
+| `cosine_similarity` | 0.999756 – 0.999967 | ≥ 0.999 | clears |
+| `top1_agreement` | 20 / 20 | required | clears |
+| `top5_overlap` | 0.80 – 1.00 | ≥ 0.80 | clears |
+| `max_absolute_error` | 0.1855 – 0.5781 | ≤ 0.25 | **fails** |
+| `max_protected_relative_error` | 0.1738 – 0.4878 | ≤ 0.10 | **fails** |
+| `mean_absolute_error` | 0.032307 – 0.129059 | — | recorded |
+
+Every record ends `passed: false` with `failure_kinds: ["numerical_tolerance"]`
+and nothing else.
+
+Read the two tables together before drawing a conclusion. Every
+decision-relevant invariant holds: the predicted token agrees with the
+reference at every step of every context, the top five never drop below the
+required overlap, and directional agreement is at worst 0.999756. What fails is
+the raw magnitude of the logit difference, measured against thresholds that no
+execution had ever informed.
+
+The reference is bfloat16 and the graph is float16 — two different roundings of
+the same weights, not one rounding of the other — so a magnitude gap of roughly
+this size is unsurprising. That is an explanation, not a justification. The
+honest position is that these thresholds are now known to be wrong for this
+comparison and the derivation that should replace them has not been done. It is
+deliberately not done here: `T23` re-exports the prefill graphs, which will move
+these numbers, and a threshold fitted to superseded measurements would have to
+be re-derived anyway.
+
+One observation, recorded rather than diagnosed: S4096 step 4 is the only step
+of the 20 whose `top5_overlap` is not 1.00. It is exactly 0.80 — one of the five
+highest-scoring tokens differs, while top-1 still agrees — which clears the
+threshold. Its cache invariants pass on all 56 tensors, so it reads as a
+reordering deep in a float16-versus-bfloat16 logit tail. Nothing ties it to any
+other finding.
 
 ## What is being compared
 
@@ -650,22 +728,41 @@ Verified here:
 
 ## What could not be verified in this environment
 
-- Any parity number whatsoever: no `max_absolute_error`, no
-  `cosine_similarity`, no `top1_agreement`, no `top5_overlap`.
-- Whether the proposed tolerances are correct, too tight, or too loose.
-- Whether the real T20 decode graph actually honours the T12 cache contract at
-  runtime. T20's own worklog flags this precisely: it verified export structure
-  and content identity, *not* numerical runtime behaviour, and asked T21 to
-  check whether `valid_length` remains a live internal slice/scatter dependency
-  rather than a traced constant. **That question is still open.** The machinery
-  to answer it exists and is tested; it has not been pointed at the real graph.
-- Whether ONNX Runtime loads an opset-18 model with a 1.19 GB external-data
-  file on the CPU execution provider at all.
-- Whether the reference model loads, and whether its BF16 logits match T11's
-  recorded values on the parity host.
-- Any behaviour of `TorchReferenceSource._materialize`, `numpy_tensor_factory`,
-  or `onnxruntime_cpu_session_factory`'s inner `factory` — all three are marked
-  `# pragma: no cover` because they cannot execute here.
+This section described the environment before `onnxruntime` and `torch` were
+installed. What it listed as unverifiable has since been measured, and the
+results are in *The first real measurement* above. Retained here, corrected,
+because the boundary it drew is what the measurement had to cross:
+
+- ~~Any parity number whatsoever.~~ Measured; see the aggregate table.
+- **Whether the proposed tolerances are correct, too tight, or too loose.**
+  Still open. The measurement shows the magnitude thresholds are not met, which
+  proves they are wrong *or* that parity is wrong, and does not say which.
+- ~~Whether the real T20 decode graph honours the T12 cache contract at
+  runtime.~~ Answered. T20's worklog asked T21 to check whether `valid_length`
+  remains a live internal slice/scatter dependency rather than a traced
+  constant; the invariants that would catch a traced constant held on all 20
+  steps, with `valid_length_increment` among them.
+- ~~Whether ONNX Runtime loads an opset-18 model with a 1.19 GB external-data
+  file on the CPU provider at all.~~ It does — for decode at every optimization
+  level, and for prefill only at `ORT_ENABLE_BASIC` and above. The float16
+  prefill graphs do **not** load at `ORT_DISABLE_ALL`; that is the subject of
+  the failure analysis linked at the top of this document.
+- ~~Whether the reference model loads on the parity host.~~ It does; the
+  bfloat16 reference produced logits for all 20 steps.
+- ~~Any behaviour of `TorchReferenceSource._materialize`,
+  `numpy_tensor_factory`, or `onnxruntime_cpu_session_factory`'s inner
+  `factory`.~~ All three executed. Their `# pragma: no cover` markers remain
+  correct for the locked root environment, which still has no runtime.
+
+Still genuinely unverified:
+
+- Any measurement at `ORT_DISABLE_ALL`, which is what an unfused baseline
+  requires and what `T23` unblocks.
+- Whether the newly written cache slot holds the *right* values, as opposed to
+  having been written and being finite. That needs a reference cache
+  comparison, which is not implemented.
+- Any behaviour on a non-CPU execution provider, or on any ONNX Runtime version
+  other than 1.28.0.
 
 ## Reproducing the real measurement
 
@@ -779,13 +876,15 @@ logit changes it.
 
 None of the work described here establishes:
 
-- **Any parity result.** No logit error, no cosine similarity, no top-1
-  agreement, no top-5 overlap has been measured against ONNX Runtime.
-- **That the proposed tolerances are correct.** They are a hypothesis recorded
-  in code and serialized as `proposed_unvalidated`.
-- **That the real T20 decode graph updates the cache correctly.** The
-  invariants are defined and their detection is tested against injected faults;
-  the real graph has not been checked against them.
+- **That parity holds.** It was measured and the magnitude thresholds were not
+  met. Top-1, top-5 and cosine agreement all cleared, which is a weaker claim
+  than parity and is the only one the evidence supports.
+- **That the proposed tolerances are correct.** They remain a hypothesis
+  recorded in code and serialized as `proposed_unvalidated`, now with one
+  measurement against them that they failed. They were not adjusted to fit it.
+- **That any of this describes the graphs a compiler will see.** The reference
+  prefill graphs are scheduled for re-export under `T23`; these numbers
+  describe the artifacts as committed on 2026-08-02, at `ORT_ENABLE_BASIC`.
 - **That the newly written cache slot holds the right values.** T21 checks only
   that the slot was written and is finite. Verifying its contents needs a
   reference cache comparison, which is not implemented. Relatedly,

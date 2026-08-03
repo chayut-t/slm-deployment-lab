@@ -187,10 +187,10 @@ graph LR
 
 | Checkpoint | Subject | Covers | Built | Sheet |
 |---|---|---|---|---|
-| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-02 (stale: 1) | `build/learning/learn-00.html` |
-| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-02 (stale: 1) | `build/learning/learn-01.html` |
+| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-02 | `build/learning/learn-00.html` |
+| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-02 | `build/learning/learn-01.html` |
 | LEARN-02 — Fixtures as a contract | Frozen prompts, exact token IDs, and the limits of "same input" | T10 | 2026-08-02 | `build/learning/learn-02.html` |
-| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-02 (stale: 1) | `build/learning/learn-03.html` |
+| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-02 | `build/learning/learn-03.html` |
 | LEARN-04 — Benchmarking without false equivalence | Where a timer starts, and what a median is allowed to claim | T13 | 2026-08-02 | `build/learning/learn-04.html` |
 | LEARN-05 — ONNX export as a compiler contract | Eight graphs, four manifests, and one very narrow claim | T20 | 2026-08-02 | `build/learning/learn-05.html` |
 | LEARN-06 — The Qualcomm public pipeline | Authentication, a bounded toy lifecycle, and real NPU placement | T02, T30 | 2026-08-02 | `build/learning/learn-06.html` |
@@ -199,9 +199,3 @@ graph LR
 | LEARN-09 — CI as a deployment surface | A manually dispatched workflow that can touch a paid service | T72 | 2026-08-02 | `build/learning/learn-09.html` |
 | LEARN-10 — Reading a graph before a compiler does | What an exported graph tells you, and what only a measurement can | T21 | 2026-08-02 | `build/learning/learn-10.html` |
 | LEARN-11 — Calibration data as a contract | Freezing the inputs to quantization before quantizing anything | T40 | 2026-08-02 | `build/learning/learn-11.html` |
-
-Rebuild and republish these sheets:
-
-- LEARN-00: `docs/project/plan.md` changed since 2026-08-02. Run `scripts/learning/build_learning_sheet.py LEARN-00 --record` after republishing.
-- LEARN-01: `docs/project/plan.md` changed since 2026-08-02. Run `scripts/learning/build_learning_sheet.py LEARN-01 --record` after republishing.
-- LEARN-03: `docs/project/plan.md` changed since 2026-08-02. Run `scripts/learning/build_learning_sheet.py LEARN-03 --record` after republishing.

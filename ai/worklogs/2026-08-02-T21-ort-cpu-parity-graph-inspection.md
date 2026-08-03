@@ -158,3 +158,40 @@ device job. None is possible in this environment and none is claimed.
 - Also outstanding: execute the recorded parity command on a host with the
   runtime, commit the evidence under `results/graph/parity/`, and update
   `docs/results/onnx/ort-cpu-parity.md` from "no measurement" to a result.
+
+## Addendum — 2026-08-02: the measurement landed
+
+The last Follow-up item above is done. `onnxruntime` 1.28.0, `torch` 2.7.1,
+`transformers` 4.51.3, `onnx` 1.18.0 and `numpy` 2.4.6 were installed into a
+separate environment at `.ai-local/envs/t21-ort-cpu`, built per
+`environments/onnx-cpu/README.md` and deliberately outside the locked root
+environment so `uv sync --locked` stays valid for every other host.
+
+Outcome: all four contexts measured, `evidence_tier="real_onnxruntime_cpu"`,
+committed under `results/graph/parity/`.
+
+- **Acceptance criterion "multiple decode steps update cache correctly" is now
+  satisfied by measurement**, not by construction: every static-cache invariant
+  held on all 20 steps, `cache_report.passed` true in every record.
+- **Acceptance criterion "ORT outputs satisfy numerical tolerances" is not
+  satisfied.** Every record ends `passed: false` with
+  `failure_kinds: ["numerical_tolerance"]` and nothing else. Cosine
+  (0.999756–0.999967), top-1 (20/20) and top-5 (0.80–1.00) all clear; the
+  magnitude thresholds do not — `max_absolute_error` 0.1855–0.5781 against
+  `atol` 0.25, protected relative 0.1738–0.4878 against 0.10.
+- The tolerances were **not** adjusted. They still serialize
+  `proposed_unvalidated`. Fitting them to a measurement of graphs that `T23`
+  is about to replace would launder a fitted number into a validated one.
+- The runs had to use `ORT_ENABLE_BASIC`. The float16 reference prefill graphs
+  cannot be loaded at the runner's `ORT_DISABLE_ALL` default at all — the
+  finding recorded in
+  `docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md`, which
+  is what created `T23`.
+
+Documents corrected in the same change, because landing the records falsified
+them: `docs/results/onnx/ort-cpu-parity.md` (its "no measurement" header and
+its two unverified/boundary sections), `results/graph/README.md` (which stated
+the directory did not exist), and two statements in the failure analysis.
+
+Remaining for `T23`: re-measure at `ORT_DISABLE_ALL` against the promoted
+graphs, then confirm or replace the tolerances with a recorded derivation.

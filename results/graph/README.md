@@ -44,11 +44,20 @@ about 8.9 GB of storage. Only these compact summaries are committed.
 ## `parity/` — ORT CPU multi-step parity evidence
 
 `results/graph/parity/` is the committed home of the `ParityEvidence` JSON that
-`slm_lab.backends.onnx_cpu` writes, starting with
-`results/graph/parity/S128-ort-cpu.json`. **No such record exists yet, and the
-directory has not been created:** no ONNX Runtime has ever been run against
-these graphs. Producing the first one — which is also what confirms or replaces
-the proposed tolerances — is described in `docs/results/onnx/ort-cpu-parity.md`.
+`slm_lab.backends.onnx_cpu` writes. It holds one record per context variant —
+`S{128,512,1024,4096}-ort-cpu.json` — each measured on 2026-08-02 against the
+committed reference graphs with `onnxruntime` 1.28.0 on the CPU execution
+provider, and each carrying `evidence_tier="real_onnxruntime_cpu"`.
+
+Two caveats travel with these records. They were taken at `ORT_ENABLE_BASIC`
+rather than the runner's `ORT_DISABLE_ALL` default, because the float16
+reference prefill graphs cannot be loaded at that level; and every record ends
+`passed: false` with `failure_kinds: ["numerical_tolerance"]`, because the
+proposed tolerances remain `proposed_unvalidated` and were not widened to fit
+the measurement. The cache invariants pass on all 20 steps. See
+`docs/results/onnx/ort-cpu-parity.md` for the numbers and what they license,
+and `docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md` for
+the load failure. `T23` re-measures at `ORT_DISABLE_ALL` after re-export.
 
 Unlike the inspection reports above, a parity record *is* a numerical claim,
 made by a named runtime on a named host, and it carries its own

@@ -1,0 +1,301 @@
+{
+  "cache_capacity": 1152,
+  "cache_report": {
+    "passed": true,
+    "slot_immutability_violations": [],
+    "steps": [
+      {
+        "graph_kind": "prefill",
+        "input_valid_length": 0,
+        "output_valid_length": 1024,
+        "passed": true,
+        "step": 0,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": null
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1024,
+        "output_valid_length": 1025,
+        "passed": true,
+        "step": 1,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1024
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1025,
+        "output_valid_length": 1026,
+        "passed": true,
+        "step": 2,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1025
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1026,
+        "output_valid_length": 1027,
+        "passed": true,
+        "step": 3,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1026
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1027,
+        "output_valid_length": 1028,
+        "passed": true,
+        "step": 4,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1027
+      }
+    ]
+  },
+  "evidence_sha256": "5d46ad54319c756c951d845c3a3098ad5096272a9704f336009604ee0f9e5bf1",
+  "evidence_tier": "real_onnxruntime_cpu",
+  "failure_kinds": [
+    "numerical_tolerance"
+  ],
+  "failures": [
+    {
+      "detail": "prefill logits are outside the proposed ORT CPU tolerance",
+      "kind": "numerical_tolerance",
+      "step": 0
+    },
+    {
+      "detail": "decode logits are outside the proposed ORT CPU tolerance",
+      "kind": "numerical_tolerance",
+      "step": 1
+    },
+    {
+      "detail": "decode logits are outside the proposed ORT CPU tolerance",
+      "kind": "numerical_tolerance",
+      "step": 2
+    },
+    {
+      "detail": "decode logits are outside the proposed ORT CPU tolerance",
+      "kind": "numerical_tolerance",
+      "step": 3
+    },
+    {
+      "detail": "decode logits are outside the proposed ORT CPU tolerance",
+      "kind": "numerical_tolerance",
+      "step": 4
+    }
+  ],
+  "graph_digests": {
+    "decode": {
+      "relative_path": "S1024/decode.onnx",
+      "sha256": "4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759"
+    },
+    "prefill": {
+      "relative_path": "S1024/prefill.onnx",
+      "sha256": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6"
+    }
+  },
+  "passed": false,
+  "prompt_length": 1024,
+  "reference_provenance": {
+    "expected_token_ids": [
+      3717,
+      7460,
+      13166,
+      21448
+    ],
+    "model_id": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "prompt_token_count": 1024,
+    "prompt_token_ids_sha256": "024451cc29696f85e8fcdd067b638490f75aab0419214189a06c11e77e8b1ba5",
+    "reference_logits_sha256": [
+      "82e4983b91b2cb376e9a70c032402a5e0671da2e87dec589ce46ff565e631933",
+      "d5f4bcdbfa7388a4a29d5b7c1625682f37e802b38c9f349b972d6356ea131de2",
+      "587c7edd10ee25f9adcfa6730ba1aecd54cc15f5ac7852e8a6fce7a532522bad",
+      "78923d7fffc1a2887f245eeb220767019a19209191129c5972c2d5a74aeb80ac",
+      "db8f82b1ede87ce2258607b1c95d1f82490c20b24ede423e748ed4508d5903b8"
+    ],
+    "runtime": {
+      "actual_attention_implementation": "eager",
+      "deterministic_algorithms": true,
+      "device": "cpu",
+      "dtype": "bfloat16",
+      "python_version": "3.11.13",
+      "requested_attention_implementation": "eager",
+      "safetensors_version": "0.8.0",
+      "seed": 0,
+      "torch_version": "2.7.1",
+      "transformers_version": "4.51.3"
+    },
+    "source": "slm_lab.models.qwen3_reference.load_reference_model",
+    "teacher_forced": true
+  },
+  "runtime": {
+    "onnxruntime_version": "1.28.0",
+    "platform": "macOS-15.7.7-arm64-arm-64bit",
+    "providers": {
+      "decode": [
+        "CPUExecutionProvider"
+      ],
+      "prefill": [
+        "CPUExecutionProvider"
+      ]
+    },
+    "python_version": "3.11.13",
+    "session_settings": {
+      "decode": {
+        "execution_mode": "ORT_SEQUENTIAL",
+        "graph_optimization_level": "ORT_ENABLE_BASIC",
+        "inter_op_num_threads": 1,
+        "intra_op_num_threads": 1
+      },
+      "prefill": {
+        "execution_mode": "ORT_SEQUENTIAL",
+        "graph_optimization_level": "ORT_ENABLE_BASIC",
+        "inter_op_num_threads": 1,
+        "intra_op_num_threads": 1
+      }
+    }
+  },
+  "schema_version": 1,
+  "steps": [
+    {
+      "candidate_logits_sha256": "8c8f7d04d5e9f5d8ba66cda7d3091b20acb139c358c6ffbc474ce2bb6894023c",
+      "graph_kind": "prefill",
+      "input_token_id": null,
+      "input_valid_length": 0,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9999672230470017,
+        "max_absolute_error": 0.21875,
+        "max_protected_relative_error": 0.1904296875,
+        "mean_absolute_error": 0.037671743165591784,
+        "passed": false,
+        "reference_top1_top2_margin": 11.375,
+        "top1_agreement": true,
+        "top1_candidate": 3717,
+        "top1_reference": 3717,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1024,
+      "reference_logits_sha256": "82e4983b91b2cb376e9a70c032402a5e0671da2e87dec589ce46ff565e631933",
+      "step": 0
+    },
+    {
+      "candidate_logits_sha256": "74f432b366978c0e189f174ea85b0e2abf533d87af3496121c1c725f09af5d58",
+      "graph_kind": "decode",
+      "input_token_id": 3717,
+      "input_valid_length": 1024,
+      "metrics": {
+        "allclose": false,
+        "cosine_similarity": 0.999922722038281,
+        "max_absolute_error": 0.35546875,
+        "max_protected_relative_error": 0.2845458984375,
+        "mean_absolute_error": 0.07752607428808496,
+        "passed": false,
+        "reference_top1_top2_margin": 9.125,
+        "top1_agreement": true,
+        "top1_candidate": 7460,
+        "top1_reference": 7460,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1025,
+      "reference_logits_sha256": "d5f4bcdbfa7388a4a29d5b7c1625682f37e802b38c9f349b972d6356ea131de2",
+      "step": 1
+    },
+    {
+      "candidate_logits_sha256": "13367b6baf7340f5652d354afa6d6c18def5077747a2c60bd4123a059dd17b6e",
+      "graph_kind": "decode",
+      "input_token_id": 7460,
+      "input_valid_length": 1025,
+      "metrics": {
+        "allclose": false,
+        "cosine_similarity": 0.9999543762479877,
+        "max_absolute_error": 0.3515625,
+        "max_protected_relative_error": 0.25164794921875,
+        "mean_absolute_error": 0.05756410152126471,
+        "passed": false,
+        "reference_top1_top2_margin": 10.875,
+        "top1_agreement": true,
+        "top1_candidate": 13166,
+        "top1_reference": 13166,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1026,
+      "reference_logits_sha256": "587c7edd10ee25f9adcfa6730ba1aecd54cc15f5ac7852e8a6fce7a532522bad",
+      "step": 2
+    },
+    {
+      "candidate_logits_sha256": "4488d2582ee391a1b47266c3108de9a95ab08c058729846caf9db69cfa554d92",
+      "graph_kind": "decode",
+      "input_token_id": 13166,
+      "input_valid_length": 1026,
+      "metrics": {
+        "allclose": false,
+        "cosine_similarity": 0.9999182127567999,
+        "max_absolute_error": 0.34375,
+        "max_protected_relative_error": 0.34228515625,
+        "mean_absolute_error": 0.06622866484969729,
+        "passed": false,
+        "reference_top1_top2_margin": 10.0,
+        "top1_agreement": true,
+        "top1_candidate": 21448,
+        "top1_reference": 21448,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1027,
+      "reference_logits_sha256": "78923d7fffc1a2887f245eeb220767019a19209191129c5972c2d5a74aeb80ac",
+      "step": 3
+    },
+    {
+      "candidate_logits_sha256": "15debed02f5148e10ed0b89a9634780fa2114e5e6fc3d0c2aec4735faec12f24",
+      "graph_kind": "decode",
+      "input_token_id": 21448,
+      "input_valid_length": 1027,
+      "metrics": {
+        "allclose": false,
+        "cosine_similarity": 0.9998400680212054,
+        "max_absolute_error": 0.5546875,
+        "max_protected_relative_error": 0.453125,
+        "mean_absolute_error": 0.08649766408675919,
+        "passed": false,
+        "reference_top1_top2_margin": 9.875,
+        "top1_agreement": true,
+        "top1_candidate": 5904,
+        "top1_reference": 5904,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1028,
+      "reference_logits_sha256": "db8f82b1ede87ce2258607b1c95d1f82490c20b24ede423e748ed4508d5903b8",
+      "step": 4
+    }
+  ],
+  "steps_requested": 4,
+  "task_id": "T21",
+  "tolerance": {
+    "atol": 0.25,
+    "cache_state": {
+      "require_finite_slot": true,
+      "require_prefix_identical": true,
+      "require_slot_written": true,
+      "require_tail_identical": true,
+      "require_valid_length_increment": true
+    },
+    "cosine_min": 0.999,
+    "protected_relative_max": 0.1,
+    "relative_floor": 1.0,
+    "require_top1": true,
+    "rtol": 0.02,
+    "status": "proposed_unvalidated: no ONNX Runtime run has confirmed these thresholds",
+    "top5_overlap_min": 0.8
+  },
+  "variant_id": "S1024"
+}

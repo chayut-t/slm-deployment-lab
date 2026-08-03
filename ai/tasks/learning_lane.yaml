@@ -16,7 +16,7 @@
       "sources": {
         "ai/worklogs/2026-07-24-T01-environments-manifests-storage.md": "07b998fd905d",
         "docs/decisions/0001-model-and-version-pins.md": "61d880d3d709",
-        "docs/project/plan.md": "462df32555e3",
+        "docs/project/plan.md": "520772281f42",
         "src/slm_lab/manifests/README.md": "a864eac6bf3d"
       }
     },
@@ -34,7 +34,7 @@
         "AGENTS.md": "3ccd54da05c5",
         "ai/worklogs/2026-07-24-T03-agent-workflow-completion.md": "d92f3f3aa949",
         "docs/agentic/dual-agent-setup.md": "9aadcabfc21d",
-        "docs/project/plan.md": "462df32555e3"
+        "docs/project/plan.md": "520772281f42"
       }
     },
     {
@@ -65,7 +65,7 @@
       "sources": {
         "ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md": "31be265ede1b",
         "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
-        "docs/project/plan.md": "462df32555e3",
+        "docs/project/plan.md": "520772281f42",
         "src/slm_lab/contracts/README.md": "1e1a551f8989"
       }
     },
@@ -174,10 +174,10 @@
       "sheet": "build/learning/learn-10.html",
       "built": "2026-08-02",
       "sources": {
-        "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "3ceb076a04ad",
+        "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "ff00270d341c",
         "configs/graph/README.md": "d7257839030c",
         "docs/results/onnx/graph-inspection.md": "192e1f6fc92f",
-        "docs/results/onnx/ort-cpu-parity.md": "e873fbf16c85"
+        "docs/results/onnx/ort-cpu-parity.md": "715f515c66a7"
       }
     },
     {

@@ -582,9 +582,11 @@ still contain the defect. Every committed record that describes them —
 `results/manifests/onnx/S*.json`, `results/graph/S*.json`,
 `results/quantization/t40-baseline-parity-*.json`, and the prose in
 `docs/results/onnx/*.md` — is still **accurate for the artifact it describes**,
-and none of it was regenerated here. (`results/graph/parity/` does not exist on
-this branch; `results/graph/README.md` documents it as the future home of ORT
-parity evidence and states plainly that no such record exists yet.)
+and none of it was regenerated here. (`results/graph/parity/` did not exist on
+this branch. It was created immediately after this analysis merged, by landing
+the four `S*-ort-cpu.json` records measured against the *reference* graphs at
+`ORT_ENABLE_BASIC`; those records describe the defective artifacts and are
+themselves superseded by the promotion.)
 
 ### A committed test is red on any host that has the artifacts
 
@@ -651,9 +653,10 @@ The promotion order that satisfies those checks:
 4. Regenerate, in order: `results/manifests/onnx/S*.json`
    (`onnx_matrix validate --write-manifests`), `results/graph/S*.json`
    (`slm_lab.graph.inspection --all-manifests`), and the T40 baseline parity
-   record, which re-hashed all 16 files. `results/graph/parity/` does not exist
-   yet, so there is nothing there to regenerate; the first record written into
-   it should come from the promoted graphs.
+   record, which re-hashed all 16 files. `results/graph/parity/` now holds four
+   records measured against the pre-promotion graphs at `ORT_ENABLE_BASIC`;
+   every one must be re-measured against the promoted graphs, and at
+   `ORT_DISABLE_ALL`, which promotion is what makes possible.
 5. Update the hand-written records. **Do not work this list from memory, and
    do not trust prose — including this prose.** Four successive attempts to
    enumerate it by reasoning were each incomplete. Generate it instead:
