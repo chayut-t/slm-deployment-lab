@@ -2,9 +2,18 @@
 
 Date: 2026-08-02
 Task: `T20` (defect), found by `T21`
-Status: fixed in the exporter; the attested reference artifacts are **not** yet
-replaced, so the committed T20/T21/T40 records still describe the defective
-graphs
+Status: **closed.** Fixed in the exporter, and `T23` promoted the fix into the
+attested reference artifacts and regenerated every committed record against
+them. See "Downstream implications", which records what the promotion did and
+where three predictions in this analysis turned out to be wrong.
+
+> **Reading note.** Everything from here to "Downstream implications" describes
+> the investigation as it stood before promotion, and is left intact: the root
+> cause, the ruled-out hypotheses, the operator census and the numerical
+> equivalence evidence are the durable content and none of it was invalidated.
+> Where the analysis made a *prediction* about what promotion would require or
+> affect, and the prediction was wrong, the correction is recorded in
+> "Downstream implications" rather than by editing the original claim.
 
 ## Intended outcome
 
@@ -18,7 +27,9 @@ the numbers that come back are the graph's, not the optimizer's.
 - Repository branch: `task/prefill-scatter-cache-write`, based on `main` @ `11a9c57`
 - Host: Darwin `24.6.0`, `arm64`, macOS 15.7.7 (reported by the runner as
   `macOS-15.7.7-arm64-arm-64bit`)
-- CPython `3.11.13` (the T20 attestation pins `3.11.15`; see "What is not proven")
+- CPython `3.11.13` (the T20 attestation pinned `3.11.15` at the time; see
+  "What is not proven". The promotion moved that pin to `3.11.13`, the
+  interpreter that actually runs the exporter.)
 - `torch` 2.7.1, `transformers` 4.51.3, `onnx` 1.18.0, `onnxruntime` 1.28.0,
   `numpy` 2.4.6. `environments/onnx-cpu/README.md` requires the `onnxruntime`
   and `numpy` versions to be chosen and recorded together; every number below
@@ -548,23 +559,31 @@ output read as proof of absence and was not.
   runs CPython 3.11.13 and the attestation pins 3.11.15. The T12 contract check
   inside `export_onnx_graph` did run and did pass for all four; the attestation
   chain did not. Their digests are recorded here as measurements, not as
-  attested artifact identities.
+  attested artifact identities. *(Since resolved: the promotion re-ran the
+  export through the attested chain on 3.11.13, and `validate
+  --write-manifests` confirmed these same four digests. They are T20 evidence
+  now.)*
 - **The manifests used to drive the parity runner are provisional.** They are
   the committed T20 manifests with the prefill artifact record replaced by a
   freshly computed `inspect_onnx_artifact` record — the same producer T20 uses —
   so the runner could hash-verify the graphs it was about to execute. Their
   `export_provenance` blocks still describe the superseded export run. They live
-  under `.ai-local/scratch/` and are not committed.
+  under `.ai-local/scratch/` and are not committed. *(Since resolved: the
+  committed `results/manifests/onnx/S*.json` were regenerated and describe the
+  promoted export.)*
 - **No compiler and no device were involved.** The argument that `Concat` is
   friendlier than a scatter for the Qualcomm lane follows from the ranked risks
   in `docs/results/onnx/graph-inspection.md`; it is reasoning about the graph,
   not a QNN conversion result. Nothing here establishes compiler acceptance,
   accelerator placement, or any latency or memory claim.
-- **The tolerance question is untouched.** Whether
+- ~~**The tolerance question is untouched.** Whether
   `DEFAULT_ORT_CPU_TOLERANCE` should be widened, kept, or replaced by a
   different comparison against a float16 rather than bfloat16 reference remains
   open, and belongs to T21. It is also a blocker to a green tree; see
-  "Downstream implications".
+  "Downstream implications".~~ **Resolved by `T23` — correction 3 below.** The
+  framing was also wrong about the shape of the answer: the choice was not
+  "widen, keep, or change the reference dtype", because the superseded `atol`
+  rejected float32 and so was not a threshold any implementation could meet.
 - **The parity environment was mutated to take these measurements.** `uv pip
   install jsonschema pytest` into `.ai-local/envs/t21-ort-cpu` added
   `jsonschema`, `jsonschema-specifications`, `referencing`, `rpds-py`, `attrs`,
@@ -577,18 +596,153 @@ output read as proof of absence and was not.
 
 ## Downstream implications
 
-The reference artifacts under `${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20`
-still contain the defect. Every committed record that describes them —
-`results/manifests/onnx/S*.json`, `results/graph/S*.json`,
-`results/quantization/t40-baseline-parity-*.json`, and the prose in
-`docs/results/onnx/*.md` — is still **accurate for the artifact it describes**,
-and none of it was regenerated here. (`results/graph/parity/` did not exist on
-this branch. It was created immediately after this analysis merged, by landing
-the four `S*-ort-cpu.json` records measured against the *reference* graphs at
-`ORT_ENABLE_BASIC`; those records describe the defective artifacts and are
-themselves superseded by the promotion.)
+### The promotion happened
+
+`T23` promoted the fix. The four `Concat` prefill graphs replaced the defective
+ones under `${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20`, the export was
+re-attested on the interpreter that actually performed it, and every
+machine-generated record was regenerated against the promoted artifacts. What
+that settled:
+
+- **All four prefill graphs now create a CPU-EP session at `ORT_DISABLE_ALL`.**
+  The defect this document describes is not reachable from the committed
+  manifests any more.
+- **The decode graphs and the external-data sidecar are byte-identical after
+  re-export.** All four decode digests and the single
+  `external_data_sha256` `e9d4b051fa86…` are unchanged, which is what lets one
+  attestation keep covering the whole set. The prefill digests all moved.
+- **The attestation now records CPython 3.11.13**, moving from 3.11.15 — an
+  interpreter that had never run the exporter, and whose pin is what forced the
+  investigation above to bypass the CLI and call `export_onnx_graph` directly.
+- **`results/graph/parity/S*-ort-cpu.json` were re-measured** against the
+  promoted graphs at `ORT_DISABLE_ALL`, replacing records taken at
+  `ORT_ENABLE_BASIC` against the defective ones.
+
+The paragraph this section used to open with — that the reference artifacts
+still contain the defect and that every committed record remains accurate for
+the artifact it describes — was true when written and is now history. It is
+worth keeping the distinction it drew, because it is the one that made the
+promotion safe: a record describing a superseded artifact is not *wrong*, it is
+*stale*, and the two are repaired differently. A wrong record is corrected in
+place; a stale one is regenerated by its producer and its prose reconciled
+afterwards.
+
+### Three predictions in this analysis were falsified
+
+Recorded as corrections rather than silently removed, because the way each one
+failed is more useful than the claim itself.
+
+**Correction 1 — "`LEARN-11` is not affected" was wrong, and no search for a
+graph number could have found it.**
+
+The blast-radius list below states: *"`LEARN-11` is **not** affected — AIMET and
+calibration material for T40, citing no `Pad`, node count or T20 digest."* That
+enumeration is correct about what `LEARN-11` cites and still reaches the wrong
+conclusion. `configs/quantization/calibration.yaml` lists
+`configs/models/qwen3-0.6b-onnx-export.json` under `inputs[]` and pins its
+`canonical_json_sha256`. The re-export rewrote that config's
+`evidence_attestation` block, so the pin went stale and **22 tests in
+`tests/quantization/test_calibration.py` failed** against the promoted export
+(repaired in commit `45d10f9`, which moved the pin from `e9b47945…` to
+`2d38d1ad…` using the contract's own `calibration generate` producer rather
+than by hand). `ai/tasks/learning_lane.yaml` in turn pins a digest of
+`calibration.yaml`, so `LEARN-11` went stale with it.
+
+The lesson is about how blast-radius enumeration fails. Every search this
+analysis proposed was for a *graph* fact — a digest, a node count, an operator
+name, a byte size. The dependency that broke was a pin on the digest of a
+**config**, one link further out: nothing in `calibration.yaml` mentions `Pad`,
+7,634, or any graph SHA-256, and it would not have matched any of those
+searches at any level of diligence. Enumerating a blast radius by searching for
+the values that changed finds only first-order readers. Second-order readers
+pin the *identity of a file* that contains those values, and they are found by
+walking the pin graph — `inputs[]` blocks, `canonical_json_sha256` fields,
+`learning_lane.yaml` sources — not by grepping for numbers.
+
+**Correction 2 — the promotion order prescribed below is not executable.**
+
+Step 1 says to commit the fixed exporter "together with a config that has no
+`evidence_attestation` block", and step 2 says to re-export from that commit.
+That cannot be done: `load_export_config` calls `_load_export_attestation`,
+which raises `ExportConfigurationError("evidence_attestation must be a
+schema-version 1 mapping")` when the key is absent, and every `onnx_matrix`
+entry point begins with `load_export_config`. The CLI cannot run at that commit
+at all. The order is not merely awkward, it is a fixed point that does not
+exist: the commit the export must be attested *to* is a commit at which the
+exporter refuses to run.
+
+The chain that actually worked breaks it into two commits and moves
+re-attestation out of the CLI entirely:
+
+1. **Commit A** (`321b11b`) — the attested commit. The `evidence_attestation`
+   block is removed from the config and `FROZEN_EXPORT_CONFIG_SHA256` is
+   repinned to the block-less bytes (`be885020…` → `02a2fe3c…`). The
+   `onnx_matrix` CLI cannot run at this commit; the state is inherent and
+   transient. This commit also adds
+   `scripts/export/write_export_attestation.py`, a separate script rather than
+   an `onnx_matrix attest` subcommand precisely because the subcommand would
+   have to bypass its own trust root before it could restore it.
+2. **Commit B** (`d3494fd`) — the attestation is regenerated from artifacts on
+   disk by that script, which hashes every file it records so no digest is ever
+   hand-edited. It names `321b11ba` as `exporter_commit`, moves
+   `runtime_python_version` to 3.11.13, and `FROZEN_EXPORT_CONFIG_SHA256` is
+   repinned again (`02a2fe3c…` → `ede6cfc0…`).
+3. **Export** from commit B, which now loads.
+4. **`validate --write-manifests`** — this is the step that *confirms* the
+   digests. The attestation written in commit B asserts what the bytes should
+   be; `validate` re-checks all of them against the bytes the re-export
+   actually wrote, and writes the manifests only if they agree. Attestation and
+   verification are therefore separate acts by separate producers, which is the
+   property the one-commit order silently gave up.
+
+**Correction 3 — "the tolerance question is untouched" is resolved, and the
+green-tree framing was wrong.**
+
+Both halves of the claim under "A committed test is red on any host that has
+the artifacts" — that a green tree needs two independent pieces of work, and
+that the tolerance one is a hard blocker — were right about the *count* and
+wrong about the *nature* of the second piece. The choice offered was "confirm,
+widen, or replace `DEFAULT_ORT_CPU_TOLERANCE` against a real measurement", with
+widening understood as the suspect option. What the measurement showed is that
+`atol = 0.25` **rejects float32**: running the pinned reference at float32
+against itself at bfloat16, with no ONNX anywhere, misses that threshold too,
+and at S512 step 1 the exact answer misses by 0.609 against the graph's 0.578.
+
+A threshold no implementation can meet is not a tolerance that was too tight;
+it is a broken instrument, and the action it calls for is neither "confirm" nor
+"widen" but "re-derive". `DEFAULT_ORT_CPU_TOLERANCE` was replaced by a budget
+derived from the two dtypes' unit roundoff, the measured logit scale and the
+28-layer residual depth — `atol` 0.25 → 1.15, `protected_relative_max` 0.10 →
+1.05, `cosine_min` 0.999 → **0.9993, tightened** — with `rtol`,
+`top5_overlap_min`, `require_top1`, `relative_floor` and the exact cache rules
+confirmed unchanged. `TOLERANCE_STATUS` reads `derived_and_measured…`. All four
+contexts pass at `ORT_DISABLE_ALL`. The derivation, the float32 control, and
+why this is a repair rather than an accommodation are in
+`docs/results/onnx/ort-cpu-parity.md`; the analysis above was right that this
+work did not belong to the exporter change.
+
+### One prediction held: the clean report sits on a one-byte boundary
+
+"A risk finding that does not fire, by one byte", below, predicted that the
+reserve constants would not trigger `R-LARGE-INLINE-CONSTANT` because the S1024
+and S4096 reserve is *exactly* 262,144 bytes against
+`inspection.py`'s `inline_bytes <= max_bytes` skip and a rule `max_bytes` of
+262,144. **Confirmed against the regenerated reports.** `results/graph/S*.json`
+gained no findings: `R-LARGE-INLINE-CONSTANT` still fires once per prefill
+graph at S512, S1024 and S4096 and not at all at S128, and in each case the
+detail's total equals its largest — 524,288, 2,097,152 and 33,554,432 bytes
+respectively, the causal mask alone. Not one of the 56 reserves is counted at
+any context. The clean report is therefore sitting on the boundary exactly as
+predicted, and the warning stands: one more cache position, or a rule tightened
+by a single byte, and all 56 become findings at two contexts.
 
 ### A committed test is red on any host that has the artifacts
+
+> **Resolved by `T23`.** Both pieces of work below were done: the export was
+> promoted, and `DEFAULT_ORT_CPU_TOLERANCE` was re-derived (correction 3). The
+> section is kept because the *diagnosis* — a red test that hides as a skip on
+> any host without the artifact root — is a durable hazard, and because the
+> two-item list below is exactly where the framing went wrong.
 
 `tests/onnx/test_onnx_cpu_parity.py::test_real_onnxruntime_cpu_parity_when_available`
 **fails** in the parity environment whenever `SLM_LAB_ARTIFACT_ROOT` points at
@@ -640,11 +794,14 @@ requires the attested commit's copy of the config to equal the current one with
 the `evidence_attestation` block removed — which is why the currently attested
 commit `631fd70` carries a config with no attestation block at all.
 
-The promotion order that satisfies those checks:
+The promotion order that satisfies those checks — **not executable as written;
+see correction 2 above for the chain that was actually used**:
 
 1. Commit the fixed exporter together with a config that has no
    `evidence_attestation` block. This is the commit the new export is attested
-   to.
+   to. *(This is the step that cannot work: `load_export_config` refuses a
+   config with no attestation block, so nothing in the `onnx_matrix` CLI runs
+   at this commit.)*
 2. Re-export all eight graphs into `onnx/reference/T20` from that commit, on an
    interpreter whose version will be recorded truthfully.
 3. Add the attestation block back with the new run id, the commit from step 1,
@@ -664,6 +821,14 @@ The promotion order that satisfies those checks:
    ```bash
    python .ai-local/scratch/promotion_audit.py claims
    ```
+
+   *(That private prototype is superseded. Its committed successor is
+   `scripts/audit/audit_reference_graph_claims.py`, which adds a strict
+   `citations` mode that exits non-zero on any bound claim disagreeing with the
+   evidence, and takes `--baseline-ref <pre-promotion commit>` to populate
+   `MOVES`. Two further "enumerate it by reasoning" attempts were found
+   incomplete after this was written, bringing the count to six; the rule below
+   stands unchanged and stood up.)*
 
    That extracts *every* numeric token from `graph-inspection.md`,
    `ort-cpu-parity.md`, `results/graph/README.md` and the T20 export worklog
@@ -746,6 +911,11 @@ The promotion order that satisfies those checks:
    **`results/graph/README.md` needs no size edit.** Its figures are the
    1,192,085,504-byte sidecar, which does not change, and the ~8.9 GB storage
    total, which does not move materially against ~40 MB of added protobuf.
+   *(Held, and now checked rather than reasoned: the sidecar is byte-identical
+   before and after, and the ~8.9 GB figure is the eight sidecars alone,
+   8 × 1,192,085,504 = 9,536,684,032 bytes. What moved is the T40 record's
+   `recorded_total_bytes` over all sixteen files, 9,586,211,364 →
+   9,626,186,972 — the +39,975,608 of prefill protobuf this note anticipated.)*
 
    **`results/graph/S*.json` gains no findings.** `R-LARGE-INLINE-CONSTANT`
    still does not fire — see the boundary note below — and
@@ -760,8 +930,12 @@ The promotion order that satisfies those checks:
    - **`LEARN-10`** reads `graph-inspection.md` and `ort-cpu-parity.md`
      directly. This is the one that matters.
    - **`LEARN-05`** is affected indirectly, through the T20 worklog above.
-   - `LEARN-11` is **not** affected — AIMET and calibration material for T40,
-     citing no `Pad`, node count or T20 digest.
+   - ~~`LEARN-11` is **not** affected — AIMET and calibration material for T40,
+     citing no `Pad`, node count or T20 digest.~~ **False; see correction 1.**
+     `LEARN-11` is affected through `configs/quantization/calibration.yaml`,
+     which pins the export config's `canonical_json_sha256`. The enumeration of
+     what it cites is accurate and the conclusion drawn from it is wrong,
+     which is the point.
 
 ### A risk finding that does not fire, by one byte
 
@@ -775,5 +949,12 @@ byte, and all 56 reserves become findings at those two contexts. Anyone
 re-tuning that rule or changing `CONTEXT_VARIANTS` should know the current
 clean report is sitting on the boundary.
 
-Until then, anything needing a loadable float16 prefill graph at
-`ORT_DISABLE_ALL` must use the candidate export, not the reference.
+**Confirmed after promotion.** The regenerated `results/graph/S*.json` gained no
+findings, and `R-LARGE-INLINE-CONSTANT`'s detail totals equal its largest at
+every context where it fires — the mask alone, with none of the 56 reserves
+counted. The warning is therefore live, not hypothetical.
+
+~~Until then, anything needing a loadable float16 prefill graph at
+`ORT_DISABLE_ALL` must use the candidate export, not the reference.~~ The
+promotion made the reference export the loadable one; there is no longer a
+separate candidate to reach for.

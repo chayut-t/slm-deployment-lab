@@ -39,7 +39,15 @@ The eight `.onnx` graphs and their eight external-data sidecars stay under the
 external artifact root and are never committed. There is one
 1,192,085,504-byte `.onnx.data` file *per graph*, not one shared file; the eight
 are byte-identical and therefore share a single SHA-256, but the set still needs
-about 8.9 GB of storage. Only these compact summaries are committed.
+about 8.9 GB of storage (8 × 1,192,085,504 = 9,536,684,032 bytes). Only these
+compact summaries are committed.
+
+Neither figure moved with the `T23` re-export: the sidecars are byte-identical
+before and after, which is the whole reason the export attestation can keep
+recording one shared `external_data_sha256`. What did move is the total of all
+sixteen files, which `results/quantization/t40-baseline-parity-2026-08-02.json`
+records as `recorded_total_bytes`: 9,586,211,364 → 9,626,186,972, all of it in
+the four prefill protobufs.
 
 ## `parity/` — ORT CPU multi-step parity evidence
 
@@ -49,15 +57,25 @@ about 8.9 GB of storage. Only these compact summaries are committed.
 committed reference graphs with `onnxruntime` 1.28.0 on the CPU execution
 provider, and each carrying `evidence_tier="real_onnxruntime_cpu"`.
 
-Two caveats travel with these records. They were taken at `ORT_ENABLE_BASIC`
-rather than the runner's `ORT_DISABLE_ALL` default, because the float16
-reference prefill graphs cannot be loaded at that level; and every record ends
-`passed: false` with `failure_kinds: ["numerical_tolerance"]`, because the
-proposed tolerances remain `proposed_unvalidated` and were not widened to fit
-the measurement. The cache invariants pass on all 20 steps. See
-`docs/results/onnx/ort-cpu-parity.md` for the numbers and what they license,
-and `docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md` for
-the load failure. `T23` re-measures at `ORT_DISABLE_ALL` after re-export.
+All four are taken at the runner's `ORT_DISABLE_ALL` default, on both the
+prefill and the decode session, so they measure the exported graph rather than
+ONNX Runtime's fusion choices. That was not possible before `T23`: the float16
+prefill graphs could not be loaded at that level until their cache write was
+re-exported from a `Pad` to a `Concat`. Every record ends `passed: true` with
+an empty `failures[]`, against a `tolerance.status` of `derived_and_measured…`
+— thresholds derived from reference and candidate dtype ULP, logit scale and
+layer depth, with no observed candidate error used to set any of them. The
+cache invariants pass on all 20 steps. See
+`docs/results/onnx/ort-cpu-parity.md` for the numbers, the derivation, and what
+they license, and
+`docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md` for the
+load failure that made the re-export necessary.
+
+`parity/diagnostics/` holds the records that justify the tolerance rather than
+apply it: a reference-against-itself run at float32, bfloat16 and float16 with
+no ONNX Runtime session anywhere, and a float16-reference parity probe. They
+are **not** T21 parity records and must never be read as one; see the README in
+that directory.
 
 Unlike the inspection reports above, a parity record *is* a numerical claim,
 made by a named runtime on a named host, and it carries its own
