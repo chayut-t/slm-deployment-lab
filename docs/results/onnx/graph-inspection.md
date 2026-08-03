@@ -42,8 +42,8 @@ completely static, standard, single-domain graph.
 |---|---|
 | Model | `Qwen/Qwen3-0.6B` |
 | Model revision | `c1899de289a04d12100db370d81485cdf75e47ca` |
-| Export task | T20, exporter commit `631fd70bcff9b73b81c08a2a2e0127cad07f09ca` |
-| Exporter | `torch.onnx.export`, torch 2.7.1, transformers 4.51.3, onnx 1.18.0, python 3.11.15 |
+| Export task | T20; the four prefill graphs were re-exported under T23 with a `Concat` cache write, exporter commit `321b11ba922f4bf68471d678e4f5ed987f3c8668` |
+| Exporter | `torch.onnx.export`, torch 2.7.1, transformers 4.51.3, onnx 1.18.0, python 3.11.13 |
 | Attention implementation | `eager`; constant folding disabled at export |
 | Producer string in every graph | `pytorch 2.7.1` |
 | IR version in every graph | 8 |
@@ -61,14 +61,18 @@ manifest values and the values of the bytes actually inspected.
 
 | Variant | Manifest | Manifest SHA-256 | Graph | Graph SHA-256 |
 |---|---|---|---|---|
-| S128 | `results/manifests/onnx/S128.json` | `2d0212d7deeba5d11d6a3e4ea065cc39cbe8b3b92b37474eb58d94355f98adb7` | `S128/prefill.onnx` | `a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1` |
+| S128 | `results/manifests/onnx/S128.json` | `f66d628fb59d069aa095cde1e258d29cee417eed941702e472acdd2c1db353dd` | `S128/prefill.onnx` | `464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3` |
 | S128 | | | `S128/decode.onnx` | `e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2` |
-| S512 | `results/manifests/onnx/S512.json` | `bf06fd5293d3aeab87ac4ea35be661b74d810b57f993d872db2fa4acb8362cd4` | `S512/prefill.onnx` | `05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e` |
+| S512 | `results/manifests/onnx/S512.json` | `92d03e3fa513da43b696b1352d6768448cf2ae5ca009d4723da8c2765545df56` | `S512/prefill.onnx` | `6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f` |
 | S512 | | | `S512/decode.onnx` | `ed2c8b52bd284685a6c549b7ebadd4db257c93e17ec7cae6b09c5b7561e36c8f` |
-| S1024 | `results/manifests/onnx/S1024.json` | `9280bf9d8845bd1a57db75e441d781cd39971888ef9910d689f53c23de6cac67` | `S1024/prefill.onnx` | `b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6` |
+| S1024 | `results/manifests/onnx/S1024.json` | `adcf51a3bc665254626c0b332f1a65a93966a4fb50520516f08c0785401cfac6` | `S1024/prefill.onnx` | `61d1b8b8b56f97dc44c93c27b02cafece5a2691ac33e51105c91444122521940` |
 | S1024 | | | `S1024/decode.onnx` | `4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759` |
-| S4096 | `results/manifests/onnx/S4096.json` | `8c3a426c7a5bb685a3c2c2315c8adb3ed94941033303f096c1dca8dba3d0817a` | `S4096/prefill.onnx` | `c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988` |
+| S4096 | `results/manifests/onnx/S4096.json` | `7ea2db7643c8ca6b4b44c1869204e1ddd5c1f3e67258b0ddb95c1eaaf9ee8788` | `S4096/prefill.onnx` | `cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0` |
 | S4096 | | | `S4096/decode.onnx` | `ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd` |
+
+The four decode digests are unchanged from the original T20 export: the T23
+re-export touched the prefill graphs only, and the decode protobufs came back
+byte-identical. Every prefill digest and every manifest digest moved.
 
 Each of the eight graphs has its **own** external-data sidecar next to it —
 `S128/prefill.onnx.data`, `S128/decode.onnx.data`, `S512/prefill.onnx.data`, and
@@ -77,9 +81,10 @@ has SHA-256 `e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde`,
 which is the single digest each T20 manifest records under
 `artifacts.<kind>.external_data`. Identical content is not one shared file:
 storing the set costs **8 x 1.19 GB**, and `du -sh` on
-`${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20` reports **8.9 GB**. Size storage
-from that number, not from 1.19 GB. None of these files is ever opened by this
-tooling (section 3).
+`${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20` reports **9.0 GB**. Size storage
+from that number, not from 1.19 GB. (It read 8.9 GB before the T23 re-export;
+the four larger prefill protobufs pushed it over.) None of these files is ever
+opened by this tooling (section 3).
 
 ## 3. What was measured, and how
 
@@ -88,7 +93,7 @@ used. `slm_lab.graph.onnx_reader` decodes the protobuf wire format directly
 with the standard library and recovers the model's *structure*: opset imports,
 IR version, producer, graph inputs/outputs/`value_info`, initializer metadata,
 and the full node list with attributes. It retains only `len(raw_data)` for
-tensor payloads, so a 33 MB graph costs bounded memory. It never opens,
+tensor payloads, so a 47 MB graph costs bounded memory. It never opens,
 follows, or reads an external-data sidecar, so every statement below about
 weights is a statement about a declaration, not about weight bytes.
 
@@ -133,13 +138,13 @@ Three consequences of this method must be carried into every conclusion:
 
 | Variant | Capacity `C` | Graph | Nodes | Op types | Inputs | Outputs | Initializers (external) | Non-static dims | `value_info` | `.onnx` bytes |
 |---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| S128 | 160 | prefill | 8,753 | 28 | 3 | 58 | 310 (254) | 0 | 0 | 1,560,358 |
+| S128 | 160 | prefill | 7,634 | 26 | 3 | 58 | 310 (254) | 0 | 0 | 5,131,850 |
 | S128 | 160 | decode | 10,191 | 29 | 60 | 58 | 310 (254) | 0 | 0 | 1,759,947 |
-| S512 | 576 | prefill | 8,755 | 28 | 3 | 58 | 310 (254) | 0 | 0 | 2,064,360 |
+| S512 | 576 | prefill | 7,634 | 26 | 3 | 58 | 310 (254) | 0 | 0 | 9,305,674 |
 | S512 | 576 | decode | 10,191 | 29 | 60 | 58 | 310 (254) | 0 | 0 | 1,759,947 |
-| S1024 | 1152 | prefill | 8,755 | 28 | 3 | 58 | 310 (254) | 0 | 0 | 3,653,613 |
+| S1024 | 1152 | prefill | 7,634 | 26 | 3 | 58 | 310 (254) | 0 | 0 | 18,235,014 |
 | S1024 | 1152 | decode | 10,191 | 29 | 60 | 58 | 310 (254) | 0 | 0 | 1,759,947 |
-| S4096 | 4224 | prefill | 8,755 | 28 | 3 | 58 | 310 (254) | 0 | 0 | 35,209,213 |
+| S4096 | 4224 | prefill | 7,634 | 26 | 3 | 58 | 310 (254) | 0 | 0 | 49,790,614 |
 | S4096 | 4224 | decode | 10,191 | 29 | 60 | 58 | 310 (254) | 0 | 0 | 1,759,947 |
 
 The boundary matches the frozen T12 contract in `src/slm_lab/contracts/static_cache.py`:
@@ -160,16 +165,22 @@ and the four capacities (160, 576, 1152, 4224) all encode as two-byte protobuf
 varints, so the serialized size does not move. The deeper reason is that decode
 stores no mask at all and builds one at run time; section 5.4 gives that
 evidence in full, because it is the contrast that explains prefill's growth.
-The prefill protobuf grows 22.6x from S128 to S4096, and section 5.4 localizes
-essentially all of that growth to one node.
+The prefill protobuf grows 9.70x from S128 to S4096, and section 5.4 splits
+that growth between two families of inline constant rather than localizing it
+to one node: the O(S^2) causal mask supplies 75.1% of it and the 56 zero
+reserves that the `Concat` cache write appends to each layer's prefix supply
+24.7%.
 
-**S128 prefill has two fewer nodes than the other three prefill graphs**
-(8,753 vs 8,755: one fewer `Constant`, one fewer `Reshape`). The extra
-`Reshape` at S >= 512 raises the shape-defining-input population from 1,257 to
-1,258 while the flagged count stays at 804, so its shape input is a constant.
-This inspection observes the difference and does not explain it; anyone
-rewriting the export should find out why the traced graph is not identical
-across variants before assuming the four prefill graphs are interchangeable.
+**All four prefill graphs are now structurally identical**: 7,634 nodes, 26
+operator types, and the same operator histogram at every context length, with
+only the sizes of the inline constants differing. That is a change worth
+noticing. Before the T23 re-export, S128 prefill had two fewer nodes than the
+other three variants and a shape-defining-input population one smaller — an
+asymmetry this report flagged and could not explain. Replacing the float16
+`Pad` cache write with a `Concat` removed it: the population is 922 and the
+flagged count 804 in all four prefill graphs (section 5.1). The four variants
+are now interchangeable in structure, which is what a variant matrix should
+look like.
 
 ## 5. Findings ranked by deployment impact
 
@@ -193,19 +204,19 @@ whether T22 produces a package at all.
 | 1 | `R-DATA-DEPENDENT-SHAPE-INPUT` | high | 804 | 1,231 | Largest population, most common cause of a static-shape conversion failure, and upstream of every other count |
 | 2 | `R-SCATTER-GATHER-INDEXING` | high | 1 | 57 | Load-bearing: if the indexed cache write cannot be lowered, the T12 decode contract itself has to change |
 | 3 | `R-WIDE-IO-BOUNDARY` | high | 58 | 118 | The one certain cost; it is arithmetic, not a toolchain question, and it grows linearly with capacity |
-| 4 | `R-LARGE-INLINE-CONSTANT` | medium | 1 (S >= 512) | not present | Single localized node, but it is 95% of the S4096 prefill protobuf and it is O(S^2) |
-| 5 | `R-GRAPH-NODE-COUNT` | medium | 8,753-8,755 | 10,191 | Drives converter time and partition search; a budget to track, not a defect |
+| 4 | `R-LARGE-INLINE-CONSTANT` | medium | 1 (S >= 512) | not present | Single localized node, but it is 67% of the S4096 prefill protobuf and it is O(S^2) |
+| 5 | `R-GRAPH-NODE-COUNT` | medium | 7,634 | 10,191 | Drives converter time and partition search; a budget to track, not a defect |
 | 6 | `R-FLOAT-PRECISION-CAST` | medium | 285 | 285 | Real precision boundaries, but they bind T21 numerics and quantization, not T22 acceptance |
 | 6 | `R-FLOAT-SENSITIVE-ELEMENTWISE` | medium | 367 | 367 | Same reasoning; these are where a quantized graph will diverge first |
-| 7 | `R-SHAPE-COMPUTATION-CHAIN` | low | 239 | 556 | Population context for rank 1 and the natural before/after metric for a folding fix — covered inside section 5.1 rather than in its own subsection |
+| 7 | `R-SHAPE-COMPUTATION-CHAIN` | low | 127 | 556 | Population context for rank 1 and the natural before/after metric for a folding fix — covered inside section 5.1 rather than in its own subsection |
 
 ### 5.1 Rank 1 — Shape-defining inputs are computed, not constant
 
 **Observed.** In the decode graph, 1,231 of 1,326 shape-defining operator
 inputs are produced by another node rather than by an initializer, a graph
-input, a `Constant`, or a `ConstantOfShape`. In prefill it is 804 of 1,257
-(S128) or 1,258 (S512, S1024, S4096). The counts are identical across all four
-context lengths for each graph kind. The watched positions are `Reshape[1]`,
+input, a `Constant`, or a `ConstantOfShape`. In prefill it is 804 of 922. Both
+the numerator and the denominator are identical across all four context lengths
+for each graph kind. The watched positions are `Reshape[1]`,
 `Slice[1,2,3,4]`, `Expand[1]`, and `Tile[1]` — the target-shape and bound
 inputs. The sampled locations show the classic tracing residue directly, for
 example `node[11] ai.onnx.Slice /Slice input[1]=/Unsqueeze_1_output_0`.
@@ -215,8 +226,8 @@ verdict is about — no node in these graphs declares a domain at all.)
 
 The raw material for those chains is counted separately by rank 7:
 `Shape=459`, `ConstantOfShape=91`, `Range=6` in decode (556 total) and
-`Shape=121`, `ConstantOfShape=118` in prefill (239 total). Note the asymmetry:
-decode has nearly four times as many `Shape` nodes as prefill, and is the only
+`Shape=65`, `ConstantOfShape=62` in prefill (127 total). Note the asymmetry:
+decode has about seven times as many `Shape` nodes as prefill, and is the only
 graph kind containing `Range`.
 
 **Why it matters on a static-shape NPU.** An ahead-of-time compiler for a
@@ -260,9 +271,17 @@ Reading one of them directly confirms the structure: `/ScatterElements` takes
 `present_key.0` (a graph output). The write is therefore a direct
 graph-input-to-graph-output edge, at an index derived from `valid_length`.
 
-Prefill instead materializes its cache with 56 `Pad` nodes (`/Pad` through
-`/Pad_55`), matching the contract's `prefill_prefix_materialization` strategy:
-write `[0, prompt_length)` and zero-fill the reserve.
+Prefill instead materializes its cache with one concatenation per cache tensor:
+`/Concat` through `/Concat_55`, 56 of the graph's 341 `Concat` nodes. That
+matches the contract's `prefill_prefix_materialization` strategy — write
+`[0, prompt_length)` and zero-fill the reserve. Each one concatenates the
+computed `[1, 8, S, 128]` prefix with a `[1, 8, C - S, 128]` float16 zero
+constant on `axis=2` and feeds a `Reshape` that produces the graph
+output — for layer 0, `/Concat` over `/Cast_1_output_0` and `/Constant_1`, then
+`/Reshape_1` producing `key_cache.0`. Before T23 this was 56 float16 `Pad`
+nodes; the substitution is why `Pad` and `Sub` no longer appear in any prefill
+graph, and why the zero reserve is now a materialized inline constant rather
+than a computed pad amount. Section 5.4 is where that cost shows up.
 
 **Why it matters.** This is the single most load-bearing structure in the
 decode graph. It implements `fixed_capacity_indexed_copy` from the T12 contract,
@@ -352,20 +371,51 @@ inspection localizes it to a single node in every case:
 
 | Variant | Node | Attribute tensor | Inline bytes | Share of `.onnx` file |
 |---|---|---|---:|---:|
-| S128 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 128, 128]` | 32,768 | 2.1% |
-| S512 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 512, 512]` | 524,288 | 25.4% |
-| S1024 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 1024, 1024]` | 2,097,152 | 57.4% |
-| S4096 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 4096, 4096]` | 33,554,432 | 95.3% |
+| S128 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 128, 128]` | 32,768 | 0.6% |
+| S512 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 512, 512]` | 524,288 | 5.6% |
+| S1024 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 1024, 1024]` | 2,097,152 | 11.5% |
+| S4096 | `node[6] /model/model/Constant_4` | float16 `[1, 1, 4096, 4096]` | 33,554,432 | 67.4% |
 
 The S128 row is included for honesty: the rule does **not** fire at S128,
 because 32,768 bytes is below the catalogue's 262,144-byte threshold. The node
 is there; it is simply small enough not to be flagged. That row was read
 directly from `S128/prefill.onnx` with the same reader, not inferred.
 
-This is exactly the growth T20's worklog attributed to "context-shaped graph
-constants": at S4096 the mask alone is 33,554,432 of the file's 35,209,213
-bytes. The remaining inline node-attribute tensors at S4096 total only 157,928
-bytes, of which the largest four are 32,768-byte int64 index vectors.
+**The mask is no longer the whole story, and the share column is why.** Before
+T23, this one node was 95.3% of the S4096 prefill protobuf and the section could
+honestly say it localized essentially all of prefill's growth. It cannot any
+more. The `Concat` cache write introduced a second family of inline constant:
+56 float16 `[1, 8, C - S, 128]` zero reserves, one per cache tensor, on
+`/Constant_1` through `/Constant_111`. They are 65,536 bytes each at S128,
+131,072 at S512, and 262,144 at S1024 and S4096 — sized by `C - S`, not by `S`
+— so together they are 3,670,016 / 7,340,032 / 14,680,064 / 14,680,064 bytes,
+which is 71.5%, 78.9%, 80.5% and 29.5% of the four protobufs. **At S128, S512
+and S1024 the reserves, not the mask, are the largest thing in the file.** The
+mask only takes the lead at S4096, where `S` has grown but `C - S` has not.
+
+Two consequences follow, and both matter for T22. First, the two costs scale
+differently: the mask is O(S^2) and the reserves are O(C - S), so removing the
+mask fixes the long-context case and does nothing for the short-context ones.
+Second, a rank based on total inline bytes would put the reserves above the mask
+at three of the four variants; this section keeps the mask at rank 4 because
+`R-LARGE-INLINE-CONSTANT` is a per-tensor rule that fires only *above* its
+262,144-byte threshold, and no individual reserve ever exceeds it — they are
+65,536 and 131,072 bytes at S128 and S512 and exactly 262,144 at S1024 and
+S4096. That is a statement about the catalogue's granularity, not about which
+tensor family costs more, and it is the clearest case in this report of a
+threshold rule under-reporting a real cost. The catalogue is due a
+`total-inline-bytes` companion to the per-tensor rule; that is a change to
+`configs/graph/onnx-risk-rules-v1.json` and therefore to every committed
+report's `rules_sha256`, so it is named here rather than made here.
+
+At S4096 the mask alone is 33,554,432 of the file's 49,790,614 bytes, and the
+inline node-attribute tensors that are not the mask total 14,833,032 bytes — of
+which 14,680,064 is the 56 reserves. Only 152,968 bytes remain after both
+families, and the largest four of *those* are 32,768-byte int64 index vectors.
+The growth T20's worklog attributed to "context-shaped graph constants" is
+therefore now two effects, not one: from S128 to S4096 the protobuf gains
+44,658,764 bytes, of which the mask supplies 33,521,664 (75.1%), the reserves
+11,010,048 (24.7%), and everything else 127,052 (0.3%).
 
 **Why an O(S^2) materialized mask is a distinct problem, not merely a big one.**
 Three reasons, in increasing order of nastiness:
@@ -377,10 +427,10 @@ Three reasons, in increasing order of nastiness:
    partitioner — pays to load and copy 32 MiB of mask before it does anything
    useful, and some of them will do so more than once.
 2. It grows quadratically while the thing it represents is a boolean triangle
-   with an O(1) description. At S4096 the mask alone is 21.5x the size of the
+   with an O(1) description. At S4096 the mask alone is 6.5x the size of the
    entire S128 prefill graph, and the same tensor at a hypothetical S8192
-   variant would be 134,217,728 bytes (128 MiB). The scaling is structural,
-   not incidental.
+   variant would be 134,217,728 bytes (128 MiB) — more than twice the whole
+   S4096 protobuf. The scaling is structural, not incidental.
 3. It becomes a quantization liability. A materialized additive mask in float16
    contains large-magnitude negative fill values alongside zeros. Any quantizer
    that treats it as an ordinary constant tensor has to choose an encoding
@@ -400,7 +450,7 @@ contains the capacity dimension; decode's largest inline attribute is a
 256-byte float32 `[1, 64, 1]` on `Constant_4107`, identical at all four
 capacities. Instead decode computes its mask at run time from the position
 arithmetic: it is the only graph kind containing `Range` (6 nodes) and `Greater`
-(1 node), and it carries 459 `Shape` nodes against prefill's 121. The chain is
+(1 node), and it carries 459 `Shape` nodes against prefill's 65. The chain is
 visible by name — `/model/model/Range_1` produces the cache-position ramp,
 `/model/model/Greater` compares it against the reshaped current position, and
 `Cast_3947` widens that `bool` into the arithmetic dtype. A materialized
@@ -409,22 +459,43 @@ constant would have to scale with `C` (320 bytes at `C=160`, 8,448 bytes at
 such constant exists. That is the same trade this section asks prefill to make:
 spend a handful of shape nodes to avoid an O(S^2) inline constant.
 
+The 56 reserves deserve the same treatment and are cheaper to fix. They are
+literal zeros, so an exporter that emitted one `ConstantOfShape` per reserve —
+or reused a single shared constant across all 56, since the shape is identical
+for every layer — would remove between 3,670,016 and 14,680,064 bytes from
+every prefill protobuf without touching the mask or the cache-write contract,
+which at S128 is 71.5% of the file. This report
+does not attempt that change; it records that the byte cost of the T23 `Concat`
+write is carried entirely by inline constants and is therefore addressable in
+the exporter rather than in the graph contract.
+
 ### 5.5 Rank 5 — Graph scale
 
-**Observed.** 8,753-8,755 nodes across 28 operator types in prefill;
-10,191 nodes across 29 types in decode; identical across context lengths (bar
-the S128 prefill anomaly in section 4). The review threshold is 2,000. The
+**Observed.** 7,634 nodes across 26 operator types in prefill;
+10,191 nodes across 29 types in decode; identical across context lengths in
+both graph kinds. The review threshold is 2,000. The
 busiest operators are overwhelmingly bookkeeping:
 
 | Graph | Top five operators |
 |---|---|
-| prefill (S512/S1024/S4096) | `Constant=3178`, `Unsqueeze=1568`, `Mul=542`, `Cast=460`, `Reshape=396` |
+| prefill (all four) | `Constant=2729`, `Unsqueeze=1568`, `Mul=486`, `Cast=348`, `Concat=341` |
 | decode (all) | `Constant=3399`, `Unsqueeze=2083`, `Mul=571`, `Cast=464`, `Shape=459` |
 
-There are only 254 `MatMul` nodes in either graph — the actual arithmetic is
-under 3% of the node list (2.9% in prefill, 2.5% in decode). 31 distinct
-operator types appear across all eight graphs; `Pad` and `Sub` occur only in
-prefill, and `Greater`, `Range`, and `ScatterElements` only in decode.
+The prefill row changed identity as well as magnitude at the T23 re-export:
+`Reshape` was fifth before and is seventh now, displaced by `Concat` and
+`Transpose`. `Concat=341` is one of the few prefill counts that did not move at
+all, so it rose in rank purely because everything above it shrank — a reminder
+that a top-five table reports rank, not growth.
+
+There are only 254 `MatMul` nodes in either graph, and the actual arithmetic is
+a low single-digit share of the node list: 3.3% in prefill, 2.5% in decode. That
+prefill figure used to be 2.9%, and the "under 3%" reading of it no longer
+holds. The graph did not gain arithmetic — `MatMul` is unchanged at 254 — it
+shed over a thousand bookkeeping nodes when the `Pad` cache write went away,
+which raised arithmetic's share without adding any. 29 distinct operator types
+appear across all eight graphs; no operator now occurs only in prefill, whose 26
+types are a strict subset of decode's 29, and `Greater`, `Range`, and
+`ScatterElements` occur only in decode.
 
 **Why it matters.** Node count drives converter and compiler wall-clock time,
 the size of the partitioning search space, and how many small operators can end
@@ -440,14 +511,19 @@ be attributed. Most of the reduction should fall out of the rank-1 fix.
 
 ### 5.6 Rank 6 — Precision boundaries
 
-**Observed, casts.** 285 of 460 prefill `Cast` nodes and 285 of 464 decode
+**Observed, casts.** 285 of 348 prefill `Cast` nodes and 285 of 464 decode
 `Cast` nodes cross the float16/float32 boundary. Every direction is resolved;
 the breakdown is identical in all eight graphs:
 
 | Graph | `float16->float32` | `float32->float16` | `unknown->` | Total casts |
 |---|---:|---:|---:|---:|
-| prefill (all four) | 142 | 143 | 0 | 460 |
+| prefill (all four) | 142 | 143 | 0 | 348 |
 | decode (all four) | 142 | 143 | 0 | 464 |
+
+Only prefill's *total* moved at the T23 re-export. The crossing count is still
+285 and the split is still 142/143, so every `Cast` node the re-export removed
+from prefill was a non-crossing one. Prefill's cast population shrank; its
+precision surface did not.
 
 An earlier revision of this report showed 2 prefill and 3 decode casts as
 `unknown->float16` and treated their sources as unresolvable. They were not:
@@ -500,7 +576,7 @@ One is not, and is called out explicitly.
 | Rule | Severity | Silent because |
 |---|---|---|
 | `R-BOUNDARY-DYNAMIC-SHAPE` | blocking | **Genuinely clean.** `dynamic_dimensions` is empty in all eight reports; 0 of 118 decode and 0 of 61 prefill boundary tensors has a symbolic or unset dimension. Every dimension is a concrete `dim_value`. |
-| `R-CONTROL-FLOW-OP` | blocking | **Genuinely clean.** No `If`, `Loop`, or `Scan` in any of the 31 operator types across all eight op histograms. The prefill/decode split already hoisted the generation loop into host code, which is exactly the shape plan section 6.5 asks for. |
+| `R-CONTROL-FLOW-OP` | blocking | **Genuinely clean.** No `If`, `Loop`, or `Scan` in any of the 29 operator types across all eight op histograms. The prefill/decode split already hoisted the generation loop into host code, which is exactly the shape plan section 6.5 asks for. |
 | `R-NON-DEFAULT-DOMAIN` | blocking | **Genuinely clean.** Every node is in the default domain. Each graph declares exactly one opset import, `("", 18)`. No custom operators, so the artifact is portable across the three target platforms rather than tied to one runtime's extension library. |
 | `R-SUBGRAPH-ATTRIBUTE` | high | **Genuinely clean.** No node carries a `GRAPH`-typed attribute. The reader recurses into subgraphs when they exist and flattens them into the node list with a scope path; every node in all eight graphs has an empty scope. |
 | `R-DATA-DEPENDENT-OUTPUT-SHAPE` | high | **Genuinely clean.** No `NonZero`, `Compress`, or `Unique`. Nothing in these graphs produces an output whose element count is a function of data values, so a static allocator has a bound for every tensor. |
@@ -563,7 +639,7 @@ validity; this report is not.
 
 Requires the T20 graphs under the external artifact root
 (`/Volumes/T9/slm-deployment-lab` on the primary machine). The eight graphs and
-their eight 1.19 GB external-data sidecars — about 8.9 GB in total — are
+their eight 1.19 GB external-data sidecars — about 9.0 GB in total — are
 deliberately not committed; regenerate them with the `export` commands recorded
 in `results/manifests/onnx/*.json` if the artifact root is empty. Only the
 compact JSON reports under `results/graph/` are committed.
@@ -604,11 +680,11 @@ Each was read directly from the named graphs with `slm_lab.graph.onnx_reader`:
 |---|---|---|
 | The `.onnx bytes` column | §4 | File size on disk, not a report field |
 | Decode inline node-attribute total `26,706` | §4, §5.4 | Summed over all attribute tensors; the JSON keeps only initializer sizes |
-| S4096 prefill residual `157,928` and its four 32,768-byte int64 vectors | §5.4 | Same: below the rule's 262,144-byte threshold, so never a finding |
+| The 56 prefill reserve constants, their per-variant sizes, and the S4096 residual `152,968` with its four 32,768-byte int64 vectors | §5.4 | Each reserve is below the rule's 262,144-byte threshold at S128 and S512, and the residual is below it everywhere, so neither is ever a finding |
 | The S128 `32,768` mask row | §5.4 | The rule does not fire at S128, so the node is in no finding |
 | "No attribute tensor in any graph carries the capacity dimension" | §4, §5.4 | Attribute tensor shapes are not report fields at all |
 | The RMSNorm `28 x 4 + 1 = 113` name decomposition | §5.6 | `locations` is capped at 8 samples per finding |
-| The per-node reads: `/ScatterElements`'s `axis=2` and its `key_cache.0` → `present_key.0` operands, the `/Pad` through `/Pad_55` names, `/model/model/Constant_4`'s node index and attribute shape | §5.2, §5.4 | Findings record node type, index, and name — not attributes or operand names |
+| The per-node reads: `/ScatterElements`'s `axis=2` and its `key_cache.0` → `present_key.0` operands, the `/Concat` through `/Concat_55` names and their `/Constant_1` … `/Constant_111` reserve operands, `/model/model/Constant_4`'s node index and attribute shape | §5.2, §5.4 | Findings record node type, index, and name — not attributes or operand names |
 
 The snippet below reproduces the first six rows; only the last row, the
 per-node reads, is left out. Those come from walking
@@ -656,9 +732,11 @@ PY
 Run on 2026-08-02 it printed, among the rest:
 
 ```
-S128   prefill  file= 1,560,358 inline_attr_total=    63,704 largest=(32768, '/model/model/Constant_4', (1, 1, 128, 128)) rest=   30,936 next4=[1024, 1024, 1024, 1024] attrs_with_capacity_dim=0
+S128   prefill  file= 5,131,850 inline_attr_total= 3,728,776 largest=(65536, '/Constant_99', (1, 8, 32, 128)) rest=3,663,240 next4=[65536, 65536, 65536, 65536] attrs_with_capacity_dim=0
 S128   decode   file= 1,759,947 inline_attr_total=    26,706 largest=(256, 'Constant_4107', (1, 64, 1)) rest=   26,450 next4=[32, 32, 24, 16] attrs_with_capacity_dim=0
-S4096  prefill  file=35,209,213 inline_attr_total=33,712,360 largest=(33554432, '/model/model/Constant_4', (1, 1, 4096, 4096)) rest=  157,928 next4=[32768, 32768, 32768, 32768] attrs_with_capacity_dim=0
+S512   prefill  file= 9,305,674 inline_attr_total= 7,902,600 largest=(524288, '/model/model/Constant_4', (1, 1, 512, 512)) rest=7,378,312 next4=[131072, 131072, 131072, 131072] attrs_with_capacity_dim=0
+S1024  prefill  file=18,235,014 inline_attr_total=16,831,880 largest=(2097152, '/model/model/Constant_4', (1, 1, 1024, 1024)) rest=14,734,728 next4=[262144, 262144, 262144, 262144] attrs_with_capacity_dim=0
+S4096  prefill  file=49,790,614 inline_attr_total=48,387,464 largest=(33554432, '/model/model/Constant_4', (1, 1, 4096, 4096)) rest=14,833,032 next4=[262144, 262144, 262144, 262144] attrs_with_capacity_dim=0
 S4096  decode   file= 1,759,947 inline_attr_total=    26,706 largest=(256, 'Constant_4107', (1, 64, 1)) rest=   26,450 next4=[32, 32, 24, 16] attrs_with_capacity_dim=0
 113 Counter({'input_layernorm': 28, 'q_norm': 28, 'k_norm': 28, 'post_attention_layernorm': 28, '/model/model/norm/Pow': 1})
 ```
@@ -666,12 +744,32 @@ S4096  decode   file= 1,759,947 inline_attr_total=    26,706 largest=(256, 'Cons
 The decode line is identical at all four capacities, its largest inline
 attribute is a 256-byte `[1, 64, 1]` tensor, and `attrs_with_capacity_dim=0`
 holds for every one of the eight graphs — the §5.4 claim that decode carries no
-materialized mask and builds one at run time instead. The four 32,768-byte
-entries after the S4096 mask are the int64 index vectors named in §5.4. The
-snippet prints sizes only; their `int64` element type comes from reading
-`attribute.tensor.dtype` on those four nodes (`Constant_3250`,
-`/model/model/Constant_34`, `/model/model/Constant_33`,
-`/model/model/Constant_30`).
+materialized mask and builds one at run time instead.
+
+**Read the S128 prefill line carefully: its `largest` is not the mask.** At
+S128 the biggest inline attribute tensor is a 65,536-byte float16
+`[1, 8, 32, 128]` zero reserve on `/Constant_99`, one of the 56 the `Concat`
+cache write appends; the 32,768-byte mask is only the 57th-largest attribute in
+that file. That single line is the §5.4 crossover in raw output form. It also
+changes what the `rest` column means from row to row: at S512, S1024 and S4096
+`largest` is the mask and `rest` reads as "everything that is not the mask", but
+at S128 `largest` is a reserve, so 3,663,240 is total minus *one reserve* and
+the mask is still inside it. The `next4` column tells the same story from the
+other side — four more reserves at every variant, where it used to show the
+int64 index vectors.
+
+Those index vectors are still there, just no longer near the top. At S4096 they
+are the four 32,768-byte entries immediately below the 56 reserves, and their
+`int64` element type comes from reading `attribute.tensor.dtype` on those four
+nodes (`Constant_2801`, `/model/model/Constant_34`, `/model/model/Constant_33`,
+`/model/model/Constant_30`). The first of the four was `Constant_3250` before
+the re-export; the exporter renumbered its anonymous constants.
+
+Two figures in §5.4 are one step beyond this snippet's output: the reserve count
+of 56 and the S4096 residual of 152,968 bytes need the `inline` list filtered by
+tensor size before summing, which is the same walk with one extra line. The
+snippet is left as it is so its output can be compared line-for-line with the
+block above.
 
 The §5.3 byte columns are `--check`-covered in a slightly indirect way: the
 per-variant totals appear inside the `R-WIDE-IO-BOUNDARY` finding's `detail`
@@ -709,15 +807,23 @@ severity.
   explain why that ratio, not the absolute megabytes, is the number that
   decides whether long-context decode is viable.
 - [ ] The decode `.onnx` protobuf is the same 1,759,947 bytes at every capacity
-  while the prefill protobuf grows 22.6x from S128 to S4096. Explain both facts
+  while the prefill protobuf grows 9.70x from S128 to S4096. Explain both facts
   from the graph structure — one graph materializes its mask as an inline
   constant and the other builds one at run time; name the operators that show
   which is which — and say what would happen to each at a hypothetical S8192
   variant.
+- [ ] Section 5.4 shows two families of inline constant in prefill: one sized by
+  `S` and one sized by `C - S`. Say which is which, work out which family
+  dominates each of the four protobufs, and explain why removing the causal
+  mask would leave the S128 prefill graph almost as large as it is now.
 - [ ] The prefill graph has one `ScatterND` and no `ScatterElements`; the decode
   graph has one `ScatterND` and 56 `ScatterElements`. Explain which of these is
   the KV-cache write, how you can tell from the committed JSON alone, and what
   the other one is doing.
+- [ ] Prefill writes its cache with 56 concatenations and decode writes its own
+  with 56 `ScatterElements`. Explain why the two graph kinds need different
+  operators for what the T12 contract calls the same cache, and say what each
+  choice costs: one in protobuf bytes, the other in compile-time addressability.
 - [ ] Rank 2 is ranked above rank 3 even though rank 3 is a certain cost and
   rank 2 is a possible one. Justify that ordering for T22, then argue the
   opposite case.

@@ -5,6 +5,35 @@ Task: `T20`
 Visibility: `public`
 Status: completed
 
+## Amendment: the four prefill graphs were re-exported under T23
+
+**This worklog is the record of the T20 run on 2026-07-30. It has not been
+rewritten.** Everything below describes the graphs, commits, and interpreter
+that existed then. On 2026-08-02, T23 re-exported the four prefill graphs with a
+`Concat` cache write in place of the float16 `Pad` that ONNX Runtime could not
+load (`docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md`) and
+promoted them into the attested reference artifacts. Three classes of value
+below are therefore historical, not current:
+
+- **Exporter commit.** T20 exported and attested
+  `631fd70bcff9b73b81c08a2a2e0127cad07f09ca`. The committed manifests and the
+  attestation in `configs/models/qwen3-0.6b-onnx-export.json` now record the
+  T23 re-export commit `321b11ba922f4bf68471d678e4f5ed987f3c8668`.
+- **Interpreter.** T20 exported on, and attested to, CPython 3.11.15; every
+  `3.11.15` below is a statement about that run. The re-export ran on 3.11.13
+  and the attestation was re-pinned to it, so a reader comparing this worklog
+  against `results/manifests/onnx/S128.json` will find 3.11.13 there. Neither
+  number is wrong; they describe different runs.
+- **Prefill graph identity and size.** Every prefill graph SHA-256 and every
+  manifest SHA-256 moved. The prefill protobufs are now 5,131,850 /
+  9,305,674 / 18,235,014 / 49,790,614 bytes at S128 / S512 / S1024 / S4096.
+  The four decode graphs came back byte-identical and their digests and their
+  1,759,947-byte size are unchanged.
+
+The current structural read of the promoted graphs is
+`docs/results/onnx/graph-inspection.md`; the current numbers always live in the
+generated evidence under `results/`, never here.
+
 ## Outcome
 
 T20 implementation exported the pinned Qwen3-0.6B model into eight reference
@@ -259,6 +288,12 @@ task now unblocks T21 for ONNX Runtime parity and graph-risk inspection.
   at S4096 because the legacy static export materializes more context-shaped
   graph constants. Decode protobufs are 1,759,947 bytes each but have distinct
   hashes because their fixed cache capacities differ.
+  - *Superseded by T23 for prefill only.* Those two figures are the `Pad`-based
+    prefill graphs this run produced. The promoted `Concat` graphs are
+    5,131,850 bytes at S128 and 49,790,614 at S4096 — the reserve the `Concat`
+    now materializes as an inline zero constant is a second context-shaped
+    constant family alongside the causal mask. See §5.4 of
+    `docs/results/onnx/graph-inspection.md`. The decode statement still holds.
 - The first real decode attempt exposed that Qwen3 in Transformers 4.51.3
   rejects legacy cache tuples. Constructing `DynamicCache` inside the wrapper
   preserves the model's required Python protocol without changing the
