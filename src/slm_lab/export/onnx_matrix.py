@@ -764,11 +764,50 @@ def _torch_module() -> Any:
 
 
 class PrefillWrapper:
-    """Factory returning a torch module with the frozen static prefill boundary."""
+    """Factory returning a torch module with the frozen static prefill boundary.
+
+    The zero-extension of each layer's cache from ``prompt_length`` to the
+    fixed capacity is expressed as a concatenation with a zero reserve, not as
+    ``torch.nn.functional.pad``. Both compute exactly the same tensor:
+    the prompt prefix in ``[0, prompt_length)`` and zeros in
+    ``[prompt_length, capacity)``. They do not lower the same way.
+
+    ``pad`` lowers to ONNX ``Pad``, for which ONNX Runtime's CPU execution
+    provider registers no float16 kernel. At ``ORT_DISABLE_ALL`` the resulting
+    graph cannot even be loaded: ORT's ``InsertCastTransformer`` -- registered
+    under the name ``CastFloat16Transformer``, which is the name that appears in
+    the log and the error -- inserts a precision-free cast around the
+    unsupported node and then fails type inference on it, so all four float16
+    prefill graphs were rejected before a single inference.
+
+    ``ORT_ENABLE_BASIC`` and above do load, and dumping
+    ``optimized_model_filepath`` shows why: ORT does not fold the cast away, it
+    hoists the ``Pad`` above it so the pad runs in float32.
+
+        old:  Add(float32) -> Pad(float32) -> Cast(to=float16) -> Reshape
+        new:  Add(float32) -> Cast(to=float16) -> Concat(float16) -> Reshape
+
+    That ORT rewrites the graph rather than run ``Pad`` in float16 is the
+    missing kernel stated positively, rather than inferred from an error
+    message. It is also why the gap looked like an optimization-level quirk:
+    the graph loads and runs at every level except the strictest, so only a
+    session at ``ORT_DISABLE_ALL`` exposes it.
+
+    ``cat`` lowers to ONNX ``Concat``, which does have a CPU float16 kernel,
+    and is also the friendlier form downstream: the reserve is a compile-time
+    constant, so the write stays fully static with no runtime index. The
+    alternative that most closely mirrors :class:`DecodeWrapper` -- scattering
+    the prompt prefix into a preallocated capacity-sized buffer -- would load
+    just as well but would add 56 more indexed scatters to a graph whose
+    indexed cache write is already a ranked deployment risk for the Qualcomm
+    lane, and would materialise a capacity-sized zero buffer per variant
+    instead of a reserve-sized one.
+    """
 
     def __new__(cls, model: Any, *, prompt_length: int) -> Any:
         torch = _torch_module()
         capacity = CONTEXT_VARIANTS[prompt_length]
+        reserve_length = capacity - prompt_length
 
         class _Module(torch.nn.Module):
             def __init__(self) -> None:
@@ -793,11 +832,61 @@ class PrefillWrapper:
                     .to(torch.float32)
                     .reshape(BATCH_SIZE, VOCAB_SIZE)
                 ]
+                # The reserve [prompt_length, capacity) that decode later
+                # overwrites. This is a trace-time constant, and the exporter
+                # re-materialises it at each of the 56 use sites rather than
+                # sharing one node; expressing it as a broadcast from a scalar
+                # zero was tried and produced a byte-identical graph. The pass
+                # responsible is TorchScript's ``_jit_pass_constant_propagation``,
+                # which ``torch.onnx.utils._optimize_graph`` runs unconditionally
+                # -- its ``_disable_torch_constant_prop`` switch is private and
+                # ``torch.onnx.export`` does not expose it. It is NOT the
+                # ``do_constant_folding=False`` this module passes below: that
+                # flag governs the later ONNX-level fold, and exporting the same
+                # module with it both True and False gives the identical single
+                # 65,610-byte ``Constant`` and no ``Expand`` either way.
+                # Net measured file growth is 3.57 MB at S128, 7.24 at S512 and
+                # 14.58 at S1024 and S4096.
+                #
+                # Each copy is 65,536 bytes at S128 and 262,144 at S1024/S4096,
+                # so it is 64x to 256x the configured 1024-byte external-data
+                # threshold and is NOT kept inline by that threshold. It is
+                # kept inline because torch emits it as an ``onnx::Constant``
+                # node *attribute*, and ``export_onnx_graph`` saves with
+                # ``convert_attribute=False``, so ``onnx.save_model``
+                # externalises initializers only and never looks at it. That is
+                # also why ``inspect_onnx_artifact``'s inline-initializer guard
+                # does not see it: the guard walks ``graph.initializer``.
+                #
+                # The consequence is that prefill's ``.onnx.data`` stays
+                # byte-identical to decode's and the T20 attestation can keep
+                # recording one shared ``external_data_sha256``. Hoisting the
+                # reserve to a registered buffer would collapse it to a single
+                # initializer but would push a 64--256 KB tensor into external
+                # data and break that invariant.
+                #
+                # Both halves are guarded by
+                # ``test_prefill_cache_write_lowers_to_concat_and_never_pad``,
+                # measured by breaking each one through this export path:
+                # ``convert_attribute=True`` makes its ``numpy_helper.to_array``
+                # raise ``ValidationError`` (the reserve moved to external
+                # data), and a registered-buffer reserve makes its producer
+                # lookup raise ``KeyError`` (the reserve is an initializer, not
+                # a node output). Do not weaken those assertions without
+                # replacing the guarantee.
+                reserve = torch.zeros(
+                    BATCH_SIZE,
+                    NUM_KEY_VALUE_HEADS,
+                    reserve_length,
+                    HEAD_DIM,
+                    dtype=torch.float16,
+                    device=input_ids.device,
+                )
                 for key, value in _legacy_cache(output.past_key_values):
                     result.append(
-                        torch.nn.functional.pad(
-                            key.to(torch.float16),
-                            (0, 0, 0, capacity - prompt_length),
+                        torch.cat(
+                            (key.to(torch.float16), reserve),
+                            dim=2,
                         ).reshape(
                             BATCH_SIZE,
                             NUM_KEY_VALUE_HEADS,
@@ -806,9 +895,9 @@ class PrefillWrapper:
                         )
                     )
                     result.append(
-                        torch.nn.functional.pad(
-                            value.to(torch.float16),
-                            (0, 0, 0, capacity - prompt_length),
+                        torch.cat(
+                            (value.to(torch.float16), reserve),
+                            dim=2,
                         ).reshape(
                             BATCH_SIZE,
                             NUM_KEY_VALUE_HEADS,
