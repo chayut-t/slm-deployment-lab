@@ -25,6 +25,32 @@
     "constant_folding": false,
     "dynamic_axes": null
   },
+  "evidence_attestation": {
+    "schema_version": 1,
+    "run_id": "T20-qwen3-0.6b-reference-onnx-concat-2026-08-02",
+    "exporter_commit": "321b11ba922f4bf68471d678e4f5ed987f3c8668",
+    "runtime_python_version": "3.11.13",
+    "source_artifact_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "external_data_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+    "graph_sha256": {
+      "S128": {
+        "prefill": "464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3",
+        "decode": "e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2"
+      },
+      "S512": {
+        "prefill": "6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f",
+        "decode": "ed2c8b52bd284685a6c549b7ebadd4db257c93e17ec7cae6b09c5b7561e36c8f"
+      },
+      "S1024": {
+        "prefill": "61d1b8b8b56f97dc44c93c27b02cafece5a2691ac33e51105c91444122521940",
+        "decode": "4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759"
+      },
+      "S4096": {
+        "prefill": "cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0",
+        "decode": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd"
+      }
+    }
+  },
   "artifact_directory": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20",
   "manifest_directory": "results/manifests/onnx"
 }

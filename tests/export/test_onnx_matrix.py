@@ -70,9 +70,12 @@ def test_export_config_freezes_exact_matrix_and_toolchain() -> None:
     assert config.onnx_version == "1.18.0"
     assert config.external_data_threshold_bytes == 1024
     assert config.evidence_attestation.exporter_commit == (
-        "631fd70bcff9b73b81c08a2a2e0127cad07f09ca"
+        "321b11ba922f4bf68471d678e4f5ed987f3c8668"
     )
-    assert config.evidence_attestation.runtime_python_version == "3.11.15"
+    # The interpreter that actually performed the re-export, and the one
+    # `pyproject.toml` requires. The superseded attestation claimed 3.11.15,
+    # which no longer describes any interpreter that has run this exporter.
+    assert config.evidence_attestation.runtime_python_version == "3.11.13"
     assert config.token_fixture.source_path == (
         ROOT / "tests/fixtures/t10/token-fixtures-v1.json"
     )
