@@ -1033,6 +1033,81 @@ def run_compile(
     return manifest
 
 
+_COMPILE_REQUEST_FIELDS = frozenset(
+    {
+        "schema_version",
+        "stage",
+        "client_version",
+        "device",
+        "runtime",
+        "source_artifact",
+        "output_artifact",
+        "output_logical_name",
+        "input_specs",
+        "options",
+        "job_name",
+        "timeout_seconds",
+    }
+)
+_COMPILE_REQUEST_OPTIONAL_FIELDS = frozenset({"retry"})
+
+
+def preflight_compile_request(path: Path) -> dict[str, Any]:
+    """Validate a compile request offline, exactly as ``run_compile`` would.
+
+    Runs the committed compile validation chain in the same order the stage
+    runner uses -- schema version, stage, public-safety projection, exact
+    field set, client version, device selector, runtime identity, option
+    allowlist, timeout, retry, source-artifact existence and digest, input
+    specs, and output-path policy -- and returns the sanitized public
+    projection with the deterministic request id ``run_compile`` would record.
+
+    Nothing here constructs a backend, imports ``qai_hub``, or contacts the
+    service. Acceptance therefore means the request satisfies this adapter's
+    own contract. It is not evidence that Qualcomm AI Hub accepted the
+    request, or that it would accept it.
+
+    Like ``run_compile``, this prepares the private parent directory of
+    ``output_artifact`` so an invalid destination fails before submission.
+    """
+
+    request = load_request(path, "compile")
+    _require_exact_keys(
+        request,
+        required=set(_COMPILE_REQUEST_FIELDS),
+        optional=set(_COMPILE_REQUEST_OPTIONAL_FIELDS),
+        field="compile request",
+    )
+    if request["schema_version"] != SCHEMA_VERSION or request["stage"] != "compile":
+        raise AiHubAdapterError("compile request has wrong schema or stage")
+    common = _common_request(request, "compile")
+    _, source = _artifact_from_request(request["source_artifact"], role="source_model")
+    public_specs, _ = _input_specs(request["input_specs"])
+    _private_output_path(request["output_artifact"], "output_artifact")
+    output_logical_name = _safe_logical_name(
+        request["output_logical_name"], "output_logical_name"
+    )
+    public_request = {
+        **_public_request_projection(request),
+        "source_artifact": source,
+        "input_specs": public_specs,
+    }
+    _assert_public_safe(public_request, "compile request")
+    preflight = {
+        "stage": "compile",
+        "request_id": _request_id("compile", public_request),
+        "validated_by": f"{__name__}.preflight_compile_request",
+        "adapter_schema_version": SCHEMA_VERSION,
+        "client_version": common["client_version"],
+        "output_logical_name": output_logical_name,
+        "service_contacted": False,
+        "job_submitted": False,
+        "public_request": public_request,
+    }
+    _assert_public_safe(preflight, "compile preflight")
+    return preflight
+
+
 def _load_predecessor(
     value: Any,
 ) -> tuple[Path, Mapping[str, Any], str, dict[str, Any]]:

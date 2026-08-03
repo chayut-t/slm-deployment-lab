@@ -1,0 +1,3120 @@
+{
+  "artifacts": {
+    "decode": {
+      "external_data": [
+        {
+          "location": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "input_tensors": [
+        {
+          "dtype": "int64",
+          "name": "input_ids",
+          "shape": [
+            1,
+            1
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "attention_mask",
+          "shape": [
+            1,
+            4224
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "position_ids",
+          "shape": [
+            1,
+            1
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "output_tensors": [
+        {
+          "dtype": "float32",
+          "name": "next_logits",
+          "shape": [
+            1,
+            151936
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_key.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "present_value.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "updated_valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "relative_path": "S4096/decode.onnx",
+      "sha256": "81394648522eaf1cbe1365915b6a6019022c19d9270390b469c07bd29312c79d",
+      "size_bytes": 1752538
+    },
+    "prefill": {
+      "external_data": [
+        {
+          "location": "prefill.onnx.data",
+          "sha256": "f476f51267e0c7ee09e9e97166afa9900158b22adcf5acec895b94d96e3d0dd3",
+          "size_bytes": 1240451072
+        }
+      ],
+      "graph_kind": "prefill",
+      "input_tensors": [
+        {
+          "dtype": "int64",
+          "name": "input_ids",
+          "shape": [
+            1,
+            4096
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "attention_mask",
+          "shape": [
+            1,
+            4096
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "position_ids",
+          "shape": [
+            1,
+            4096
+          ]
+        }
+      ],
+      "output_tensors": [
+        {
+          "dtype": "float32",
+          "name": "last_logits",
+          "shape": [
+            1,
+            151936
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.0",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.1",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.2",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.3",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.4",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.5",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.6",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.7",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.8",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.9",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.10",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.11",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.12",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.13",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.14",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.15",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.16",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.17",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.18",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.19",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.20",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.21",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.22",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.23",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.24",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.25",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.26",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "key_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "float16",
+          "name": "value_cache.27",
+          "shape": [
+            1,
+            8,
+            4224,
+            128
+          ]
+        },
+        {
+          "dtype": "int64",
+          "name": "valid_length",
+          "shape": [
+            1
+          ]
+        }
+      ],
+      "relative_path": "S4096/prefill.onnx",
+      "sha256": "b2534ad68999f7df60c2be2118a44f473db66b075e4cdfd40f343b150e3613b7",
+      "size_bytes": 958654
+    },
+    "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-candidate/T22"
+  },
+  "cache_capacity": 4224,
+  "cache_contract": {
+    "decode": {
+      "input_valid_range": "[0, valid_length)",
+      "output_valid_length": "valid_length + 1",
+      "strategy": "fixed_capacity_indexed_copy",
+      "write_index": "valid_length"
+    },
+    "prefill": {
+      "output_valid_length": "prompt_length",
+      "strategy": "prefill_prefix_materialization",
+      "written_range": "[0, prompt_length)",
+      "zero_filled_range": "[prompt_length, cache_capacity)"
+    }
+  },
+  "claim_boundary": {
+    "does_not_establish": [
+      "compiler_acceptance",
+      "operator_support_by_any_vendor_toolchain",
+      "accelerator_placement",
+      "latency_or_memory_performance",
+      "that_a_reduced_finding_count_makes_the_graph_convertible",
+      "candidate_parity_beyond_the_recorded_steps_of_one_frozen_workload_on_the_cpu_execution_provider"
+    ],
+    "establishes": [
+      "reference_graph_and_sidecar_sha256_match_the_committed_T20_manifest",
+      "candidate_graph_was_produced_by_the_committed_transform_catalogue",
+      "onnx_checker_accepted_the_candidate_graph",
+      "candidate_public_boundary_is_identical_to_the_reference_boundary",
+      "T12_static_cache_write_survives_in_all_56_cache_outputs",
+      "structural_before_and_after_scored_by_the_committed_T21_rule_engine",
+      "measured_structural_cost_of_the_rejected_onnxruntime_offline_pass",
+      "candidate_was_executed_on_the_onnxruntime_cpu_provider",
+      "candidate_logit_and_static_cache_parity_held_on_every_recorded_step_under_the_T21_protocol_and_tolerance"
+    ]
+  },
+  "context_length": 4096,
+  "contract_preservation": {
+    "decode": {
+      "boundary_identical_to_reference": true,
+      "cache_write_operator": "ScatterElements",
+      "cache_writes_preserved": 56,
+      "input_count": 60,
+      "output_count": 58
+    },
+    "prefill": {
+      "boundary_identical_to_reference": true,
+      "cache_write_operator": "Concat",
+      "cache_writes_preserved": 56,
+      "input_count": 3,
+      "output_count": 58
+    }
+  },
+  "generated_by": {
+    "module": "slm_lab.graph.qnn.build",
+    "schema_version": 1
+  },
+  "opset": 18,
+  "precision": "float16",
+  "risk_catalogue": {
+    "catalogue_id": "onnx-deployment-risk-v1",
+    "path": "configs/graph/onnx-risk-rules-v1.json",
+    "sha256": "f769acd86e83bc7163c4211672180b392b4134bcea6e74da66960b42c65e6c1d"
+  },
+  "schema_version": 1,
+  "source": {
+    "decode": {
+      "external_data": [
+        {
+          "location": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "relative_path": "S4096/decode.onnx",
+      "sha256": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd",
+      "sha256_recomputed_from_disk": true,
+      "size_bytes": 1759947
+    },
+    "manifest_path": "results/manifests/onnx/S4096.json",
+    "manifest_sha256": "7ea2db7643c8ca6b4b44c1869204e1ddd5c1f3e67258b0ddb95c1eaaf9ee8788",
+    "prefill": {
+      "external_data": [
+        {
+          "location": "prefill.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "prefill",
+      "relative_path": "S4096/prefill.onnx",
+      "sha256": "cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0",
+      "sha256_recomputed_from_disk": true,
+      "size_bytes": 49790614
+    },
+    "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20"
+  },
+  "stage": "qnn_candidate",
+  "structural_delta": {
+    "decode": {
+      "external_data_bytes": {
+        "after": 1192085504,
+        "before": 1192085504
+      },
+      "external_initializer_count": {
+        "after": 254,
+        "before": 254
+      },
+      "finding_counts": {
+        "R-DATA-DEPENDENT-SHAPE-INPUT": {
+          "after": 423,
+          "before": 1231
+        },
+        "R-FLOAT-PRECISION-CAST": {
+          "after": 285,
+          "before": 285
+        },
+        "R-FLOAT-SENSITIVE-ELEMENTWISE": {
+          "after": 367,
+          "before": 367
+        },
+        "R-GRAPH-NODE-COUNT": {
+          "after": 5421,
+          "before": 10191
+        },
+        "R-INTERNAL-DYNAMIC-SHAPE": {
+          "after": 1069,
+          "before": 0
+        },
+        "R-SCATTER-GATHER-INDEXING": {
+          "after": 57,
+          "before": 57
+        },
+        "R-SHAPE-COMPUTATION-CHAIN": {
+          "after": 496,
+          "before": 556
+        },
+        "R-WIDE-IO-BOUNDARY": {
+          "after": 118,
+          "before": 118
+        }
+      },
+      "highest_severity": {
+        "after": "high",
+        "before": "high"
+      },
+      "initializer_count": {
+        "after": 3451,
+        "before": 310
+      },
+      "inline_bytes": {
+        "after": {
+          "initializers": 39040,
+          "node_attributes": 482,
+          "total": 39522
+        },
+        "before": {
+          "initializers": 14336,
+          "node_attributes": 26706,
+          "total": 41042
+        }
+      },
+      "input_count": {
+        "after": 60,
+        "before": 60
+      },
+      "largest_inline_initializer_bytes": {
+        "after": 256,
+        "before": 256
+      },
+      "node_count": {
+        "after": 5421,
+        "before": 10191
+      },
+      "operator_histogram_delta": {
+        "Cast": {
+          "after": 462,
+          "before": 464
+        },
+        "Concat": {
+          "after": 336,
+          "before": 370
+        },
+        "Constant": {
+          "after": 0,
+          "before": 3399
+        },
+        "ConstantOfShape": {
+          "after": 61,
+          "before": 91
+        },
+        "Equal": {
+          "after": 61,
+          "before": 91
+        },
+        "Expand": {
+          "after": 90,
+          "before": 91
+        },
+        "Mul": {
+          "after": 541,
+          "before": 571
+        },
+        "Reshape": {
+          "after": 231,
+          "before": 261
+        },
+        "Shape": {
+          "after": 429,
+          "before": 459
+        },
+        "Unsqueeze": {
+          "after": 929,
+          "before": 2083
+        },
+        "Where": {
+          "after": 61,
+          "before": 91
+        }
+      },
+      "operator_type_count": {
+        "after": 28,
+        "before": 29
+      },
+      "output_count": {
+        "after": 58,
+        "before": 58
+      },
+      "protobuf_bytes": {
+        "after": 1752538,
+        "before": 1759947
+      },
+      "value_info_count": {
+        "after": 5363,
+        "before": 0
+      }
+    },
+    "prefill": {
+      "external_data_bytes": {
+        "after": 1240451072,
+        "before": 1192085504
+      },
+      "external_initializer_count": {
+        "after": 315,
+        "before": 254
+      },
+      "finding_counts": {
+        "R-DATA-DEPENDENT-SHAPE-INPUT": {
+          "after": 6,
+          "before": 804
+        },
+        "R-FLOAT-PRECISION-CAST": {
+          "after": 285,
+          "before": 285
+        },
+        "R-FLOAT-SENSITIVE-ELEMENTWISE": {
+          "after": 367,
+          "before": 367
+        },
+        "R-GRAPH-NODE-COUNT": {
+          "after": 2824,
+          "before": 7634
+        },
+        "R-INTERNAL-DYNAMIC-SHAPE": {
+          "after": 9,
+          "before": 0
+        },
+        "R-LARGE-INLINE-CONSTANT": {
+          "after": 0,
+          "before": 1
+        },
+        "R-SCATTER-GATHER-INDEXING": {
+          "after": 1,
+          "before": 1
+        },
+        "R-SHAPE-COMPUTATION-CHAIN": {
+          "after": 11,
+          "before": 127
+        },
+        "R-WIDE-IO-BOUNDARY": {
+          "after": 58,
+          "before": 58
+        }
+      },
+      "highest_severity": {
+        "after": "high",
+        "before": "high"
+      },
+      "initializer_count": {
+        "after": 1785,
+        "before": 310
+      },
+      "inline_bytes": {
+        "after": {
+          "initializers": 31328,
+          "node_attributes": 40,
+          "total": 31368
+        },
+        "before": {
+          "initializers": 14336,
+          "node_attributes": 48387464,
+          "total": 48401800
+        }
+      },
+      "input_count": {
+        "after": 3,
+        "before": 3
+      },
+      "largest_inline_initializer_bytes": {
+        "after": 256,
+        "before": 256
+      },
+      "node_count": {
+        "after": 2824,
+        "before": 7634
+      },
+      "operator_histogram_delta": {
+        "Add": {
+          "after": 255,
+          "before": 257
+        },
+        "Cast": {
+          "after": 346,
+          "before": 348
+        },
+        "Concat": {
+          "after": 115,
+          "before": 341
+        },
+        "Constant": {
+          "after": 1,
+          "before": 2729
+        },
+        "ConstantOfShape": {
+          "after": 4,
+          "before": 62
+        },
+        "Equal": {
+          "after": 5,
+          "before": 63
+        },
+        "Expand": {
+          "after": 62,
+          "before": 63
+        },
+        "Mul": {
+          "after": 428,
+          "before": 486
+        },
+        "Reshape": {
+          "after": 226,
+          "before": 284
+        },
+        "Shape": {
+          "after": 7,
+          "before": 65
+        },
+        "Unsqueeze": {
+          "after": 65,
+          "before": 1568
+        },
+        "Where": {
+          "after": 5,
+          "before": 63
+        }
+      },
+      "operator_type_count": {
+        "after": 26,
+        "before": 26
+      },
+      "output_count": {
+        "after": 58,
+        "before": 58
+      },
+      "protobuf_bytes": {
+        "after": 958654,
+        "before": 49790614
+      },
+      "value_info_count": {
+        "after": 2766,
+        "before": 0
+      }
+    }
+  },
+  "task_id": "T22",
+  "toolchain": {
+    "numpy": "2.4.6",
+    "onnx": "1.18.0",
+    "onnxruntime": "1.28.0",
+    "python": "3.11.13"
+  },
+  "transform_catalogue": {
+    "catalogue_id": "qnn-candidate-v1",
+    "path": "configs/graph/qnn-transforms-v1.json",
+    "sha256": "0f6ffb3a3647fe5d04e0623ec766452712da3673de174beed2ed7977e8eabc28"
+  },
+  "transformations": [
+    {
+      "applied": true,
+      "effect": {
+        "decode": {
+          "bytes_moved_to_initializers": 25984,
+          "constant_nodes_before": 3399,
+          "converted_to_initializer": 3399,
+          "initializer_count_after": 3709,
+          "initializer_count_before": 310,
+          "largest_converted_tensor_bytes": 256,
+          "node_count_after": 6792,
+          "node_count_before": 10191,
+          "skipped_by_reason": {}
+        },
+        "prefill": {
+          "bytes_moved_to_initializers": 48386960,
+          "constant_nodes_before": 2729,
+          "converted_to_initializer": 2728,
+          "initializer_count_after": 3038,
+          "initializer_count_before": 310,
+          "largest_converted_tensor_bytes": 33554432,
+          "node_count_after": 4906,
+          "node_count_before": 7634,
+          "skipped_by_reason": {
+            "output_is_graph_output": 1
+          }
+        }
+      },
+      "id": "X-CONSTANT-TO-INITIALIZER",
+      "observed_issue": "graph-inspection.md 5.4. The two largest inline tensor families in every prefill protobuf are Constant node value attributes, not initializers: the O(S^2) float16 causal mask on /model/model/Constant_4 (32,768 bytes at S128 rising to 33,554,432 bytes at S4096) and the 56 float16 [1, 8, C - S, 128] zero cache reserves on /Constant_1 through /Constant_111 (65,536 bytes each at S128, 262,144 at S1024 and S4096). Section 5.4 point 1 states the mechanism exactly: T20 forces initializers over 1,024 bytes into external data, but saves with convert_attribute=false, so a Constant attribute bypasses that threshold and stays inside the protobuf. Prefill carries 2,729 Constant nodes and decode 3,399 (section 5.5), so this is also the single largest operator population in both graph kinds.",
+      "order": 1,
+      "parameters": {
+        "attribute": "value",
+        "skip_unsupported_attribute_forms": true,
+        "skip_when_output_is_graph_output": true
+      },
+      "rule_ids": [
+        "R-LARGE-INLINE-CONSTANT"
+      ],
+      "title": "Rewrite every Constant node as a graph initializer",
+      "transformation": "For every Constant node carrying a value tensor attribute, delete the node and append that tensor to graph.initializer under the name the node produced. No consumer edge is rewritten, because the initializer takes over the produced name. This is a pure canonicalization: it changes where a tensor is stored in the protobuf, never its dtype, shape, or bytes."
+    },
+    {
+      "applied": true,
+      "effect": {
+        "decode": {
+          "bytes_created": 15239,
+          "constant_pool_after": 4826,
+          "constant_pool_before": 3455,
+          "external_initializers_excluded_from_pool": 254,
+          "folded_by_operator": {
+            "Cast": 2,
+            "Concat": 34,
+            "ConstantOfShape": 30,
+            "Equal": 30,
+            "Expand": 1,
+            "Mul": 30,
+            "Reshape": 30,
+            "Shape": 30,
+            "Unsqueeze": 1154,
+            "Where": 30
+          },
+          "folded_nodes": 1371,
+          "forward_passes": 1,
+          "initializers_created": 1371,
+          "max_input_bytes": 1048576,
+          "max_output_bytes": 1048576,
+          "node_count_after": 5421,
+          "node_count_before": 6792,
+          "skipped_by_reason": {
+            "input_in_external_data": 255,
+            "input_not_constant": 4456,
+            "operator_not_allowlisted": 708,
+            "output_is_graph_output": 2
+          },
+          "topological_order_verified": true
+        },
+        "prefill": {
+          "bytes_created": 62951,
+          "constant_pool_after": 4866,
+          "constant_pool_before": 2784,
+          "external_initializers_excluded_from_pool": 254,
+          "folded_by_operator": {
+            "Add": 2,
+            "Cast": 2,
+            "Concat": 226,
+            "ConstantOfShape": 58,
+            "Equal": 58,
+            "Expand": 1,
+            "Mul": 58,
+            "Reshape": 58,
+            "Shape": 58,
+            "Unsqueeze": 1503,
+            "Where": 58
+          },
+          "folded_nodes": 2082,
+          "forward_passes": 1,
+          "initializers_created": 2082,
+          "max_input_bytes": 1048576,
+          "max_output_bytes": 1048576,
+          "node_count_after": 2824,
+          "node_count_before": 4906,
+          "skipped_by_reason": {
+            "input_bytes_over_budget": 1,
+            "input_in_external_data": 255,
+            "input_not_constant": 1857,
+            "operator_not_allowlisted": 653,
+            "output_bytes_over_budget": 1,
+            "output_is_graph_output": 57
+          },
+          "topological_order_verified": true
+        }
+      },
+      "id": "X-STATIC-SHAPE-FOLD",
+      "observed_issue": "graph-inspection.md 5.1, the rank-1 finding. 804 of 922 prefill and 1,231 of 1,326 decode shape-defining operator inputs (the watched positions Reshape[1], Slice[1,2,3,4], Expand[1], Tile[1]) are produced by another node rather than by an initializer, a graph input, or a Constant. The raw material is counted by the rank-7 companion: Shape=65 and ConstantOfShape=62 in prefill; Shape=459, ConstantOfShape=91 and Range=6 in decode. Section 5.1's caveat is the reason this pass exists and the reason its result is a measurement rather than a fix: the detector counts unfolded residue, not proven dynamism, and T20 exported with do_constant_folding=false while every boundary dimension is static, so most of these values provably never vary.",
+      "order": 2,
+      "parameters": {
+        "allowed_ops": [
+          "Add",
+          "Cast",
+          "Ceil",
+          "Concat",
+          "ConstantOfShape",
+          "Div",
+          "Equal",
+          "Expand",
+          "Floor",
+          "Gather",
+          "GatherElements",
+          "Greater",
+          "GreaterOrEqual",
+          "Identity",
+          "Less",
+          "LessOrEqual",
+          "Max",
+          "Min",
+          "Mod",
+          "Mul",
+          "Neg",
+          "Not",
+          "Range",
+          "Reshape",
+          "Shape",
+          "Size",
+          "Slice",
+          "Squeeze",
+          "Sub",
+          "Tile",
+          "Transpose",
+          "Unsqueeze",
+          "Where"
+        ],
+        "constant_source": "inline_initializers_only",
+        "forward_passes": 1,
+        "max_input_bytes": 1048576,
+        "max_output_bytes": 1048576,
+        "require_topological_order": true
+      },
+      "rule_ids": [
+        "R-DATA-DEPENDENT-SHAPE-INPUT",
+        "R-SHAPE-COMPUTATION-CHAIN",
+        "R-GRAPH-NODE-COUNT"
+      ],
+      "title": "Evaluate and replace nodes whose every input is a known constant",
+      "transformation": "Walk the node list once in declaration order, which the ONNX specification requires to be topological and which the engine asserts rather than assumes. A node is folded when its operator is in allowed_ops, it carries no subgraph attribute, none of its outputs is a graph output, every one of its inputs is either omitted or an inline initializer of known value, the total declared bytes of those inputs is at most max_input_bytes, and the total declared bytes of the outputs the evaluation produced is at most max_output_bytes. The node is evaluated by onnx.reference.ReferenceEvaluator on a single-node graph whose only tensors are that node's constant inputs, and each output becomes an initializer under the name the node produced. Every node not folded is counted by reason."
+    },
+    {
+      "applied": true,
+      "effect": {
+        "decode": {
+          "graph_inputs_preserved": 60,
+          "initializer_bytes_removed": 16519,
+          "initializer_count_after": 3451,
+          "initializer_count_before": 5080,
+          "initializers_removed": 1629,
+          "node_count_after": 5421,
+          "node_count_before": 5421,
+          "nodes_removed": 0,
+          "nodes_removed_by_operator": {},
+          "value_info_removed": 0
+        },
+        "prefill": {
+          "graph_inputs_preserved": 3,
+          "initializer_bytes_removed": 67351,
+          "initializer_count_after": 1785,
+          "initializer_count_before": 5120,
+          "initializers_removed": 3335,
+          "node_count_after": 2824,
+          "node_count_before": 2824,
+          "nodes_removed": 0,
+          "nodes_removed_by_operator": {},
+          "value_info_removed": 0
+        }
+      },
+      "id": "X-DEAD-NODE-ELIMINATION",
+      "observed_issue": "graph-inspection.md 5.5, the rank-5 finding: 7,634 prefill and 10,191 decode nodes against a 2,000-node review convention, of which only 254 are MatMul. Pass 2 deletes the nodes it folds but leaves their operands behind as initializers that nothing reads any more -- above all the 2,729 prefill and 3,399 decode tensors pass 1 promoted out of Constant nodes. Those dead initializers are protobuf bytes, and on the T20 graphs they are the bulk of what this pass reclaims. Section 5.5's mitigation and plan section 6.6 both insist that a node-count reduction is only meaningful when it is measured, which is why this pass reports separately what it removed in nodes and in initializer bytes rather than asserting a saving.",
+      "order": 3,
+      "parameters": {
+        "preserve_graph_inputs": true,
+        "prune_initializers": true,
+        "prune_value_info": true,
+        "roots": "graph_outputs"
+      },
+      "rule_ids": [
+        "R-GRAPH-NODE-COUNT"
+      ],
+      "title": "Remove nodes and initializers no graph output depends on",
+      "transformation": "Compute the set of tensor names transitively required by the graph outputs, keep every node that produces at least one required name, and drop every initializer and value_info entry whose name is not required. Graph inputs are never removed, whether or not any surviving node consumes them, because the public boundary is the frozen T12 contract and its 60 decode inputs and 3 prefill inputs are part of it."
+    },
+    {
+      "applied": true,
+      "effect": {
+        "decode": {
+          "already_external": 254,
+          "bytes_kept_inline": 39040,
+          "bytes_newly_externalized": 0,
+          "initializer_count": 3451,
+          "kept_inline": 3197,
+          "largest_newly_externalized_bytes": 0,
+          "location": "decode.onnx.data",
+          "newly_externalized": 0,
+          "realized_at": "serialization",
+          "size_threshold_bytes": 1024
+        },
+        "prefill": {
+          "already_external": 254,
+          "bytes_kept_inline": 31328,
+          "bytes_newly_externalized": 48365568,
+          "initializer_count": 1785,
+          "kept_inline": 1470,
+          "largest_newly_externalized_bytes": 33554432,
+          "location": "prefill.onnx.data",
+          "newly_externalized": 61,
+          "realized_at": "serialization",
+          "size_threshold_bytes": 1024
+        }
+      },
+      "id": "X-EXTERNALIZE-LARGE-TENSORS",
+      "observed_issue": "graph-inspection.md 5.4. The rule fires once per prefill graph at S512 and above, on the mask, whose share of the protobuf is 5.6%, 11.5% and 67.4% at S512, S1024 and S4096; and section 5.4 records that the per-tensor rule is blind to the 56 reserves, which are 71.5%, 78.9%, 80.5% and 29.5% of the four prefill files and are the largest inline family at three of the four variants. Both families are inline only because they were Constant attributes; once pass 1 has made them initializers, the same 1,024-byte threshold that T20 already applies to weights applies to them.",
+      "order": 4,
+      "parameters": {
+        "all_tensors_to_one_file": true,
+        "convert_attribute": false,
+        "location": "<graph_kind>.onnx.data",
+        "size_threshold_bytes": 1024
+      },
+      "rule_ids": [
+        "R-LARGE-INLINE-CONSTANT"
+      ],
+      "title": "Write initializers at or above the threshold into the candidate sidecar",
+      "transformation": "Serialize the candidate with ONNX external-data conversion at size_threshold bytes into one sidecar per candidate graph, named <graph_kind>.onnx.data next to the candidate protobuf. The candidate never shares, references, or modifies the reference graph's sidecar. Node attributes are not converted, because after pass 1 there is no attribute tensor left worth converting."
+    },
+    {
+      "applied": true,
+      "effect": {
+        "decode": {
+          "annotated_fully_static": 4294,
+          "annotated_not_fully_static": 1069,
+          "check_type": false,
+          "coverage": "complete",
+          "data_prop": true,
+          "intermediate_tensors": 5363,
+          "intermediate_tensors_annotated": 5363,
+          "intermediate_tensors_unannotated": 0,
+          "status": "measured",
+          "strict_mode": false,
+          "value_info_after": 5363,
+          "value_info_before": 0
+        },
+        "prefill": {
+          "annotated_fully_static": 2757,
+          "annotated_not_fully_static": 9,
+          "check_type": false,
+          "coverage": "complete",
+          "data_prop": true,
+          "intermediate_tensors": 2766,
+          "intermediate_tensors_annotated": 2766,
+          "intermediate_tensors_unannotated": 0,
+          "status": "measured",
+          "strict_mode": false,
+          "value_info_after": 2766,
+          "value_info_before": 0
+        }
+      },
+      "id": "X-INFER-VALUE-INFO",
+      "observed_issue": "graph-inspection.md 6 and 7. R-INTERNAL-DYNAMIC-SHAPE is the one silent rule that is explicitly not a clean result: value_info is empty in all eight graphs, so the detector inspected 0 of 0 entries. Section 7 names this pass as the follow-up that closes the boundary, in these words: run ONNX shape inference on a machine with onnx installed, write the inferred value_info back, and re-run the inspection, and the same rule then produces a real answer. Section 3 point 3 records the second cost of the same absence: every intermediate dtype in the T21 report had to be reconstructed by resolve_element_types from opset-18 type constraints rather than read from a declaration.",
+      "order": 5,
+      "parameters": {
+        "check_type": false,
+        "data_prop": true,
+        "strict_mode": false
+      },
+      "rule_ids": [
+        "R-INTERNAL-DYNAMIC-SHAPE"
+      ],
+      "title": "Run ONNX shape inference and keep the inferred value_info",
+      "transformation": "Run onnx.shape_inference on the candidate and keep the value_info entries it produced. The engine then counts how many of the graph's intermediate tensors carry an entry and how many of those entries are fully static, and records both numbers. Inference that annotates only part of the graph is reported as partial with the exact fraction; the pass never claims coverage it did not achieve."
+    },
+    {
+      "applied": true,
+      "effect": {
+        "decode": {
+          "ir_version": 8,
+          "metadata_props": {
+            "slm_lab.applied_passes": "X-CONSTANT-TO-INITIALIZER,X-STATIC-SHAPE-FOLD,X-DEAD-NODE-ELIMINATION,X-EXTERNALIZE-LARGE-TENSORS,X-INFER-VALUE-INFO,X-STAMP-CANDIDATE-PROVENANCE",
+            "slm_lab.graph_kind": "decode",
+            "slm_lab.source_relative_path": "S4096/decode.onnx",
+            "slm_lab.source_sha256": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd",
+            "slm_lab.stage": "qnn_candidate",
+            "slm_lab.task_id": "T22",
+            "slm_lab.transform_catalogue_id": "qnn-candidate-v1",
+            "slm_lab.transform_catalogue_sha256": "0f6ffb3a3647fe5d04e0623ec766452712da3673de174beed2ed7977e8eabc28",
+            "slm_lab.variant_id": "S4096"
+          },
+          "opset_imports": [
+            [
+              "",
+              18
+            ]
+          ],
+          "producer_after": "slm_lab.graph.qnn qnn-candidate-v1",
+          "producer_before": "pytorch 2.7.1"
+        },
+        "prefill": {
+          "ir_version": 8,
+          "metadata_props": {
+            "slm_lab.applied_passes": "X-CONSTANT-TO-INITIALIZER,X-STATIC-SHAPE-FOLD,X-DEAD-NODE-ELIMINATION,X-EXTERNALIZE-LARGE-TENSORS,X-INFER-VALUE-INFO,X-STAMP-CANDIDATE-PROVENANCE",
+            "slm_lab.graph_kind": "prefill",
+            "slm_lab.source_relative_path": "S4096/prefill.onnx",
+            "slm_lab.source_sha256": "cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0",
+            "slm_lab.stage": "qnn_candidate",
+            "slm_lab.task_id": "T22",
+            "slm_lab.transform_catalogue_id": "qnn-candidate-v1",
+            "slm_lab.transform_catalogue_sha256": "0f6ffb3a3647fe5d04e0623ec766452712da3673de174beed2ed7977e8eabc28",
+            "slm_lab.variant_id": "S4096"
+          },
+          "opset_imports": [
+            [
+              "",
+              18
+            ]
+          ],
+          "producer_after": "slm_lab.graph.qnn qnn-candidate-v1",
+          "producer_before": "pytorch 2.7.1"
+        }
+      },
+      "id": "X-STAMP-CANDIDATE-PROVENANCE",
+      "observed_issue": "graph-inspection.md 2 records that the producer string in every one of the eight reference graphs is pytorch 2.7.1 and the IR version is 8. A rewritten candidate that kept that producer string would be indistinguishable in-band from the reference export it was derived from, and the only thing separating the two stages would be the directory it happened to be written to.",
+      "order": 6,
+      "parameters": {
+        "metadata_prefix": "slm_lab.",
+        "preserve_ir_version": true,
+        "preserve_opset_imports": true,
+        "producer_name": "slm_lab.graph.qnn"
+      },
+      "rule_ids": [],
+      "title": "Record the source digest, catalogue identity, and applied passes in-band",
+      "transformation": "Set producer_name and producer_version to this engine and its schema version, and set metadata_props to the task id, the stage, the variant id, the graph kind, the source graph relative path and sha256, the transform catalogue id and sha256, and the ordered list of applied pass ids. The graph body, the IR version, and the opset imports are left exactly as the preceding passes produced them."
+    },
+    {
+      "applied": false,
+      "effect": {
+        "decode": {
+          "reason": "recorded as a rejected transformation; see rejection_evidence",
+          "status": "not_applied"
+        },
+        "prefill": {
+          "reason": "recorded as a rejected transformation; see rejection_evidence",
+          "status": "not_applied"
+        }
+      },
+      "id": "X-ORT-CPU-OFFLINE-OPTIMIZATION",
+      "observed_issue": "Writing an ONNX Runtime session's optimized_model_filepath at ORT_ENABLE_BASIC is the obvious, one-line way to fold these graphs, and it does fold them hard. It is rejected on measured grounds rather than asserted away, and the build tool re-measures it on every graph it builds rather than citing a planning probe.",
+      "order": 7,
+      "parameters": {
+        "delete_scratch_output": true,
+        "execution_provider": "CPUExecutionProvider",
+        "graph_optimization_level": "ORT_ENABLE_BASIC",
+        "measure_only": true
+      },
+      "rejection_evidence": {
+        "decode": {
+          "added_opset_domains": [
+            "ai.onnx.ml",
+            "ai.onnx.preview",
+            "ai.onnx.preview.training",
+            "ai.onnx.training",
+            "com.microsoft",
+            "com.microsoft.experimental",
+            "com.microsoft.nchwc",
+            "org.pytorch.aten"
+          ],
+          "added_opset_domains_used_by_no_node": [
+            "ai.onnx.ml",
+            "ai.onnx.preview",
+            "ai.onnx.preview.training",
+            "ai.onnx.training",
+            "com.microsoft",
+            "com.microsoft.experimental",
+            "com.microsoft.nchwc",
+            "org.pytorch.aten"
+          ],
+          "execution_provider": "CPUExecutionProvider",
+          "external_data_bytes": {
+            "after": 0,
+            "before": 1192085504
+          },
+          "external_data_files": [],
+          "external_initializer_count": {
+            "after": 58,
+            "before": 254
+          },
+          "graph_optimization_level": "ORT_ENABLE_BASIC",
+          "initializer_count": {
+            "after": 593,
+            "before": 310
+          },
+          "inline_initializer_bytes": {
+            "after": 1191990214,
+            "before": 14336
+          },
+          "node_count": {
+            "after": 4245,
+            "before": 10191
+          },
+          "note": "wall-clock duration is deliberately not recorded here so that --check stays a genuine drift check; the build tool prints the observed duration on stderr instead. Every other number in this record was produced by this run, not copied from a planning probe.",
+          "onnxruntime_version": "1.28.0",
+          "operator_histogram_delta": {
+            "Add": {
+              "after": 260,
+              "before": 317
+            },
+            "Cast": {
+              "after": 860,
+              "before": 464
+            },
+            "Concat": {
+              "after": 228,
+              "before": 370
+            },
+            "Constant": {
+              "after": 0,
+              "before": 3399
+            },
+            "ConstantOfShape": {
+              "after": 1,
+              "before": 91
+            },
+            "Div": {
+              "after": 141,
+              "before": 167
+            },
+            "Equal": {
+              "after": 58,
+              "before": 91
+            },
+            "Exp": {
+              "after": 28,
+              "before": 0
+            },
+            "Expand": {
+              "after": 62,
+              "before": 91
+            },
+            "Gather": {
+              "after": 261,
+              "before": 369
+            },
+            "Mul": {
+              "after": 366,
+              "before": 571
+            },
+            "ReduceMax": {
+              "after": 28,
+              "before": 0
+            },
+            "ReduceSum": {
+              "after": 28,
+              "before": 0
+            },
+            "Reshape": {
+              "after": 231,
+              "before": 261
+            },
+            "Shape": {
+              "after": 89,
+              "before": 459
+            },
+            "Slice": {
+              "after": 256,
+              "before": 258
+            },
+            "Softmax": {
+              "after": 0,
+              "before": 28
+            },
+            "Sub": {
+              "after": 28,
+              "before": 0
+            },
+            "Transpose": {
+              "after": 141,
+              "before": 338
+            },
+            "Unsqueeze": {
+              "after": 378,
+              "before": 2083
+            },
+            "Where": {
+              "after": 58,
+              "before": 91
+            }
+          },
+          "operator_type_count": {
+            "after": 31,
+            "before": 29
+          },
+          "opset_imports": {
+            "after": [
+              [
+                "",
+                18
+              ],
+              [
+                "com.microsoft.experimental",
+                1
+              ],
+              [
+                "ai.onnx.ml",
+                5
+              ],
+              [
+                "ai.onnx.training",
+                1
+              ],
+              [
+                "com.microsoft",
+                1
+              ],
+              [
+                "ai.onnx.preview",
+                1
+              ],
+              [
+                "org.pytorch.aten",
+                1
+              ],
+              [
+                "ai.onnx.preview.training",
+                1
+              ],
+              [
+                "com.microsoft.nchwc",
+                1
+              ]
+            ],
+            "before": [
+              [
+                "",
+                18
+              ]
+            ]
+          },
+          "producer": {
+            "after": "pytorch 2.7.1",
+            "before": "pytorch 2.7.1"
+          },
+          "protobuf_bytes": {
+            "after": 1193053329,
+            "before": 1759947
+          },
+          "reference_graph": "decode.onnx",
+          "scratch_output_deleted": true,
+          "status": "measured"
+        },
+        "prefill": {
+          "added_opset_domains": [
+            "ai.onnx.ml",
+            "ai.onnx.preview",
+            "ai.onnx.preview.training",
+            "ai.onnx.training",
+            "com.microsoft",
+            "com.microsoft.experimental",
+            "com.microsoft.nchwc",
+            "org.pytorch.aten"
+          ],
+          "added_opset_domains_used_by_no_node": [
+            "ai.onnx.ml",
+            "ai.onnx.preview",
+            "ai.onnx.preview.training",
+            "ai.onnx.training",
+            "com.microsoft",
+            "com.microsoft.experimental",
+            "com.microsoft.nchwc",
+            "org.pytorch.aten"
+          ],
+          "execution_provider": "CPUExecutionProvider",
+          "external_data_bytes": {
+            "after": 0,
+            "before": 1192085504
+          },
+          "external_data_files": [],
+          "external_initializer_count": {
+            "after": 58,
+            "before": 254
+          },
+          "graph_optimization_level": "ORT_ENABLE_BASIC",
+          "initializer_count": {
+            "after": 422,
+            "before": 310
+          },
+          "inline_initializer_bytes": {
+            "after": 1810643510,
+            "before": 14336
+          },
+          "node_count": {
+            "after": 3040,
+            "before": 7634
+          },
+          "note": "wall-clock duration is deliberately not recorded here so that --check stays a genuine drift check; the build tool prints the observed duration on stderr instead. Every other number in this record was produced by this run, not copied from a planning probe.",
+          "onnxruntime_version": "1.28.0",
+          "operator_histogram_delta": {
+            "Add": {
+              "after": 254,
+              "before": 257
+            },
+            "Cast": {
+              "after": 830,
+              "before": 348
+            },
+            "Concat": {
+              "after": 113,
+              "before": 341
+            },
+            "Constant": {
+              "after": 0,
+              "before": 2729
+            },
+            "ConstantOfShape": {
+              "after": 0,
+              "before": 62
+            },
+            "Div": {
+              "after": 141,
+              "before": 113
+            },
+            "Equal": {
+              "after": 1,
+              "before": 63
+            },
+            "Exp": {
+              "after": 28,
+              "before": 0
+            },
+            "Expand": {
+              "after": 56,
+              "before": 63
+            },
+            "Mul": {
+              "after": 309,
+              "before": 486
+            },
+            "ReduceMax": {
+              "after": 28,
+              "before": 0
+            },
+            "ReduceSum": {
+              "after": 28,
+              "before": 0
+            },
+            "Reshape": {
+              "after": 226,
+              "before": 284
+            },
+            "Shape": {
+              "after": 0,
+              "before": 65
+            },
+            "Slice": {
+              "after": 113,
+              "before": 144
+            },
+            "Softmax": {
+              "after": 0,
+              "before": 28
+            },
+            "Sub": {
+              "after": 28,
+              "before": 0
+            },
+            "Transpose": {
+              "after": 141,
+              "before": 338
+            },
+            "Unsqueeze": {
+              "after": 61,
+              "before": 1568
+            },
+            "Where": {
+              "after": 1,
+              "before": 63
+            }
+          },
+          "operator_type_count": {
+            "after": 26,
+            "before": 26
+          },
+          "opset_imports": {
+            "after": [
+              [
+                "",
+                18
+              ],
+              [
+                "com.microsoft.experimental",
+                1
+              ],
+              [
+                "ai.onnx.ml",
+                5
+              ],
+              [
+                "ai.onnx.training",
+                1
+              ],
+              [
+                "com.microsoft",
+                1
+              ],
+              [
+                "ai.onnx.preview",
+                1
+              ],
+              [
+                "org.pytorch.aten",
+                1
+              ],
+              [
+                "ai.onnx.preview.training",
+                1
+              ],
+              [
+                "com.microsoft.nchwc",
+                1
+              ]
+            ],
+            "before": [
+              [
+                "",
+                18
+              ]
+            ]
+          },
+          "producer": {
+            "after": "pytorch 2.7.1",
+            "before": "pytorch 2.7.1"
+          },
+          "protobuf_bytes": {
+            "after": 1811439962,
+            "before": 49790614
+          },
+          "reference_graph": "prefill.onnx",
+          "scratch_output_deleted": true,
+          "status": "measured"
+        }
+      },
+      "rule_ids": [
+        "R-DATA-DEPENDENT-SHAPE-INPUT",
+        "R-SHAPE-COMPUTATION-CHAIN",
+        "R-GRAPH-NODE-COUNT"
+      ],
+      "title": "Rejected: ONNX Runtime CPU offline graph optimization as the folding mechanism",
+      "transformation": "Not applied. Would be: build an onnxruntime InferenceSession over the reference graph on the CPU execution provider with graph_optimization_level=ORT_ENABLE_BASIC and optimized_model_filepath set, and adopt the written graph as the candidate."
+    }
+  ],
+  "variant_id": "S4096",
+  "verification": {
+    "graph_inspection": {
+      "catalogue_id": "onnx-deployment-risk-v1",
+      "engine": "slm_lab.graph.inspection",
+      "note": "the reference and the candidate were scored by the same committed rule catalogue; the full findings, including sampled locations, are in report_path",
+      "report_path": "results/manifests/qnn/inspection/S4096.json",
+      "status": "measured"
+    },
+    "onnx_checker": {
+      "decode": {
+        "checker": "onnx.checker.check_model",
+        "full_check": false,
+        "status": "passed"
+      },
+      "prefill": {
+        "checker": "onnx.checker.check_model",
+        "full_check": false,
+        "status": "passed"
+      }
+    },
+    "ort_cpu_parity": {
+      "cache_report_passed": true,
+      "evidence_sha256": "643c874be1ccf84853d5e5046654443fb57ab8df4a488f2120fdb674034397bf",
+      "evidence_tier": "real_onnxruntime_cpu",
+      "failure_kinds": [],
+      "graph_digests_match_candidate": true,
+      "logit_metrics": {
+        "decode": {
+          "cosine_similarity_min": 0.9999425449833687,
+          "max_absolute_error_max": 0.390625,
+          "max_protected_relative_error_max": 0.30865478515625,
+          "mean_absolute_error_max": 0.05076817648207554,
+          "steps": 4,
+          "steps_passed": 4,
+          "steps_scored": 4,
+          "steps_with_non_finite_candidate_logits": 0,
+          "top1_agreements": 4,
+          "top5_overlap_min": 0.8
+        },
+        "prefill": {
+          "cosine_similarity_min": 0.9999535121847054,
+          "max_absolute_error_max": 0.265625,
+          "max_protected_relative_error_max": 0.23828125,
+          "mean_absolute_error_max": 0.05447883406738737,
+          "steps": 1,
+          "steps_passed": 1,
+          "steps_scored": 1,
+          "steps_with_non_finite_candidate_logits": 0,
+          "top1_agreements": 1,
+          "top5_overlap_min": 1.0
+        }
+      },
+      "note": "measured by the T21 runner, not by this build tool, and read back from results/manifests/qnn/parity/S4096-ort-cpu.json. record_task_id is T21 because the runner stamps its own task id into a fixed schema field; the record's graph_digests are what identify it as a measurement of this candidate. The protocol, reference, step count and tolerance are the ones the reference-stage records in results/graph/parity/ use, which is what makes the two directly comparable.",
+      "passed": true,
+      "record_kind": "t21_ort_cpu_parity",
+      "record_path": "results/manifests/qnn/parity/S4096-ort-cpu.json",
+      "record_schema_version": 1,
+      "record_sha256": "1ae960fb8b5ed296f9133e161146e0b54184312c1bbf6bbf71e5d565283a1ad9",
+      "record_task_id": "T21",
+      "reference_provenance": {
+        "expected_token_ids": [
+          21009,
+          4771,
+          39270,
+          374
+        ],
+        "model_id": "Qwen/Qwen3-0.6B",
+        "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "prompt_token_count": 4096,
+        "prompt_token_ids_sha256": "5a2a2dfcb10b80d0991ca44588bdbd89efc665a3070e051c4932a1ef5a6749d9",
+        "reference_logits_sha256": [
+          "bf2b0952e608fce26de3fdb522626be86d53d69c6ea432d84ae0a1db7a883c27",
+          "dbbdbab77632d15769187bf72b810b7e2b41a477661e2ba06f36a027e9535594",
+          "d6c800277b9757bc693df108dbe8d50380123504555790374599727ab47fba67",
+          "8c0747c552e8b878a8c7d8b816119db89682f0c9ee629f0fcc1fd28770754f4d",
+          "5b1e493bd7bb8807ddfa60cbb44b0e4259bc4908e1dfffcb8fe4a91268e30134"
+        ],
+        "runtime": {
+          "actual_attention_implementation": "eager",
+          "deterministic_algorithms": true,
+          "device": "cpu",
+          "dtype": "bfloat16",
+          "python_version": "3.11.13",
+          "requested_attention_implementation": "eager",
+          "safetensors_version": "0.8.0",
+          "seed": 0,
+          "torch_version": "2.7.1",
+          "transformers_version": "4.51.3"
+        },
+        "source": "slm_lab.models.qwen3_reference.load_reference_model",
+        "teacher_forced": true
+      },
+      "runner": "slm_lab.backends.onnx_cpu",
+      "runtime": {
+        "onnxruntime_version": "1.28.0",
+        "platform": "macOS-15.7.7-arm64-arm-64bit",
+        "providers": {
+          "decode": [
+            "CPUExecutionProvider"
+          ],
+          "prefill": [
+            "CPUExecutionProvider"
+          ]
+        },
+        "python_version": "3.11.13",
+        "session_settings": {
+          "decode": {
+            "execution_mode": "ORT_SEQUENTIAL",
+            "graph_optimization_level": "ORT_DISABLE_ALL",
+            "inter_op_num_threads": 1,
+            "intra_op_num_threads": 1
+          },
+          "prefill": {
+            "execution_mode": "ORT_SEQUENTIAL",
+            "graph_optimization_level": "ORT_DISABLE_ALL",
+            "inter_op_num_threads": 1,
+            "intra_op_num_threads": 1
+          }
+        }
+      },
+      "status": "measured",
+      "steps_recorded": 5,
+      "steps_requested": 4,
+      "tolerance": {
+        "atol": 1.15,
+        "cache_state": {
+          "require_finite_slot": true,
+          "require_prefix_identical": true,
+          "require_slot_written": true,
+          "require_tail_identical": true,
+          "require_valid_length_increment": true
+        },
+        "cosine_min": 0.9993,
+        "protected_relative_max": 1.05,
+        "relative_floor": 1.0,
+        "require_top1": true,
+        "rtol": 0.02,
+        "status": "derived_and_measured: the proposed thresholds were replaced by a budget derived from bfloat16-reference and float16-candidate ULP at the measured logit scale and from 28-layer residual depth, with no observed candidate error used to set any threshold; measured on onnxruntime 1.28.0 CPU EP at ORT_DISABLE_ALL over four contexts x five steps, which pass (results/graph/parity/S*-ort-cpu.json, 2026-08-02)",
+        "top5_overlap_min": 0.8
+      }
+    }
+  }
+}

@@ -75,8 +75,12 @@ load failure that made the re-export necessary.
 apply it: a reference-against-itself run at float32, bfloat16 and float16 with
 no ONNX Runtime session anywhere, and a float16-reference parity probe. They
 are **not** T21 parity records and must never be read as one; each says so in
-its own `record_kind`, which only reads `t21_ort_cpu_parity` for the four files
-above. See the README in that directory.
+its own `record_kind`. Of the records under this directory, only the four above
+read `t21_ort_cpu_parity`. That `record_kind` is not unique to them: the four
+T22 candidate records under `results/manifests/qnn/parity/` carry it too,
+because the same runner measured the `qnn_candidate` graphs under the same
+protocol. What separates those from these is `graph_digests`, not
+`record_kind`. See the README in that directory.
 
 Unlike the inspection reports above, a parity record *is* a numerical claim,
 made by a named runtime on a named host, and it carries its own

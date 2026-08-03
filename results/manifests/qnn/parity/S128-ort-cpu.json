@@ -1,0 +1,274 @@
+{
+  "cache_capacity": 160,
+  "cache_report": {
+    "passed": true,
+    "slot_immutability_violations": [],
+    "steps": [
+      {
+        "graph_kind": "prefill",
+        "input_valid_length": 0,
+        "output_valid_length": 128,
+        "passed": true,
+        "step": 0,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": null
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 128,
+        "output_valid_length": 129,
+        "passed": true,
+        "step": 1,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 128
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 129,
+        "output_valid_length": 130,
+        "passed": true,
+        "step": 2,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 129
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 130,
+        "output_valid_length": 131,
+        "passed": true,
+        "step": 3,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 130
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 131,
+        "output_valid_length": 132,
+        "passed": true,
+        "step": 4,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 131
+      }
+    ]
+  },
+  "evidence_sha256": "c3ee3726fa9a6d94887832e01e8845f26ec4cd140fe490fc8724b4e3b2750d3f",
+  "evidence_tier": "real_onnxruntime_cpu",
+  "failure_kinds": [],
+  "failures": [],
+  "graph_digests": {
+    "decode": {
+      "relative_path": "S128/decode.onnx",
+      "sha256": "fc220a31ddf3dc3b460d8e0a843d38376c89ec49be9dae1a7e9b66c0cd16111a"
+    },
+    "prefill": {
+      "relative_path": "S128/prefill.onnx",
+      "sha256": "463313d4ba05bc0f769b53efa91496cfb9b59be818966e0a496ba4da9782ee3f"
+    }
+  },
+  "passed": true,
+  "prompt_length": 128,
+  "record_kind": "t21_ort_cpu_parity",
+  "reference_provenance": {
+    "expected_token_ids": [
+      9569,
+      11,
+      323,
+      18662
+    ],
+    "model_id": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "prompt_token_count": 128,
+    "prompt_token_ids_sha256": "52d8283880b465f99406bcf64f0460f421b3ebe508a347b40eefa20b29d1e5fa",
+    "reference_logits_sha256": [
+      "2c5208ce47366370163f5787d031f90918d84feb857b124bb54499e7fbd02428",
+      "2d1e8ad130b026fd56a45d67c822c7f9d281ed656cef5aa13172e9ed7bba72bf",
+      "2c68f0f803255ef3b9eb62228637f4c38ccf540334c621622cbe7a843abbc2b7",
+      "14e06689f214e8477d5cc0bd21ff5576f1650b8eb2171b140ad44fd00b5559cd",
+      "09a8f294a6bc1e832fd7ae0f90e4d369d04da59f37e9c2369f754a45a58d19ca"
+    ],
+    "runtime": {
+      "actual_attention_implementation": "eager",
+      "deterministic_algorithms": true,
+      "device": "cpu",
+      "dtype": "bfloat16",
+      "python_version": "3.11.13",
+      "requested_attention_implementation": "eager",
+      "safetensors_version": "0.8.0",
+      "seed": 0,
+      "torch_version": "2.7.1",
+      "transformers_version": "4.51.3"
+    },
+    "source": "slm_lab.models.qwen3_reference.load_reference_model",
+    "teacher_forced": true
+  },
+  "runtime": {
+    "onnxruntime_version": "1.28.0",
+    "platform": "macOS-15.7.7-arm64-arm-64bit",
+    "providers": {
+      "decode": [
+        "CPUExecutionProvider"
+      ],
+      "prefill": [
+        "CPUExecutionProvider"
+      ]
+    },
+    "python_version": "3.11.13",
+    "session_settings": {
+      "decode": {
+        "execution_mode": "ORT_SEQUENTIAL",
+        "graph_optimization_level": "ORT_DISABLE_ALL",
+        "inter_op_num_threads": 1,
+        "intra_op_num_threads": 1
+      },
+      "prefill": {
+        "execution_mode": "ORT_SEQUENTIAL",
+        "graph_optimization_level": "ORT_DISABLE_ALL",
+        "inter_op_num_threads": 1,
+        "intra_op_num_threads": 1
+      }
+    }
+  },
+  "schema_version": 1,
+  "steps": [
+    {
+      "candidate_logits_sha256": "64d43692039ca2e225f9e4f254b47b3f4b01c9fde4bbd496accad3d32e6a2b1f",
+      "graph_kind": "prefill",
+      "input_token_id": null,
+      "input_valid_length": 0,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9999009589580755,
+        "max_absolute_error": 0.34375,
+        "max_protected_relative_error": 0.261474609375,
+        "mean_absolute_error": 0.06313156410533913,
+        "passed": true,
+        "reference_top1_top2_margin": 7.75,
+        "top1_agreement": true,
+        "top1_candidate": 9569,
+        "top1_reference": 9569,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 128,
+      "reference_logits_sha256": "2c5208ce47366370163f5787d031f90918d84feb857b124bb54499e7fbd02428",
+      "step": 0
+    },
+    {
+      "candidate_logits_sha256": "b2f68845e912cd7cdc20bc86a1d5864bed2d9ccf137aac4a4f34bf6c126aec48",
+      "graph_kind": "decode",
+      "input_token_id": 9569,
+      "input_valid_length": 128,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9998215368226393,
+        "max_absolute_error": 0.296875,
+        "max_protected_relative_error": 0.2872314453125,
+        "mean_absolute_error": 0.05186011227320098,
+        "passed": true,
+        "reference_top1_top2_margin": 6.5,
+        "top1_agreement": true,
+        "top1_candidate": 11,
+        "top1_reference": 11,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 129,
+      "reference_logits_sha256": "2d1e8ad130b026fd56a45d67c822c7f9d281ed656cef5aa13172e9ed7bba72bf",
+      "step": 1
+    },
+    {
+      "candidate_logits_sha256": "e3731a3d95dbde7e9244d12ae789c6c1e0145bb30ce139b19fe01fbdfb263f8a",
+      "graph_kind": "decode",
+      "input_token_id": 11,
+      "input_valid_length": 129,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9997569243223734,
+        "max_absolute_error": 0.4609375,
+        "max_protected_relative_error": 0.36395263671875,
+        "mean_absolute_error": 0.06607673678189366,
+        "passed": true,
+        "reference_top1_top2_margin": 4.0,
+        "top1_agreement": true,
+        "top1_candidate": 323,
+        "top1_reference": 323,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 130,
+      "reference_logits_sha256": "2c68f0f803255ef3b9eb62228637f4c38ccf540334c621622cbe7a843abbc2b7",
+      "step": 2
+    },
+    {
+      "candidate_logits_sha256": "65655ef5088c26b516711fa6a1f07bb30f85d5a53746723e55cc4d1a33967b75",
+      "graph_kind": "decode",
+      "input_token_id": 323,
+      "input_valid_length": 130,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9998772817786208,
+        "max_absolute_error": 0.431640625,
+        "max_protected_relative_error": 0.346435546875,
+        "mean_absolute_error": 0.062376514492633345,
+        "passed": true,
+        "reference_top1_top2_margin": 6.375,
+        "top1_agreement": true,
+        "top1_candidate": 18662,
+        "top1_reference": 18662,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 131,
+      "reference_logits_sha256": "14e06689f214e8477d5cc0bd21ff5576f1650b8eb2171b140ad44fd00b5559cd",
+      "step": 3
+    },
+    {
+      "candidate_logits_sha256": "cc33828b14fb115ba1eb89cd395f9fc34b0a200b56298aad0e5fae280e92c0d3",
+      "graph_kind": "decode",
+      "input_token_id": 18662,
+      "input_valid_length": 131,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9998985410269836,
+        "max_absolute_error": 0.3671875,
+        "max_protected_relative_error": 0.3073308270676692,
+        "mean_absolute_error": 0.05624135950950571,
+        "passed": true,
+        "reference_top1_top2_margin": 5.5,
+        "top1_agreement": true,
+        "top1_candidate": 18732,
+        "top1_reference": 18732,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 132,
+      "reference_logits_sha256": "09a8f294a6bc1e832fd7ae0f90e4d369d04da59f37e9c2369f754a45a58d19ca",
+      "step": 4
+    }
+  ],
+  "steps_requested": 4,
+  "task_id": "T21",
+  "tolerance": {
+    "atol": 1.15,
+    "cache_state": {
+      "require_finite_slot": true,
+      "require_prefix_identical": true,
+      "require_slot_written": true,
+      "require_tail_identical": true,
+      "require_valid_length_increment": true
+    },
+    "cosine_min": 0.9993,
+    "protected_relative_max": 1.05,
+    "relative_floor": 1.0,
+    "require_top1": true,
+    "rtol": 0.02,
+    "status": "derived_and_measured: the proposed thresholds were replaced by a budget derived from bfloat16-reference and float16-candidate ULP at the measured logit scale and from 28-layer residual depth, with no observed candidate error used to set any threshold; measured on onnxruntime 1.28.0 CPU EP at ORT_DISABLE_ALL over four contexts x five steps, which pass (results/graph/parity/S*-ort-cpu.json, 2026-08-02)",
+    "top5_overlap_min": 0.8
+  },
+  "variant_id": "S128"
+}

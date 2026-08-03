@@ -1,0 +1,274 @@
+{
+  "cache_capacity": 1152,
+  "cache_report": {
+    "passed": true,
+    "slot_immutability_violations": [],
+    "steps": [
+      {
+        "graph_kind": "prefill",
+        "input_valid_length": 0,
+        "output_valid_length": 1024,
+        "passed": true,
+        "step": 0,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": null
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1024,
+        "output_valid_length": 1025,
+        "passed": true,
+        "step": 1,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1024
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1025,
+        "output_valid_length": 1026,
+        "passed": true,
+        "step": 2,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1025
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1026,
+        "output_valid_length": 1027,
+        "passed": true,
+        "step": 3,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1026
+      },
+      {
+        "graph_kind": "decode",
+        "input_valid_length": 1027,
+        "output_valid_length": 1028,
+        "passed": true,
+        "step": 4,
+        "tensors_checked": 56,
+        "violations": [],
+        "write_index": 1027
+      }
+    ]
+  },
+  "evidence_sha256": "a37b88dd301ba8fb250de94bdb092a64c7b947fc5713c92d252154165ebd864e",
+  "evidence_tier": "real_onnxruntime_cpu",
+  "failure_kinds": [],
+  "failures": [],
+  "graph_digests": {
+    "decode": {
+      "relative_path": "S1024/decode.onnx",
+      "sha256": "7d7e816d110df7d48b584f7ef37b17f844920a52f5172694e64e9a5f4dcdc1b6"
+    },
+    "prefill": {
+      "relative_path": "S1024/prefill.onnx",
+      "sha256": "da0ae3dcd8f27464fed7b6db92e2f52d33087e50f78e71ee0cf2b4c7dd79613d"
+    }
+  },
+  "passed": true,
+  "prompt_length": 1024,
+  "record_kind": "t21_ort_cpu_parity",
+  "reference_provenance": {
+    "expected_token_ids": [
+      3717,
+      7460,
+      13166,
+      21448
+    ],
+    "model_id": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "prompt_token_count": 1024,
+    "prompt_token_ids_sha256": "024451cc29696f85e8fcdd067b638490f75aab0419214189a06c11e77e8b1ba5",
+    "reference_logits_sha256": [
+      "82e4983b91b2cb376e9a70c032402a5e0671da2e87dec589ce46ff565e631933",
+      "d5f4bcdbfa7388a4a29d5b7c1625682f37e802b38c9f349b972d6356ea131de2",
+      "587c7edd10ee25f9adcfa6730ba1aecd54cc15f5ac7852e8a6fce7a532522bad",
+      "78923d7fffc1a2887f245eeb220767019a19209191129c5972c2d5a74aeb80ac",
+      "db8f82b1ede87ce2258607b1c95d1f82490c20b24ede423e748ed4508d5903b8"
+    ],
+    "runtime": {
+      "actual_attention_implementation": "eager",
+      "deterministic_algorithms": true,
+      "device": "cpu",
+      "dtype": "bfloat16",
+      "python_version": "3.11.13",
+      "requested_attention_implementation": "eager",
+      "safetensors_version": "0.8.0",
+      "seed": 0,
+      "torch_version": "2.7.1",
+      "transformers_version": "4.51.3"
+    },
+    "source": "slm_lab.models.qwen3_reference.load_reference_model",
+    "teacher_forced": true
+  },
+  "runtime": {
+    "onnxruntime_version": "1.28.0",
+    "platform": "macOS-15.7.7-arm64-arm-64bit",
+    "providers": {
+      "decode": [
+        "CPUExecutionProvider"
+      ],
+      "prefill": [
+        "CPUExecutionProvider"
+      ]
+    },
+    "python_version": "3.11.13",
+    "session_settings": {
+      "decode": {
+        "execution_mode": "ORT_SEQUENTIAL",
+        "graph_optimization_level": "ORT_DISABLE_ALL",
+        "inter_op_num_threads": 1,
+        "intra_op_num_threads": 1
+      },
+      "prefill": {
+        "execution_mode": "ORT_SEQUENTIAL",
+        "graph_optimization_level": "ORT_DISABLE_ALL",
+        "inter_op_num_threads": 1,
+        "intra_op_num_threads": 1
+      }
+    }
+  },
+  "schema_version": 1,
+  "steps": [
+    {
+      "candidate_logits_sha256": "d6341cde503c7957eb16253a00b148bd0d9fa8d5672560602b11242d30b1cf2c",
+      "graph_kind": "prefill",
+      "input_token_id": null,
+      "input_valid_length": 0,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9999671017008026,
+        "max_absolute_error": 0.21875,
+        "max_protected_relative_error": 0.1884765625,
+        "mean_absolute_error": 0.03787319647405601,
+        "passed": true,
+        "reference_top1_top2_margin": 11.375,
+        "top1_agreement": true,
+        "top1_candidate": 3717,
+        "top1_reference": 3717,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1024,
+      "reference_logits_sha256": "82e4983b91b2cb376e9a70c032402a5e0671da2e87dec589ce46ff565e631933",
+      "step": 0
+    },
+    {
+      "candidate_logits_sha256": "8658f7a157bee9a61a9e78d06152b401fdfcc2f950091e688243e10a6ae0d7ba",
+      "graph_kind": "decode",
+      "input_token_id": 3717,
+      "input_valid_length": 1024,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9999243583917717,
+        "max_absolute_error": 0.3515625,
+        "max_protected_relative_error": 0.288970947265625,
+        "mean_absolute_error": 0.07589560026136598,
+        "passed": true,
+        "reference_top1_top2_margin": 9.125,
+        "top1_agreement": true,
+        "top1_candidate": 7460,
+        "top1_reference": 7460,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1025,
+      "reference_logits_sha256": "d5f4bcdbfa7388a4a29d5b7c1625682f37e802b38c9f349b972d6356ea131de2",
+      "step": 1
+    },
+    {
+      "candidate_logits_sha256": "c41eb9e8624f39af96fe4635f5e884fb53c3b635dc170d2fbc1f1eb65c091564",
+      "graph_kind": "decode",
+      "input_token_id": 7460,
+      "input_valid_length": 1025,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9999541342431781,
+        "max_absolute_error": 0.34375,
+        "max_protected_relative_error": 0.25396728515625,
+        "mean_absolute_error": 0.05686665902647057,
+        "passed": true,
+        "reference_top1_top2_margin": 10.875,
+        "top1_agreement": true,
+        "top1_candidate": 13166,
+        "top1_reference": 13166,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1026,
+      "reference_logits_sha256": "587c7edd10ee25f9adcfa6730ba1aecd54cc15f5ac7852e8a6fce7a532522bad",
+      "step": 2
+    },
+    {
+      "candidate_logits_sha256": "3740016fb67b701aa82357d399f62c869b474e41e1f2e18ebd7f93f9159cebea",
+      "graph_kind": "decode",
+      "input_token_id": 13166,
+      "input_valid_length": 1026,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.9999177125755104,
+        "max_absolute_error": 0.3515625,
+        "max_protected_relative_error": 0.344482421875,
+        "mean_absolute_error": 0.06646651419808597,
+        "passed": true,
+        "reference_top1_top2_margin": 10.0,
+        "top1_agreement": true,
+        "top1_candidate": 21448,
+        "top1_reference": 21448,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1027,
+      "reference_logits_sha256": "78923d7fffc1a2887f245eeb220767019a19209191129c5972c2d5a74aeb80ac",
+      "step": 3
+    },
+    {
+      "candidate_logits_sha256": "a9962b56cf9d6bb1e9c6b13b5971bac78aa349d73eecaa3a142cad21797ee3f1",
+      "graph_kind": "decode",
+      "input_token_id": 21448,
+      "input_valid_length": 1027,
+      "metrics": {
+        "allclose": true,
+        "cosine_similarity": 0.999844225953869,
+        "max_absolute_error": 0.546875,
+        "max_protected_relative_error": 0.449951171875,
+        "mean_absolute_error": 0.08565406684223138,
+        "passed": true,
+        "reference_top1_top2_margin": 9.875,
+        "top1_agreement": true,
+        "top1_candidate": 5904,
+        "top1_reference": 5904,
+        "top5_overlap": 1.0
+      },
+      "non_finite_candidate_logits": 0,
+      "output_valid_length": 1028,
+      "reference_logits_sha256": "db8f82b1ede87ce2258607b1c95d1f82490c20b24ede423e748ed4508d5903b8",
+      "step": 4
+    }
+  ],
+  "steps_requested": 4,
+  "task_id": "T21",
+  "tolerance": {
+    "atol": 1.15,
+    "cache_state": {
+      "require_finite_slot": true,
+      "require_prefix_identical": true,
+      "require_slot_written": true,
+      "require_tail_identical": true,
+      "require_valid_length_increment": true
+    },
+    "cosine_min": 0.9993,
+    "protected_relative_max": 1.05,
+    "relative_floor": 1.0,
+    "require_top1": true,
+    "rtol": 0.02,
+    "status": "derived_and_measured: the proposed thresholds were replaced by a budget derived from bfloat16-reference and float16-candidate ULP at the measured logit scale and from 28-layer residual depth, with no observed candidate error used to set any threshold; measured on onnxruntime 1.28.0 CPU EP at ORT_DISABLE_ALL over four contexts x five steps, which pass (results/graph/parity/S*-ort-cpu.json, 2026-08-02)",
+    "top5_overlap_min": 0.8
+  },
+  "variant_id": "S1024"
+}

@@ -15,6 +15,7 @@ from typing import Any
 from slm_lab.deployment.qualcomm.ai_hub import (
     AiHubAdapterError,
     normalize_profile,
+    preflight_compile_request,
     run_compile,
     run_inference,
     run_profile,
@@ -842,6 +843,210 @@ class AiHubAdapterTests(unittest.TestCase):
         self.assertIn("arguments are invalid", captured_err.getvalue())
         for marker in PRIVATE_MARKERS:
             self.assertNotIn(marker, captured_err.getvalue())
+
+
+class PreflightCompileRequestTests(unittest.TestCase):
+    """The offline compile preflight must accept exactly what run_compile does."""
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        self.source = self.root / "prefill-128.onnx"
+        self.source.write_bytes(b"deterministic-source-onnx")
+        self.compiled = self.root / "prefill-128.serialized.bin"
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def compile_request(self) -> dict[str, Any]:
+        return {
+            **common("compile"),
+            "source_artifact": artifact(self.source, "prefill-128.onnx"),
+            "output_artifact": str(self.compiled),
+            "output_logical_name": "prefill-128.serialized.bin",
+            "input_specs": {
+                "input_ids": {"shape": [1, 128], "dtype": "int32"},
+                "attention_mask": {"shape": [1, 128], "dtype": "int32"},
+            },
+        }
+
+    def write_request(self, request: dict[str, Any]) -> Path:
+        path = self.root / "compile-request.json"
+        path.write_text(json.dumps(request), encoding="utf-8")
+        return path
+
+    def mutations(self) -> dict[str, dict[str, Any]]:
+        missing_field = self.compile_request()
+        del missing_field["input_specs"]
+        extra_field = self.compile_request()
+        extra_field["predecessor_manifest"] = str(self.root / "compile-manifest.json")
+        unsafe_specs = self.compile_request()
+        unsafe_specs["input_specs"] = {
+            "input ids": {"shape": [1, 128], "dtype": "int32"}
+        }
+        bad_dtype = self.compile_request()
+        bad_dtype["input_specs"]["input_ids"]["dtype"] = "bfloat16"
+        zero_dimension = self.compile_request()
+        zero_dimension["input_specs"]["input_ids"]["shape"] = [1, 0]
+        empty_specs = self.compile_request()
+        empty_specs["input_specs"] = {}
+        digest_mismatch = self.compile_request()
+        digest_mismatch["source_artifact"]["sha256"] = "0" * 64
+        missing_source = self.compile_request()
+        missing_source["source_artifact"]["path"] = str(self.root / "absent.onnx")
+        path_logical_name = self.compile_request()
+        path_logical_name["source_artifact"]["logical_name"] = "graphs/prefill.onnx"
+        public_output = self.compile_request()
+        public_output["output_artifact"] = str(
+            Path(__file__).resolve().parents[3] / "results" / "raw" / "unsafe.bin"
+        )
+        private_job_name = self.compile_request()
+        private_job_name["job_name"] = PRIVATE_MARKERS[0]
+
+        def with_options(options: str) -> dict[str, Any]:
+            request = self.compile_request()
+            request["options"] = options
+            return request
+
+        def with_field(field: str, value: Any) -> dict[str, Any]:
+            request = self.compile_request()
+            request[field] = value
+            return request
+
+        def with_runtime_name(name: str) -> dict[str, Any]:
+            request = self.compile_request()
+            request["runtime"]["name"] = name
+            return request
+
+        return {
+            "schema_v1": with_field("schema_version", 1),
+            "wrong_stage": with_field("stage", "profile"),
+            "missing_field": missing_field,
+            "extra_field": extra_field,
+            "inexact_client_version": with_field("client_version", ">=0.53"),
+            "non_qairt_runtime": with_runtime_name("QNN"),
+            "retry_true": with_field("retry", True),
+            "retry_not_boolean": with_field("retry", "false"),
+            "zero_timeout": with_field("timeout_seconds", 0),
+            "unnamed_device": with_field("device", {"os": "Windows 11"}),
+            "wrong_option_spelling": with_options(
+                f"--target_runtime qnn_context_binary --qairt-version {QAIRT_VERSION}"
+            ),
+            "missing_runtime_option": with_options(
+                "--target_runtime qnn_context_binary"
+            ),
+            "duplicate_runtime_option": with_options(
+                f"{COMPILE_OPTIONS} --qairt_version {QAIRT_VERSION}"
+            ),
+            "inference_option": with_options(f"--qairt_framework {QAIRT_VERSION}"),
+            "credential_option": with_options(
+                f"{COMPILE_OPTIONS} --access-token synthetic-private-value"
+            ),
+            "path_like_option_value": with_options(
+                f"--target_runtime /private/synthetic --qairt_version {QAIRT_VERSION}"
+            ),
+            "unknown_target_runtime": with_options(
+                f"--target_runtime synthetic_runtime --qairt_version {QAIRT_VERSION}"
+            ),
+            "unsafe_tensor_name": unsafe_specs,
+            "unsupported_dtype": bad_dtype,
+            "zero_input_dimension": zero_dimension,
+            "empty_input_specs": empty_specs,
+            "source_digest_mismatch": digest_mismatch,
+            "missing_source_artifact": missing_source,
+            "path_in_logical_name": path_logical_name,
+            "public_output_path": public_output,
+            "private_job_name": private_job_name,
+        }
+
+    def test_preflight_returns_the_request_id_the_stage_runner_would_record(
+        self,
+    ) -> None:
+        import sys
+
+        path = self.write_request(self.compile_request())
+        preflight = preflight_compile_request(path)
+
+        self.assertEqual(preflight["stage"], "compile")
+        self.assertFalse(preflight["service_contacted"])
+        self.assertFalse(preflight["job_submitted"])
+        self.assertEqual(preflight["client_version"], CLIENT_VERSION)
+        self.assertNotIn("qai_hub", sys.modules)
+        self.assertFalse(self.compiled.exists())
+
+        manifest = run_compile(
+            self.compile_request(),
+            backend=MockBackend(compile_job=MockCompileJob()),
+        )
+        self.assertEqual(preflight["request_id"], manifest["request_id"])
+
+    def test_preflight_projection_is_public_and_path_free(self) -> None:
+        path = self.write_request(self.compile_request())
+        preflight = preflight_compile_request(path)
+
+        text = json.dumps(preflight, sort_keys=True)
+        self.assertNotIn(str(self.root), text)
+        self.assertNotIn("path", preflight["public_request"])
+        self.assertNotIn("output_artifact", preflight["public_request"])
+        self.assertNotIn("path", preflight["public_request"]["source_artifact"])
+        self.assertEqual(
+            preflight["public_request"]["source_artifact"]["logical_name"],
+            "prefill-128.onnx",
+        )
+        self.assertEqual(
+            preflight["public_request"]["input_specs"]["input_ids"],
+            {"shape": [1, 128], "dtype": "int32"},
+        )
+        for marker in PRIVATE_MARKERS:
+            self.assertNotIn(marker, text)
+
+    def test_preflight_is_stable_across_repeated_validation(self) -> None:
+        path = self.write_request(self.compile_request())
+        first = preflight_compile_request(path)
+        second = preflight_compile_request(path)
+        self.assertEqual(first, second)
+
+    def test_preflight_and_stage_runner_reject_the_same_requests(self) -> None:
+        for name, request in self.mutations().items():
+            with self.subTest(mutation=name):
+                path = self.write_request(request)
+                with self.assertRaises(AiHubAdapterError) as preflight_error:
+                    preflight_compile_request(path)
+
+                backend = MockBackend(compile_job=MockCompileJob())
+                with self.assertRaises(AiHubAdapterError) as runner_error:
+                    run_compile(request, backend=backend)
+
+                self.assertEqual(backend.calls, [])
+                self.assertFalse(self.compiled.exists())
+                for message in (
+                    str(preflight_error.exception),
+                    str(runner_error.exception),
+                ):
+                    self.assertNotIn("synthetic-private-value", message)
+                    self.assertNotIn(str(self.root), message)
+                    for marker in PRIVATE_MARKERS:
+                        self.assertNotIn(marker, message)
+
+    def test_preflight_rejects_an_unreadable_or_non_object_request(self) -> None:
+        path = self.root / "broken-request.json"
+        path.write_text("[]", encoding="utf-8")
+        with self.assertRaisesRegex(AiHubAdapterError, "request"):
+            preflight_compile_request(path)
+
+        with self.assertRaisesRegex(AiHubAdapterError, "valid JSON"):
+            preflight_compile_request(self.root / "absent-request.json")
+
+    def test_preflight_accepts_the_reviewed_qnn_suboption(self) -> None:
+        request = self.compile_request()
+        request["options"] = (
+            f"{COMPILE_OPTIONS} --qnn_options context_enable_graphs=prefill"
+        )
+        preflight = preflight_compile_request(self.write_request(request))
+        self.assertEqual(
+            preflight["public_request"]["options"],
+            request["options"],
+        )
 
 
 if __name__ == "__main__":

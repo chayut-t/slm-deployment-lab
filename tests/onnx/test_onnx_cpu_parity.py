@@ -2260,3 +2260,188 @@ def _parity_failure_message(evidence: Any) -> str:
             ),
         ]
     )
+
+
+# ---------------------------------------------------------------------------
+# Artifact-stage resolution.
+#
+# The runner reads its graph directory from the manifest's `artifacts.root`
+# instead of a hard-coded `onnx/reference/T20`, so one implementation, one
+# protocol and one tolerance can measure a later graph stage as well as the T20
+# reference. Comparability is the whole point: a second parity implementation
+# for a second stage would not produce evidence that could be set beside
+# `results/graph/parity/`. That generalization is only safe if it is a no-op for
+# everything already committed, which is what the first test checks against the
+# committed manifests themselves.
+# ---------------------------------------------------------------------------
+
+COMMITTED_MANIFEST_DIRECTORY = ROOT / "results/manifests/onnx"
+REFERENCE_ROOT_TEMPLATE = "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20"
+
+
+def test_committed_manifests_resolve_to_the_hard_coded_reference_directory(
+    tmp_path: Path,
+) -> None:
+    """Every committed manifest resolves exactly where the constant put it.
+
+    `verified_graph_paths` used to join `ARTIFACT_SUBDIRECTORY` to the artifact
+    root; it now expands the manifest's own `artifacts.root`. For every manifest
+    already committed the two must name the same directory, or re-running the
+    protocol would read different files than the records under
+    `results/graph/parity/` were measured from -- and nothing in those records
+    carries a host path that would reveal the substitution. This proves the
+    equality on the committed files instead of asserting it in prose, against
+    two unrelated roots so it cannot hold by coincidence of one mount point.
+    """
+
+    manifests = sorted(COMMITTED_MANIFEST_DIRECTORY.glob("S*.json"))
+    assert [path.name for path in manifests] == [
+        "S1024.json",
+        "S128.json",
+        "S4096.json",
+        "S512.json",
+    ]
+    for manifest_path in manifests:
+        artifacts = onnx_cpu.load_manifest(manifest_path)["artifacts"]
+        assert artifacts["root"] == REFERENCE_ROOT_TEMPLATE, manifest_path.name
+        for root in (tmp_path, Path("/Volumes/T9/slm-deployment-lab")):
+            assert onnx_cpu.manifest_graph_directory(artifacts, root) == (
+                root / onnx_cpu.ARTIFACT_SUBDIRECTORY
+            ), manifest_path.name
+
+
+def test_a_manifest_without_a_root_still_uses_the_reference_subdirectory(
+    tmp_path: Path,
+) -> None:
+    """An older or hand-written manifest keeps resolving where it always did."""
+
+    assert onnx_cpu.manifest_graph_directory({}, tmp_path) == (
+        tmp_path / onnx_cpu.ARTIFACT_SUBDIRECTORY
+    )
+
+
+def test_a_manifest_root_selects_a_different_artifact_stage(tmp_path: Path) -> None:
+    """A non-T20 stage is read through the same runner, not a second one."""
+
+    artifacts = {"root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-candidate/T22"}
+
+    assert onnx_cpu.manifest_graph_directory(artifacts, tmp_path) == (
+        tmp_path / "onnx/qnn-candidate/T22"
+    )
+
+
+@pytest.mark.parametrize("template", [None, "", 17, ["a"]])
+def test_a_malformed_manifest_root_is_rejected(tmp_path: Path, template: Any) -> None:
+    """`root` present but unusable is an error, not a silent T20 fallback.
+
+    A null or empty template is a broken manifest. Falling back to the reference
+    stage would answer it by quietly measuring different graphs than the ones
+    the manifest's own digests pin.
+    """
+
+    with pytest.raises(OnnxCpuError, match="artifacts.root"):
+        onnx_cpu.manifest_graph_directory({"root": template}, tmp_path)
+
+
+def test_a_relative_manifest_root_is_rejected(tmp_path: Path) -> None:
+    """The expansion has to land somewhere absolute, not on the working dir."""
+
+    with pytest.raises(OnnxCpuError, match="absolute path"):
+        onnx_cpu.manifest_graph_directory({"root": "onnx/reference/T20"}, tmp_path)
+
+
+@pytest.mark.parametrize(
+    "relative", ["../escape.onnx", "/etc/passwd", "S128/../../escape.onnx", ""]
+)
+def test_the_escape_guard_applies_to_a_manifest_resolved_directory(
+    tmp_path: Path, relative: str
+) -> None:
+    """The `safe_relative` guard covers the expanded directory too.
+
+    Resolving the directory from the manifest does not make the manifest
+    trusted: the same file supplies both `root` and `relative_path`.
+    """
+
+    manifest = {
+        "context_length": PROMPT_LENGTH,
+        "artifacts": {
+            "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-candidate/T22",
+            "prefill": {"relative_path": relative, "sha256": "0" * 64},
+            "decode": {"relative_path": "S128/decode.onnx", "sha256": "0" * 64},
+        },
+    }
+
+    with pytest.raises(OnnxCpuError, match="relative_path"):
+        onnx_cpu.verified_graph_paths(manifest, tmp_path)
+
+
+def test_verified_graph_paths_reads_the_stage_the_manifest_names(
+    tmp_path: Path,
+) -> None:
+    """The resolved path follows `artifacts.root`; the evidence path does not.
+
+    `graph_digests_payload` records only the manifest-relative path, so two
+    stages are told apart by their digests and by the manifest that pins them,
+    never by a host path leaking into a committed record.
+    """
+
+    directory = tmp_path / "onnx/qnn-candidate/T22/S128"
+    directory.mkdir(parents=True)
+    digests: dict[str, str] = {}
+    for kind in ("prefill", "decode"):
+        path = directory / f"{kind}.onnx"
+        path.write_bytes(f"fake-candidate-{kind}".encode("utf-8"))
+        digests[kind] = onnx_cpu.sha256_file(path)
+    manifest = {
+        "artifacts": {
+            "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-candidate/T22",
+            "prefill": {
+                "relative_path": "S128/prefill.onnx",
+                "sha256": digests["prefill"],
+            },
+            "decode": {
+                "relative_path": "S128/decode.onnx",
+                "sha256": digests["decode"],
+            },
+        }
+    }
+
+    graphs = onnx_cpu.verified_graph_paths(manifest, tmp_path)
+
+    assert graphs["prefill"][0] == directory / "prefill.onnx"
+    assert graphs["decode"][0] == directory / "decode.onnx"
+    payload = onnx_cpu.graph_digests_payload(graphs)
+    assert payload == {
+        "prefill": {
+            "sha256": digests["prefill"],
+            "relative_path": "S128/prefill.onnx",
+        },
+        "decode": {
+            "sha256": digests["decode"],
+            "relative_path": "S128/decode.onnx",
+        },
+    }
+    assert str(tmp_path) not in json.dumps(payload)
+
+
+def test_a_missing_graph_in_a_named_stage_still_says_how_to_get_it(
+    tmp_path: Path,
+) -> None:
+    """The message names the missing graph and both ways to fix it."""
+
+    manifest = {
+        "artifacts": {
+            "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-candidate/T22",
+            "prefill": {"relative_path": "S128/prefill.onnx", "sha256": "0" * 64},
+            "decode": {"relative_path": "S128/decode.onnx", "sha256": "0" * 64},
+        }
+    }
+
+    with pytest.raises(OnnxCpuError) as caught:
+        onnx_cpu.verified_graph_paths(manifest, tmp_path)
+
+    message = str(caught.value)
+    assert "missing prefill graph" in message
+    assert str(tmp_path / "onnx/qnn-candidate/T22/S128/prefill.onnx") in message
+    assert "artifacts.root" in message
+    assert "--artifact-root" in message

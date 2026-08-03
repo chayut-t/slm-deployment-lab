@@ -1,0 +1,736 @@
+{
+  "build_observation": {
+    "artifact_root_committed": false,
+    "created_at_utc": "2026-08-03T12:38:10.648436Z",
+    "graphs": [
+      {
+        "graph_kind": "prefill",
+        "placements": [
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "prefill.onnx"
+          },
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "prefill.onnx.data"
+          }
+        ],
+        "request_id": "t30-compile-83b8813c19a37ac036ad"
+      },
+      {
+        "graph_kind": "decode",
+        "placements": [
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "decode.onnx"
+          },
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "decode.onnx.data"
+          }
+        ],
+        "request_id": "t30-compile-ea3c5969c8f1a3b3ad86"
+      }
+    ],
+    "request_written_to_repository": false
+  },
+  "cache_capacity": 160,
+  "claim_boundary": {
+    "does_not_establish": [
+      "qualcomm_ai_hub_accepted_or_would_accept_this_request",
+      "qualcomm_ai_hub_accepts_this_external_data_package_layout",
+      "compiler_acceptance_of_the_candidate_graph",
+      "accelerator_placement_or_device_numerical_parity",
+      "latency_or_memory_performance"
+    ],
+    "establishes": [
+      "package_contents_match_the_committed_candidate_manifest_digests",
+      "package_is_self_verifying_through_a_sha256sum_checksum_file",
+      "compile_request_satisfies_the_committed_T30_adapter_contract"
+    ]
+  },
+  "client": {
+    "name": "qai-hub",
+    "version": "0.53.0"
+  },
+  "compile": {
+    "options": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+    "retry": false,
+    "timeout_seconds": 3600
+  },
+  "context_length": 128,
+  "device": {
+    "attributes": [],
+    "name": "Snapdragon X Elite CRD",
+    "os": "Windows 11"
+  },
+  "opset": 18,
+  "package": {
+    "checksum_file": "SHA256SUMS",
+    "checksum_format": "sha256sum",
+    "graphs": [
+      {
+        "compile_request": {
+          "external_data_members": [
+            "prefill.onnx.data"
+          ],
+          "input_specs": {
+            "attention_mask": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                128
+              ]
+            },
+            "input_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                128
+              ]
+            },
+            "position_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                128
+              ]
+            }
+          },
+          "job_name": "slm-lab-t22-compile-S128-prefill",
+          "output_logical_name": "S128-prefill.serialized.bin",
+          "request_id": "t30-compile-83b8813c19a37ac036ad",
+          "single_file_source_caveat": "The compile request names only the .onnx file because the committed T30 adapter requires source_artifact.path to be one existing file. Whether the service reads the sidecar from the same directory, or requires a directory or an archive instead, is unverified.",
+          "source_logical_name": "prefill.onnx"
+        },
+        "files": [
+          {
+            "logical_name": "prefill.onnx",
+            "role": "candidate_graph",
+            "sha256": "463313d4ba05bc0f769b53efa91496cfb9b59be818966e0a496ba4da9782ee3f",
+            "size_bytes": 949559
+          },
+          {
+            "logical_name": "prefill.onnx.data",
+            "role": "external_data",
+            "sha256": "adbca551d245106eefb3faf0a6fe850ea1f859ffff9a28b5d68ce2d9a3fe2760",
+            "size_bytes": 1196378112
+          },
+          {
+            "logical_name": "SHA256SUMS",
+            "role": "checksums",
+            "sha256": "a5dfdc980022bddbe7feca78878234b2e3a87c8113f57bec77656d3462d425b0",
+            "size_bytes": 163
+          }
+        ],
+        "graph_kind": "prefill",
+        "package_relative_path": "S128/prefill"
+      },
+      {
+        "compile_request": {
+          "external_data_members": [
+            "decode.onnx.data"
+          ],
+          "input_specs": {
+            "attention_mask": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                160
+              ]
+            },
+            "input_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                1
+              ]
+            },
+            "key_cache.0": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.1": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.10": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.11": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.12": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.13": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.14": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.15": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.16": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.17": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.18": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.19": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.2": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.20": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.21": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.22": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.23": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.24": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.25": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.26": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.27": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.3": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.4": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.5": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.6": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.7": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.8": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "key_cache.9": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "position_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                1
+              ]
+            },
+            "valid_length": {
+              "dtype": "int64",
+              "shape": [
+                1
+              ]
+            },
+            "value_cache.0": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.1": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.10": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.11": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.12": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.13": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.14": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.15": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.16": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.17": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.18": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.19": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.2": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.20": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.21": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.22": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.23": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.24": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.25": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.26": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.27": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.3": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.4": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.5": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.6": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.7": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.8": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            },
+            "value_cache.9": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                160,
+                128
+              ]
+            }
+          },
+          "job_name": "slm-lab-t22-compile-S128-decode",
+          "output_logical_name": "S128-decode.serialized.bin",
+          "request_id": "t30-compile-ea3c5969c8f1a3b3ad86",
+          "single_file_source_caveat": "The compile request names only the .onnx file because the committed T30 adapter requires source_artifact.path to be one existing file. Whether the service reads the sidecar from the same directory, or requires a directory or an archive instead, is unverified.",
+          "source_logical_name": "decode.onnx"
+        },
+        "files": [
+          {
+            "logical_name": "decode.onnx",
+            "role": "candidate_graph",
+            "sha256": "fc220a31ddf3dc3b460d8e0a843d38376c89ec49be9dae1a7e9b66c0cd16111a",
+            "size_bytes": 1752536
+          },
+          {
+            "logical_name": "decode.onnx.data",
+            "role": "external_data",
+            "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+            "size_bytes": 1192085504
+          },
+          {
+            "logical_name": "SHA256SUMS",
+            "role": "checksums",
+            "sha256": "54ce0faf9b1dd1ffdef9ae11000ea8c15ecc659049f007a449f4ef14be725a8c",
+            "size_bytes": 161
+          }
+        ],
+        "graph_kind": "decode",
+        "package_relative_path": "S128/decode"
+      }
+    ],
+    "root_token": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-package/T22"
+  },
+  "precision": "float16",
+  "record_type": "slm_lab.qualcomm.qnn_package",
+  "runtime": {
+    "name": "QAIRT",
+    "version": "2.45.0.260326154327"
+  },
+  "schema_version": 1,
+  "source_manifest": {
+    "path": "results/manifests/qnn/S128.json",
+    "sha256": "dc8c4c3639dd3a60df95f335005dbfcf03d1dcc35cc21f61dfc97e53cdbdbc2d",
+    "stage": "qnn_candidate",
+    "task_id": "T22"
+  },
+  "stage": "qnn_package",
+  "submission_status": {
+    "caveat": "The package layout for an external-data ONNX model has not been verified against the Qualcomm AI Hub service. No compile job was submitted and no service call was made. T31 owns the first real submission. Ready for submission means exactly three things: the candidate and sidecar digests were re-verified against the committed T22 manifest, a compile request was generated, and that request was accepted by the committed T30 adapter's own validation. It does not mean AI Hub accepted it.",
+    "first_submission_owner": "T31",
+    "job_submitted": false,
+    "package_layout_verified_against_service": false,
+    "ready_for_submission_means": [
+      "candidate_and_sidecar_digests_reverified_against_the_manifest",
+      "compile_request_generated_into_private_storage",
+      "request_accepted_by_the_committed_T30_adapter_validation"
+    ],
+    "service_contacted": false
+  },
+  "target_config": {
+    "config_id": "qualcomm-snapdragon-x-elite-crd",
+    "path": "configs/targets/qualcomm-snapdragon-x-elite-crd.json",
+    "sha256": "20b284060beb6de64bac3cf903858f87a6e5683e0669af539d177d4c92327846"
+  },
+  "task_id": "T22",
+  "variant_id": "S128"
+}

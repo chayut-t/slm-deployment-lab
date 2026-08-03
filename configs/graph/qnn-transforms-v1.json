@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "catalogue_id": "qnn-candidate-v1",
+  "description": "Declarative, ordered catalogue of the graph transformations that turn a T20/T23 reference ONNX export into the T22 qnn_candidate stage. Each pass names the T21 rule ids it addresses, the structural observation that motivated it, the exact rewrite, and its parameters. The engine is slm_lab.graph.qnn.transforms; the build tool is slm_lab.graph.qnn.build. Every pass is target-neutral: nothing here encodes a host kernel choice, an execution provider, or a vendor operator set. A pass with applied=false is recorded, not run, and carries the measured evidence for its rejection in the per-variant manifest.",
+  "target_context": "Primary target: Qualcomm QNN / Hexagon HTP ahead-of-time compilation of the static Qwen3-0.6B graphs (docs/project/plan.md 3.2 and 6.6). The passes are chosen to remove structure that a static-shape ahead-of-time compiler cannot plan against, without touching the frozen T12 static-cache contract: the decode fixed_capacity_indexed_copy write and the prefill prefix_materialization write survive every pass unchanged. No pass here has been through a vendor converter; the catalogue records graph rewrites and their measured structural effect, not compiler acceptance.",
+  "source_evidence": "docs/results/onnx/graph-inspection.md, task T21, catalogue onnx-deployment-risk-v1. Section 4 gives the eight-graph inventory, section 5 the ranked findings, section 7 the evidence boundaries.",
+  "passes": [
+    {
+      "id": "X-CONSTANT-TO-INITIALIZER",
+      "title": "Rewrite every Constant node as a graph initializer",
+      "order": 1,
+      "applied": true,
+      "addresses": ["R-LARGE-INLINE-CONSTANT"],
+      "observed_issue": "graph-inspection.md 5.4. The two largest inline tensor families in every prefill protobuf are Constant node value attributes, not initializers: the O(S^2) float16 causal mask on /model/model/Constant_4 (32,768 bytes at S128 rising to 33,554,432 bytes at S4096) and the 56 float16 [1, 8, C - S, 128] zero cache reserves on /Constant_1 through /Constant_111 (65,536 bytes each at S128, 262,144 at S1024 and S4096). Section 5.4 point 1 states the mechanism exactly: T20 forces initializers over 1,024 bytes into external data, but saves with convert_attribute=false, so a Constant attribute bypasses that threshold and stays inside the protobuf. Prefill carries 2,729 Constant nodes and decode 3,399 (section 5.5), so this is also the single largest operator population in both graph kinds.",
+      "transformation": "For every Constant node carrying a value tensor attribute, delete the node and append that tensor to graph.initializer under the name the node produced. No consumer edge is rewritten, because the initializer takes over the produced name. This is a pure canonicalization: it changes where a tensor is stored in the protobuf, never its dtype, shape, or bytes.",
+      "parameters": {
+        "attribute": "value",
+        "skip_when_output_is_graph_output": true,
+        "skip_unsupported_attribute_forms": true
+      },
+      "rationale": "A Constant attribute and an initializer denote the same immutable tensor, but only an initializer is visible to ONNX external-data conversion, to the T21 large-inline-constant detector's initializer branch, and to a constant-folding pass that works from the initializer pool. Running this first is what lets pass 2 see 2,729 more constant values and pass 4 move the mask and the reserves out of the protobuf at all.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 5.4",
+        "docs/results/onnx/graph-inspection.md 5.5",
+        "src/slm_lab/export/onnx_matrix.py export_onnx_graph convert_attribute=False"
+      ]
+    },
+    {
+      "id": "X-STATIC-SHAPE-FOLD",
+      "title": "Evaluate and replace nodes whose every input is a known constant",
+      "order": 2,
+      "applied": true,
+      "addresses": [
+        "R-DATA-DEPENDENT-SHAPE-INPUT",
+        "R-SHAPE-COMPUTATION-CHAIN",
+        "R-GRAPH-NODE-COUNT"
+      ],
+      "observed_issue": "graph-inspection.md 5.1, the rank-1 finding. 804 of 922 prefill and 1,231 of 1,326 decode shape-defining operator inputs (the watched positions Reshape[1], Slice[1,2,3,4], Expand[1], Tile[1]) are produced by another node rather than by an initializer, a graph input, or a Constant. The raw material is counted by the rank-7 companion: Shape=65 and ConstantOfShape=62 in prefill; Shape=459, ConstantOfShape=91 and Range=6 in decode. Section 5.1's caveat is the reason this pass exists and the reason its result is a measurement rather than a fix: the detector counts unfolded residue, not proven dynamism, and T20 exported with do_constant_folding=false while every boundary dimension is static, so most of these values provably never vary.",
+      "transformation": "Walk the node list once in declaration order, which the ONNX specification requires to be topological and which the engine asserts rather than assumes. A node is folded when its operator is in allowed_ops, it carries no subgraph attribute, none of its outputs is a graph output, every one of its inputs is either omitted or an inline initializer of known value, the total declared bytes of those inputs is at most max_input_bytes, and the total declared bytes of the outputs the evaluation produced is at most max_output_bytes. The node is evaluated by onnx.reference.ReferenceEvaluator on a single-node graph whose only tensors are that node's constant inputs, and each output becomes an initializer under the name the node produced. Every node not folded is counted by reason.",
+      "parameters": {
+        "allowed_ops": [
+          "Add",
+          "Cast",
+          "Ceil",
+          "Concat",
+          "ConstantOfShape",
+          "Div",
+          "Equal",
+          "Expand",
+          "Floor",
+          "Gather",
+          "GatherElements",
+          "Greater",
+          "GreaterOrEqual",
+          "Identity",
+          "Less",
+          "LessOrEqual",
+          "Max",
+          "Min",
+          "Mod",
+          "Mul",
+          "Neg",
+          "Not",
+          "Range",
+          "Reshape",
+          "Shape",
+          "Size",
+          "Slice",
+          "Squeeze",
+          "Sub",
+          "Tile",
+          "Transpose",
+          "Unsqueeze",
+          "Where"
+        ],
+        "max_input_bytes": 1048576,
+        "max_output_bytes": 1048576,
+        "constant_source": "inline_initializers_only",
+        "forward_passes": 1,
+        "require_topological_order": true
+      },
+      "rationale": "Two guards keep this target-neutral and keep it away from the weights. The allowlist admits only shape, index, and small elementwise arithmetic, so no normalization, no Softmax, and no MatMul is ever evaluated at build time. The byte budget bounds both the tensors consumed and the tensors produced, so a folded chain can never materialize a large tensor, and an initializer that lives in external data is not in the constant pool at all, which means a float16 weight can never be an input to a fold under any budget. The single forward pass is sufficient because the node list is topological: an operand produced by an earlier folded node is already an initializer by the time its consumer is reached, so the cascade closes in one sweep.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 5.1",
+        "docs/results/onnx/graph-inspection.md 7 shape-defining inputs boundary",
+        "configs/graph/onnx-risk-rules-v1.json R-DATA-DEPENDENT-SHAPE-INPUT"
+      ]
+    },
+    {
+      "id": "X-DEAD-NODE-ELIMINATION",
+      "title": "Remove nodes and initializers no graph output depends on",
+      "order": 3,
+      "applied": true,
+      "addresses": ["R-GRAPH-NODE-COUNT"],
+      "observed_issue": "graph-inspection.md 5.5, the rank-5 finding: 7,634 prefill and 10,191 decode nodes against a 2,000-node review convention, of which only 254 are MatMul. Pass 2 deletes the nodes it folds but leaves their operands behind as initializers that nothing reads any more -- above all the 2,729 prefill and 3,399 decode tensors pass 1 promoted out of Constant nodes. Those dead initializers are protobuf bytes, and on the T20 graphs they are the bulk of what this pass reclaims. Section 5.5's mitigation and plan section 6.6 both insist that a node-count reduction is only meaningful when it is measured, which is why this pass reports separately what it removed in nodes and in initializer bytes rather than asserting a saving.",
+      "transformation": "Compute the set of tensor names transitively required by the graph outputs, keep every node that produces at least one required name, and drop every initializer and value_info entry whose name is not required. Graph inputs are never removed, whether or not any surviving node consumes them, because the public boundary is the frozen T12 contract and its 60 decode inputs and 3 prefill inputs are part of it.",
+      "parameters": {
+        "roots": "graph_outputs",
+        "preserve_graph_inputs": true,
+        "prune_initializers": true,
+        "prune_value_info": true
+      },
+      "rationale": "This is what makes pass 2's reduction real rather than nominal: without it the folded chains' operands stay in the protobuf and the file does not shrink even though the node list did. On the T20 graphs the node arm of this pass finds nothing to do, because pass 2 already removed every node it replaced and the exports contain no unreachable computation; that zero is a measurement of these graphs, not a statement that the pass is inert, and the initializer arm removes thousands of tensors in both graph kinds.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 5.5",
+        "docs/project/plan.md 6.6 artifact stages",
+        "src/slm_lab/contracts/static_cache.py"
+      ]
+    },
+    {
+      "id": "X-EXTERNALIZE-LARGE-TENSORS",
+      "title": "Write initializers at or above the threshold into the candidate sidecar",
+      "order": 4,
+      "applied": true,
+      "addresses": ["R-LARGE-INLINE-CONSTANT"],
+      "observed_issue": "graph-inspection.md 5.4. The rule fires once per prefill graph at S512 and above, on the mask, whose share of the protobuf is 5.6%, 11.5% and 67.4% at S512, S1024 and S4096; and section 5.4 records that the per-tensor rule is blind to the 56 reserves, which are 71.5%, 78.9%, 80.5% and 29.5% of the four prefill files and are the largest inline family at three of the four variants. Both families are inline only because they were Constant attributes; once pass 1 has made them initializers, the same 1,024-byte threshold that T20 already applies to weights applies to them.",
+      "transformation": "Serialize the candidate with ONNX external-data conversion at size_threshold bytes into one sidecar per candidate graph, named <graph_kind>.onnx.data next to the candidate protobuf. The candidate never shares, references, or modifies the reference graph's sidecar. Node attributes are not converted, because after pass 1 there is no attribute tensor left worth converting.",
+      "parameters": {
+        "size_threshold_bytes": 1024,
+        "all_tensors_to_one_file": true,
+        "location": "<graph_kind>.onnx.data",
+        "convert_attribute": false
+      },
+      "rationale": "1,024 bytes is the threshold the T20 export already uses, so the candidate and the reference make the same inline/external decision for the same tensor and the two stages stay comparable. Separating the sidecar from the reference's is a hard requirement rather than tidiness: the reference artifacts must remain byte-identical and independently identifiable, and a shared sidecar would make one stage's rewrite able to invalidate the other's committed digest.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 5.4",
+        "results/manifests/onnx/S128.json artifacts external_data",
+        "configs/models/qwen3-0.6b-onnx-export.json external_data_threshold_bytes"
+      ]
+    },
+    {
+      "id": "X-INFER-VALUE-INFO",
+      "title": "Run ONNX shape inference and keep the inferred value_info",
+      "order": 5,
+      "applied": true,
+      "addresses": ["R-INTERNAL-DYNAMIC-SHAPE"],
+      "observed_issue": "graph-inspection.md 6 and 7. R-INTERNAL-DYNAMIC-SHAPE is the one silent rule that is explicitly not a clean result: value_info is empty in all eight graphs, so the detector inspected 0 of 0 entries. Section 7 names this pass as the follow-up that closes the boundary, in these words: run ONNX shape inference on a machine with onnx installed, write the inferred value_info back, and re-run the inspection, and the same rule then produces a real answer. Section 3 point 3 records the second cost of the same absence: every intermediate dtype in the T21 report had to be reconstructed by resolve_element_types from opset-18 type constraints rather than read from a declaration.",
+      "transformation": "Run onnx.shape_inference on the candidate and keep the value_info entries it produced. The engine then counts how many of the graph's intermediate tensors carry an entry and how many of those entries are fully static, and records both numbers. Inference that annotates only part of the graph is reported as partial with the exact fraction; the pass never claims coverage it did not achieve.",
+      "parameters": {
+        "check_type": false,
+        "strict_mode": false,
+        "data_prop": true
+      },
+      "rationale": "A candidate whose interior is declared rather than derived can be scored by R-INTERNAL-DYNAMIC-SHAPE for real, and a downstream converter or quantizer gets the shapes without re-deriving them. The claim this pass supports is bounded: an annotated static interior is evidence that inference resolved the interior, not that a compiler will accept it.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 6 R-INTERNAL-DYNAMIC-SHAPE",
+        "docs/results/onnx/graph-inspection.md 7 static interior boundary",
+        "docs/results/onnx/graph-inspection.md 3 value_info is empty"
+      ]
+    },
+    {
+      "id": "X-STAMP-CANDIDATE-PROVENANCE",
+      "title": "Record the source digest, catalogue identity, and applied passes in-band",
+      "order": 6,
+      "applied": true,
+      "addresses": [],
+      "observed_issue": "graph-inspection.md 2 records that the producer string in every one of the eight reference graphs is pytorch 2.7.1 and the IR version is 8. A rewritten candidate that kept that producer string would be indistinguishable in-band from the reference export it was derived from, and the only thing separating the two stages would be the directory it happened to be written to.",
+      "transformation": "Set producer_name and producer_version to this engine and its schema version, and set metadata_props to the task id, the stage, the variant id, the graph kind, the source graph relative path and sha256, the transform catalogue id and sha256, and the ordered list of applied pass ids. The graph body, the IR version, and the opset imports are left exactly as the preceding passes produced them.",
+      "parameters": {
+        "producer_name": "slm_lab.graph.qnn",
+        "metadata_prefix": "slm_lab.",
+        "preserve_ir_version": true,
+        "preserve_opset_imports": true
+      },
+      "rationale": "A candidate must be self-identifying: a reader who has only the .onnx file must be able to recover which reference bytes it came from and which catalogue produced it, without the manifest. This addresses no T21 risk rule, and its addresses list is empty for that reason rather than by omission.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 2 provenance",
+        "ai/plans/active/T22-qnn-candidates.md the transformation profile",
+        "results/manifests/qnn/README.md"
+      ]
+    },
+    {
+      "id": "X-ORT-CPU-OFFLINE-OPTIMIZATION",
+      "title": "Rejected: ONNX Runtime CPU offline graph optimization as the folding mechanism",
+      "order": 7,
+      "applied": false,
+      "addresses": [
+        "R-DATA-DEPENDENT-SHAPE-INPUT",
+        "R-SHAPE-COMPUTATION-CHAIN",
+        "R-GRAPH-NODE-COUNT"
+      ],
+      "observed_issue": "Writing an ONNX Runtime session's optimized_model_filepath at ORT_ENABLE_BASIC is the obvious, one-line way to fold these graphs, and it does fold them hard. It is rejected on measured grounds rather than asserted away, and the build tool re-measures it on every graph it builds rather than citing a planning probe.",
+      "transformation": "Not applied. Would be: build an onnxruntime InferenceSession over the reference graph on the CPU execution provider with graph_optimization_level=ORT_ENABLE_BASIC and optimized_model_filepath set, and adopt the written graph as the candidate.",
+      "parameters": {
+        "graph_optimization_level": "ORT_ENABLE_BASIC",
+        "execution_provider": "CPUExecutionProvider",
+        "measure_only": true,
+        "delete_scratch_output": true
+      },
+      "rationale": "Four measured effects, each recorded per graph in the manifest's rejection_evidence. First, the optimizer decomposes Softmax into Sub/Exp/ReduceMax/ReduceSum/Div, replacing one operator that an NPU implements natively with five, on exactly the operator graph-inspection.md 5.6 ranks as precision-sensitive. Second, Cast rises sharply, which is the CPU execution provider's float16 fallback inserting casts around kernels it lacks: a host-specific artifact with no business in a candidate aimed at a different target, and one that moves the 285 real float16/float32 crossings section 5.6 counts. Third, it stamps opset imports that no node uses, including com.microsoft, com.microsoft.nchwc and org.pytorch.aten, weakening the single-standard-domain portability that section 6 records as one of the three clean blocking results. Fourth, and decisive, it destroys the external-data layout: external_data_files comes back empty and external_data_bytes.after is 0, so no sidecar is written beside the optimized model, and the float16 weights that lived in one are serialized back inline. The protobuf therefore grows rather than shrinks on every graph measured, and the largest prefill output lands close to protobuf's 2 GiB serialization ceiling; the per-graph byte counts are in rejection_evidence and none is restated here. The engine's own passes are target-neutral by construction, produce no host-specific operator choice at all, and move those bytes in the opposite direction.",
+      "references": [
+        "docs/results/onnx/graph-inspection.md 5.6 precision boundaries",
+        "docs/results/onnx/graph-inspection.md 6 R-NON-DEFAULT-DOMAIN",
+        "ai/plans/active/T22-qnn-candidates.md one rejected transformation"
+      ]
+    }
+  ]
+}

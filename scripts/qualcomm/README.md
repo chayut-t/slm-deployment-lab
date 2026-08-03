@@ -96,3 +96,63 @@ alone.
 Do not commit request files: they contain machine-local paths. Do not redirect
 raw SDK output into public files, run `qai-hub configure` in task logs, or use
 job URLs/IDs as cross-stage state.
+
+## Generating a compile request from a T22 QNN candidate
+
+`package_qnn_candidate.py` builds the package a compile job would consume and
+generates the compile request for it. It never contacts the service, never
+imports `qai-hub`, and never submits a job, so it runs in the common
+environment:
+
+```bash
+SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python3 \
+  scripts/qualcomm/package_qnn_candidate.py \
+  --manifest results/manifests/qnn/S128.json
+
+SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python3 \
+  scripts/qualcomm/package_qnn_candidate.py \
+  --manifest results/manifests/qnn/S128.json --check
+```
+
+Defaults: target selector
+`configs/targets/qualcomm-snapdragon-x-elite-crd.json`, package root
+`$SLM_LAB_ARTIFACT_ROOT/onnx/qnn-package/T22`, committed record
+`results/manifests/qnn/packages/S<context>.json`, and requests under
+`.ai-local/profiles/T22/`. `--graph prefill|decode|all`, `--artifact-root`,
+`--package-root`, `--record`, and `--request-dir` override them. A request
+directory inside the public repository tree is refused by the same rule that
+governs stage output artifacts.
+
+The committed record carries logical names, digests, byte sizes, input specs,
+the target selector, the runtime identity, the option string, and the request
+id. It never carries a filesystem path. The generated request does carry
+machine-local paths and therefore stays private, exactly as above.
+
+`--check` re-verifies an assembled package against its committed record. It
+re-reads every package member, re-derives the record from the candidate
+manifest and the target selector, regenerates the request into private
+storage, and re-runs the preflight. It never relinks, copies, or rebuilds
+anything.
+
+### The honest boundary
+
+The package layout for an external-data ONNX model has not been verified
+against the Qualcomm AI Hub service. No compile job was submitted and no
+service call was made. T31 owns the first real submission. Ready for
+submission means exactly three things: the candidate and sidecar digests were
+re-verified against the committed T22 manifest, a compile request was
+generated, and that request was accepted by the committed T30 adapter's own
+validation. It does not mean AI Hub accepted it.
+
+The compile request names only the `.onnx` file, because `source_artifact.path`
+must be one existing file. Whether the service reads the `.onnx.data` sidecar
+from the same directory, or requires a directory or an archive instead, is
+unverified. Nothing here establishes a compile result, a device result, or a
+latency number.
+
+The offline validation itself is `ai_hub.preflight_compile_request`, which
+runs the full committed compile validation chain — schema version, stage,
+public-safety projection, field set, client version, device selector, runtime,
+option allowlist, timeout, retry, source-artifact existence and digest, input
+specs, and output-path policy — and returns the same `request_id` the compile
+stage would record. It builds no backend and touches no network.

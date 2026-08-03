@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "config_id": "qualcomm-snapdragon-x-elite-crd",
+  "task_id": "T22",
+  "description": "Qualcomm AI Hub Workbench compile target for the T22 QNN candidate packages. Every identity below is copied from committed evidence in this repository and nothing is inferred, guessed, or carried over from vendor documentation.",
+  "evidence": {
+    "device_and_runtime": "docs/results/access/2026-07-25-workbench-toy-lifecycle.md",
+    "machine_readable": "results/hosts/workbench-toy-lifecycle-2026-07-25.json",
+    "adapter_contract": "scripts/qualcomm/README.md"
+  },
+  "client": {
+    "name": "qai-hub",
+    "version": "0.53.0"
+  },
+  "device": {
+    "name": "Snapdragon X Elite CRD",
+    "os": "Windows 11",
+    "attributes": []
+  },
+  "runtime": {
+    "name": "QAIRT",
+    "version": "2.45.0.260326154327"
+  },
+  "compile": {
+    "options": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+    "target_runtime": "qnn_context_binary",
+    "job_name_prefix": "slm-lab-t22-compile",
+    "timeout_seconds": 3600,
+    "retry": false
+  },
+  "notes": [
+    "The device selector carries no attributes. The T02 lifecycle recorded Hexagon v73, the HTP backend, and SoC model 60 as properties the service resolved for a compile job, not as selector attributes that were requested, so publishing them here would overstate what was observed.",
+    "The QAIRT version is the resolved default variant from the same T02 lifecycle. The authenticated framework query also returned 2.47.0.260601114230 and 2.48.0.260626120635; neither has been exercised by this repository.",
+    "No AI Hub job has been submitted with this configuration. It has only been proven to satisfy the committed T30 adapter validation offline. T31 owns the first real submission."
+  ],
+  "claim_boundary": {
+    "establishes": [
+      "device_and_runtime_identity_match_committed_T02_evidence",
+      "option_string_is_accepted_by_the_committed_T30_compile_allowlist"
+    ],
+    "does_not_establish": [
+      "qualcomm_ai_hub_accepted_a_job_with_this_configuration",
+      "device_availability_or_account_quota_at_submission_time",
+      "compiler_acceptance_of_any_qwen3_graph",
+      "latency_or_memory_performance"
+    ]
+  }
+}

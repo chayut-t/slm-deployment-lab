@@ -77,3 +77,68 @@ to the reader.
 
    Reports are written to `results/graph/<variant>.json`. They contain no
    timestamp, so `--check` is a genuine drift check.
+
+# Graph transformation catalogue
+
+`qnn-transforms-v1.json` is the second catalogue in this directory and it is a
+different kind of object from the first. `onnx-risk-rules-v1.json` describes
+patterns to *look for*; `qnn-transforms-v1.json`, id `qnn-candidate-v1`,
+describes rewrites to *apply*, in order, to turn a T20/T23 reference export into
+the T22 `qnn_candidate` stage. The engine is `slm_lab.graph.qnn.transforms` and
+the build tool is `slm_lab.graph.qnn.build`.
+
+## What a pass is
+
+Each entry in `passes` names:
+
+- `id` (an `X-` prefixed identifier that the engine must implement), `title`,
+  and `order` — the orders must be `1..N` in declaration order;
+- `applied`, a boolean. A pass the engine implements must declare `applied:
+  true`; a pass declaring `applied: false` must be one the engine deliberately
+  does not implement. The catalogue therefore cannot silently disable a real
+  pass, and cannot silently enable an unimplemented one;
+- `addresses`, the list of `onnx-risk-rules-v1.json` rule ids the pass is meant
+  to move. The build tool cross-checks every id against the loaded risk
+  catalogue and refuses to run if one is unknown. The list may be empty, and is
+  empty for `X-STAMP-CANDIDATE-PROVENANCE`, which addresses no risk rule;
+- `observed_issue`, citing the numbered finding in
+  `docs/results/onnx/graph-inspection.md` that motivated the pass;
+- `transformation`, the exact rewrite, and `parameters`, its declarative
+  settings — allowlists, byte budgets, thresholds;
+- `rationale` and `references`.
+
+## The recorded rejection
+
+`X-ORT-CPU-OFFLINE-OPTIMIZATION` is in the catalogue with `applied: false`. It
+is the obvious way to fold these graphs — write an ONNX Runtime session's
+`optimized_model_filepath` at `ORT_ENABLE_BASIC` — and it is rejected on
+measured grounds. The build tool re-measures it on every graph it builds and
+writes the result into each manifest's `rejection_evidence`, so the rejection
+is evidence in the repository rather than an assertion in prose. A catalogue
+with no rejected pass makes the build tool fail.
+
+## Adding or changing a pass
+
+1. Implement the pass in `slm_lab.graph.qnn.transforms`, add its id to
+   `APPLIED_PASS_IDS`, wire it into `slm_lab.graph.qnn.build`, and add positive
+   and negative tests in `tests/qnn/`.
+2. Add the pass object with all ten fields and renumber `order` so the orders
+   stay contiguous.
+3. Cite a numbered finding in `docs/results/onnx/graph-inspection.md` for
+   `observed_issue`. Do not claim a compiler outcome; no pass here has been
+   through a vendor converter, and the catalogue's `target_context` says so.
+4. Keep `schema_version` at `1` while the field set is unchanged.
+5. Rebuild the candidates and confirm the committed manifests reproduce:
+
+   ```bash
+   SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src \
+     python -m slm_lab.graph.qnn.build --all-manifests
+
+   SLM_LAB_ARTIFACT_ROOT=/Volumes/T9/slm-deployment-lab PYTHONPATH=src \
+     python -m slm_lab.graph.qnn.build --all-manifests --check
+   ```
+
+   Both need an environment with `onnx`, `onnxruntime`, and `numpy`; the locked
+   root environment has none of them, which is why the transform tests skip
+   there. `results/manifests/qnn/README.md` documents the manifest schema and
+   what `--check` does and does not prove.
