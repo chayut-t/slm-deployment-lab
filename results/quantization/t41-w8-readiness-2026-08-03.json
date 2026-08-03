@@ -1071,7 +1071,7 @@
       }
     ]
   },
-  "generated_at": "2026-08-03T11:52:12Z",
+  "generated_at": "2026-08-03T12:47:10Z",
   "inputs": {
     "ai_hub_capability_record": "results/quantization/t41-ai-hub-capability-2026-08-03.json",
     "baseline_manifest_directory": "results/manifests/onnx",
@@ -1084,8 +1084,8 @@
   "released_for_submission_preparation_only": true,
   "released_for_submission_preparation_only_meaning": "Both candidate specifications regenerate byte-identically from committed inputs, every binding still hashes to its recorded value, and the request emitter can compose a schema-v2 stage request. It does not mean a request was written, a job was submitted, a weight was quantized, or a precision was achieved. Submission is permitted as of 2026-08-03 and the scope of this release did not widen when it was: preparation is still all there is, because there is still no artifact to submit.",
   "repository": {
-    "git_commit": "0085a2c5ee01ef9fa1360ac130c88f574a68c3aa",
-    "git_tree_clean": false
+    "git_commit": "02004cc0a635b4fb25176631c4a950df745e7884",
+    "git_tree_clean": true
   },
   "schema_version": 1,
   "task_id": "T41"
