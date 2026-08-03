@@ -3,7 +3,7 @@
 Date: 2026-08-02
 Task: `T23`
 Visibility: `public`
-Status: complete on `task/T23-prefill-reexport-promotion`, **not merged**
+Status: completed
 
 ## Outcome
 
@@ -189,38 +189,31 @@ from a document, however good.
 
 ## Task status
 
-`T23` stays **`in_progress`**, not `completed`.
+`T23` is **`completed`**.
 
-The task graph's `allowed_statuses` are `planned`, `in_progress`, `blocked` and
-`completed` — there is no state meaning "finished on its branch, awaiting
-merge". AGENTS.md defines `completed` as requiring that changes be integrated
-into the branch downstream tasks will use, and states plainly that draft or
-merely local work is not completed. This work is committed to an unmerged task
-branch and merging was not authorized, so `in_progress` with the branch and
-worklog recorded is the most truthful available state.
+It was written `in_progress` on delivery, because at that point the work was
+committed to an unmerged task branch: the graph's `allowed_statuses` are
+`planned`, `in_progress`, `blocked` and `completed`, with no state meaning
+"finished on its branch, awaiting merge", and AGENTS.md defines `completed` as
+requiring that changes be integrated into the branch downstream tasks will use.
 
-**Promotion to `completed` requires the merge.** `T22` is blocked on `T23` and
-must not be started until then: it would otherwise build QNN candidates from
-bytes that exist only on an unmerged branch.
+`task/T23-prefill-reexport-promotion` was merged into `main` on 2026-08-03 as a
+`--no-ff` merge of its 12 commits, which is what made `completed` truthful. The
+full suite passed on the merge result (655 passed, 15 skipped), as did
+`render_task_status.py --check`, `check_hygiene.py --all`,
+`build_dashboard.py --check`, and the audit tool's `citations` mode at zero
+disagreements. `status` and `worklog` were set in the same edit, per the
+validator's `only completed tasks may set the worklog field` rule, and this plan
+moved to `ai/plans/completed/`.
 
-One consequence to be aware of when reading the graph: **this worklog is not
-referenced from `ai/tasks/task_graph.yaml`, and cannot be.** The validator
-enforces `only completed tasks may set the worklog field`, so `T23`'s `worklog`
-is `null` while it is `in_progress`. That is the schema's design — a recorded
-worklog is part of what `completed` means — not an omission. Whoever merges this
-branch sets `status` and `worklog` in the same edit, then re-runs
-`render_task_status.py`. Until then this file is discoverable from the branch
-name, from `ai/plans/active/T23-prefill-reexport-promotion.md`, and from its own
-`Task: T23` header.
+`T22` unblocks as of that merge.
 
 ## Follow-up
 
-- Newly unblocked tasks: **none yet.** `T22` unblocks when this branch merges
-  and `T23` is promoted to `completed`, not before.
-- Recommended next action: review and merge
-  `task/T23-prefill-reexport-promotion`, set `T23` to `completed`, re-run
-  `python3 scripts/ai/render_task_status.py`, and move
-  `ai/plans/active/T23-prefill-reexport-promotion.md` to `ai/plans/completed/`.
+- Newly unblocked tasks: **`T22`**, as of the 2026-08-03 merge into `main`.
+- Recommended next action: `T22` may start from `main` at the merge commit. Its
+  QNN candidates now build from bytes that are on the integration branch rather
+  than a task branch, which was the condition it was waiting on.
 - Deferred, for whoever next owns the risk catalogue: add a total-inline-bytes
   companion to `R-LARGE-INLINE-CONSTANT`.
 - Deferred, for the next ONNX Runtime task: take the paired `ORT_ENABLE_ALL`

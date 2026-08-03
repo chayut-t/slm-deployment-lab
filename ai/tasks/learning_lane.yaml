@@ -12,7 +12,7 @@
         "T01"
       ],
       "sheet": "build/learning/learn-00.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-24-T01-environments-manifests-storage.md": "07b998fd905d",
         "docs/decisions/0001-model-and-version-pins.md": "61d880d3d709",
@@ -29,7 +29,7 @@
         "T04"
       ],
       "sheet": "build/learning/learn-01.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "AGENTS.md": "3ccd54da05c5",
         "ai/worklogs/2026-07-24-T03-agent-workflow-completion.md": "d92f3f3aa949",
@@ -45,7 +45,7 @@
         "T10"
       ],
       "sheet": "build/learning/learn-02.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-25-T10-token-prompt-evaluation-fixtures.md": "7fd8db71d102",
         "docs/decisions/0001-model-and-version-pins.md": "61d880d3d709",
@@ -61,7 +61,7 @@
         "T12"
       ],
       "sheet": "build/learning/learn-03.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md": "31be265ede1b",
         "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
@@ -77,7 +77,7 @@
         "T13"
       ],
       "sheet": "build/learning/learn-04.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md": "1d26054e7195",
         "docs/learning/deployment_benchmarking.md": "343d6d511b43",
@@ -92,7 +92,7 @@
         "T20"
       ],
       "sheet": "build/learning/learn-05.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md": "ed3f8b7e76ef",
         "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
@@ -108,7 +108,7 @@
         "T30"
       ],
       "sheet": "build/learning/learn-06.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-25-T30-ai-hub-adapters.md": "4466591ce3c3",
         "docs/failures/access/2026-07-24-t02-qualcomm-authentication.md": "3ecd12828d94",
@@ -125,7 +125,7 @@
         "T32"
       ],
       "sheet": "build/learning/learn-07.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-28-T32-device-cloud-baseline.md": "c2f64fe9b6d0",
         "docs/results/qualcomm/device-cloud.md": "74b9be4a509a",
@@ -141,7 +141,7 @@
         "T51"
       ],
       "sheet": "build/learning/learn-08.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md": "84c450e57669",
         "ai/worklogs/2026-07-30-T51-custom-mlx-runtime.md": "4d5d94aca668",
@@ -157,7 +157,7 @@
         "T72"
       ],
       "sheet": "build/learning/learn-09.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         ".github/workflows/README.md": "37d6699eb421",
         "ai/worklogs/2026-07-30-T72-qualcomm-actions.md": "9546b4c0ad79",
@@ -169,10 +169,11 @@
       "title": "Reading a graph before a compiler does",
       "subject": "What an exported graph tells you, and what only a measurement can",
       "covers": [
-        "T21"
+        "T21",
+        "T23"
       ],
       "sheet": "build/learning/learn-10.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "ff00270d341c",
         "configs/graph/README.md": "d7257839030c",
@@ -188,7 +189,7 @@
         "T40"
       ],
       "sheet": "build/learning/learn-11.html",
-      "built": "2026-08-02",
+      "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md": "7b11e5d0fef9",
         "configs/quantization/calibration.yaml": "f3ae61e12908",

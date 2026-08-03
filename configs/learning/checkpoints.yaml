@@ -869,7 +869,7 @@ checkpoints:
       Runtime execution missed thresholds that, it turns out, also reject
       float32. Two very different kinds of evidence, and the second one is a
       lesson in what a threshold is for.
-    tasks: [T21]
+    tasks: [T21, T23]
     attention: Deep study
     outcomes:
       - Explain how a graph can be fully static at its boundary and still be

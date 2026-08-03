@@ -254,17 +254,16 @@
 
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
-      <div class="stat"><div class="num">17<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
-      <div class="stat"><div class="num">3</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
-      <div class="stat"><div class="num">10</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
-      <div class="stat"><div class="num">1</div><div class="lbl">In progress</div></div>
+      <div class="stat"><div class="num">18<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
+      <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
+      <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 17 completed, 1 in progress, 3 ready, 10 blocked, of 31 tasks">
-      <span style="flex:17;background:var(--bar-done)"></span>
-      <span style="flex:1;background:var(--copper)"></span>
-      <span style="flex:3;background:var(--bar-ready)"></span>
-      <span style="flex:10;background:var(--bar-blocked)"></span>
+    <div class="bar" role="img" aria-label="Task progress: 18 completed, 4 ready, 9 blocked, of 31 tasks">
+      <span style="flex:18;background:var(--bar-done)"></span>
+      <span style="flex:4;background:var(--bar-ready)"></span>
+      <span style="flex:9;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
     <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection and the CPU-parity machinery (T21),
@@ -297,7 +296,7 @@
         </div>
         <div class="arrow">→</div>
         <div class="node here">
-          <span class="chip blocked">Blocked</span> <span class="here-tag">← you are here</span>
+          <span class="chip ready">Ready</span> <span class="here-tag">← you are here</span>
           <div class="t">T22 · Package QNN candidates</div>
           <div style="font-size:0.8rem;color:var(--ink-2);">Compiler-friendly rewrites</div>
         </div>
@@ -398,10 +397,10 @@
       <div class="sub">The tasks that are ready right now. Priority follows the plan: Qualcomm first.</div>
     </div>
 
-    <div class="next priority" style="border-style:dashed;">
-      <h3><strong>T23</strong> · Prefill re-export &amp; evidence refresh — <em>in flight</em></h3>
-      <span class="prio-tag">Complete on its branch · awaiting merge</span>
-      <div class="why">Not listed as ready, because it is neither. The four reference prefill graphs could not be loaded by ONNX Runtime's CPU provider at all: they zero-extended the KV cache with a float16 <code>Pad</code>, and ORT registers no float16 <code>Pad</code> kernel. The fix — writing the reserve with <code>Concat</code>, as decode already does — has now been promoted into the attested export, and every committed digest, count and size has been brought back into agreement. All four prefill graphs load on the CPU EP, parity is measured at <code>ORT_DISABLE_ALL</code>, and the numeric-claim audit reports zero disagreements. The work sits on <code>task/T23-prefill-reexport-promotion</code> and has <strong>not been merged</strong>, so the task is still <code>in_progress</code>: nothing downstream can build on it yet. <strong>T22</strong> unblocks when it merges, not before.</div>
+    <div class="next priority">
+      <h3><span class="tid">T22</span> · QNN candidates &amp; packaging</h3>
+      <span class="prio-tag">Priority 1 · Qualcomm lane</span>
+      <div class="why">Transform the reference exports into compiler-oriented QNN candidates without obscuring source parity, and package them for Workbench submission. Unblocked by the T23 merge: the four reference prefill graphs now load on ONNX Runtime's CPU provider, so the candidates are built from bytes that are on <code>main</code> rather than a task branch. The reference and QNN-candidate artifacts must stay distinct, and every transformation recorded.</div>
     </div>
 
     <div class="next priority">
@@ -423,8 +422,7 @@
     </div>
 
     <p style="color:var(--ink-2);font-size:0.95rem;">
-      After those: <strong>T22</strong> (QNN candidate packaging, unblocked once the T23 branch merges) →
-      <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
+      After those: <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
       <strong>T33</strong> (the Qualcomm floating-point milestone) → <strong>T42–T43</strong> (W4/LPBQ/LiteMP and quantized NPU deployment),
       then the demo (T70/T71) and release (T80–T82).
     </p>
