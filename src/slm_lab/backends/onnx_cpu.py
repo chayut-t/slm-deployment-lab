@@ -62,6 +62,16 @@ field is additionally validated against :class:`EvidenceTier` at construction:
 an unknown tier is rejected, but a hand-built record carrying a valid tier
 string is still not a measurement.
 
+The tier answers "was a real session involved". :class:`RecordKind` answers the
+separate question "is this a T21 parity measurement at all", because a
+``--reference-dtype float16`` probe answers the first with
+``real_onnxruntime_cpu`` and is still only a diagnostic:
+:data:`DEFAULT_ORT_CPU_TOLERANCE` is derived for the model contract's
+``reference_dtype`` and no other pairing. ``record_kind`` is derived from the
+reference's own recorded dtype by :func:`classify_record_kind`, is covered by
+``evidence_sha256``, and is backed by a CLI refusal to write an off-contract
+run to a canonical ``S<N>-ort-cpu.json`` name.
+
 Nothing in this module imports ``onnxruntime``, ``torch``, ``numpy``, or
 ``onnx`` at import time, and none of them is needed for the unit tests.
 """
@@ -74,6 +84,7 @@ import json
 import math
 import os
 import platform
+import re
 import sys
 from array import array
 from dataclasses import dataclass, field
@@ -690,7 +701,7 @@ TOLERANCE_STATUS = (
 #     relative_floor = 1.0 and logits of measured RMS 2.19 .. 6.05 (mean 4.74),
 #     roughly a fifth of the vocabulary sits below the floor, and the max of
 #     |delta_z| over that subset is
-#     sqrt(2 ln 0.19V) / sqrt(2 ln V) = 4.55/4.89 = 0.93 of its max over the
+#     sqrt(2 ln 0.19V) / sqrt(2 ln V) = 4.532/4.885 = 0.93 of its max over the
 #     whole vocabulary. So
 #
 #         max_protected_relative_error ~= 0.93 * max_absolute_error
@@ -741,7 +752,7 @@ TOLERANCE_STATUS = (
 # the error it must not fire on is a tight one, not a generous one, and if the
 # derivation had come out below either figure the right answer would have been
 # to record the failure. It would have, at Lambda <= 16 (one binade lower), or
-# with the N=56 count and no margin (0.399), or against a float16 reference
+# with the N=56 count and no margin (0.400), or against a float16 reference
 # (0.201 -- see section 7).
 #
 # ---------------------------------------------------------------------------
@@ -797,7 +808,9 @@ TOLERANCE_STATUS = (
 # ---------------------------------------------------------------------------
 #
 # atol=1.15                       REPLACED (was 0.25)
-#     G_budget * u_eff * Lambda = 9.11 * 3.936e-3 * 32 = 1.147, rounded down.
+#     G_budget * u_eff * Lambda = 9.11 * 3.936e-3 * 32 = 1.147, stated as 1.15.
+#     The rounding DOWN is inside G_budget, where the 2.18x margin was cut to
+#     2.0; the last two significant figures of the product are not.
 # rtol=0.02                       CONFIRMED
 #     `allclose` uses torch's convention |ref - cand| <= atol + rtol * |cand|,
 #     so rtol covers the magnitude-proportional part of the error. Section 4(a)
@@ -853,8 +866,9 @@ TOLERANCE_STATUS = (
 #
 # Both write to results/graph/parity/diagnostics/ and are diagnostics, not T21
 # parity records. The float16-reference probe carries
-# reference_provenance.runtime.dtype = "float16", which is what distinguishes
-# it from the committed S<N>-ort-cpu.json measurements.
+# record_kind = "diagnostic_off_contract_reference_dtype", derived from
+# reference_provenance.runtime.dtype and covered by evidence_sha256, and the
+# CLI refuses outright to write it to an S<N>-ort-cpu.json name.
 DEFAULT_ORT_CPU_TOLERANCE = ParityTolerance(
     atol=1.15,
     rtol=0.02,
@@ -1112,6 +1126,57 @@ class EvidenceTier(str, Enum):
 
     REAL_ONNXRUNTIME_CPU = "real_onnxruntime_cpu"
     FAKE_SESSION_SELF_TEST = "fake_session_self_test"
+
+
+class RecordKind(str, Enum):
+    """What a record *is*, independently of how good its numbers are.
+
+    ``evidence_tier`` answers "was a real session involved"; a float16-reference
+    diagnostic answers that with ``real_onnxruntime_cpu`` and is still not a T21
+    parity measurement, because ``DEFAULT_ORT_CPU_TOLERANCE`` is derived for the
+    model contract's ``reference_dtype`` and nothing else. Before this field
+    existed the only things separating the two were the recorded dtype and the
+    file's name, which made the guard documentation rather than structure.
+    """
+
+    #: Reference model loaded at the contract dtype. The only pairing the
+    #: tolerance covers, so the only kind whose ``passed`` is a T21 verdict.
+    T21_ORT_CPU_PARITY = "t21_ort_cpu_parity"
+    #: Same runner and schema, reference model loaded at some other dtype.
+    #: ``passed`` says nothing about T21 -- see the derivation's section 7.
+    DIAGNOSTIC_OFF_CONTRACT_REFERENCE_DTYPE = (
+        "diagnostic_off_contract_reference_dtype"
+    )
+
+
+def contract_reference_dtype() -> str:
+    """The reference dtype ``DEFAULT_ORT_CPU_TOLERANCE`` is derived for.
+
+    Read from the T00 model contract rather than restated here, so the record
+    kind cannot drift away from the value the reference loader actually
+    defaults to.
+    """
+
+    from slm_lab.models.qwen3_reference import load_model_contract
+
+    return load_model_contract().reference_dtype
+
+
+def classify_record_kind(reference_provenance: Mapping[str, Any]) -> RecordKind:
+    """Decide the record kind from the reference's own recorded dtype.
+
+    Derived from provenance, never from a caller claim, for the same reason
+    :func:`detect_evidence_tier` derives the tier from the session objects. A
+    provenance block with no runtime dtype -- the in-repository fakes -- is
+    treated as the contract pairing, because those records are already fenced
+    off by ``evidence_tier="fake_session_self_test"``.
+    """
+
+    runtime = reference_provenance.get("runtime")
+    dtype = runtime.get("dtype") if isinstance(runtime, Mapping) else None
+    if dtype is None or dtype == contract_reference_dtype():
+        return RecordKind.T21_ORT_CPU_PARITY
+    return RecordKind.DIAGNOSTIC_OFF_CONTRACT_REFERENCE_DTYPE
 
 
 @dataclass(frozen=True)
@@ -1450,16 +1515,18 @@ class ParityEvidence:
     failures: tuple[ParityFailure, ...]
     schema_version: int = SCHEMA_VERSION
     task_id: str = TASK_ID
+    record_kind: str = RecordKind.T21_ORT_CPU_PARITY.value
     evidence_sha256: str = field(default="", compare=False)
 
     def __post_init__(self) -> None:
-        """Reject a tier that is not a member of :class:`EvidenceTier`.
+        """Reject a tier or record kind that is not a declared member.
 
-        ``run()`` derives the tier from the session objects, but the dataclass
-        is public and ``with_digest()`` reconstructs it, so the field is checked
-        here too. This stops a typo or an invented tier from being serialized;
-        it cannot, and does not claim to, stop a caller who owns the code from
-        writing a *valid* tier onto a record that was never measured.
+        ``run()`` derives both from measured facts -- the tier from the session
+        objects, the kind from the reference's recorded dtype -- but the
+        dataclass is public and ``with_digest()`` reconstructs it, so the fields
+        are checked here too. This stops a typo or an invented value from being
+        serialized; it cannot, and does not claim to, stop a caller who owns the
+        code from writing a *valid* one onto a record that was never measured.
         """
 
         try:
@@ -1468,6 +1535,13 @@ class ParityEvidence:
             raise ParityInputError(
                 f"unknown evidence tier {self.evidence_tier!r}; expected one of "
                 f"{[tier.value for tier in EvidenceTier]}"
+            ) from exc
+        try:
+            RecordKind(self.record_kind)
+        except ValueError as exc:
+            raise ParityInputError(
+                f"unknown record kind {self.record_kind!r}; expected one of "
+                f"{[kind.value for kind in RecordKind]}"
             ) from exc
 
     @property
@@ -1489,6 +1563,7 @@ class ParityEvidence:
             {
                 "schema_version": self.schema_version,
                 "task_id": self.task_id,
+                "record_kind": self.record_kind,
                 "evidence_tier": self.evidence_tier,
                 "variant_id": self.variant_id,
                 "prompt_length": self.prompt_length,
@@ -1535,6 +1610,7 @@ class ParityEvidence:
             failures=self.failures,
             schema_version=self.schema_version,
             task_id=self.task_id,
+            record_kind=self.record_kind,
             evidence_sha256=canonical_sha256(self.digest_payload()),
         )
 
@@ -1945,8 +2021,10 @@ class OrtCpuParityRunner:
             "prefill": self._prefill_session,
             "decode": self._decode_session,
         }
+        provenance = dict(self._reference.provenance())
         evidence = ParityEvidence(
             evidence_tier=detect_evidence_tier(list(sessions.values())).value,
+            record_kind=classify_record_kind(provenance).value,
             variant_id=self._contract_prefill.variant_id,
             prompt_length=prompt_length,
             cache_capacity=capacity,
@@ -1954,7 +2032,7 @@ class OrtCpuParityRunner:
             graph_digests=dict(self._graph_digests),
             runtime=runtime_record(sessions),
             tolerance=self._tolerance,
-            reference_provenance=dict(self._reference.provenance()),
+            reference_provenance=provenance,
             steps=tuple(records),
             cache_report=cache_report,
             failures=tuple(failures),
@@ -2436,10 +2514,33 @@ def reference_self_error(
 
     logits: dict[str, list[list[float]]] = {}
     provenance: dict[str, Any] = {}
+    token_path: dict[str, tuple[int, ...]] = {}
     for name in names:
         source = build(name)
         provenance[name] = dict(source.provenance())
         logits[name] = [list(source.next_logits(index)) for index in range(steps + 1)]
+        token_path[name] = tuple(
+            source.expected_token_id(index) for index in range(steps)
+        )
+
+    # The precondition that makes this a *control*. Each dtype teacher-forces
+    # its own greedy token, so if two dtypes chose different tokens at some step
+    # the later rows would compare two different continuations and the measured
+    # "dtype error" would silently include a whole extra token of context --
+    # which is the `consecutive_step_distance` scale, three orders of magnitude
+    # larger. The committed records do agree, but agreeing by luck and agreeing
+    # by construction are different claims, so it is asserted rather than
+    # assumed.
+    baseline_path = token_path[names[0]]
+    for name in names[1:]:
+        if token_path[name] != baseline_path:
+            raise OnnxCpuError(
+                "reference dtypes disagree on the greedy token path, so the "
+                "per-step comparison would not hold context fixed: "
+                f"{names[0]} chose {list(baseline_path)}, {name} chose "
+                f"{list(token_path[name])}. That is a finding about the "
+                "reference model, not a diagnostic to record."
+            )
 
     def measured(left: Sequence[float], right: Sequence[float]) -> dict[str, Any]:
         # relative_floor and the cosine convention are shared with the parity
@@ -2703,10 +2804,10 @@ def build_parser() -> argparse.ArgumentParser:
             "Reference model dtype; defaults to the contract's reference_dtype "
             "(bfloat16). DIAGNOSTIC ONLY: a run at any other dtype is not a T21 "
             "parity record, because DEFAULT_ORT_CPU_TOLERANCE is derived for a "
-            "bfloat16 reference. The chosen dtype is recorded in "
-            "reference_provenance.runtime.dtype, so such a record is "
-            "self-identifying; do not write one over results/graph/parity/"
-            "S<N>-ort-cpu.json"
+            "bfloat16 reference. Such a run is stamped "
+            "record_kind=diagnostic_off_contract_reference_dtype, which is "
+            "covered by evidence_sha256, and the CLI refuses to write it to a "
+            "canonical S<N>-ort-cpu.json name"
         ),
     )
     parser.add_argument(
@@ -2726,6 +2827,40 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     return parser
+
+
+#: The four committed T21 parity records, by name. Anything written here is
+#: read as a T21 measurement by every downstream document and by the audit
+#: tool's ``PARITY_GLOB``.
+CANONICAL_PARITY_RECORD_NAME = re.compile(r"^S\d+-ort-cpu\.json$")
+
+
+def _refuse_off_contract_overwrite(
+    reference_dtype: str | None, output: str | None
+) -> None:
+    """Refuse to write an off-contract-dtype run to a canonical record name.
+
+    The record now says what it is in ``record_kind``, but a file that lands at
+    ``results/graph/parity/S<N>-ort-cpu.json`` is treated as a T21 measurement
+    by the audit tool's glob and by every document that cites the directory.
+    Placement is therefore a second, independent claim, and this refuses to let
+    a diagnostic make it. Checked before any session is created, so the run
+    fails in a second rather than after the measurement.
+    """
+
+    if reference_dtype is None or output is None:
+        return
+    if reference_dtype == contract_reference_dtype():
+        return
+    if not CANONICAL_PARITY_RECORD_NAME.match(Path(output).name):
+        return
+    raise OnnxCpuError(
+        f"refusing to write a --reference-dtype {reference_dtype} run to "
+        f"{Path(output).name}: that name is reserved for T21 parity records, "
+        f"which DEFAULT_ORT_CPU_TOLERANCE is only derived for at the contract "
+        f"dtype {contract_reference_dtype()}. Write the diagnostic under "
+        "results/graph/parity/diagnostics/ with a name that says what it is."
+    )
 
 
 def _run_cli(
@@ -2759,6 +2894,10 @@ def _run_cli(
         else:
             print(document)
         return 0
+
+    _refuse_off_contract_overwrite(
+        getattr(args, "reference_dtype", None), args.output
+    )
 
     artifact_root = resolve_artifact_root(args.artifact_root)
     graphs = verified_graph_paths(manifest, artifact_root)

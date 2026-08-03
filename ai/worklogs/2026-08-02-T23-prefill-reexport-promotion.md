@@ -45,6 +45,19 @@ Committed on `task/T23-prefill-reexport-promotion`:
 - `7391ec3` — the public T23 claim, plus a learning-lane rebuild.
 - `b03a452` — the `R-LARGE-INLINE-CONSTANT` rationale correction (below).
 - `7f6a6cd` — `environments/onnx-cpu/README.md` version pins.
+- Review round: three documents outside the audit tool's `CLAIM_DOCUMENTS`
+  still asserted the superseded `3.11.15` pin or an interpreter divergence the
+  re-attestation had removed (`environments/linux-aimet/README.md` twice,
+  `docs/learning/calibration_and_aimet.md`); several derivation figures were
+  misstated in wording rather than in value; and the float16-reference probe
+  was structurally indistinguishable from a T21 parity record. That last one
+  is the only behaviour change: `ParityEvidence` now carries a `record_kind`
+  derived from the reference's own recorded dtype and covered by
+  `evidence_sha256`, and the CLI refuses to write a non-contract-dtype run to
+  an `S<N>-ort-cpu.json` name. All five committed parity records were
+  regenerated for it; every measured value in all five reproduced
+  byte-identically, so the only lines that moved are `record_kind` and
+  `evidence_sha256`.
 
 ## Verification
 
@@ -52,7 +65,7 @@ Committed on `task/T23-prefill-reexport-promotion`:
   Result: pass — task graph valid; 31 tasks; 12 learning checkpoints; generated
   status current.
 - Command: `python3 scripts/repo/check_hygiene.py --all`
-  Result: pass — 322 tracked and untracked public files.
+  Result: pass — 323 tracked and untracked public files.
 - Command: `python3 scripts/dashboard/build_dashboard.py --check`
   Result: pass — generated regions current and prose matches the graph.
 - Command: `python3 scripts/audit/audit_reference_graph_claims.py citations`
@@ -60,7 +73,9 @@ Committed on `task/T23-prefill-reexport-promotion`:
 - Command: full suite in the parity environment
   (`SLM_LAB_ARTIFACT_ROOT`, `HF_HOME`, `TRANSFORMERS_OFFLINE=1`, `PYTHONPATH=src`,
   `.ai-local/envs/t21-ort-cpu/bin/python -m pytest -q`)
-  Result: **594 passed, 9 skipped, 138 subtests passed, 0 failed** in 62.9 s.
+  Result: **601 passed, 9 skipped, 138 subtests passed, 0 failed** in 63.1 s.
+  (594 when this log was first written; the review round below added seven
+  tests.)
 - Command: `python -m slm_lab.graph.inspection --all-manifests --check`
   Result: pass — the committed inspection reports reproduce from their producer.
 
@@ -124,7 +139,10 @@ the document — reported 0 disagreements before the work was committed, because
 current or the baseline snapshot, and the old digest was still in HEAD. After
 committing, the same falsification reported 1 disagreement. The 0 that matters
 is the one taken against a committed baseline; a green audit on a dirty tree
-proves less than it appears to.
+proves less than it appears to. The review round moved this out of the worklog
+and into the tool: `citations` now prints a `NOTE: not checked` naming both
+skipped checks whenever the baseline snapshot equals the worktree, and the
+docstring and `--baseline-ref` help say why.
 
 **Discoveries worth carrying forward** are recorded in the execution plan's
 "Decisions and discoveries": the prescribed promotion order was not executable

@@ -168,7 +168,7 @@ section is the reading, not a second copy.
 
 | Threshold | T21 derived | T21 superseded | T11 in use | Where the T21 value comes from |
 |---|---:|---:|---:|---|
-| `atol` | **1.15** | 0.25 | 0.25 | `G_budget · u_eff · Λ` = 9.11 × 3.936e-3 × 32 = 1.147, rounded **down**. |
+| `atol` | **1.15** | 0.25 | 0.25 | `G_budget · u_eff · Λ` = 9.11 × 3.936e-3 × 32 = 1.147, stated as 1.15. The rounding **down** is inside `G_budget`, where the 2.18x margin was cut to 2.0 — not in the last two figures of the product. |
 | `rtol` | 0.02 | 0.02 | 0.02 | *Confirmed.* Covers only the magnitude-proportional term — the final logit rounding, 1–2 ULP. With the same 2x margin that is 4·u_bf = 0.0156; 0.02 sits just above it. |
 | `protected_relative_max` | **1.05** | 0.10 | 0.10 | 0.93 × `atol` = 1.07, rounded down. A restatement of `atol` at this logit distribution, not an independent check. |
 | `relative_floor` | 1.0 | 1.0 | 1.0 | *Unchanged*, deliberately identical to T11 so a T21 number and a T11 number compare directly. |
@@ -269,7 +269,7 @@ measured candidate error (0.578). Those two are nearly the same number because
 they are nearly the same quantity — see point 1. A tolerance sitting at twice
 the error it must not fire on is a tight one. The derivation would have landed
 *below* the measurement at Λ ≤ 16 (one binade lower), or with the 56-store
-count and no margin (0.399), or against a float16 reference (0.201), and in
+count and no margin (0.400), or against a float16 reference (0.201), and in
 each of those cases the right answer would have been to record the failure.
 
 **4. It still fails loudly on a mis-wired graph.** The question a widened
@@ -323,11 +323,15 @@ with 3x to spare.
 
 That is the evidence that the graph is faithful and that the entire gap was the
 reference dtype. It is committed as
-`results/graph/parity/diagnostics/S128-ort-cpu-float16-reference-probe.json`,
-distinguished from a real record by `reference_provenance.runtime.dtype =
-"float16"` — **not** by `task_id`, which is a fixed field of the evidence schema
-and still reads `T21`. Whether the T21 comparison should move to a float16
-reference is a contract decision that `T23` deliberately did not take.
+`results/graph/parity/diagnostics/S128-ort-cpu-float16-reference-probe.json` and
+carries `record_kind = "diagnostic_off_contract_reference_dtype"`, derived from
+`reference_provenance.runtime.dtype` and covered by `evidence_sha256`. It is
+**not** distinguished by `task_id`, which is a fixed field of the schema and
+still reads `T21`, nor by `evidence_tier`, which honestly reads
+`real_onnxruntime_cpu` because real sessions ran. The CLI also refuses outright
+to write a non-contract-dtype run to an `S<N>-ort-cpu.json` name, so placement
+cannot make the claim either. Whether the T21 comparison should move to a
+float16 reference is a contract decision that `T23` deliberately did not take.
 
 Two diagnostics make both of these reproducible from committed code, through
 CLI flags that did not exist when this document was first written:
@@ -992,8 +996,9 @@ the run that produced these records: **`onnxruntime` 1.28.0** and **`numpy`
 `docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md`, with the
 runtime version independently read back into every parity record's
 `runtime.onnxruntime_version`. The version table in
-`environments/onnx-cpu/README.md` still carries placeholders and is owed that
-update; it is not this document's to make.
+`environments/onnx-cpu/README.md` carried placeholders when this section was
+written and now carries the same two pins, each with the smoke test that
+justifies it.
 
 Then run the measurement:
 
@@ -1059,6 +1064,7 @@ Written to the `--output` path (stdout if omitted), as sorted-key JSON with
 | Field | Content |
 |---|---|
 | `schema_version`, `task_id` | `1`, `"T21"` |
+| `record_kind` | derived from the reference's own recorded dtype by `classify_record_kind`; `t21_ort_cpu_parity` only when the reference ran at the contract's `reference_dtype`, otherwise `diagnostic_off_contract_reference_dtype`. It answers a different question from `evidence_tier` — see below. |
 | `evidence_tier` | derived from the session objects; `real_onnxruntime_cpu` only for genuine sessions |
 | `variant_id`, `prompt_length`, `cache_capacity`, `steps_requested` | `"S128"`, `128`, `160`, and the `--steps` value |
 | `graph_digests` | per graph kind: the verified `sha256` and the manifest `relative_path` (e.g. `S128/prefill.onnx`). Built by `graph_digests_payload`, which the CLI and the guarded real-runtime test both call, so the two produce comparable records. No absolute host path appears in the evidence: it is committed under `results/graph/parity/` and covered by `evidence_sha256`, so it must not depend on where the artifact root is mounted. |

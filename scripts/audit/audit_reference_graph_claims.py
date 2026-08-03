@@ -52,6 +52,15 @@ What this tool does NOT prove
 * ``citations`` proves agreement only for claims it can *bind* to a subject
   structurally. A claim it cannot bind is not checked here; it is left to
   ``claims``.
+* **A digest is "known" if it appears in *either* snapshot.** ``known_digests``
+  is the union of the current and the baseline measured digests, so with the
+  default ``--baseline-ref HEAD`` an uncommitted edit that reinstates a
+  superseded digest is still "known" and ``check_unresolved_digests`` stays
+  quiet about it. For the same reason ``sweep_stale_digests`` has an empty
+  stale set against ``HEAD`` and performs no sweep at all. Both checks only
+  say something once the baseline is a *pre-promotion commit*, which is what
+  ``--baseline-ref <commit>`` selects; ``citations`` prints a NOTE naming the
+  checks it skipped whenever the two snapshots are identical.
 * Nothing here establishes that the graphs are correct, loadable, or numerically
   faithful. It compares records to records, and records to file digests.
 """
@@ -1870,11 +1879,36 @@ def run_citations(args: argparse.Namespace) -> int:
     if not args.no_stale_sweep:
         findings.extend(sweep_stale_digests(current_reader, current, baseline))
 
+    # A "0 disagreements" line has to say what it did not look at. When the
+    # baseline snapshot equals the worktree -- which is what the default
+    # --baseline-ref HEAD gives on a clean tree -- the stale set is empty, so
+    # sweep_stale_digests walks nothing, and known_digests() is a union in
+    # which no digest can be superseded, so check_unresolved_digests cannot
+    # object to one either. `claims` already prints this; `citations` is the
+    # mode whose exit code gets quoted as evidence, so it prints it too.
+    identical = _snapshots_identical(current, baseline)
+    skipped: List[str] = []
+    if identical:
+        skipped.append(
+            "baseline evidence is identical to the worktree, so the "
+            "stale-digest sweep had an empty stale set and walked no files, "
+            "and known_digests() -- the union of both snapshots -- contains no "
+            "superseded digest for the unresolved-digest check to flag. "
+            "Re-run with --baseline-ref <pre-promotion commit> to exercise "
+            "both."
+        )
+    elif args.no_stale_sweep:
+        skipped.append(
+            "--no-stale-sweep: no tracked file outside the bound documents was "
+            "searched for a superseded digest."
+        )
+
     if args.json:
         print(json.dumps({
             "mode": "citations",
             "artifact_root": str(artifact_root) if artifact_root else None,
             "notes": current.notes,
+            "not_checked": skipped,
             "findings": [f.__dict__ for f in findings],
         }, indent=2))
         return 1 if findings else 0
@@ -1885,6 +1919,8 @@ def run_citations(args: argparse.Namespace) -> int:
     print(f"repository      {root}")
     print(f"baseline state  {baseline_reader.name}")
     print(f"artifact re-hash {artifact_root if artifact_root else 'not available'}")
+    for entry in skipped:
+        print(f"  NOTE: not checked -- {entry}")
     for note in current.notes:
         print(f"  note: {note}")
     print(f"measured facts  {len(current.facts)}")
@@ -1947,7 +1983,12 @@ def build_parser() -> argparse.ArgumentParser:
             help="git ref supplying the comparison snapshot of the measured "
                  "evidence (default: HEAD). Before the re-export lands this "
                  "equals the worktree and nothing can be reported as moved; "
-                 "afterwards, name the pre-promotion commit.")
+                 "afterwards, name the pre-promotion commit. It also decides "
+                 "what the two stale-digest checks can see: a digest counts as "
+                 "known when it appears in EITHER snapshot, so against an "
+                 "identical baseline the stale set is empty, the sweep walks no "
+                 "files, and no superseded digest can be flagged. citations "
+                 "prints a NOTE saying so.")
         mode.add_argument("--include-historical", action="store_true",
                           help="also scan documents recording past "
                                "measurements, which must not be edited")

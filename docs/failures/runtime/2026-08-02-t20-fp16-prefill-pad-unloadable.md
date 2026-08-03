@@ -791,8 +791,10 @@ the exporter commit, and the runtime Python version; `FROZEN_EXPORT_CONFIG_SHA25
 in the exporter pins that config's bytes; `_trusted_export_config_bytes`
 requires the on-disk config to equal `HEAD`'s copy; and `_export_provenance`
 requires the attested commit's copy of the config to equal the current one with
-the `evidence_attestation` block removed — which is why the currently attested
-commit `631fd70` carries a config with no attestation block at all.
+the `evidence_attestation` block removed — which is why the commit attested at
+the time this was written, `631fd70`, carries a config with no attestation block
+at all. (T23 has since re-attested to its own such commit; `exporter_commit` in
+that config is the current answer.)
 
 The promotion order that satisfies those checks — **not executable as written;
 see correction 2 above for the chain that was actually used**:

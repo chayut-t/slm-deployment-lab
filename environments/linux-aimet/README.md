@@ -373,9 +373,11 @@ an environment bug, not a quantization result.
 ## Relationship to the T20 export pins
 
 T20 exported the reference ONNX graph with `torch 2.7.1`, `transformers
-4.51.3`, `onnx 1.18.0`, opset 18, float16, on CPython 3.11.15, recorded in
-`configs/models/qwen3-0.6b-onnx-export.json`. This environment holds those
-three pins.
+4.51.3`, `onnx 1.18.0`, opset 18, float16, on CPython 3.11.15. T23 re-exported
+the four prefill graphs and re-attested on 3.11.13, so
+`configs/models/qwen3-0.6b-onnx-export.json` now records
+`runtime_python_version: 3.11.13`; the three library pins are unchanged by that
+re-export. This environment holds those three pins.
 
 Holding them is currently free, which is a fact to state precisely rather than
 a coincidence to rely on:
@@ -426,15 +428,17 @@ differ silently.
    `transformers`, do not quietly relax `aimet-requirements.in`. Record the
    forced version, the AIMET release that forced it, and the resolver error,
    then re-run the T20 baseline parity check above on the new stack.
-3. The CPython interpreter is covered by this rule too, and one divergence
-   already exists. T20 exported on CPython **3.11.15**
-   (`runtime_python_version` in `configs/models/qwen3-0.6b-onnx-export.json`),
-   while this environment builds on the repository-pinned **3.11.13**
-   (`environments/common-toolchain.json`). That is a patch-level difference in
-   the interpreter that produced the graph versus the one that will consume it.
-   It is recorded rather than hidden; any run on this stack must carry both
-   interpreter versions in its artifact manifest, exactly as it carries both
-   library version sets.
+3. The CPython interpreter is covered by this rule too, and a patch-level
+   difference between the interpreter that produced the graph and the one that
+   will consume it counts. Any run on a stack whose interpreter differs from
+   the attested one must carry both interpreter versions in its artifact
+   manifest, exactly as it carries both library version sets. There is no such
+   difference right now: T20 originally exported on CPython 3.11.15, but T23
+   re-exported and moved the pin, so `runtime_python_version` in
+   `configs/models/qwen3-0.6b-onnx-export.json` is **3.11.13** — the same
+   repository-pinned interpreter this environment builds on
+   (`environments/common-toolchain.json`). The rule stands; it currently has no
+   live instance.
 4. Any run produced on a diverged stack must record both version sets in its
    artifact manifest and be labelled as such wherever its numbers appear. Do
    not compare a diverged-stack quantization number to a T20-stack baseline

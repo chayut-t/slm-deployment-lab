@@ -815,6 +815,49 @@ class EndToEndCliTests(unittest.TestCase):
         self.assertIn("empty by construction", out)
         self.assertIn("UNCLASSIFIED", out)
 
+    def test_citations_names_the_checks_an_identical_baseline_skips(
+        self,
+    ) -> None:
+        """A "0 disagreements" has to say what it did not look at.
+
+        Against the default `--baseline-ref HEAD` on a clean tree the stale set
+        is empty, so `sweep_stale_digests` walks no file at all, and
+        `known_digests()` is a union in which no digest can be superseded. That
+        exit code is quoted as evidence for an acceptance criterion, so the
+        silence had to become a printed NOTE.
+        """
+
+        text = (
+            "| Variant | Graph | Nodes |\n"
+            "|---|---|---:|\n"
+            "| S128 | prefill | 8,753 |\n"
+        )
+        with TemporaryDirectory() as tmp:
+            root = self._repo(Path(tmp), text)
+            code, out = self._run(["citations", "--repo-root", str(root)])
+            code_json, out_json = self._run(
+                ["citations", "--repo-root", str(root), "--json"])
+        self.assertEqual(code, 0, out)
+        self.assertIn("NOTE: not checked", out)
+        self.assertIn("stale-digest sweep", out)
+        self.assertIn("known_digests()", out)
+        self.assertEqual(code_json, 0, out_json)
+        self.assertEqual(len(json.loads(out_json)["not_checked"]), 1)
+
+    def test_citations_makes_no_such_note_against_a_moved_baseline(
+        self,
+    ) -> None:
+        """With a real pre-promotion baseline both checks do run."""
+
+        text = "nothing to bind here\n"
+        with TemporaryDirectory() as tmp:
+            root = self._repo(Path(tmp), text)
+            for relpath, body in evidence_files(**POST).items():
+                (root / relpath).write_text(body, encoding="utf-8")
+            code, out = self._run(["citations", "--repo-root", str(root)])
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("NOTE: not checked", out)
+
 
 if __name__ == "__main__":
     unittest.main()

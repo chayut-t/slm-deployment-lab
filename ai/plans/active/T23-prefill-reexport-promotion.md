@@ -199,7 +199,9 @@ rule. See the last entry under "Decisions and discoveries".
 
 All eight milestones are met on `task/T23-prefill-reexport-promotion`. The
 promotion is done, the evidence is regenerated, and the audit tool reports zero
-citation disagreements across all nine in-scope documents.
+citation disagreements. `CLAIM_DOCUMENTS` holds eight in-scope documents, of
+which `citations` binds the six with `role="reconcile"`; the other two are
+`role="historical"` and are enumerated by `claims` rather than bound.
 
 **The work is not merged, and merging was not authorized.** `T23` therefore
 stays `in_progress` in `ai/tasks/task_graph.yaml`: the schema allows only

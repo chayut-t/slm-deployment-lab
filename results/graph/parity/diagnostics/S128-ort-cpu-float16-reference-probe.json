@@ -56,7 +56,7 @@
       }
     ]
   },
-  "evidence_sha256": "65ad9e9c91db4f729a914dcf0e7f9d44a8ed3d3d8f43d255e39988bd928a9e38",
+  "evidence_sha256": "76597938527c6bcd5b787f898aad1d8d3bcca006a5d7f30302eb1d243c511eec",
   "evidence_tier": "real_onnxruntime_cpu",
   "failure_kinds": [],
   "failures": [],
@@ -72,6 +72,7 @@
   },
   "passed": true,
   "prompt_length": 128,
+  "record_kind": "diagnostic_off_contract_reference_dtype",
   "reference_provenance": {
     "expected_token_ids": [
       9569,

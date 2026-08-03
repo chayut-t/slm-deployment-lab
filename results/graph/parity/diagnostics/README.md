@@ -13,6 +13,12 @@ its contract dtype, **bfloat16**, on the ONNX Runtime CPU provider at
 `ORT_DISABLE_ALL`. That pairing is what `DEFAULT_ORT_CPU_TOLERANCE` is derived
 for, and nothing here may be copied over them.
 
+**Read `record_kind`, at the top level of every file here and of every record
+one level up.** A T21 parity record carries `t21_ort_cpu_parity`; anything else
+is a diagnostic whose `passed` is not a T21 verdict. The field is derived from
+the reference's own recorded dtype, is covered by `evidence_sha256`, and the CLI
+refuses to write a non-contract-dtype run to an `S<N>-ort-cpu.json` name at all.
+
 ## `S<N>-reference-dtype-self-error.json`
 
 `record_kind: diagnostic_reference_dtype_self_error`. No ONNX Runtime session
@@ -51,10 +57,12 @@ python -m slm_lab.backends.onnx_cpu --reference-self-error \
 
 The same runner and schema as a T21 record, but with the reference model in
 **float16** instead of bfloat16, so both sides of the comparison carry the same
-11 significand bits. `reference_provenance.runtime.dtype` is `"float16"`, which
-is what distinguishes it from a real record; note that `task_id` still reads
-`T21` because it is a fixed field of the evidence schema, so **do not identify a
-record by `task_id`** — use the dtype and the path.
+11 significand bits. It says so structurally:
+`record_kind: diagnostic_off_contract_reference_dtype`, derived from
+`reference_provenance.runtime.dtype` and covered by `evidence_sha256`. Note that
+`task_id` still reads `T21` and `evidence_tier` still reads
+`real_onnxruntime_cpu` — both are true and neither distinguishes anything, so
+**identify a record by `record_kind`**, not by those two.
 
 Result: max absolute error 0.031 … 0.066 against 0.297 … 0.461 for the same
 steps with a bfloat16 reference — 6.9x to 9.8x tighter. The derivation predicts

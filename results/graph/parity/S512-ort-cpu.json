@@ -56,7 +56,7 @@
       }
     ]
   },
-  "evidence_sha256": "c1e81476be0d1f36be90bcedb837b9a7c28be9789413523f13587f926ae768f4",
+  "evidence_sha256": "18c2ccd556e3dd1787a76dba4d0bbb004bb7db9e69b2a6e3ac1e093e3943ad5d",
   "evidence_tier": "real_onnxruntime_cpu",
   "failure_kinds": [],
   "failures": [],
@@ -72,6 +72,7 @@
   },
   "passed": true,
   "prompt_length": 512,
+  "record_kind": "t21_ort_cpu_parity",
   "reference_provenance": {
     "expected_token_ids": [
       21448,

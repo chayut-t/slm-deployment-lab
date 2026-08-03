@@ -1853,6 +1853,36 @@ def test_reference_self_error_measures_the_reference_against_itself() -> None:
     assert verdict["every_consecutive_step_pair_fails"] is True
 
 
+def test_reference_self_error_requires_one_shared_greedy_token_path() -> None:
+    """It is a control only while all three dtypes decode the same tokens.
+
+    Each dtype teacher-forces its own greedy token, so if two of them chose
+    differently at some step the later rows would compare two *different*
+    continuations. The measured "dtype error" would then quietly include a
+    whole extra token of context, which is the `consecutive_step_distance`
+    scale — three orders of magnitude larger than the effect being measured,
+    and in the direction that makes a tolerance look generous. The committed
+    records do agree; this is what makes that a checked precondition rather
+    than a lucky one.
+    """
+
+    class DivergentReference(DtypeFakeReference):
+        def expected_token_id(self, step: int) -> int:
+            return step + (1 if self.dtype == "float16" else 0)
+
+    wobble = {"float32": 0.0, "bfloat16": 0.05, "float16": 0.006}
+    with pytest.raises(OnnxCpuError) as excinfo:
+        onnx_cpu.reference_self_error(
+            128,
+            steps=2,
+            reference_factory=lambda name: DivergentReference(
+                name, steps=2, vocab=8, wobble=wobble[name]
+            ),
+        )
+
+    assert "greedy token path" in str(excinfo.value)
+
+
 def test_cli_self_error_mode_never_builds_a_session(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1907,6 +1937,121 @@ def test_reference_dtype_defaults_to_the_contract_and_is_constrained() -> None:
     ).reference_dtype == "float16"
     with pytest.raises(SystemExit):
         parser.parse_args(["--manifest", "x", "--reference-dtype", "int8"])
+
+
+def test_record_kind_is_derived_from_the_reference_dtype() -> None:
+    """A probe must not be structurally identical to a T21 record.
+
+    ``evidence_tier`` cannot carry this: a ``--reference-dtype float16`` run
+    creates real ONNX Runtime sessions, so it is honestly
+    ``real_onnxruntime_cpu``, and it is honestly ``task_id="T21"`` and honestly
+    ``passed`` — against a tolerance derived for a *bfloat16* reference, which
+    is roughly 5.7x too loose for that pairing. Before ``record_kind`` the only
+    differences were one nested provenance string and the file's name.
+    """
+
+    contract_dtype = onnx_cpu.contract_reference_dtype()
+    assert contract_dtype == "bfloat16"
+
+    parity = onnx_cpu.classify_record_kind(
+        {"runtime": {"dtype": contract_dtype}}
+    )
+    assert parity is onnx_cpu.RecordKind.T21_ORT_CPU_PARITY
+
+    probe = onnx_cpu.classify_record_kind({"runtime": {"dtype": "float16"}})
+    assert probe is onnx_cpu.RecordKind.DIAGNOSTIC_OFF_CONTRACT_REFERENCE_DTYPE
+
+    # A provenance block with no runtime dtype is the in-repository fake, which
+    # `evidence_tier` already fences off.
+    assert (
+        onnx_cpu.classify_record_kind({})
+        is onnx_cpu.RecordKind.T21_ORT_CPU_PARITY
+    )
+
+
+def test_record_kind_is_serialized_and_covered_by_the_digest() -> None:
+    """A marker outside `evidence_sha256` could be edited off a record."""
+
+    runner, _, _ = build_runner(steps=2)
+    evidence = runner.run(2)
+
+    payload = json.loads(evidence.to_json())
+    assert payload["record_kind"] == "t21_ort_cpu_parity"
+
+    relabelled = dataclasses.replace(
+        evidence,
+        record_kind=(
+            onnx_cpu.RecordKind.DIAGNOSTIC_OFF_CONTRACT_REFERENCE_DTYPE.value
+        ),
+    ).with_digest()
+    assert relabelled.evidence_sha256 != evidence.evidence_sha256
+
+    with pytest.raises(ParityInputError):
+        dataclasses.replace(evidence, record_kind="looks_official")
+
+
+def test_a_probe_may_not_be_written_to_a_canonical_parity_name(
+    tmp_path: Path,
+) -> None:
+    """Placement is a second claim, so the CLI refuses to let a probe make it.
+
+    ``results/graph/parity/S<N>-ort-cpu.json`` is what the audit tool's glob
+    and every citing document read as a T21 measurement. This fires before any
+    session is created, so it costs a second rather than a whole run.
+    """
+
+    manifest_path, root = write_manifest(tmp_path)
+    canonical = tmp_path / "S128-ort-cpu.json"
+
+    def explode(path: Path) -> Any:  # pragma: no cover - must never be called
+        raise AssertionError(f"a session was built for {path}")
+
+    code = main(
+        [
+            "--manifest",
+            str(manifest_path),
+            "--artifact-root",
+            str(root),
+            "--steps",
+            "1",
+            "--reference-dtype",
+            "float16",
+            "--output",
+            str(canonical),
+        ],
+        session_factory=explode,
+    )
+
+    assert code == 2
+    assert not canonical.exists()
+
+    # The contract dtype is allowed at that name, and a diagnostic name is
+    # allowed at any dtype; neither raises here.
+    onnx_cpu._refuse_off_contract_overwrite(
+        onnx_cpu.contract_reference_dtype(), str(canonical)
+    )
+    onnx_cpu._refuse_off_contract_overwrite(
+        "float16", str(tmp_path / "S128-ort-cpu-float16-reference-probe.json")
+    )
+
+
+def test_committed_probe_says_what_it_is() -> None:
+    """The committed float16-reference probe carries the diagnostic kind."""
+
+    path = (
+        ROOT
+        / "results/graph/parity/diagnostics"
+        / "S128-ort-cpu-float16-reference-probe.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert (
+        payload["record_kind"] == "diagnostic_off_contract_reference_dtype"
+    ), "the committed probe must not look like a T21 record"
+    assert payload["reference_provenance"]["runtime"]["dtype"] == "float16"
+
+    for record in sorted((ROOT / "results/graph/parity").glob("S*-ort-cpu.json")):
+        committed = json.loads(record.read_text(encoding="utf-8"))
+        assert committed["record_kind"] == "t21_ort_cpu_parity", record.name
 
 
 # ---------------------------------------------------------------------------

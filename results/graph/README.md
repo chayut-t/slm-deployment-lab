@@ -74,8 +74,9 @@ load failure that made the re-export necessary.
 `parity/diagnostics/` holds the records that justify the tolerance rather than
 apply it: a reference-against-itself run at float32, bfloat16 and float16 with
 no ONNX Runtime session anywhere, and a float16-reference parity probe. They
-are **not** T21 parity records and must never be read as one; see the README in
-that directory.
+are **not** T21 parity records and must never be read as one; each says so in
+its own `record_kind`, which only reads `t21_ort_cpu_parity` for the four files
+above. See the README in that directory.
 
 Unlike the inspection reports above, a parity record *is* a numerical claim,
 made by a named runtime on a named host, and it carries its own
