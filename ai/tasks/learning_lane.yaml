@@ -94,7 +94,7 @@
       "sheet": "build/learning/learn-05.html",
       "built": "2026-08-02",
       "sources": {
-        "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md": "b669b244ab2f",
+        "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md": "ed3f8b7e76ef",
         "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
         "src/slm_lab/export/README.md": "5fc2d1e3edb1"
       }
@@ -176,8 +176,8 @@
       "sources": {
         "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "ff00270d341c",
         "configs/graph/README.md": "d7257839030c",
-        "docs/results/onnx/graph-inspection.md": "192e1f6fc92f",
-        "docs/results/onnx/ort-cpu-parity.md": "715f515c66a7"
+        "docs/results/onnx/graph-inspection.md": "a4878a287ea9",
+        "docs/results/onnx/ort-cpu-parity.md": "06530446d8f2"
       }
     },
     {
