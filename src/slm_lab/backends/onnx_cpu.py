@@ -1,9 +1,15 @@
 """ONNX Runtime CPU parity and multi-step static-cache validation (T21).
 
-This module drives the eight static graphs exported by T20 through ONNX
-Runtime on CPU and compares them against the deterministic T11 PyTorch
-reference. It separates two failure modes that look similar in a log and have
-completely different fixes:
+This module drives static prefill/decode graph pairs through ONNX Runtime on
+CPU and compares them against the deterministic T11 PyTorch reference. Which
+graphs it reads is the manifest's decision, not this module's: a manifest pins
+the digests and names its artifact stage in ``artifacts.root``, which
+:func:`manifest_graph_directory` expands the same way
+``slm_lab.graph.inspection`` does. The committed T20 manifests name the eight
+reference graphs, and a later stage measured through the same protocol,
+tolerance and code is comparable evidence in a way a second implementation
+would not be. It separates two failure modes that look similar in a log and
+have completely different fixes:
 
 * ``numerical_tolerance`` -- the graph is wired correctly, but FP16 storage and
   a different backend's accumulation order move the logits outside an explicit,
@@ -105,6 +111,12 @@ from slm_lab.contracts.static_cache import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_ARTIFACT_SYMLINK = PROJECT_ROOT / "artifacts"
+#: The token a manifest's ``artifacts.root`` uses to stand for the artifact
+#: root, expanded exactly as ``slm_lab.graph.inspection`` expands it.
+ARTIFACT_ROOT_TOKEN = "${SLM_LAB_ARTIFACT_ROOT}"
+#: Where a manifest that carries no ``artifacts.root`` is assumed to keep its
+#: graphs. Every committed manifest carries the template, so this is the
+#: compatibility path for an older or hand-written one, not the normal one.
 ARTIFACT_SUBDIRECTORY = Path("onnx/reference/T20")
 DEFAULT_MANIFEST_PATH = PROJECT_ROOT / "results/manifests/onnx/S128.json"
 TASK_ID = "T21"
@@ -2355,7 +2367,7 @@ class TorchReferenceSource:
         fixture_path: Path | None = None,
         **kwargs: Any,
     ) -> TorchReferenceSource:
-        """Build the source from a T20 manifest's frozen T10 workload."""
+        """Build the source from the manifest's frozen T10 workload."""
 
         context_length = manifest.get("context_length")
         if not isinstance(context_length, int):
@@ -2659,6 +2671,13 @@ def resolve_artifact_root(explicit: str | None = None) -> Path:
 
     value = explicit or os.environ.get("SLM_LAB_ARTIFACT_ROOT")
     root = Path(value).expanduser() if value else DEFAULT_ARTIFACT_SYMLINK
+    # Absolutized against the working directory, as
+    # ``slm_lab.graph.inspection.resolve_artifact_root`` already does, because
+    # a manifest's ``artifacts.root`` template is expanded against this value
+    # and is required to come out absolute. It names the same directory either
+    # way; only the string in an error message changes.
+    if not root.is_absolute():
+        root = (Path.cwd() / root).resolve()
     if not root.is_dir():
         raise OnnxCpuError(
             f"artifact root does not exist: {root}. Set SLM_LAB_ARTIFACT_ROOT "
@@ -2671,9 +2690,9 @@ def load_manifest(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise OnnxCpuError(f"cannot load T20 manifest {path}: {exc}") from exc
+        raise OnnxCpuError(f"cannot load manifest {path}: {exc}") from exc
     if not isinstance(payload, dict):
-        raise OnnxCpuError(f"T20 manifest {path} is not a JSON object")
+        raise OnnxCpuError(f"manifest {path} is not a JSON object")
     return payload
 
 
@@ -2683,15 +2702,52 @@ def safe_relative(directory: Path, relative_path: Any) -> Path:
     A manifest is an input file like any other, so the same guard
     ``slm_lab.graph.inspection._safe_relative`` applies to the inspection side
     applies here: an absolute path or one containing ``..`` is rejected rather
-    than silently resolved outside the artifact root.
+    than silently resolved outside the graph directory.
     """
 
     if not isinstance(relative_path, str) or not relative_path:
-        raise OnnxCpuError("T20 manifest relative_path must be a non-empty string")
+        raise OnnxCpuError("manifest relative_path must be a non-empty string")
     pure = PurePosixPath(relative_path)
     if pure.is_absolute() or ".." in pure.parts or not pure.parts:
-        raise OnnxCpuError(f"unsafe T20 manifest relative_path {relative_path!r}")
+        raise OnnxCpuError(f"unsafe manifest relative_path {relative_path!r}")
     return directory.joinpath(*pure.parts)
+
+
+def manifest_graph_directory(
+    artifacts: Mapping[str, Any],
+    artifact_root: Path,
+) -> Path:
+    """Resolve the directory holding one manifest's graphs.
+
+    A manifest names its own artifact stage in ``artifacts.root``, and the
+    ``${SLM_LAB_ARTIFACT_ROOT}`` token in that template is expanded against the
+    resolved artifact root exactly as
+    ``slm_lab.graph.inspection._expand_artifact_root`` expands it. Reading the
+    stage from the manifest instead of hard-coding one is what lets a single
+    runner -- one protocol, one tolerance, one implementation -- measure the T20
+    reference graphs and any later graph stage. A second parity implementation
+    for a second stage would not produce comparable evidence.
+
+    A manifest carrying no ``root`` key falls back to
+    :data:`ARTIFACT_SUBDIRECTORY`, so an older or hand-written manifest resolves
+    exactly where it always did. For every committed manifest under
+    ``results/manifests/onnx/`` the template and that fallback name the same
+    directory; ``tests/onnx/test_onnx_cpu_parity.py`` checks that against the
+    committed files rather than assuming it.
+    """
+
+    if "root" not in artifacts:
+        return artifact_root / ARTIFACT_SUBDIRECTORY
+    template = artifacts["root"]
+    if not isinstance(template, str) or not template:
+        raise OnnxCpuError("manifest artifacts.root must be a non-empty string")
+    expanded = template.replace(ARTIFACT_ROOT_TOKEN, artifact_root.as_posix())
+    directory = Path(expanded)
+    if not directory.is_absolute():
+        raise OnnxCpuError(
+            f"manifest artifacts.root did not resolve to an absolute path: {expanded}"
+        )
+    return directory
 
 
 def verified_graph_paths(
@@ -2700,36 +2756,39 @@ def verified_graph_paths(
 ) -> dict[str, tuple[Path, str, str]]:
     """Resolve and hash-verify both graphs before any session is created.
 
-    Each entry is ``(resolved_path, sha256, manifest_relative_path)``. The
-    resolved path is a host detail used to open the file; the relative path is
-    what identifies the graph in committed evidence. See
-    :func:`graph_digests_payload`.
+    The directory comes from the manifest through
+    :func:`manifest_graph_directory`, so this measures whichever graph stage the
+    given manifest names. Each entry is
+    ``(resolved_path, sha256, manifest_relative_path)``. The resolved path is a
+    host detail used to open the file; the relative path is what identifies the
+    graph in committed evidence. See :func:`graph_digests_payload`.
     """
 
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, Mapping):
-        raise OnnxCpuError("T20 manifest has no artifacts block")
-    directory = artifact_root / ARTIFACT_SUBDIRECTORY
+        raise OnnxCpuError("manifest has no artifacts block")
+    directory = manifest_graph_directory(artifacts, artifact_root)
     resolved: dict[str, tuple[Path, str]] = {}
     for kind in ("prefill", "decode"):
         record = artifacts.get(kind)
         if not isinstance(record, Mapping):
-            raise OnnxCpuError(f"T20 manifest has no {kind} artifact record")
+            raise OnnxCpuError(f"manifest has no {kind} artifact record")
         relative = record.get("relative_path")
         expected = record.get("sha256")
         if not isinstance(relative, str) or not isinstance(expected, str):
-            raise OnnxCpuError(f"T20 manifest {kind} record lacks relative_path/sha256")
+            raise OnnxCpuError(f"manifest {kind} record lacks relative_path/sha256")
         path = safe_relative(directory, relative)
         if not path.is_file():
             raise OnnxCpuError(
-                f"missing {kind} graph {path}. Export it with T20 or point "
-                "--artifact-root at the storage that holds it."
+                f"missing {kind} graph {path}. Build the artifact stage this "
+                "manifest names in artifacts.root -- T20 exports the reference "
+                "stage -- or point --artifact-root at the storage that holds it."
             )
         actual = sha256_file(path)
         if actual != expected:
             raise OnnxCpuError(
                 f"{kind} graph {path} does not match the digest committed in "
-                f"the T20 manifest: expected {expected}, found {actual}"
+                f"the manifest: expected {expected}, found {actual}"
             )
         resolved[kind] = (path, expected, relative)
     return resolved
@@ -2757,20 +2816,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m slm_lab.backends.onnx_cpu",
         description=(
-            "Run the T20 ONNX graphs on the ONNX Runtime CPU provider and "
-            "classify numerical-tolerance versus static-cache-state failures."
+            "Run the ONNX graphs a committed manifest names on the ONNX Runtime "
+            "CPU provider and classify numerical-tolerance versus "
+            "static-cache-state failures."
         ),
     )
     parser.add_argument(
         "--manifest",
         default=str(DEFAULT_MANIFEST_PATH),
-        help="Committed T20 manifest describing one exported variant",
+        help=(
+            "Committed manifest describing one exported variant; it pins the "
+            "graph digests and names its own artifact stage in artifacts.root"
+        ),
     )
     parser.add_argument(
         "--artifact-root",
         default=None,
         help=(
-            "Root holding onnx/reference/T20; defaults to "
+            "Root the manifest's artifacts.root template expands against "
+            "(onnx/reference/T20 for the T20 manifests); defaults to "
             "SLM_LAB_ARTIFACT_ROOT, then the repository artifacts/ symlink"
         ),
     )

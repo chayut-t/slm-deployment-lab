@@ -110,7 +110,7 @@ graph TD
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
 | T20 — Four-context ONNX export matrix | completed | T12 | t9_heavy_io | ai/worklogs/2026-07-30-T20-onnx-export-matrix.md |
 | T21 — ONNX Runtime CPU parity and graph inspection | completed | T20 | — | ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md |
-| T22 — QNN candidates and packaging | ready | T21, T23 | t9_heavy_io | — |
+| T22 — QNN candidates and packaging | in_progress | T21, T23 | t9_heavy_io | — |
 | T23 — Prefill re-export promotion and evidence refresh | completed | T20, T21 | t9_heavy_io | ai/worklogs/2026-08-02-T23-prefill-reexport-promotion.md |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
 | T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
@@ -133,8 +133,8 @@ graph TD
 
 ## Summary
 
-- ready: 4
-- in_progress: 0
+- ready: 3
+- in_progress: 1
 - blocked: 9
 - completed: 18
 

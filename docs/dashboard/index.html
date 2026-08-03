@@ -255,14 +255,15 @@
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
       <div class="stat"><div class="num">18<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
-      <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
       <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
-      <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
+      <div class="stat"><div class="num">1</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 18 completed, 4 ready, 9 blocked, of 31 tasks">
+    <div class="bar" role="img" aria-label="Task progress: 18 completed, 1 in progress, 3 ready, 9 blocked, of 31 tasks">
       <span style="flex:18;background:var(--bar-done)"></span>
-      <span style="flex:4;background:var(--bar-ready)"></span>
+      <span style="flex:1;background:var(--copper)"></span>
+      <span style="flex:3;background:var(--bar-ready)"></span>
       <span style="flex:9;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
@@ -276,7 +277,19 @@
       Qualcomm cloud tooling, a real baseline run on a physical Snapdragon&nbsp;X&nbsp;Elite, and a
       hand-written Apple/MLX runtime. What it does <em>not</em> have yet is the headline act:
       <strong>your own Qwen3 graphs running on the Hexagon NPU</strong>, and the quantization
-      measurements that follow. The very next task, T22, is the NPU packaging work itself.
+      measurements that follow. The NPU packaging work itself, <strong>T22</strong>, is in
+      progress.
+    </p>
+
+    <p style="margin-top:14px;">
+      <strong>T22 is in flight on an unmerged branch.</strong> Six declarative graph rewrites now
+      turn the eight reference exports into a distinct <code>qnn_candidate</code> stage: prefill
+      drops from 7,634 nodes to about 2,800, its protobuf stops growing with context length, and
+      the candidates come back <em>bit-identical</em> to the reference on ONNX Runtime's CPU
+      provider. A seventh transformation is recorded as rejected, with measured evidence. None of
+      it has been near a compiler, a converter, or a device — that is <strong>T31</strong>, and
+      T31 is waiting on the merge rather than on any missing T22 work. See
+      <code>docs/results/qualcomm/qnn-candidates.md</code>.
     </p>
 
     <h3 style="margin-top:30px;">The road to the NPU <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">(critical path)</span></h3>
@@ -302,7 +315,7 @@
         </div>
         <div class="arrow">→</div>
         <div class="node here">
-          <span class="chip ready">Ready</span> <span class="here-tag">← you are here</span>
+          <span class="chip ready">In progress</span> <span class="here-tag">← you are here</span>
           <div class="t">T22 · Package QNN candidates</div>
           <div style="font-size:0.8rem;color:var(--ink-2);">Compiler-friendly rewrites</div>
         </div>
@@ -409,14 +422,13 @@
     </div>
 
     <div class="next priority">
-      <h3><span class="tid">T22</span> · QNN candidates &amp; packaging</h3>
-      <span class="prio-tag">Priority 1 · Qualcomm lane</span>
-      <div class="why">Transform the reference exports into compiler-oriented QNN candidates without obscuring source parity, and package them for Workbench submission. Unblocked by the T23 merge: the four reference prefill graphs now load on ONNX Runtime's CPU provider, so the candidates are built from bytes that are on <code>main</code> rather than a task branch. The reference and QNN-candidate artifacts must stay distinct, and every transformation recorded.</div>
+      <h3><strong>T22</strong> · QNN candidates &amp; packaging <span class="prio-tag">In progress</span></h3>
+      <div class="why">Not a ready task — it is under way, and the immediate action is to <strong>merge its branch</strong>. The transformation catalogue, the eight candidate graphs, the candidate parity measurement, and the packages all exist and are recorded; the work is on <code>task/T22-qnn-candidates</code> and is not integrated, so <strong>T31</strong> stays blocked on the merge rather than on any missing engineering. The close-out sequence is in <code>ai/handoffs/T22-qnn-candidates.md</code>.</div>
     </div>
 
     <div class="next priority">
       <h3><span class="tid">T41</span> · W8 quantization evidence</h3>
-      <span class="prio-tag">Priority 2 · quantization lane</span>
+      <span class="prio-tag">Priority 1 · quantization lane</span>
       <div class="why">Produce the first real quantization results (W8A16 / W8A8) on top of the calibration corpus T40 froze. The first task in the project that actually quantizes a weight.</div>
     </div>
 

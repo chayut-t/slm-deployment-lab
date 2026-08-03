@@ -114,7 +114,7 @@
         "docs/failures/access/2026-07-24-t02-qualcomm-authentication.md": "3ecd12828d94",
         "docs/results/access/2026-07-24-public-platform-access.md": "a8df8a169fb2",
         "docs/results/access/2026-07-25-workbench-toy-lifecycle.md": "5784f0629f88",
-        "scripts/qualcomm/README.md": "4265418487f7"
+        "scripts/qualcomm/README.md": "4dccab0ee736"
       }
     },
     {
@@ -176,7 +176,7 @@
       "built": "2026-08-03",
       "sources": {
         "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "ff00270d341c",
-        "configs/graph/README.md": "d7257839030c",
+        "configs/graph/README.md": "1dc35e2d3b87",
         "docs/results/onnx/graph-inspection.md": "b6c6ed0bd308",
         "docs/results/onnx/ort-cpu-parity.md": "c793a9ceb656"
       }

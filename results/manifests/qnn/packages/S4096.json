@@ -1,0 +1,736 @@
+{
+  "build_observation": {
+    "artifact_root_committed": false,
+    "created_at_utc": "2026-08-03T12:38:18.537149Z",
+    "graphs": [
+      {
+        "graph_kind": "prefill",
+        "placements": [
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "prefill.onnx"
+          },
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "prefill.onnx.data"
+          }
+        ],
+        "request_id": "t30-compile-768a6848cdb20ab3ff03"
+      },
+      {
+        "graph_kind": "decode",
+        "placements": [
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "decode.onnx"
+          },
+          {
+            "digest_evidence": "same_inode_as_verified_source",
+            "link_mode": "hardlink",
+            "logical_name": "decode.onnx.data"
+          }
+        ],
+        "request_id": "t30-compile-d67a8d43d368af1da061"
+      }
+    ],
+    "request_written_to_repository": false
+  },
+  "cache_capacity": 4224,
+  "claim_boundary": {
+    "does_not_establish": [
+      "qualcomm_ai_hub_accepted_or_would_accept_this_request",
+      "qualcomm_ai_hub_accepts_this_external_data_package_layout",
+      "compiler_acceptance_of_the_candidate_graph",
+      "accelerator_placement_or_device_numerical_parity",
+      "latency_or_memory_performance"
+    ],
+    "establishes": [
+      "package_contents_match_the_committed_candidate_manifest_digests",
+      "package_is_self_verifying_through_a_sha256sum_checksum_file",
+      "compile_request_satisfies_the_committed_T30_adapter_contract"
+    ]
+  },
+  "client": {
+    "name": "qai-hub",
+    "version": "0.53.0"
+  },
+  "compile": {
+    "options": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+    "retry": false,
+    "timeout_seconds": 3600
+  },
+  "context_length": 4096,
+  "device": {
+    "attributes": [],
+    "name": "Snapdragon X Elite CRD",
+    "os": "Windows 11"
+  },
+  "opset": 18,
+  "package": {
+    "checksum_file": "SHA256SUMS",
+    "checksum_format": "sha256sum",
+    "graphs": [
+      {
+        "compile_request": {
+          "external_data_members": [
+            "prefill.onnx.data"
+          ],
+          "input_specs": {
+            "attention_mask": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                4096
+              ]
+            },
+            "input_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                4096
+              ]
+            },
+            "position_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                4096
+              ]
+            }
+          },
+          "job_name": "slm-lab-t22-compile-S4096-prefill",
+          "output_logical_name": "S4096-prefill.serialized.bin",
+          "request_id": "t30-compile-768a6848cdb20ab3ff03",
+          "single_file_source_caveat": "The compile request names only the .onnx file because the committed T30 adapter requires source_artifact.path to be one existing file. Whether the service reads the sidecar from the same directory, or requires a directory or an archive instead, is unverified.",
+          "source_logical_name": "prefill.onnx"
+        },
+        "files": [
+          {
+            "logical_name": "prefill.onnx",
+            "role": "candidate_graph",
+            "sha256": "b2534ad68999f7df60c2be2118a44f473db66b075e4cdfd40f343b150e3613b7",
+            "size_bytes": 958654
+          },
+          {
+            "logical_name": "prefill.onnx.data",
+            "role": "external_data",
+            "sha256": "f476f51267e0c7ee09e9e97166afa9900158b22adcf5acec895b94d96e3d0dd3",
+            "size_bytes": 1240451072
+          },
+          {
+            "logical_name": "SHA256SUMS",
+            "role": "checksums",
+            "sha256": "5bce0c43deecaf2c8f08977c123ffd8c9bdc1f530341f5936fd48978aa3404b2",
+            "size_bytes": 163
+          }
+        ],
+        "graph_kind": "prefill",
+        "package_relative_path": "S4096/prefill"
+      },
+      {
+        "compile_request": {
+          "external_data_members": [
+            "decode.onnx.data"
+          ],
+          "input_specs": {
+            "attention_mask": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                4224
+              ]
+            },
+            "input_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                1
+              ]
+            },
+            "key_cache.0": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.1": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.10": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.11": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.12": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.13": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.14": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.15": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.16": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.17": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.18": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.19": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.2": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.20": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.21": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.22": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.23": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.24": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.25": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.26": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.27": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.3": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.4": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.5": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.6": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.7": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.8": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "key_cache.9": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "position_ids": {
+              "dtype": "int64",
+              "shape": [
+                1,
+                1
+              ]
+            },
+            "valid_length": {
+              "dtype": "int64",
+              "shape": [
+                1
+              ]
+            },
+            "value_cache.0": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.1": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.10": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.11": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.12": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.13": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.14": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.15": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.16": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.17": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.18": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.19": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.2": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.20": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.21": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.22": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.23": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.24": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.25": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.26": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.27": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.3": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.4": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.5": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.6": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.7": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.8": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            },
+            "value_cache.9": {
+              "dtype": "float16",
+              "shape": [
+                1,
+                8,
+                4224,
+                128
+              ]
+            }
+          },
+          "job_name": "slm-lab-t22-compile-S4096-decode",
+          "output_logical_name": "S4096-decode.serialized.bin",
+          "request_id": "t30-compile-d67a8d43d368af1da061",
+          "single_file_source_caveat": "The compile request names only the .onnx file because the committed T30 adapter requires source_artifact.path to be one existing file. Whether the service reads the sidecar from the same directory, or requires a directory or an archive instead, is unverified.",
+          "source_logical_name": "decode.onnx"
+        },
+        "files": [
+          {
+            "logical_name": "decode.onnx",
+            "role": "candidate_graph",
+            "sha256": "81394648522eaf1cbe1365915b6a6019022c19d9270390b469c07bd29312c79d",
+            "size_bytes": 1752538
+          },
+          {
+            "logical_name": "decode.onnx.data",
+            "role": "external_data",
+            "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+            "size_bytes": 1192085504
+          },
+          {
+            "logical_name": "SHA256SUMS",
+            "role": "checksums",
+            "sha256": "c051daafcb7b0a5bbf31617bb48edb0ac62a51aba269a89e671f70bc10c8a161",
+            "size_bytes": 161
+          }
+        ],
+        "graph_kind": "decode",
+        "package_relative_path": "S4096/decode"
+      }
+    ],
+    "root_token": "${SLM_LAB_ARTIFACT_ROOT}/onnx/qnn-package/T22"
+  },
+  "precision": "float16",
+  "record_type": "slm_lab.qualcomm.qnn_package",
+  "runtime": {
+    "name": "QAIRT",
+    "version": "2.45.0.260326154327"
+  },
+  "schema_version": 1,
+  "source_manifest": {
+    "path": "results/manifests/qnn/S4096.json",
+    "sha256": "2f31bb07cafd50c89f0bd5ff784e5959ec920bc31d42fcae19181127f73847d6",
+    "stage": "qnn_candidate",
+    "task_id": "T22"
+  },
+  "stage": "qnn_package",
+  "submission_status": {
+    "caveat": "The package layout for an external-data ONNX model has not been verified against the Qualcomm AI Hub service. No compile job was submitted and no service call was made. T31 owns the first real submission. Ready for submission means exactly three things: the candidate and sidecar digests were re-verified against the committed T22 manifest, a compile request was generated, and that request was accepted by the committed T30 adapter's own validation. It does not mean AI Hub accepted it.",
+    "first_submission_owner": "T31",
+    "job_submitted": false,
+    "package_layout_verified_against_service": false,
+    "ready_for_submission_means": [
+      "candidate_and_sidecar_digests_reverified_against_the_manifest",
+      "compile_request_generated_into_private_storage",
+      "request_accepted_by_the_committed_T30_adapter_validation"
+    ],
+    "service_contacted": false
+  },
+  "target_config": {
+    "config_id": "qualcomm-snapdragon-x-elite-crd",
+    "path": "configs/targets/qualcomm-snapdragon-x-elite-crd.json",
+    "sha256": "20b284060beb6de64bac3cf903858f87a6e5683e0669af539d177d4c92327846"
+  },
+  "task_id": "T22",
+  "variant_id": "S4096"
+}
