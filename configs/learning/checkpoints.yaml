@@ -1087,3 +1087,160 @@ checkpoints:
       - Only artifact-identity parity was measured. Numerical logit parity
         between the PyTorch reference and the ONNX export remains unrun and is
         owned by T21.
+  - id: LEARN-12
+    title: Rewriting a graph for a compiler you have not run
+    subject: What a transformation catalogue can prove, and where the proof stops
+    lede: >-
+      T21 ranked what is wrong with the eight reference graphs. T22 rewrites
+      them and measures what changed. Six declarative passes turn 7,634 prefill
+      nodes into 2,785, collapse a 9.70x protobuf spread to 1.01x, and take the
+      rank-1 shape finding from 804 to at most 6 — while the boundary, the 56
+      cache writes, the 285 precision crossings and the 367 sensitive operators
+      stay exactly where the export put them. Then the candidates are executed,
+      and every logit comes back bit-identical to the reference. The two
+      instructive parts are the transformation this catalogue *refused*, on
+      four measured grounds, and the follow-up that closed a T21 evidence
+      boundary and closed it unfavourably.
+    tasks: [T22]
+    attention: Deep study
+    outcomes:
+      - Explain why a rewrite catalogue must be declarative, ordered, and
+        target-neutral, and what each of those three words rules out.
+      - Read a pass ordering as a dependency argument, naming which passes
+        cannot work until an earlier one has run, and why.
+      - Distinguish a smaller finding count from a more convertible graph, and
+        say what evidence would be needed for the second.
+      - Argue why bit-identical logits are the expected result of a
+        semantics-preserving catalogue, and what a one-ULP difference would
+        have meant.
+      - Judge an optimizer by the objective it was built for rather than by the
+        node count it reports, and name the artifacts a host-specific optimizer
+        leaves behind.
+      - Say precisely what "ready for submission" is allowed to mean before any
+        service has been contacted.
+    readings:
+      - key: report
+        label: QNN candidate report
+        title: "The T22 QNN candidate graphs: what six rewrites did"
+        path: docs/results/qualcomm/qnn-candidates.md
+        required: true
+        why: >-
+          The measured report: provenance, the six passes with one graph walked
+          end to end, the before/after matrix, the rejected pass with its four
+          grounds, the parity result, and an explicit list of what none of it
+          licenses. Read section 1 and section 10 before the tables.
+      - key: catalogue
+        label: The transformation catalogue
+        title: "qnn-candidate-v1"
+        path: configs/graph/qnn-transforms-v1.json
+        required: true
+        why: >-
+          The artifact the build tool actually consumes. Read `target_context`
+          first, then each pass's `observed_issue` before its `transformation`
+          - the order is deliberate, because a pass with no cited finding is a
+          preference rather than a fix. The rejected pass is the last entry.
+      - key: manifests
+        label: Candidate manifests
+        title: "T22 QNN candidate manifests"
+        path: results/manifests/qnn/README.md
+        required: true
+        why: >-
+          What each committed manifest holds, what the build tool does in
+          order, and what `--check` proves and does not. The section on the
+          rejected transformation records a number that disagreed with the
+          planning probe, and says the cause is not known rather than guessing
+          one.
+      - key: packaging
+        label: Packaging and preflight
+        title: "QNN candidate packaging and the offline compile preflight"
+        path: src/slm_lab/deployment/README.md
+        required: false
+        why: >-
+          The package layout, why one directory per graph kind is a
+          requirement rather than tidiness, and the three things "ready for
+          submission" is allowed to mean.
+      - key: worklog
+        label: T22 worklog
+        title: "T22: QNN candidates and packaging"
+        path: ai/worklogs/2026-08-03-T22-qnn-candidates-and-packaging.md
+        required: false
+        why: >-
+          The decisions and their costs, including why the reference-graph
+          parity runner was generalized rather than duplicated, and why the
+          task was not marked completed.
+    labs:
+      - what: Run the transform-engine and packaging tests
+        run: uv run pytest tests/qnn tests/deployment/qualcomm
+        proves: >-
+          The catalogue loader's own guards, every pass's positive and negative
+          cases, the package builder, and the offline compile preflight. The
+          `onnx`-dependent cases skip in the locked root environment, which has
+          no `onnx`, `onnxruntime`, or `numpy` - that absence is deliberate.
+      - what: Prove the candidate logits are bit-identical to the reference
+        run: uv run python -c "import json;[print(v,all(a['candidate_logits_sha256']==b['candidate_logits_sha256'] for a,b in zip(json.load(open(f'results/manifests/qnn/parity/{v}-ort-cpu.json'))['steps'],json.load(open(f'results/graph/parity/{v}-ort-cpu.json'))['steps']))) for v in ('S128','S512','S1024','S4096')]"
+        proves: >-
+          Every one of the 20 recorded steps produced the same logit digest on
+          the candidate as on the reference. Then read `graph_digests` in both
+          files and confirm the two runs loaded different bytes.
+      - what: Read the rejected pass's evidence off committed JSON
+        run: uv run python -c "import json;d=json.load(open('results/manifests/qnn/S4096.json'));r=[t for t in d['transformations'] if not t['applied']][0]['rejection_evidence']['prefill'];print(r['node_count'],r['protobuf_bytes'],r['operator_histogram_delta']['Softmax'],r['operator_histogram_delta']['Cast'],len(r['added_opset_domains_used_by_no_node']))"
+        proves: >-
+          The four grounds in one line: the node count really does fall, the
+          protobuf really is 1,811,439,962 bytes, `Softmax` really goes to
+          zero, `Cast` really more than doubles, and all eight added domains
+          are used by no node.
+      - what: Reproduce the committed manifests from the real graphs
+        run: SLM_LAB_ARTIFACT_ROOT=<external-root> <onnx-env-python> -m slm_lab.graph.qnn.build --all-manifests --check
+        proves: >-
+          Every committed number re-derives from reference bytes whose SHA-256
+          matches the T20 manifest, down to the candidate digests. Needs the
+          artifact root and an environment with `onnx`, `onnxruntime` and
+          `numpy`; exits 0 when current. It re-reads the parity record; it does
+          not re-measure it.
+    notebooks:
+      - name: 03_graph_inspection.ipynb
+        status: planned
+        owner: T80
+        focus: >-
+          Graph risks and the rewrites that answer them, with the folding
+          experiment run against a graph you can re-inspect.
+    questions:
+      - Pass 1 changes no value and no edge. Explain why every other pass
+        depends on it, and what would have happened to the S4096 causal mask
+        without it.
+      - The static-shape folder reaches zero residual shape-defining inputs at
+        S128 and stops at six above it. Explain that from the byte budget, then
+        argue against raising the budget.
+      - Dead-node elimination removed zero nodes on all eight graphs. Argue
+        that this makes the pass useless, then refute yourself from its own
+        recorded effect.
+      - R-INTERNAL-DYNAMIC-SHAPE reported nothing on the reference and 1,069 on
+        the decode candidate. Say why the first was never a zero, and why the
+        second is a statement about shape inference rather than about the
+        graph.
+      - The rejected pass reduces decode to 4,245 nodes where the committed
+        catalogue reaches 5,421. Make the strongest case for adopting it, then
+        name the single measured number that defeats that case.
+      - Every candidate produced bit-identical logits. Explain why that was
+        predicted from the six passes alone, and why the same measurement on
+        the rejected pass could not have been read the same way.
+      - A colleague writes "the T22 candidates are QNN-ready with verified
+        numerical parity". Rewrite it so every clause is supported, and list
+        what you removed.
+    boundaries:
+      - No compiler, no converter, no QAIRT tool, no quantizer and no device
+        was run. Nothing here establishes compiler acceptance, operator
+        support, accelerator placement, latency or memory.
+      - No Qualcomm AI Hub job was submitted and no service call was made. The
+        package layout for an external-data ONNX model is unverified against
+        the service, and T31 owns the first real submission.
+      - The parity result is one frozen workload, four variants, 20 steps, one
+        host, one execution provider, one ONNX Runtime build, at
+        ORT_DISABLE_ALL. It says nothing about how the candidate behaves under
+        a real converter.
+      - A reduced finding count is a smaller population of a structural
+        pattern, not evidence of convertibility; every manifest's
+        claim_boundary says so in-band.
+      - The rejected pass's numbers describe what onnxruntime 1.28.0's CPU
+        optimizer did on one host. One of them did not reproduce a planning
+        probe, and the cause is recorded as unknown rather than explained.

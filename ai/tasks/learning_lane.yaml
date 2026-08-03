@@ -196,6 +196,23 @@
         "docs/learning/calibration_and_aimet.md": "f58873e131fc",
         "environments/linux-aimet/README.md": "b2e37a235636"
       }
+    },
+    {
+      "id": "LEARN-12",
+      "title": "Rewriting a graph for a compiler you have not run",
+      "subject": "What a transformation catalogue can prove, and where the proof stops",
+      "covers": [
+        "T22"
+      ],
+      "sheet": "build/learning/learn-12.html",
+      "built": "2026-08-03",
+      "sources": {
+        "ai/worklogs/2026-08-03-T22-qnn-candidates-and-packaging.md": "0f4f84696e09",
+        "configs/graph/qnn-transforms-v1.json": "0f6ffb3a3647",
+        "docs/results/qualcomm/qnn-candidates.md": "ffb82aee9791",
+        "results/manifests/qnn/README.md": "e4fa9d16659c",
+        "src/slm_lab/deployment/README.md": "3f4d844537a5"
+      }
     }
   ]
 }

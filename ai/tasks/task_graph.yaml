@@ -162,13 +162,13 @@
       "id": "T22",
       "title": "QNN candidates and packaging",
       "definition": "ai/tasks/definitions/T22.yaml",
-      "status": "in_progress",
+      "status": "completed",
       "depends_on": ["T21", "T23"],
       "resource_locks": ["t9_heavy_io"],
       "owner": "Claude t22-main agent",
       "branch": "task/T22-qnn-candidates",
       "github_issue": null,
-      "worklog": null
+      "worklog": "ai/worklogs/2026-08-03-T22-qnn-candidates-and-packaging.md"
     },
     {
       "id": "T23",

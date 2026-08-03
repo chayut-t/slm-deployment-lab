@@ -3,8 +3,7 @@
 Date: 2026-08-03
 Task: `T22`
 Visibility: `public`
-Status: implementation complete on `task/T22-qnn-candidates`; not merged, so
-the task graph reads `in_progress`
+Status: completed
 
 ## Outcome
 
@@ -365,32 +364,40 @@ recorded as unverified on every graph record.
 
 ## Task status
 
-`T22` is **`in_progress`**, not `completed`, and that is the honest call rather
-than a formality.
+`T22` is **`completed`**.
 
-AGENTS.md defines `completed` as including "changes are integrated into the
-branch downstream tasks will use". This work lives on the unmerged task branch
-`task/T22-qnn-candidates`. Merging was not authorized and was not performed.
-The task graph's `allowed_statuses` are `planned`, `in_progress`, `blocked` and
-`completed`, with no state meaning "finished on its branch, awaiting merge" —
-the same situation `T23` documented for itself before its merge on 2026-08-03.
+This log was first written while the task branch was unmerged, when the honest
+status was `in_progress`: AGENTS.md defines `completed` as including "changes
+are integrated into the branch downstream tasks will use", and the task graph's
+`allowed_statuses` are `planned`, `in_progress`, `blocked` and `completed`, with
+no state meaning "finished on its branch, awaiting merge" — the same situation
+`T23` documented for itself before its merge on 2026-08-03.
 
-**`T31` is blocked on that integration, not on any missing T22 work.** T31
-consumes the candidate manifests, the package records, and the target selector,
-and it must start from a commit that contains them.
+`task/T22-qnn-candidates` (`abcb090`) was merged into `main` as `786ec8b` on
+2026-08-03, alongside the T41 merge that preceded it. The merge conflicted only
+in the two generated surfaces, `ai/tasks/status.generated.md` and
+`docs/dashboard/index.html`; both were resolved by regenerating them from the
+merged task graph rather than by hand-picking a side. The full suite passes at
+the merge commit: 905 passed, 31 skipped.
 
-Two repository invariants prevent the close-out from being completed while the
-status is `in_progress`, and both are deliberate:
+**`T31` is unblocked by that integration.** T31 consumes the candidate
+manifests, the package records, and the target selector, and it must start from
+a commit that contains them; `786ec8b` or later does.
 
-- **The `worklog` field is `null`.** `scripts/ai/render_task_status.py` raises
-  `only completed tasks may set the worklog field`. This log therefore exists
-  and is committed, but the graph does not reference it yet.
-- **No learning checkpoint was added.** `configs/learning/checkpoints.yaml`
-  states the rule in its own header — "cover only tasks whose task-graph status
-  is `completed`" — and `scripts/learning/build_learning_sheet.py` enforces it,
-  failing with `LEARN-12 cites T22, whose status is 'in_progress'; checkpoints
-  cover completed work only`. That was verified by adding the entry and running
-  the build, not inferred from the code.
+The close-out that the `in_progress` status had deliberately gated is therefore
+now done. Both gates were repository invariants working as intended, not
+defects:
+
+- **The `worklog` field** is now set to this file.
+  `scripts/ai/render_task_status.py` raises `only completed tasks may set the
+  worklog field`, so it could not be set earlier.
+- **The learning checkpoint** `LEARN-12` is now appended to
+  `configs/learning/checkpoints.yaml`. That file states the rule in its own
+  header — "cover only tasks whose task-graph status is `completed`" — and
+  `scripts/learning/build_learning_sheet.py` enforces it, failing with
+  `LEARN-12 cites T22, whose status is 'in_progress'; checkpoints cover
+  completed work only`. That was verified by adding the entry and running the
+  build, not inferred from the code.
 
 The complete, ready-to-paste `LEARN-12` entry is in
 `ai/handoffs/T22-qnn-candidates.md`, together with the exact sequence the

@@ -110,10 +110,10 @@ graph TD
 | T13 — Benchmark and evaluation protocol | completed | T10 | — | ai/worklogs/2026-07-25-T13-benchmark-evaluation-protocol.md |
 | T20 — Four-context ONNX export matrix | completed | T12 | t9_heavy_io | ai/worklogs/2026-07-30-T20-onnx-export-matrix.md |
 | T21 — ONNX Runtime CPU parity and graph inspection | completed | T20 | — | ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md |
-| T22 — QNN candidates and packaging | in_progress | T21, T23 | t9_heavy_io | — |
+| T22 — QNN candidates and packaging | completed | T21, T23 | t9_heavy_io | ai/worklogs/2026-08-03-T22-qnn-candidates-and-packaging.md |
 | T23 — Prefill re-export promotion and evidence refresh | completed | T20, T21 | t9_heavy_io | ai/worklogs/2026-08-02-T23-prefill-reexport-promotion.md |
 | T30 — Workbench compile, inference, and profile adapters | completed | T01, T02 | qai_hub_submission | ai/worklogs/2026-07-25-T30-ai-hub-adapters.md |
-| T31 — Qwen Workbench results on three Qualcomm targets | blocked | T22, T30 | qai_hub_submission | — |
+| T31 — Qwen Workbench results on three Qualcomm targets | ready | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
 | T40 — AIMET and calibration environment | completed | T10, T20 | t9_heavy_io | ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md |
@@ -133,10 +133,10 @@ graph TD
 
 ## Summary
 
-- ready: 2
-- in_progress: 1
-- blocked: 10
-- completed: 18
+- ready: 3
+- in_progress: 0
+- blocked: 9
+- completed: 19
 
 ## Resource capacities
 
@@ -166,6 +166,7 @@ graph LR
     LEARN_09{{"LEARN-09: A manually dispatched workflow that can touch a paid service"}}
     LEARN_10{{"LEARN-10: What an exported graph tells you, and what only a measurement can"}}
     LEARN_11{{"LEARN-11: Freezing the inputs to quantization before quantizing anything"}}
+    LEARN_12{{"LEARN-12: What a transformation catalogue can prove, and where the proof stops"}}
     T00 --> LEARN_00
     T01 --> LEARN_00
     T03 --> LEARN_01
@@ -184,6 +185,7 @@ graph LR
     T21 --> LEARN_10
     T23 --> LEARN_10
     T40 --> LEARN_11
+    T22 --> LEARN_12
 ```
 
 | Checkpoint | Subject | Covers | Built | Sheet |
@@ -200,3 +202,4 @@ graph LR
 | LEARN-09 — CI as a deployment surface | A manually dispatched workflow that can touch a paid service | T72 | 2026-08-03 | `build/learning/learn-09.html` |
 | LEARN-10 — Reading a graph before a compiler does | What an exported graph tells you, and what only a measurement can | T21, T23 | 2026-08-03 | `build/learning/learn-10.html` |
 | LEARN-11 — Calibration data as a contract | Freezing the inputs to quantization before quantizing anything | T40 | 2026-08-03 | `build/learning/learn-11.html` |
+| LEARN-12 — Rewriting a graph for a compiler you have not run | What a transformation catalogue can prove, and where the proof stops | T22 | 2026-08-03 | `build/learning/learn-12.html` |

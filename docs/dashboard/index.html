@@ -254,17 +254,16 @@
 
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
-      <div class="stat"><div class="num">18<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
-      <div class="stat"><div class="num">2</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
-      <div class="stat"><div class="num">10</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
-      <div class="stat"><div class="num">1</div><div class="lbl">In progress</div></div>
+      <div class="stat"><div class="num">19<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
+      <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 18 completed, 1 in progress, 2 ready, 10 blocked, of 31 tasks">
-      <span style="flex:18;background:var(--bar-done)"></span>
-      <span style="flex:1;background:var(--copper)"></span>
-      <span style="flex:2;background:var(--bar-ready)"></span>
-      <span style="flex:10;background:var(--bar-blocked)"></span>
+    <div class="bar" role="img" aria-label="Task progress: 19 completed, 3 ready, 9 blocked, of 31 tasks">
+      <span style="flex:19;background:var(--bar-done)"></span>
+      <span style="flex:3;background:var(--bar-ready)"></span>
+      <span style="flex:9;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
     <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection (T21) and a measured CPU-parity
@@ -314,14 +313,14 @@
           <div style="font-size:0.8rem;color:var(--ink-2);">Concat cache write · ORT CPU 1.28.0</div>
         </div>
         <div class="arrow">→</div>
-        <div class="node here">
-          <span class="chip ready">In progress</span> <span class="here-tag">← you are here</span>
+        <div class="node">
+          <span class="chip done">Done</span>
           <div class="t">T22 · Package QNN candidates</div>
           <div style="font-size:0.8rem;color:var(--ink-2);">Compiler-friendly rewrites</div>
         </div>
         <div class="arrow">→</div>
-        <div class="node">
-          <span class="chip blocked">Blocked</span>
+        <div class="node here">
+          <span class="chip ready">Ready</span> <span class="here-tag">← you are here</span>
           <div class="t">T31 · Compile &amp; profile on 3 Qualcomm targets</div>
           <div style="font-size:0.8rem;color:var(--ink-2);">X Elite, IQ-9075, 8 Elite</div>
         </div>
@@ -422,8 +421,8 @@
     </div>
 
     <div class="next priority">
-      <h3><strong>T22</strong> · QNN candidates &amp; packaging <span class="prio-tag">In progress</span></h3>
-      <div class="why">Not a ready task — it is under way, and the immediate action is to <strong>merge its branch</strong>. The transformation catalogue, the eight candidate graphs, the candidate parity measurement, and the packages all exist and are recorded; the work is on <code>task/T22-qnn-candidates</code> and is not integrated, so <strong>T31</strong> stays blocked on the merge rather than on any missing engineering. The close-out sequence is in <code>ai/handoffs/T22-qnn-candidates.md</code>.</div>
+      <h3><span class="tid">T31</span> · Workbench compile of your own graphs <span class="prio-tag">Priority 1 · Qualcomm lane</span></h3>
+      <div class="why">Unblocked by the T22 merge. The eight QNN candidate graphs, their packages, and the X Elite target selector are all committed, and the candidates are bit-identical to the reference on CPU — so whatever the compiler says next is attributable to the compiler, not to the rewrites. Expect the package layout for an external-data ONNX model to be the first thing that breaks: the compile request names only the <code>.onnx</code> file, and whether the service reads the <code>.onnx.data</code> sidecar from the same directory is untested. Inputs and traps are in <code>ai/handoffs/T22-qnn-candidates.md</code>.</div>
     </div>
 
     <div class="next">
@@ -456,8 +455,8 @@
   <!-- ============ LEARNING DIGEST ============ -->
   <section id="learning" class="reading" style="max-width:820px;">
     <div class="section-head">
-      <h2>The learning digest — LEARN-00 to LEARN-11</h2>
-      <div class="sub">Everything the completed work teaches, in ~36 minutes of reading. Each checkpoint below
+      <h2>The learning digest — LEARN-00 to LEARN-12</h2>
+      <div class="sub">Everything the completed work teaches, in ~40 minutes of reading. Each checkpoint below
       summarizes one full study sheet; the deep versions live in <code>build/learning/learn-NN.html</code>.</div>
     </div>
 
@@ -475,6 +474,7 @@
         <tr><td class="mono" style="color:var(--copper);">09</td><td><a href="#l09">CI as a deployment surface</a></td><td class="minutes">3 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">10</td><td><a href="#l10">Reading a graph before a compiler does</a> <span class="chip ready" style="margin-left:6px;">Updated</span></td><td class="minutes">5 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">11</td><td><a href="#l11">Calibration data as a contract</a></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">12</td><td><a href="#l12">Rewriting a graph for a compiler you have not run</a> <span class="chip ready" style="margin-left:6px;">New</span></td><td class="minutes">4 min</td></tr>
       </table>
     </div>
 
@@ -734,7 +734,7 @@
       <em>resolution</em>, not as a working installation.</p>
       <h4>Key ideas</h4>
       <ul>
-        <li>No weight was quantized and AIMET never ran — this is a frozen input contract, not quantization evidence. T41 produces the first real numbers.</li>
+        <li>No weight was quantized and AIMET never ran — this is a frozen input contract, not quantization evidence. T41 froze the W8A16/W8A8 candidate specs on top of it but produced no numbers either: it is blocked with no quantized artifact yet.</li>
         <li>Calibrating and evaluating on the same four samples would flatter any quality delta; T41 has to report around that.</li>
         <li>A parity gate can exit 0 with a verdict of <code>partial</code> — reading the scope field is part of reading the result.</li>
       </ul>
@@ -742,6 +742,35 @@
       Quantization is the deepest Qualcomm-specific skill in this project, and its most common failure
       mode in practice is sloppy calibration. Knowing why the corpus is a contract — and where its
       coverage argument stops — is what makes your W8/W4 claims in weeks 3–4 defensible.</div>
+    </article>
+
+    <article class="learn" id="l12">
+      <div class="learn-head"><span class="ln">LEARN-12</span><h3>Rewriting a graph for a compiler you have not run</h3><span class="chip done">Deep study</span><span class="minutes">~4 min</span></div>
+      <div class="covers">Covers T22 · what a transformation catalogue can prove, and where the proof stops</div>
+      <p><strong>In plain words:</strong> T21 ranked what was wrong with the eight reference graphs.
+      T22 rewrites them and measures what changed. Six declarative passes — Constant-to-initializer,
+      an allowlisted static shape fold, dead-node elimination, large-tensor externalization, shape
+      inference, and a provenance stamp — cut prefill from 7,634 nodes to 2,785 and shrink the S4096
+      prefill protobuf from 49,790,614 to 958,654 bytes, collapsing a 9.70× size spread across the
+      context matrix to 1.01×. The public boundary, the 56 cache writes, and the precision crossings
+      stay exactly where the export put them. Then the candidates are executed through the
+      <em>unmodified</em> T21 protocol and every logit comes back bit-identical to the reference.</p>
+      <h4>Key ideas</h4>
+      <ul>
+        <li>A rewrite catalogue must be <em>declarative, ordered, and target-neutral</em>. Each pass cites the T21 finding it answers; a pass with no cited finding is a preference, not a fix.</li>
+        <li>Bit-identical logits are the <em>expected</em> result of a semantics-preserving catalogue — not a bonus. A one-ULP difference would have meant a pass changed the math.</li>
+        <li>The parity proof is non-circular by construction: each record's <code>graph_digests</code> names the <em>candidate</em>, not the reference, and the runner hard-fails on digest mismatch before a session exists.</li>
+        <li>A smaller finding count is not a more convertible graph. Every manifest's <code>claim_boundary</code> says so in-band, and lists <code>compiler_acceptance</code> among what it does <em>not</em> establish.</li>
+        <li><strong>The trade is visible, not hidden.</strong> Folding shapes converts one risk class into another: decode's rank-1 <code>R-DATA-DEPENDENT-SHAPE-INPUT</code> falls 1,231 → 423, but 1,069 interior tensors whose shape inference cannot resolve appear as a new high-severity <code>R-INTERNAL-DYNAMIC-SHAPE</code>. By raw high-severity count decode gets <em>worse</em>. Prefill is the clean win (804 → 0 at S128, 804 → 6 at larger variants).</li>
+        <li>Judge an optimizer by the objective it was built for. ONNX Runtime's offline optimizer was <em>rejected</em> on four measured grounds — it decomposes all 28 <code>Softmax</code> nodes into five ops each, raises <code>Cast</code> from 348 to 830 (a CPU-provider float16 fallback, a host artifact irrelevant to a different target), stamps eight unused opset domains, and destroys the external-data layout by inlining weights back into a 1.81 GB protobuf, 84% of the 2 GiB ceiling.</li>
+      </ul>
+      <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
+      This is the first task that rewrites a graph <em>for</em> a compiler rather than merely describing
+      one. The discipline it models — every transformation recorded, reference and candidate kept
+      distinct, and "ready for submission" defined narrowly enough to be honest before any service has
+      been contacted — is what keeps a failed compile in T31 attributable. Because parity is
+      bit-identical, any numerical divergence observed on a device is the compiler, the runtime, or the
+      hardware; it is not these rewrites.</div>
     </article>
   </section>
 
