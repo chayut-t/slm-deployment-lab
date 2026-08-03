@@ -191,7 +191,7 @@
       "built": "2026-08-02",
       "sources": {
         "ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md": "7b11e5d0fef9",
-        "configs/quantization/calibration.yaml": "c0ec12327d66",
+        "configs/quantization/calibration.yaml": "f3ae61e12908",
         "docs/learning/calibration_and_aimet.md": "cf3cb01dd073",
         "environments/linux-aimet/README.md": "3846b8fdc0b2"
       }
