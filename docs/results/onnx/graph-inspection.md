@@ -50,7 +50,7 @@ completely static, standard, single-domain graph.
 | Opset import in every graph | default domain (`""`), version 18 |
 | Precision | float16 weights and cache, float32 logits |
 | Risk catalogue | `configs/graph/onnx-risk-rules-v1.json`, id `onnx-deployment-risk-v1`, 15 rules |
-| Catalogue SHA-256 | `21f0cf537c8aef98691cdbd26c11f1f21c530d9e97cbf2e54d0c83d40cb412dc` |
+| Catalogue SHA-256 | `f769acd86e83bc7163c4211672180b392b4134bcea6e74da66960b42c65e6c1d` |
 | Inspection module | `slm_lab.graph.inspection` (schema version 1), reader `slm_lab.graph.onnx_reader` |
 | Inspection output | `results/graph/S128.json`, `S512.json`, `S1024.json`, `S4096.json` |
 

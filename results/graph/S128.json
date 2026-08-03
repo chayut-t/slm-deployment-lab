@@ -23,7 +23,7 @@
   "generated_by": {
     "module": "slm_lab.graph.inspection",
     "rules_path": "configs/graph/onnx-risk-rules-v1.json",
-    "rules_sha256": "21f0cf537c8aef98691cdbd26c11f1f21c530d9e97cbf2e54d0c83d40cb412dc",
+    "rules_sha256": "f769acd86e83bc7163c4211672180b392b4134bcea6e74da66960b42c65e6c1d",
     "schema_version": 1
   },
   "graphs": {
