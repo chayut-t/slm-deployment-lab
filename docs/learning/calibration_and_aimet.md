@@ -639,9 +639,9 @@ The rule, in short:
    agree. A re-export changes the `graph_sha256` values every downstream
    comparison is keyed on.
 
-Note that one divergence already exists and is stated rather than hidden: T20
-exported on CPython 3.11.15, while this environment uses the repository-pinned
-3.11.13.
+The interpreter falls under the same rule. T20 originally exported on CPython
+3.11.15 while this environment uses the repository-pinned 3.11.13; the T23
+re-attestation moved the pin to 3.11.13, so no interpreter divergence remains.
 
 ## Run it yourself
 

@@ -94,7 +94,7 @@
       "sheet": "build/learning/learn-05.html",
       "built": "2026-08-02",
       "sources": {
-        "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md": "b669b244ab2f",
+        "ai/worklogs/2026-07-30-T20-onnx-export-matrix.md": "ed3f8b7e76ef",
         "docs/architecture/static-cache-contract.md": "4f1f4f195a4f",
         "src/slm_lab/export/README.md": "5fc2d1e3edb1"
       }
@@ -176,8 +176,8 @@
       "sources": {
         "ai/worklogs/2026-08-02-T21-ort-cpu-parity-graph-inspection.md": "ff00270d341c",
         "configs/graph/README.md": "d7257839030c",
-        "docs/results/onnx/graph-inspection.md": "192e1f6fc92f",
-        "docs/results/onnx/ort-cpu-parity.md": "715f515c66a7"
+        "docs/results/onnx/graph-inspection.md": "b6c6ed0bd308",
+        "docs/results/onnx/ort-cpu-parity.md": "c793a9ceb656"
       }
     },
     {
@@ -191,9 +191,9 @@
       "built": "2026-08-02",
       "sources": {
         "ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md": "7b11e5d0fef9",
-        "configs/quantization/calibration.yaml": "c0ec12327d66",
-        "docs/learning/calibration_and_aimet.md": "cf3cb01dd073",
-        "environments/linux-aimet/README.md": "3846b8fdc0b2"
+        "configs/quantization/calibration.yaml": "f3ae61e12908",
+        "docs/learning/calibration_and_aimet.md": "f58873e131fc",
+        "environments/linux-aimet/README.md": "b2e37a235636"
       }
     }
   ]

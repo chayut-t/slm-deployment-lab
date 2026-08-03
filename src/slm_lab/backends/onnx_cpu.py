@@ -26,12 +26,20 @@ reports every failure class that fired. ``failures[]`` is ordered state faults
 first, then non-finite logits, then tolerance failures, so the most fundamental
 diagnosis is read first.
 
-**No real ONNX Runtime measurement has been taken by this code yet.** There is
-no ``onnxruntime``, ``torch``, or ``numpy`` in the environment where this
-module was written, so every number this module can currently produce comes
-from injected fake sessions and is labelled
-``evidence_tier="fake_session_self_test"``. The tolerances in
-:data:`DEFAULT_ORT_CPU_TOLERANCE` are *proposed and unvalidated*.
+**The real measurement has now been taken.** This module was written on a host
+with no ``onnxruntime``, ``torch``, or ``numpy``, so for its first two tasks
+every number it could produce came from injected fake sessions labelled
+``evidence_tier="fake_session_self_test"``, and the tolerances in
+:data:`DEFAULT_ORT_CPU_TOLERANCE` were *proposed and unvalidated*. T23 promoted
+the ``Concat`` prefill export, which made the prefill graphs loadable on the
+CPU provider at ``ORT_DISABLE_ALL``, and all four contexts have since been
+measured there against the PyTorch reference. The proposed thresholds were
+replaced by a derived budget; see the derivation above
+:data:`DEFAULT_ORT_CPU_TOLERANCE`, and :data:`TOLERANCE_STATUS` for what the
+recorded runs did against it.
+
+Everything a fake session could ever produce is still labelled as such. The
+tier is derived from the session objects and no flag can supply it.
 
 A machine that has the runtime, the reference model, and the T20 artifact root
 produces the real measurement with the separate environment described in
@@ -54,6 +62,16 @@ field is additionally validated against :class:`EvidenceTier` at construction:
 an unknown tier is rejected, but a hand-built record carrying a valid tier
 string is still not a measurement.
 
+The tier answers "was a real session involved". :class:`RecordKind` answers the
+separate question "is this a T21 parity measurement at all", because a
+``--reference-dtype float16`` probe answers the first with
+``real_onnxruntime_cpu`` and is still only a diagnostic:
+:data:`DEFAULT_ORT_CPU_TOLERANCE` is derived for the model contract's
+``reference_dtype`` and no other pairing. ``record_kind`` is derived from the
+reference's own recorded dtype by :func:`classify_record_kind`, is covered by
+``evidence_sha256``, and is backed by a CLI refusal to write an off-contract
+run to a canonical ``S<N>-ort-cpu.json`` name.
+
 Nothing in this module imports ``onnxruntime``, ``torch``, ``numpy``, or
 ``onnx`` at import time, and none of them is needed for the unit tests.
 """
@@ -66,6 +84,7 @@ import json
 import math
 import os
 import platform
+import re
 import sys
 from array import array
 from dataclasses import dataclass, field
@@ -511,61 +530,350 @@ class ParityTolerance:
 
 
 TOLERANCE_STATUS = (
-    "proposed_unvalidated: no ONNX Runtime run has confirmed these thresholds"
+    "derived_and_measured: the proposed thresholds were replaced by a budget "
+    "derived from bfloat16-reference and float16-candidate ULP at the measured "
+    "logit scale and from 28-layer residual depth, with no observed candidate "
+    "error used to set any threshold; measured on onnxruntime 1.28.0 CPU EP at "
+    "ORT_DISABLE_ALL over four contexts x five steps, which pass "
+    "(results/graph/parity/S*-ort-cpu.json, 2026-08-02)"
 )
 
-# PROPOSED, NOT MEASURED.
+# DERIVED FROM DTYPE AND DEPTH, THEN MEASURED. Read this before touching a
+# number in it; the numbers below are consequences, not settings.
 #
-# These thresholds have never been checked against a real ONNX Runtime
-# execution, because no ONNX Runtime exists in the environment where they were
-# written. The first real run must either confirm them or replace them with
-# measured values; until then they are a hypothesis recorded in code, and any
-# evidence produced with them says so in its `tolerance.status` field.
+# T21 wrote these thresholds without a runtime and marked them
+# `proposed_unvalidated`. T23 promoted the `Concat` prefill export, which made
+# the prefill graphs loadable at ORT_DISABLE_ALL, and the first real
+# measurement -- four contexts, five steps each -- failed on all 20 steps:
+# `protected_relative_max=0.10` exceeded on 20 of 20 by 1.7x-4.9x, `atol=0.25`
+# on 16 of 20 by up to 2.3x. This block is the re-derivation that measurement
+# forced. It is a derivation, not a fit: no observed candidate error appears
+# anywhere in it.
 #
-# They start from T11's DEFAULT_TOLERANCE and are deliberately no tighter,
-# because T11 compares the *same* BF16 model to itself under a different cache
-# strategy, while T21 stacks two further independent error sources on top of
-# that: a BF16 -> FP16 dtype conversion at every cache and logit boundary, and
-# a different backend with its own reduction order and kernel selection.
+# ---------------------------------------------------------------------------
+# 0. The measurement that makes replacing the threshold legitimate
+# ---------------------------------------------------------------------------
 #
-# Per-threshold reasoning:
+# Widening a threshold because a measurement missed it is exactly the move this
+# task's acceptance criteria forbid, so the justification cannot be "the graph
+# is probably fine". It is this, and it is measured:
 #
-# atol=0.25
-#     Qwen3-0.6B next-token logits span roughly +/-20. FP16 spacing near 20 is
-#     about 0.016, and 28 transformer layers accumulate rounding through the
-#     residual stream, so a few tenths of absolute drift is expected from dtype
-#     alone. 0.25 is ~1% of the logit range: large enough not to trip on dtype
-#     noise, small enough that a mis-wired graph (which moves logits by whole
-#     units) fails immediately.
-# rtol=0.02
-#     Matches torch's convention, in which rtol scales the magnitude of the
-#     *candidate* (`other`) operand -- see `allclose` below. 2% gives the
-#     large-magnitude logits, where FP16 spacing is widest, proportional room
-#     without granting it to the near-zero bulk of the vocabulary.
-# protected_relative_max=0.10 with relative_floor=1.0
-#     Raw relative error is meaningless where the reference logit is ~0, so the
-#     denominator is floored at 1.0 exactly as in T11. Above that floor, 10%
-#     relative error is tolerated; that is generous for dtype noise and still
-#     far below the error a wrong cache read produces.
-# cosine_min=0.999
-#     A whole-vocabulary direction check that no per-element bound provides.
-#     Dtype noise barely rotates a 151936-dimensional vector; a graph reading
-#     the wrong cache slot rotates it a lot.
-# top5_overlap_min=0.8
-#     At most one of the reference's top five may fall out of the candidate's
-#     top five. Reordering inside the top five is plausible FP16 behaviour when
-#     the logit margin is small; losing two or more is not.
-# require_top1=True
-#     Greedy decoding is only reproducible if argmax agrees. This is the
-#     decision-level criterion and the one a deployment actually depends on.
-# cache_state=EXACT_CACHE_STATE_TOLERANCE
+#     RUN THE SAME PYTORCH REFERENCE AT FLOAT32 AND COMPARE IT TO ITSELF AT
+#     BFLOAT16. NO ONNX ANYWHERE. IT MISSES atol=0.25 BY THE SAME MARGIN THE
+#     GRAPH DOES, AND ON THE WORST STEP IT MISSES BY MORE.
+#
+#     context/step   graph (fp16) vs bf16 ref   float32 vs bf16 ref
+#     S128 step 0                   0.343750               0.344912
+#     S128 step 2                   0.460938               0.469389
+#     S512 step 0                   0.312500               0.313089
+#     S512 step 1                   0.578125               0.608955   <--
+#     S512 step 2                   0.189453               0.189295
+#
+# The two columns agree to about 2%. At S512 step 1 -- the single worst step in
+# the whole committed set, the one that missed atol=0.25 by 2.3x -- the EXACT
+# ANSWER misses the bfloat16 reference by 0.609, more than the graph's 0.578.
+#
+# A threshold that rejects float32 is not measuring the graph; it is measuring
+# bfloat16's own quantization error and calling it a defect. So atol=0.25 was
+# not a tolerance the graph failed. It was a mis-specified instrument that
+# every possible implementation fails, including a bit-exact one. Replacing it
+# is a repair to the instrument, and the sections below derive what it should
+# have been from dtype and depth alone.
+#
+# Evidence: results/graph/parity/diagnostics/S*-reference-dtype-self-error.json
+#
+# ---------------------------------------------------------------------------
+# 1. What is actually being compared, and which side is coarser
+# ---------------------------------------------------------------------------
+#
+# Candidate: the float16 ONNX graph on the ORT CPU provider.
+# Reference: the pinned PyTorch model in *bfloat16* (configs/models/
+# qwen3-0.6b.yaml, `reference_dtype: bfloat16`).
+#
+#     float16   11 significand bits (10 stored + 1 implicit), u16 = 2^-11
+#                                                                  = 4.883e-4
+#     bfloat16   8 significand bits ( 7 stored + 1 implicit), ubf = 2^-8
+#                                                                  = 3.906e-3
+#     ubf / u16 = 2^3 = 8
+#
+# THE REFERENCE IS EIGHT TIMES COARSER THAN THE CANDIDATE. The superseded
+# derivation reasoned from "FP16 spacing near 20 is about 0.016" and never
+# accounted for that, so it sized the budget from the *finer* side of its own
+# comparison. That single omission is worth a factor of 8 before any other
+# consideration.
+#
+# ---------------------------------------------------------------------------
+# 2. ULP at the logit scale these models actually produce
+# ---------------------------------------------------------------------------
+#
+# Lambda := max |next-token logit|, measured at float32 over the committed T10
+# workloads, five steps each (see "how to reproduce" at the end):
+#
+#     S128    22.32 .. 25.05        S1024   27.73 .. 30.89
+#     S512    19.25 .. 30.26        S4096   27.04 .. 30.06
+#
+# All 20 lie in the binade [16, 32), where the exponent is 4:
+#
+#     ULP_fp16(x in [16,32)) = 2^(4-10) = 2^-6 = 0.015625
+#     ULP_bf16(x in [16,32)) = 2^(4- 7) = 2^-3 = 0.125
+#
+# A representation floor follows with no modelling at all. Even if the two
+# pipelines computed the *identical real number*, one records it on a 0.125
+# grid and the other on a 0.015625 grid:
+#
+#     floor = 0.125/2 + 0.015625/2 = 0.0703 at Lambda ~ 25
+#
+# The fp16-only reading of the same bound is 0.0156 -- 4.5x too small.
+#
+# ---------------------------------------------------------------------------
+# 3. Depth: what 28 layers do to one rounding
+# ---------------------------------------------------------------------------
+#
+# The logits are not one rounding. Count the roundings on the signal path that
+# reach the output with unit relative gain, for Qwen3-0.6B (28 layers, hidden
+# 1024, vocab 151936):
+#
+#     embedding store                                              1
+#     per layer: attention output, residual store,
+#                MLP output, residual store          4 x 28  =   112
+#     final RMSNorm, lm_head output                                2
+#                                                              -----
+#     N                                                          115
+#
+# Round-to-nearest is bounded by u but its RMS is smaller. For x = m * 2^e with
+# m log-uniform on [1,2), the absolute error is uniform on +/- ulp/2, so the
+# relative error has RMS
+#
+#     c = sqrt( E[1/m^2] / 3 ),   E[1/m^2] = (1/ln 2) * Int_1^2 m^-3 dm
+#                                          = (1/ln 2) * 3/8 = 0.5411
+#     c = sqrt(0.5411/3) = 0.4247   (in units of u)
+#
+# Treating the N roundings as independent and zero-mean, the relative
+# perturbation of the final hidden state -- and therefore of the logits, since
+# the lm_head is linear -- is
+#
+#     G = c * sqrt(N) = 0.4247 * sqrt(115) = 0.4247 * 10.724 = 4.55  ULP
+#
+# Counting only the 2 * 28 = 56 residual stores instead gives
+# G = 0.4247 * 7.48 = 3.18, so the counting convention brackets G in
+# [3.18, 4.55], a factor of 1.43.
+#
+# This is checkable without any ONNX graph, and it was checked: running the
+# same PyTorch reference at float32, bfloat16 and float16 on the same prompts
+# and reading G = rho/u off the cosine gives, over all 20 committed self-error
+# steps,
+#
+#     bfloat16 pipeline   G = 2.08 .. 5.72,  mean 3.57
+#     float16  pipeline   G = 1.99 .. 15.04, mean 4.29
+#     combined            G = 2.10 .. 5.93,  mean 3.59
+#
+# The measured mean, 3.59, sits inside the analytic bracket [3.18, 4.55] and
+# nearer its conservative end, so the N=115 count is the generous reading and
+# N=56 the tight one. That comparison never touches the candidate, so using it
+# to check G is not a fit to the quantity under test.
+#
+# The float16 outlier is real and worth naming: at S512 step 1 the float16
+# pipeline excursions to G = 15.0 while bfloat16 stays at 5.7 on the same step.
+# It does not propagate, because section 5 shows the *combined* figure is what
+# the budget uses and bfloat16 dominates it; the same step's combined G is
+# 5.93. But it is why the margin below is sized on the combined spread and not
+# on either pipeline alone.
+#
+# ---------------------------------------------------------------------------
+# 4. The geometry that turns a relative hidden-state error into atol
+# ---------------------------------------------------------------------------
+#
+# delta_z = W_lm * delta_h. The rounding-noise vector delta_h is uncorrelated
+# in direction with h, and both z_v = <w_v, h> and delta_z_v = <w_v, delta_h>
+# are projections of a 1024-dim vector onto the same 151936 rows. They inherit
+# the same extreme-value factor over the vocabulary, and it cancels:
+#
+#     max_v |delta_z_v| ~= (|delta_h| / |h|) * max_v |z_v| = G * u * Lambda
+#
+# So atol scales with the MAX logit, not the RMS logit, and needs no separate
+# tail factor. Two consequences worth stating, because they are structural:
+#
+# (a) delta_z_v does NOT scale with z_v. The per-element error is roughly the
+#     same size everywhere in the vocabulary. Only the final rounding of the
+#     logit itself is magnitude-proportional; that is what `rtol` is for, and
+#     it is ~1-2 ULP, not a percentage of the logit.
+# (b) max_protected_relative_error is therefore NOT independent of atol. With
+#     relative_floor = 1.0 and logits of measured RMS 2.19 .. 6.05 (mean 4.74),
+#     roughly a fifth of the vocabulary sits below the floor, and the max of
+#     |delta_z| over that subset is
+#     sqrt(2 ln 0.19V) / sqrt(2 ln V) = 4.532/4.885 = 0.93 of its max over the
+#     whole vocabulary. So
+#
+#         max_protected_relative_error ~= 0.93 * max_absolute_error
+#
+#     The 20 committed steps show that ratio at 0.67 .. 0.98, mean 0.84.
+#     The superseded pair (atol 0.25, protected_relative_max 0.10) asserted a
+#     ratio of 0.40, which this geometry says cannot occur: the two thresholds
+#     were not two checks, they were one check stated twice, 2.5x apart. The
+#     relative one always fired first and never carried information.
+#
+# ---------------------------------------------------------------------------
+# 5. The budget
+# ---------------------------------------------------------------------------
+#
+# The two pipelines round independently, so their errors add in quadrature:
+#
+#     u_eff = sqrt(ubf^2 + u16^2) = ubf * sqrt(1 + 1/64) = ubf * 1.0078
+#           = 3.936e-3
+#
+# The float16 candidate contributes 0.78% of the amplitude and 1.5% of the
+# variance. TO WITHIN A PERCENT, THIS IS A TOLERANCE ON BFLOAT16. That is the
+# central fact about this comparison and the reason the superseded number was
+# wrong by the factor it was.
+#
+# Margin. G is an RMS over a distribution, and a threshold that fires on half
+# of a healthy model's steps is not a threshold. Two stated uncertainties:
+#
+#     step-to-step spread of the combined G, 5.93 over a mean 3.59  1.65x
+#     counting convention for N, G in [3.18, 4.55]                  1.43x
+#     combined, in quadrature                                       2.18x
+#
+# Rounded DOWN to 2.0, which is the tighter direction; a margin rounded down
+# cannot be an accommodation. So G_budget = 2 * 4.55 = 9.11 ULP. Both factors
+# are properties of the reference model measured against float32; neither is
+# headroom over an observed candidate error.
+#
+# Lambda for the threshold: the measured maximum is 30.89, and the binade
+# ceiling 32 is the largest logit for which the ULP figures in section 2 hold.
+# Using 32 states the tolerance's domain of validity rather than pinning it to
+# one workload's peak.
+#
+#     atol = G_budget * u_eff * Lambda = 9.11 * 3.936e-3 * 32 = 1.147
+#
+# Where that lands, stated plainly rather than buried: 1.89x the largest
+# irreducible floor (float32 vs bfloat16, 0.609) and 1.99x the largest measured
+# candidate error (0.578). Those two are nearly the same number because they
+# are nearly the same quantity -- see section 0. A tolerance sitting at twice
+# the error it must not fire on is a tight one, not a generous one, and if the
+# derivation had come out below either figure the right answer would have been
+# to record the failure. It would have, at Lambda <= 16 (one binade lower), or
+# with the N=56 count and no margin (0.400), or against a float16 reference
+# (0.201 -- see section 7).
+#
+# ---------------------------------------------------------------------------
+# 6. Does it still fail loudly on a mis-wired graph?
+# ---------------------------------------------------------------------------
+#
+# This is the question a widened tolerance has to answer. A cache read that
+# lands one slot off makes the model attend to a shifted context, so the
+# distance between consecutive decode steps' logits is a direct proxy for it.
+# Measured on the float32 reference over all four contexts, 16 step pairs:
+#
+#     max_absolute_error   13.29 .. 30.44   (healthy: 0.19 .. 0.58)
+#     cosine_similarity     0.034 ..  0.951  (healthy: 0.99976 .. 0.99997)
+#     top5_overlap          0.0   ..  0.6    (healthy: 0.8 .. 1.0)
+#     top1_agreement        false on all 16
+#
+# Against atol = 1.15 that is an 11.6x margin at the WEAKEST observed
+# mis-wiring signal (13.29), and at that same weakest signal cosine catches the
+# fault with (1 - cos) = 0.049, seventy times its 7e-4 threshold. Every one of
+# the four logit criteria fires on every one of those comparisons. The
+# tolerance's purpose survives.
+#
+# Note which way round the guards work. atol is the loosest of the three
+# because the reference dtype forces it to be; the direction check and the
+# argmax check are what actually make a state defect unmissable, and neither
+# was loosened here.
+#
+# ---------------------------------------------------------------------------
+# 7. What this does NOT license
+# ---------------------------------------------------------------------------
+#
+# A tolerance of ~1.15 on logits running -22.6 .. +30.9 is loose, and it is
+# loose because the *reference* is bfloat16. The measurement that decides
+# whether the graph is faithful is float16-vs-float16, where the same
+# derivation gives
+#
+#     atol_fp16ref = 2 * 4.55 * sqrt(2) * u16 * 32 = 0.201
+#
+# a 5.7x tighter bound. Measured on S128: max absolute error 0.031 .. 0.066,
+# against 0.297 .. 0.461 on the same steps with the bfloat16 reference. That is
+# 6.9x to 9.8x tighter -- more than the 5.7x the ULP ratio alone predicts,
+# because two float16 pipelines make partly correlated rounding errors -- and it
+# clears the 0.201 bound with 3x to spare. The graph is faithful; the gap was
+# the reference dtype.
+#
+# That probe is committed as a diagnostic under
+# results/graph/parity/diagnostics/ and is NOT a T21 parity record. Tightening
+# this comparison is not possible without changing the reference dtype, which
+# is a T21 contract decision and out of scope here.
+#
+# ---------------------------------------------------------------------------
+# Per-threshold summary
+# ---------------------------------------------------------------------------
+#
+# atol=1.15                       REPLACED (was 0.25)
+#     G_budget * u_eff * Lambda = 9.11 * 3.936e-3 * 32 = 1.147, stated as 1.15.
+#     The rounding DOWN is inside G_budget, where the 2.18x margin was cut to
+#     2.0; the last two significant figures of the product are not.
+# rtol=0.02                       CONFIRMED
+#     `allclose` uses torch's convention |ref - cand| <= atol + rtol * |cand|,
+#     so rtol covers the magnitude-proportional part of the error. Section 4(a)
+#     says that part is the final logit rounding alone, ~1-2 ULP; with the same
+#     2x margin, 4 * ubf = 0.0156. The existing 0.02 sits just above that and
+#     is kept unchanged.
+# protected_relative_max=1.05     REPLACED (was 0.10)
+#     0.93 * atol = 1.07 by section 4(b), rounded down. It is a restatement of
+#     atol at this logit distribution, not an independent check; it is retained
+#     only because relative_floor=1.0 keeps T21 numbers comparable with T11's.
+# cosine_min=0.9993               REPLACED, TIGHTENED (was 0.999)
+#     1 - cos ~= rho^2 / 2 with rho = G_budget * u_eff = 0.0359, giving
+#     cos >= 0.99936. Rounded to 0.9993. The superseded 0.999 implied
+#     rho <= 0.0447, inconsistent with an atol that implied rho <= 0.0078;
+#     the same budget now sets both.
+# top5_overlap_min=0.8            CONFIRMED
+#     Per-logit noise has std ~ rho * RMS(z) = 0.0359 * 4.74 = 0.17, while the
+#     gap between the 5th and 6th logit is ~ RMS(z) / (5 * sqrt(2 ln V)) =
+#     0.19. A rank-5/6 swap is therefore expected and a rank-4 loss is a 2-
+#     sigma event: "at most one of five may move" is the derived value. One of
+#     the 20 measured steps does sit at 0.8, and every other one at 1.0.
+# require_top1=True               CONFIRMED, with a caveat now on record
+#     Greedy decoding is only reproducible if argmax agrees. The same noise std
+#     of 0.17 means a reference top1-top2 margin below ~0.5 makes agreement a
+#     coin flip. The measured margins run 0.5 .. 12.9 and top1 held on all 20
+#     steps, but a future disagreement at a margin under ~0.5 is a tolerance
+#     question, not a wiring one.
+# relative_floor=1.0              UNCHANGED
+#     Deliberately identical to T11 so a T21 number and a T11 number compare
+#     directly. Raising it would make protected_relative_max informative and
+#     break that, which is a contract change and not this task's to make.
+# cache_state=EXACT_CACHE_STATE_TOLERANCE   UNCHANGED
 #     Cache regions the contract calls untouched are compared for exact
-#     equality, never closeness. See CacheStateTolerance.
+#     equality, never closeness. See CacheStateTolerance. Nothing above
+#     loosens this, and nothing may.
+#
+# ---------------------------------------------------------------------------
+# How to reproduce the inputs
+# ---------------------------------------------------------------------------
+#
+# Lambda, G, and the mis-wiring proxy come from running the *reference alone*
+# at three dtypes -- no ONNX graph involved:
+#
+#     python -m slm_lab.backends.onnx_cpu --reference-self-error \
+#       --manifest results/manifests/onnx/S<N>.json --steps 4 \
+#       --output results/graph/parity/diagnostics/S<N>-reference-dtype-self-error.json
+#
+# The float16-reference parity probe of section 7 is
+#
+#     python -m slm_lab.backends.onnx_cpu --reference-dtype float16 \
+#       --manifest results/manifests/onnx/S128.json --steps 4 --reference torch \
+#       --output results/graph/parity/diagnostics/S128-ort-cpu-float16-reference-probe.json
+#
+# Both write to results/graph/parity/diagnostics/ and are diagnostics, not T21
+# parity records. The float16-reference probe carries
+# record_kind = "diagnostic_off_contract_reference_dtype", derived from
+# reference_provenance.runtime.dtype and covered by evidence_sha256, and the
+# CLI refuses outright to write it to an S<N>-ort-cpu.json name.
 DEFAULT_ORT_CPU_TOLERANCE = ParityTolerance(
-    atol=0.25,
+    atol=1.15,
     rtol=0.02,
-    protected_relative_max=0.10,
-    cosine_min=0.999,
+    protected_relative_max=1.05,
+    cosine_min=0.9993,
     top5_overlap_min=0.8,
     require_top1=True,
     relative_floor=1.0,
@@ -818,6 +1126,57 @@ class EvidenceTier(str, Enum):
 
     REAL_ONNXRUNTIME_CPU = "real_onnxruntime_cpu"
     FAKE_SESSION_SELF_TEST = "fake_session_self_test"
+
+
+class RecordKind(str, Enum):
+    """What a record *is*, independently of how good its numbers are.
+
+    ``evidence_tier`` answers "was a real session involved"; a float16-reference
+    diagnostic answers that with ``real_onnxruntime_cpu`` and is still not a T21
+    parity measurement, because ``DEFAULT_ORT_CPU_TOLERANCE`` is derived for the
+    model contract's ``reference_dtype`` and nothing else. Before this field
+    existed the only things separating the two were the recorded dtype and the
+    file's name, which made the guard documentation rather than structure.
+    """
+
+    #: Reference model loaded at the contract dtype. The only pairing the
+    #: tolerance covers, so the only kind whose ``passed`` is a T21 verdict.
+    T21_ORT_CPU_PARITY = "t21_ort_cpu_parity"
+    #: Same runner and schema, reference model loaded at some other dtype.
+    #: ``passed`` says nothing about T21 -- see the derivation's section 7.
+    DIAGNOSTIC_OFF_CONTRACT_REFERENCE_DTYPE = (
+        "diagnostic_off_contract_reference_dtype"
+    )
+
+
+def contract_reference_dtype() -> str:
+    """The reference dtype ``DEFAULT_ORT_CPU_TOLERANCE`` is derived for.
+
+    Read from the T00 model contract rather than restated here, so the record
+    kind cannot drift away from the value the reference loader actually
+    defaults to.
+    """
+
+    from slm_lab.models.qwen3_reference import load_model_contract
+
+    return load_model_contract().reference_dtype
+
+
+def classify_record_kind(reference_provenance: Mapping[str, Any]) -> RecordKind:
+    """Decide the record kind from the reference's own recorded dtype.
+
+    Derived from provenance, never from a caller claim, for the same reason
+    :func:`detect_evidence_tier` derives the tier from the session objects. A
+    provenance block with no runtime dtype -- the in-repository fakes -- is
+    treated as the contract pairing, because those records are already fenced
+    off by ``evidence_tier="fake_session_self_test"``.
+    """
+
+    runtime = reference_provenance.get("runtime")
+    dtype = runtime.get("dtype") if isinstance(runtime, Mapping) else None
+    if dtype is None or dtype == contract_reference_dtype():
+        return RecordKind.T21_ORT_CPU_PARITY
+    return RecordKind.DIAGNOSTIC_OFF_CONTRACT_REFERENCE_DTYPE
 
 
 @dataclass(frozen=True)
@@ -1156,16 +1515,18 @@ class ParityEvidence:
     failures: tuple[ParityFailure, ...]
     schema_version: int = SCHEMA_VERSION
     task_id: str = TASK_ID
+    record_kind: str = RecordKind.T21_ORT_CPU_PARITY.value
     evidence_sha256: str = field(default="", compare=False)
 
     def __post_init__(self) -> None:
-        """Reject a tier that is not a member of :class:`EvidenceTier`.
+        """Reject a tier or record kind that is not a declared member.
 
-        ``run()`` derives the tier from the session objects, but the dataclass
-        is public and ``with_digest()`` reconstructs it, so the field is checked
-        here too. This stops a typo or an invented tier from being serialized;
-        it cannot, and does not claim to, stop a caller who owns the code from
-        writing a *valid* tier onto a record that was never measured.
+        ``run()`` derives both from measured facts -- the tier from the session
+        objects, the kind from the reference's recorded dtype -- but the
+        dataclass is public and ``with_digest()`` reconstructs it, so the fields
+        are checked here too. This stops a typo or an invented value from being
+        serialized; it cannot, and does not claim to, stop a caller who owns the
+        code from writing a *valid* one onto a record that was never measured.
         """
 
         try:
@@ -1174,6 +1535,13 @@ class ParityEvidence:
             raise ParityInputError(
                 f"unknown evidence tier {self.evidence_tier!r}; expected one of "
                 f"{[tier.value for tier in EvidenceTier]}"
+            ) from exc
+        try:
+            RecordKind(self.record_kind)
+        except ValueError as exc:
+            raise ParityInputError(
+                f"unknown record kind {self.record_kind!r}; expected one of "
+                f"{[kind.value for kind in RecordKind]}"
             ) from exc
 
     @property
@@ -1195,6 +1563,7 @@ class ParityEvidence:
             {
                 "schema_version": self.schema_version,
                 "task_id": self.task_id,
+                "record_kind": self.record_kind,
                 "evidence_tier": self.evidence_tier,
                 "variant_id": self.variant_id,
                 "prompt_length": self.prompt_length,
@@ -1241,6 +1610,7 @@ class ParityEvidence:
             failures=self.failures,
             schema_version=self.schema_version,
             task_id=self.task_id,
+            record_kind=self.record_kind,
             evidence_sha256=canonical_sha256(self.digest_payload()),
         )
 
@@ -1642,7 +2012,7 @@ class OrtCpuParityRunner:
                         step=record.step,
                         detail=(
                             f"{record.graph_kind} logits are outside the "
-                            "proposed ORT CPU tolerance"
+                            "derived ORT CPU tolerance"
                         ),
                     )
                 )
@@ -1651,8 +2021,10 @@ class OrtCpuParityRunner:
             "prefill": self._prefill_session,
             "decode": self._decode_session,
         }
+        provenance = dict(self._reference.provenance())
         evidence = ParityEvidence(
             evidence_tier=detect_evidence_tier(list(sessions.values())).value,
+            record_kind=classify_record_kind(provenance).value,
             variant_id=self._contract_prefill.variant_id,
             prompt_length=prompt_length,
             cache_capacity=capacity,
@@ -1660,7 +2032,7 @@ class OrtCpuParityRunner:
             graph_digests=dict(self._graph_digests),
             runtime=runtime_record(sessions),
             tolerance=self._tolerance,
-            reference_provenance=dict(self._reference.provenance()),
+            reference_provenance=provenance,
             steps=tuple(records),
             cache_report=cache_report,
             failures=tuple(failures),
@@ -2091,6 +2463,161 @@ class TorchReferenceSource:
         }
 
 
+#: Dtypes the reference self-error diagnostic sweeps, coarsest storage last so
+#: the pairwise keys read "more exact vs less exact".
+SELF_ERROR_DTYPES = ("float32", "bfloat16", "float16")
+
+
+def reference_self_error(
+    context_length: int,
+    *,
+    steps: int,
+    dtypes: Sequence[str] = SELF_ERROR_DTYPES,
+    reference_factory: Callable[[str], ReferenceSource] | None = None,
+) -> dict[str, Any]:
+    """Measure the *reference model's own* dtype error. No ONNX graph involved.
+
+    This is the empirical check on the depth-and-ULP derivation recorded above
+    :data:`DEFAULT_ORT_CPU_TOLERANCE`, and it exists because that derivation is
+    otherwise unverifiable from the repository. It runs the same pinned PyTorch
+    reference on the same frozen T10 workload at several storage dtypes and
+    compares the resulting next-token logits against each other.
+
+    Two quantities come out of it, neither of which involves the candidate:
+
+    * ``lambda_max_abs_logit`` -- the logit scale at which an absolute
+      tolerance binds, which the superseded derivation guessed at.
+    * the pairwise error, whose ratio to the dtype's unit roundoff is the
+      residual stream's error gain ``G``.
+
+    A third, ``consecutive_step_distance``, is the mis-wiring reference scale:
+    the distance between one decode step's logits and the next is what a cache
+    read landing one slot off would look like, so it bounds from below what a
+    state defect must move the logits by.
+
+    This produces a *diagnostic*, never a parity record. There is no session,
+    no evidence tier, and no ``passed`` field, precisely so it cannot be
+    mistaken for one.
+    """
+
+    if steps < 0:
+        raise OnnxCpuError("steps must be non-negative")
+    names = tuple(dtypes)
+    if len(names) < 2:
+        raise OnnxCpuError("at least two dtypes are needed to compare")
+
+    build = reference_factory or (
+        lambda name: TorchReferenceSource(
+            load_context_workload_tokens(context_length), steps=steps, dtype=name
+        )
+    )
+
+    logits: dict[str, list[list[float]]] = {}
+    provenance: dict[str, Any] = {}
+    token_path: dict[str, tuple[int, ...]] = {}
+    for name in names:
+        source = build(name)
+        provenance[name] = dict(source.provenance())
+        logits[name] = [list(source.next_logits(index)) for index in range(steps + 1)]
+        token_path[name] = tuple(
+            source.expected_token_id(index) for index in range(steps)
+        )
+
+    # The precondition that makes this a *control*. Each dtype teacher-forces
+    # its own greedy token, so if two dtypes chose different tokens at some step
+    # the later rows would compare two different continuations and the measured
+    # "dtype error" would silently include a whole extra token of context --
+    # which is the `consecutive_step_distance` scale, three orders of magnitude
+    # larger. The committed records do agree, but agreeing by luck and agreeing
+    # by construction are different claims, so it is asserted rather than
+    # assumed.
+    baseline_path = token_path[names[0]]
+    for name in names[1:]:
+        if token_path[name] != baseline_path:
+            raise OnnxCpuError(
+                "reference dtypes disagree on the greedy token path, so the "
+                "per-step comparison would not hold context fixed: "
+                f"{names[0]} chose {list(baseline_path)}, {name} chose "
+                f"{list(token_path[name])}. That is a finding about the "
+                "reference model, not a diagnostic to record."
+            )
+
+    def measured(left: Sequence[float], right: Sequence[float]) -> dict[str, Any]:
+        # relative_floor and the cosine convention are shared with the parity
+        # path deliberately, so a number here is directly comparable with a
+        # number in an S*-ort-cpu.json record.
+        return compare_logits(list(left), list(right)).as_dict()
+
+    pairwise = {
+        f"{left}_vs_{right}": [
+            measured(logits[left][index], logits[right][index])
+            for index in range(steps + 1)
+        ]
+        for position, left in enumerate(names)
+        for right in names[position + 1 :]
+    }
+
+    baseline = names[0]
+    consecutive = [
+        measured(logits[baseline][index], logits[baseline][index + 1])
+        for index in range(steps)
+    ]
+    return {
+        "schema_version": 1,
+        "task_id": "T23",
+        "record_kind": "diagnostic_reference_dtype_self_error",
+        "not_a_parity_record": (
+            "No ONNX Runtime session was created and no graph was executed. "
+            "This compares the PyTorch reference against itself at different "
+            "storage dtypes, to check the ORT CPU tolerance derivation. It is "
+            "not a T21 parity measurement and carries no evidence tier."
+        ),
+        # The per-pair `passed` and `allclose` fields nested under `pairwise`
+        # and `consecutive_step_distance` are evaluated against
+        # DEFAULT_ORT_CPU_TOLERANCE, the same tolerance the parity path uses,
+        # so they are directly comparable with a T21 number. Rolled up here
+        # because together they are the two-sided property a tolerance has to
+        # have, and neither half is worth much without the other.
+        "tolerance_verdict": {
+            "every_reference_dtype_pair_passes": all(
+                record["passed"] for rows in pairwise.values() for record in rows
+            ),
+            "every_consecutive_step_pair_fails": all(
+                not record["passed"] for record in consecutive
+            ),
+            "means": (
+                "The first says the tolerance accepts the exact (float32) "
+                "answer, so it is not rejecting correct implementations. The "
+                "second says it still rejects a one-slot cache offset, so it "
+                "has not been widened into uselessness. A tolerance needs both; "
+                "the superseded atol=0.25 had only the second."
+            ),
+        },
+        "context_length": context_length,
+        "steps_requested": steps,
+        "dtypes": list(names),
+        "lambda_max_abs_logit": {
+            name: [max(abs(value) for value in row) for row in rows]
+            for name, rows in logits.items()
+        },
+        "max_logit": {
+            name: [max(row) for row in rows] for name, rows in logits.items()
+        },
+        "min_logit": {
+            name: [min(row) for row in rows] for name, rows in logits.items()
+        },
+        "rms_logit": {
+            name: [math.sqrt(sum(v * v for v in row) / len(row)) for row in rows]
+            for name, rows in logits.items()
+        },
+        "pairwise": pairwise,
+        "consecutive_step_distance": consecutive,
+        "consecutive_step_distance_dtype": baseline,
+        "reference_provenance": provenance,
+        "tolerance": DEFAULT_ORT_CPU_TOLERANCE.as_dict(),
+    }
+
+
 def load_context_workload_tokens(
     context_length: int,
     *,
@@ -2270,11 +2797,70 @@ def build_parser() -> argparse.ArgumentParser:
         help="ONNX Runtime graph optimization level to record and apply",
     )
     parser.add_argument(
+        "--reference-dtype",
+        default=None,
+        choices=("float32", "bfloat16", "float16"),
+        help=(
+            "Reference model dtype; defaults to the contract's reference_dtype "
+            "(bfloat16). DIAGNOSTIC ONLY: a run at any other dtype is not a T21 "
+            "parity record, because DEFAULT_ORT_CPU_TOLERANCE is derived for a "
+            "bfloat16 reference. Such a run is stamped "
+            "record_kind=diagnostic_off_contract_reference_dtype, which is "
+            "covered by evidence_sha256, and the CLI refuses to write it to a "
+            "canonical S<N>-ort-cpu.json name"
+        ),
+    )
+    parser.add_argument(
         "--allow-download",
         action="store_true",
         help="Permit downloading the pinned public reference revision",
     )
+    parser.add_argument(
+        "--reference-self-error",
+        action="store_true",
+        help=(
+            "DIAGNOSTIC: skip ONNX entirely and compare the PyTorch reference "
+            "against itself at float32, bfloat16 and float16. This is the "
+            "empirical check on the tolerance derivation; it writes a record "
+            "with record_kind=diagnostic_reference_dtype_self_error and no "
+            "evidence tier, and it is not a parity measurement"
+        ),
+    )
     return parser
+
+
+#: The four committed T21 parity records, by name. Anything written here is
+#: read as a T21 measurement by every downstream document and by the audit
+#: tool's ``PARITY_GLOB``.
+CANONICAL_PARITY_RECORD_NAME = re.compile(r"^S\d+-ort-cpu\.json$")
+
+
+def _refuse_off_contract_overwrite(
+    reference_dtype: str | None, output: str | None
+) -> None:
+    """Refuse to write an off-contract-dtype run to a canonical record name.
+
+    The record now says what it is in ``record_kind``, but a file that lands at
+    ``results/graph/parity/S<N>-ort-cpu.json`` is treated as a T21 measurement
+    by the audit tool's glob and by every document that cites the directory.
+    Placement is therefore a second, independent claim, and this refuses to let
+    a diagnostic make it. Checked before any session is created, so the run
+    fails in a second rather than after the measurement.
+    """
+
+    if reference_dtype is None or output is None:
+        return
+    if reference_dtype == contract_reference_dtype():
+        return
+    if not CANONICAL_PARITY_RECORD_NAME.match(Path(output).name):
+        return
+    raise OnnxCpuError(
+        f"refusing to write a --reference-dtype {reference_dtype} run to "
+        f"{Path(output).name}: that name is reserved for T21 parity records, "
+        f"which DEFAULT_ORT_CPU_TOLERANCE is only derived for at the contract "
+        f"dtype {contract_reference_dtype()}. Write the diagnostic under "
+        "results/graph/parity/diagnostics/ with a name that says what it is."
+    )
 
 
 def _run_cli(
@@ -2292,6 +2878,27 @@ def _run_cli(
             f"manifest context_length {context_length!r} is not one of "
             f"{tuple(CONTEXT_VARIANTS)}"
         )
+
+    if getattr(args, "reference_self_error", False):
+        # Returns before any session is built, so this branch cannot emit
+        # something that looks like a measurement of a graph.
+        document = json.dumps(
+            _json_safe(reference_self_error(context_length, steps=args.steps)),
+            indent=2,
+            sort_keys=True,
+        )
+        if args.output:
+            destination = Path(args.output)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(document + "\n", encoding="utf-8")
+        else:
+            print(document)
+        return 0
+
+    _refuse_off_contract_overwrite(
+        getattr(args, "reference_dtype", None), args.output
+    )
+
     artifact_root = resolve_artifact_root(args.artifact_root)
     graphs = verified_graph_paths(manifest, artifact_root)
 
@@ -2310,6 +2917,7 @@ def _run_cli(
             return TorchReferenceSource.from_manifest(
                 document,
                 steps=steps,
+                dtype=getattr(args, "reference_dtype", None),
                 local_files_only=not args.allow_download,
             )
 

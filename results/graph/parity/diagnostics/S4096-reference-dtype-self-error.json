@@ -1,0 +1,486 @@
+{
+  "consecutive_step_distance": [
+    {
+      "allclose": false,
+      "cosine_similarity": 0.828571000397024,
+      "max_absolute_error": 22.647095680236816,
+      "max_protected_relative_error": 13.329971879720688,
+      "mean_absolute_error": 2.74870758961395,
+      "passed": false,
+      "reference_top1_top2_margin": 8.23150634765625,
+      "top1_agreement": false,
+      "top1_candidate": 4771,
+      "top1_reference": 21009,
+      "top5_overlap": 0.0
+    },
+    {
+      "allclose": false,
+      "cosine_similarity": 0.9049887925491527,
+      "max_absolute_error": 20.775718688964844,
+      "max_protected_relative_error": 12.682785749435425,
+      "mean_absolute_error": 1.937414307919313,
+      "passed": false,
+      "reference_top1_top2_margin": 12.665548324584961,
+      "top1_agreement": false,
+      "top1_candidate": 39270,
+      "top1_reference": 4771,
+      "top5_overlap": 0.0
+    },
+    {
+      "allclose": false,
+      "cosine_similarity": 0.8134989309212596,
+      "max_absolute_error": 19.751737594604492,
+      "max_protected_relative_error": 12.16763162612915,
+      "mean_absolute_error": 2.686787776910859,
+      "passed": false,
+      "reference_top1_top2_margin": 10.350900650024414,
+      "top1_agreement": false,
+      "top1_candidate": 374,
+      "top1_reference": 39270,
+      "top5_overlap": 0.0
+    },
+    {
+      "allclose": false,
+      "cosine_similarity": 0.8681812574641787,
+      "max_absolute_error": 16.45887851715088,
+      "max_protected_relative_error": 11.82347571849823,
+      "mean_absolute_error": 1.589532728566358,
+      "passed": false,
+      "reference_top1_top2_margin": 13.144495010375977,
+      "top1_agreement": false,
+      "top1_candidate": 537,
+      "top1_reference": 374,
+      "top5_overlap": 0.0
+    }
+  ],
+  "consecutive_step_distance_dtype": "float32",
+  "context_length": 4096,
+  "dtypes": [
+    "float32",
+    "bfloat16",
+    "float16"
+  ],
+  "lambda_max_abs_logit": {
+    "bfloat16": [
+      29.875,
+      30.25,
+      29.125,
+      27.125,
+      27.125
+    ],
+    "float16": [
+      29.90625,
+      30.03125,
+      29.15625,
+      27.375,
+      27.046875
+    ],
+    "float32": [
+      29.91716194152832,
+      30.05582046508789,
+      29.146738052368164,
+      27.409221649169922,
+      27.036319732666016
+    ]
+  },
+  "max_logit": {
+    "bfloat16": [
+      29.875,
+      30.25,
+      29.125,
+      27.125,
+      27.125
+    ],
+    "float16": [
+      29.90625,
+      30.03125,
+      29.15625,
+      27.375,
+      27.046875
+    ],
+    "float32": [
+      29.91716194152832,
+      30.05582046508789,
+      29.146738052368164,
+      27.409221649169922,
+      27.036319732666016
+    ]
+  },
+  "min_logit": {
+    "bfloat16": [
+      -22.625,
+      -18.375,
+      -19.875,
+      -14.875,
+      -15.5625
+    ],
+    "float16": [
+      -22.625,
+      -18.1875,
+      -19.84375,
+      -14.9609375,
+      -15.6171875
+    ],
+    "float32": [
+      -22.6364803314209,
+      -18.20563507080078,
+      -19.84012222290039,
+      -14.98760986328125,
+      -15.624940872192383
+    ]
+  },
+  "not_a_parity_record": "No ONNX Runtime session was created and no graph was executed. This compares the PyTorch reference against itself at different storage dtypes, to check the ORT CPU tolerance derivation. It is not a T21 parity measurement and carries no evidence tier.",
+  "pairwise": {
+    "bfloat16_vs_float16": [
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999486553394984,
+        "max_absolute_error": 0.26953125,
+        "max_protected_relative_error": 0.25732421875,
+        "mean_absolute_error": 0.058328913438440676,
+        "passed": true,
+        "reference_top1_top2_margin": 8.25,
+        "top1_agreement": true,
+        "top1_candidate": 21009,
+        "top1_reference": 21009,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999536215564725,
+        "max_absolute_error": 0.40625,
+        "max_protected_relative_error": 0.31374359130859375,
+        "mean_absolute_error": 0.05319423388718002,
+        "passed": true,
+        "reference_top1_top2_margin": 12.625,
+        "top1_agreement": true,
+        "top1_candidate": 4771,
+        "top1_reference": 4771,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999644213899099,
+        "max_absolute_error": 0.2890625,
+        "max_protected_relative_error": 0.1988525390625,
+        "mean_absolute_error": 0.03902673474869988,
+        "passed": true,
+        "reference_top1_top2_margin": 10.375,
+        "top1_agreement": true,
+        "top1_candidate": 39270,
+        "top1_reference": 39270,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999394150504005,
+        "max_absolute_error": 0.2578125,
+        "max_protected_relative_error": 0.203125,
+        "mean_absolute_error": 0.039342340460892924,
+        "passed": true,
+        "reference_top1_top2_margin": 12.9375,
+        "top1_agreement": true,
+        "top1_candidate": 374,
+        "top1_reference": 374,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999432933991365,
+        "max_absolute_error": 0.2265625,
+        "max_protected_relative_error": 0.17510986328125,
+        "mean_absolute_error": 0.040966559560042075,
+        "passed": true,
+        "reference_top1_top2_margin": 12.5,
+        "top1_agreement": true,
+        "top1_candidate": 537,
+        "top1_reference": 537,
+        "top5_overlap": 0.8
+      }
+    ],
+    "float32_vs_bfloat16": [
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999524131201339,
+        "max_absolute_error": 0.27036237716674805,
+        "max_protected_relative_error": 0.2471768856048584,
+        "mean_absolute_error": 0.05584270083159103,
+        "passed": true,
+        "reference_top1_top2_margin": 8.23150634765625,
+        "top1_agreement": true,
+        "top1_candidate": 21009,
+        "top1_reference": 21009,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999560532382792,
+        "max_absolute_error": 0.38918495178222656,
+        "max_protected_relative_error": 0.3102976679801941,
+        "mean_absolute_error": 0.050032788915473345,
+        "passed": true,
+        "reference_top1_top2_margin": 12.665548324584961,
+        "top1_agreement": true,
+        "top1_candidate": 4771,
+        "top1_reference": 4771,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999656210414816,
+        "max_absolute_error": 0.2801017761230469,
+        "max_protected_relative_error": 0.18945980072021484,
+        "mean_absolute_error": 0.03766185522496091,
+        "passed": true,
+        "reference_top1_top2_margin": 10.350900650024414,
+        "top1_agreement": true,
+        "top1_candidate": 39270,
+        "top1_reference": 39270,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999443276572093,
+        "max_absolute_error": 0.2842216491699219,
+        "max_protected_relative_error": 0.18547344207763672,
+        "mean_absolute_error": 0.040127938801011585,
+        "passed": true,
+        "reference_top1_top2_margin": 13.144495010375977,
+        "top1_agreement": true,
+        "top1_candidate": 374,
+        "top1_reference": 374,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999444521852693,
+        "max_absolute_error": 0.21998310089111328,
+        "max_protected_relative_error": 0.1681579351425171,
+        "mean_absolute_error": 0.04073903263093811,
+        "passed": true,
+        "reference_top1_top2_margin": 12.440994262695312,
+        "top1_agreement": true,
+        "top1_candidate": 537,
+        "top1_reference": 537,
+        "top5_overlap": 0.8
+      }
+    ],
+    "float32_vs_float16": [
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999993348696782,
+        "max_absolute_error": 0.034866929054260254,
+        "max_protected_relative_error": 0.034486621618270874,
+        "mean_absolute_error": 0.005647152041283702,
+        "passed": true,
+        "reference_top1_top2_margin": 8.23150634765625,
+        "top1_agreement": true,
+        "top1_candidate": 21009,
+        "top1_reference": 21009,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999993547510992,
+        "max_absolute_error": 0.03764152526855469,
+        "max_protected_relative_error": 0.029576241970062256,
+        "mean_absolute_error": 0.006643677676620672,
+        "passed": true,
+        "reference_top1_top2_margin": 12.665548324584961,
+        "top1_agreement": true,
+        "top1_candidate": 4771,
+        "top1_reference": 4771,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999995262756999,
+        "max_absolute_error": 0.03262901306152344,
+        "max_protected_relative_error": 0.02336597442626953,
+        "mean_absolute_error": 0.0054299495323767485,
+        "passed": true,
+        "reference_top1_top2_margin": 10.350900650024414,
+        "top1_agreement": true,
+        "top1_candidate": 39270,
+        "top1_reference": 39270,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999987540427245,
+        "max_absolute_error": 0.03647422790527344,
+        "max_protected_relative_error": 0.0260469913482666,
+        "mean_absolute_error": 0.005819661487066505,
+        "passed": true,
+        "reference_top1_top2_margin": 13.144495010375977,
+        "top1_agreement": true,
+        "top1_candidate": 374,
+        "top1_reference": 374,
+        "top5_overlap": 1.0
+      },
+      {
+        "allclose": true,
+        "cosine_similarity": 0.9999990435818015,
+        "max_absolute_error": 0.02864551544189453,
+        "max_protected_relative_error": 0.028540611267089844,
+        "mean_absolute_error": 0.004366604542624906,
+        "passed": true,
+        "reference_top1_top2_margin": 12.440994262695312,
+        "top1_agreement": true,
+        "top1_candidate": 537,
+        "top1_reference": 537,
+        "top5_overlap": 1.0
+      }
+    ]
+  },
+  "record_kind": "diagnostic_reference_dtype_self_error",
+  "reference_provenance": {
+    "bfloat16": {
+      "expected_token_ids": [
+        21009,
+        4771,
+        39270,
+        374
+      ],
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "prompt_token_count": 4096,
+      "prompt_token_ids_sha256": "5a2a2dfcb10b80d0991ca44588bdbd89efc665a3070e051c4932a1ef5a6749d9",
+      "reference_logits_sha256": [
+        "bf2b0952e608fce26de3fdb522626be86d53d69c6ea432d84ae0a1db7a883c27",
+        "dbbdbab77632d15769187bf72b810b7e2b41a477661e2ba06f36a027e9535594",
+        "d6c800277b9757bc693df108dbe8d50380123504555790374599727ab47fba67",
+        "8c0747c552e8b878a8c7d8b816119db89682f0c9ee629f0fcc1fd28770754f4d",
+        "5b1e493bd7bb8807ddfa60cbb44b0e4259bc4908e1dfffcb8fe4a91268e30134"
+      ],
+      "runtime": {
+        "actual_attention_implementation": "eager",
+        "deterministic_algorithms": true,
+        "device": "cpu",
+        "dtype": "bfloat16",
+        "python_version": "3.11.13",
+        "requested_attention_implementation": "eager",
+        "safetensors_version": "0.8.0",
+        "seed": 0,
+        "torch_version": "2.7.1",
+        "transformers_version": "4.51.3"
+      },
+      "source": "slm_lab.models.qwen3_reference.load_reference_model",
+      "teacher_forced": true
+    },
+    "float16": {
+      "expected_token_ids": [
+        21009,
+        4771,
+        39270,
+        374
+      ],
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "prompt_token_count": 4096,
+      "prompt_token_ids_sha256": "5a2a2dfcb10b80d0991ca44588bdbd89efc665a3070e051c4932a1ef5a6749d9",
+      "reference_logits_sha256": [
+        "2fccd07a436a64430261b168529d3004d48f53d96948cbcae469e092f6848b79",
+        "a764837818b2009c10b4ae21d0d2a28cc43a6d3d76c0ac25ad9438ed0c97f005",
+        "dae41621494c312ddf6dbc081e4f18364189581d0f1f85e0028ad45987ed017f",
+        "ebaec90f3f2657c73c4bb83d16e5ff8713a5b454b8217ed4249c653b440521e0",
+        "9bd39451e4a15f6e1a54884da9c479f4d264a5cdfb3c6f40b6779cb899fadc7a"
+      ],
+      "runtime": {
+        "actual_attention_implementation": "eager",
+        "deterministic_algorithms": true,
+        "device": "cpu",
+        "dtype": "float16",
+        "python_version": "3.11.13",
+        "requested_attention_implementation": "eager",
+        "safetensors_version": "0.8.0",
+        "seed": 0,
+        "torch_version": "2.7.1",
+        "transformers_version": "4.51.3"
+      },
+      "source": "slm_lab.models.qwen3_reference.load_reference_model",
+      "teacher_forced": true
+    },
+    "float32": {
+      "expected_token_ids": [
+        21009,
+        4771,
+        39270,
+        374
+      ],
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "prompt_token_count": 4096,
+      "prompt_token_ids_sha256": "5a2a2dfcb10b80d0991ca44588bdbd89efc665a3070e051c4932a1ef5a6749d9",
+      "reference_logits_sha256": [
+        "2d8ab27c4075a2ff07172410cda2559d3fc373f4ffc276f322a14a5e27def914",
+        "d3c09bfd845b070e66149d357cc8ea943dcf574c4ad1aa94716df86faacf38b4",
+        "9b3f63c0b149e29cf7c6373c3582b2e42f8ce04f2631a92470b672276f7d6e20",
+        "668028744c6a9f53745f8476e0b45a832d31486fe999cf5047799b31d9e8f30a",
+        "e32fde82d47d64f1e822565fda20fa8b7d4775996ff9f3dda4d5be5e4ddc8ef9"
+      ],
+      "runtime": {
+        "actual_attention_implementation": "eager",
+        "deterministic_algorithms": true,
+        "device": "cpu",
+        "dtype": "float32",
+        "python_version": "3.11.13",
+        "requested_attention_implementation": "eager",
+        "safetensors_version": "0.8.0",
+        "seed": 0,
+        "torch_version": "2.7.1",
+        "transformers_version": "4.51.3"
+      },
+      "source": "slm_lab.models.qwen3_reference.load_reference_model",
+      "teacher_forced": true
+    }
+  },
+  "rms_logit": {
+    "bfloat16": [
+      6.015923419205278,
+      5.8054903858125755,
+      5.664362251606879,
+      3.8455956619977423,
+      4.032408192374166
+    ],
+    "float16": [
+      6.049897136996364,
+      5.766839895868528,
+      5.676644196247494,
+      3.8717030919738473,
+      4.006015252705212
+    ],
+    "float32": [
+      6.048756506539296,
+      5.771980040243924,
+      5.6726996250757065,
+      3.8757620418385033,
+      4.005859823431499
+    ]
+  },
+  "schema_version": 1,
+  "steps_requested": 4,
+  "task_id": "T23",
+  "tolerance": {
+    "atol": 1.15,
+    "cache_state": {
+      "require_finite_slot": true,
+      "require_prefix_identical": true,
+      "require_slot_written": true,
+      "require_tail_identical": true,
+      "require_valid_length_increment": true
+    },
+    "cosine_min": 0.9993,
+    "protected_relative_max": 1.05,
+    "relative_floor": 1.0,
+    "require_top1": true,
+    "rtol": 0.02,
+    "status": "derived_and_measured: the proposed thresholds were replaced by a budget derived from bfloat16-reference and float16-candidate ULP at the measured logit scale and from 28-layer residual depth, with no observed candidate error used to set any threshold; measured on onnxruntime 1.28.0 CPU EP at ORT_DISABLE_ALL over four contexts x five steps, which pass (results/graph/parity/S*-ort-cpu.json, 2026-08-02)",
+    "top5_overlap_min": 0.8
+  },
+  "tolerance_verdict": {
+    "every_consecutive_step_pair_fails": true,
+    "every_reference_dtype_pair_passes": true,
+    "means": "The first says the tolerance accepts the exact (float32) answer, so it is not rejecting correct implementations. The second says it still rejects a one-slot cache offset, so it has not been widened into uselessness. A tolerance needs both; the superseded atol=0.25 had only the second."
+  }
+}

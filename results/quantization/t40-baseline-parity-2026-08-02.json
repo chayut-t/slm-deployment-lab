@@ -10,9 +10,9 @@
             4096
           ],
           "export_config": "configs/models/qwen3-0.6b-onnx-export.json",
-          "exporter_commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+          "exporter_commit": "321b11ba922f4bf68471d678e4f5ed987f3c8668",
           "manifest_directory": "results/manifests/onnx",
-          "run_id": "T20-qwen3-0.6b-reference-onnx-2026-07-30"
+          "run_id": "T20-qwen3-0.6b-reference-onnx-concat-2026-08-02"
         },
         "name": "attestation_manifest_agreement",
         "status": "passed",
@@ -75,11 +75,11 @@
             },
             {
               "matched": true,
-              "measured_sha256": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6",
-              "measured_size_bytes": 3653613,
+              "measured_sha256": "61d1b8b8b56f97dc44c93c27b02cafece5a2691ac33e51105c91444122521940",
+              "measured_size_bytes": 18235014,
               "measurement": "recomputed_sha256",
-              "recorded_sha256": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6",
-              "recorded_size_bytes": 3653613,
+              "recorded_sha256": "61d1b8b8b56f97dc44c93c27b02cafece5a2691ac33e51105c91444122521940",
+              "recorded_size_bytes": 18235014,
               "relative_path": "S1024/prefill.onnx"
             },
             {
@@ -111,11 +111,11 @@
             },
             {
               "matched": true,
-              "measured_sha256": "a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1",
-              "measured_size_bytes": 1560358,
+              "measured_sha256": "464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3",
+              "measured_size_bytes": 5131850,
               "measurement": "recomputed_sha256",
-              "recorded_sha256": "a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1",
-              "recorded_size_bytes": 1560358,
+              "recorded_sha256": "464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3",
+              "recorded_size_bytes": 5131850,
               "relative_path": "S128/prefill.onnx"
             },
             {
@@ -147,11 +147,11 @@
             },
             {
               "matched": true,
-              "measured_sha256": "c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988",
-              "measured_size_bytes": 35209213,
+              "measured_sha256": "cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0",
+              "measured_size_bytes": 49790614,
               "measurement": "recomputed_sha256",
-              "recorded_sha256": "c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988",
-              "recorded_size_bytes": 35209213,
+              "recorded_sha256": "cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0",
+              "recorded_size_bytes": 49790614,
               "relative_path": "S4096/prefill.onnx"
             },
             {
@@ -183,11 +183,11 @@
             },
             {
               "matched": true,
-              "measured_sha256": "05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e",
-              "measured_size_bytes": 2064360,
+              "measured_sha256": "6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f",
+              "measured_size_bytes": 9305674,
               "measurement": "recomputed_sha256",
-              "recorded_sha256": "05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e",
-              "recorded_size_bytes": 2064360,
+              "recorded_sha256": "6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f",
+              "recorded_size_bytes": 9305674,
               "relative_path": "S512/prefill.onnx"
             },
             {
@@ -201,10 +201,10 @@
             }
           ],
           "measured_file_count": 16,
-          "measured_total_bytes": 9586211364,
+          "measured_total_bytes": 9626186972,
           "measurement": "recomputed_sha256",
           "missing": [],
-          "recorded_total_bytes": 9586211364
+          "recorded_total_bytes": 9626186972
         },
         "name": "artifact_byte_identity",
         "status": "passed",
@@ -253,7 +253,7 @@
     "record": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.quantization.parity record",
     "verify": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python -m slm_lab.quantization.parity verify"
   },
-  "generated_at": "2026-08-02T14:28:09Z",
+  "generated_at": "2026-08-03T00:58:22Z",
   "numerical_parity": {
     "blocked_by": {
       "host_class": "primary macOS development host",
@@ -298,7 +298,7 @@
   "record_type": "baseline_parity_preflight",
   "released_for_calibration_on_artifact_identity": true,
   "repository": {
-    "git_commit": "bda66e2424805e85e2ae36f723b7336babb26928",
+    "git_commit": "d3494fd1410d63547dc811626029af8a980fcbc2",
     "git_tree_clean": false
   },
   "schema_version": 1,

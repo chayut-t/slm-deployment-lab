@@ -23,7 +23,7 @@
   "generated_by": {
     "module": "slm_lab.graph.inspection",
     "rules_path": "configs/graph/onnx-risk-rules-v1.json",
-    "rules_sha256": "21f0cf537c8aef98691cdbd26c11f1f21c530d9e97cbf2e54d0c83d40cb412dc",
+    "rules_sha256": "f769acd86e83bc7163c4211672180b392b4134bcea6e74da66960b42c65e6c1d",
     "schema_version": 1
   },
   "graphs": {
@@ -227,7 +227,7 @@
         {
           "category": "dynamic_shape",
           "count": 804,
-          "detail": "804 of 1257 shape-defining operator inputs are produced by another node rather than by an initializer, a graph input, or one of ['Constant', 'ConstantOfShape']; watched operators: Expand[1], Reshape[1], Slice[1, 2, 3, 4], Tile[1].",
+          "detail": "804 of 922 shape-defining operator inputs are produced by another node rather than by an initializer, a graph input, or one of ['Constant', 'ConstantOfShape']; watched operators: Expand[1], Reshape[1], Slice[1, 2, 3, 4], Tile[1].",
           "locations": [
             "node[27] ai.onnx.Expand /model/model/Expand input[1]=/model/model/Where_output_0",
             "node[36] ai.onnx.Slice /model/model/Slice input[1]=/model/model/Unsqueeze_5_output_0",
@@ -267,7 +267,7 @@
         {
           "category": "operator_support",
           "count": 1,
-          "detail": "1 of 8753 nodes match the watched operator set (ScatterND=1); watched operators: GatherElements, GatherND, ScatterElements, ScatterND.",
+          "detail": "1 of 7634 nodes match the watched operator set (ScatterND=1); watched operators: GatherElements, GatherND, ScatterElements, ScatterND.",
           "locations": [
             "node[125] ai.onnx.ScatterND /model/model/ScatterND"
           ],
@@ -279,8 +279,8 @@
         },
         {
           "category": "graph_scale",
-          "count": 8753,
-          "detail": "graph holds 8753 nodes across 28 distinct operator types, above the review threshold of 2000; busiest operators: Constant=3177, Unsqueeze=1568, Mul=542, Cast=460, Reshape=395.",
+          "count": 7634,
+          "detail": "graph holds 7634 nodes across 26 distinct operator types, above the review threshold of 2000; busiest operators: Constant=2729, Unsqueeze=1568, Mul=486, Cast=348, Concat=341.",
           "locations": [
             "graph: main_graph"
           ],
@@ -293,7 +293,7 @@
         {
           "category": "precision",
           "count": 367,
-          "detail": "367 of 8753 nodes match the watched operator set (Pow=113, ReduceMean=113, Softmax=28, Sqrt=113); watched operators: Erf, Exp, Log, Pow, Reciprocal, ReduceMean, Softmax, Sqrt.",
+          "detail": "367 of 7634 nodes match the watched operator set (Pow=113, ReduceMean=113, Softmax=28, Sqrt=113); watched operators: Erf, Exp, Log, Pow, Reciprocal, ReduceMean, Softmax, Sqrt.",
           "locations": [
             "node[163] ai.onnx.Pow /model/model/layers.0/input_layernorm/Pow",
             "node[165] ai.onnx.ReduceMean /model/model/layers.0/input_layernorm/ReduceMean",
@@ -313,7 +313,7 @@
         {
           "category": "precision",
           "count": 285,
-          "detail": "285 of 460 Cast nodes cross or may cross the float16/float32 boundary: float16->float32=142, float32->float16=143.",
+          "detail": "285 of 348 Cast nodes cross or may cross the float16/float32 boundary: float16->float32=142, float32->float16=143.",
           "locations": [
             "node[159] ai.onnx.Cast /model/model/rotary_emb/Cast_4 float32->float16",
             "node[160] ai.onnx.Cast /model/model/rotary_emb/Cast_5 float32->float16",
@@ -332,8 +332,8 @@
         },
         {
           "category": "dynamic_shape",
-          "count": 239,
-          "detail": "239 of 8753 nodes match the watched operator set (ConstantOfShape=118, Shape=121); watched operators: ConstantOfShape, Range, Shape, Size.",
+          "count": 127,
+          "detail": "127 of 7634 nodes match the watched operator set (ConstantOfShape=62, Shape=65); watched operators: ConstantOfShape, Range, Shape, Size.",
           "locations": [
             "node[21] ai.onnx.Shape /model/model/Shape",
             "node[22] ai.onnx.ConstantOfShape /model/model/ConstantOfShape",
@@ -357,34 +357,32 @@
       "input_count": 3,
       "ir_version": 8,
       "largest_inline_initializer_bytes": 256,
-      "node_count": 8753,
+      "node_count": 7634,
       "op_histogram": {
         "Add": 257,
-        "Cast": 460,
+        "Cast": 348,
         "Concat": 341,
-        "Constant": 3177,
-        "ConstantOfShape": 118,
+        "Constant": 2729,
+        "ConstantOfShape": 62,
         "Cos": 1,
         "Div": 113,
         "Equal": 63,
         "Expand": 63,
-        "Gather": 58,
+        "Gather": 2,
         "MatMul": 254,
-        "Mul": 542,
+        "Mul": 486,
         "Neg": 56,
-        "Pad": 56,
         "Pow": 113,
         "ReduceMean": 113,
-        "Reshape": 395,
+        "Reshape": 284,
         "ScatterND": 1,
-        "Shape": 121,
+        "Shape": 65,
         "Sigmoid": 28,
         "Sin": 1,
-        "Slice": 200,
+        "Slice": 144,
         "Softmax": 28,
         "Sqrt": 113,
-        "Sub": 56,
-        "Transpose": 394,
+        "Transpose": 338,
         "Unsqueeze": 1568,
         "Where": 63
       },
@@ -398,7 +396,7 @@
       "producer": "pytorch 2.7.1",
       "schema_version": 1,
       "source_relative_path": "S128/prefill.onnx",
-      "source_sha256": "a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1",
+      "source_sha256": "464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3",
       "variant_id": "S128"
     }
   },
@@ -407,7 +405,7 @@
   "schema_version": 1,
   "source_manifest": {
     "path": "results/manifests/onnx/S128.json",
-    "sha256": "2d0212d7deeba5d11d6a3e4ea065cc39cbe8b3b92b37474eb58d94355f98adb7"
+    "sha256": "f66d628fb59d069aa095cde1e258d29cee417eed941702e472acdd2c1db353dd"
   },
   "task_id": "T21",
   "variant_id": "S128"

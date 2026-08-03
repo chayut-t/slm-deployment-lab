@@ -90,7 +90,7 @@ inputs:
   canonical_json_sha256: ae8469c770d8e7b2b23dd4ad2248dd6ca5f6f0263c111e30ecf1164ec1e07ae5
 - path: configs/models/qwen3-0.6b-onnx-export.json
   role: T20 ONNX export pins; fixes the shapes calibrated here
-  canonical_json_sha256: e9b47945c8adac5b84e0d43ef4e14dd55c298e95ee4b169964af0e5f8f8ce5c6
+  canonical_json_sha256: 2d38d1ad71579d5d4a242f5bd46d9725f3e2a31867be34d00f9b37b15e25b7a0
 calibration_corpus:
   schema_version: 1
   task_id: T40

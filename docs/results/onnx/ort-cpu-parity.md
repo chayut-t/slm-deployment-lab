@@ -3,93 +3,105 @@
 Task: `T21`
 Date: 2026-08-02
 Measured: 2026-08-02
-Status: **measured; the numerical criterion is open**
+Status: **measured at `ORT_DISABLE_ALL`; both acceptance criteria met**
 
-> **A real ONNX Runtime measurement now exists.** All four context variants
-> were run against the committed T20 reference graphs on the CPU execution
-> provider, and the records are committed under `results/graph/parity/`. Each
-> carries `evidence_tier="real_onnxruntime_cpu"`, a tier derived from the
-> session objects that a caller cannot assert.
+> **A real ONNX Runtime measurement exists, at the strict optimization level.**
+> All four context variants were run against the committed T20 reference graphs
+> on the CPU execution provider at `ORT_DISABLE_ALL`, and the records are
+> committed under `results/graph/parity/`. Each carries
+> `evidence_tier="real_onnxruntime_cpu"`, a tier derived from the session
+> objects that a caller cannot assert.
 >
-> Two qualifications, both load-bearing. The runs were taken at
-> `ORT_ENABLE_BASIC`, **not** at the runner's `ORT_DISABLE_ALL` default,
-> because the float16 reference prefill graphs cannot be loaded at that level
-> at all; see
+> Both of the qualifications an earlier revision of this document carried have
+> been removed by `T23`, and each was removed by work rather than by wording.
+> The runs are no longer taken at `ORT_ENABLE_BASIC`: the prefill graphs were
+> re-exported so that the cache write lowers to `Concat` rather than a float16
+> `Pad`, which is what makes them loadable at `ORT_DISABLE_ALL` at all; see
 > [`docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md`](../../failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md).
-> And the tolerances remain `proposed_unvalidated`: the measurement did not
-> meet them, and they have deliberately **not** been widened to fit it.
+> And the tolerances are no longer `proposed_unvalidated`: they were **replaced
+> by a derivation from dtype and depth**, not widened to fit the measurement.
+> The difference between those two things is the subject of *Tolerances* below,
+> and it is the most important thing in this document.
 
 Against the two T21 acceptance criteria:
 
-- **"Multiple decode steps update cache correctly" is now satisfied by
+- **"Multiple decode steps update cache correctly" is satisfied by
   measurement.** Every static-cache invariant held on all 20 recorded steps
   across the four contexts. `cache_report.passed` is true in every record and
   no state-update failure class appears in any `failure_kinds`.
-- **"ORT outputs satisfy numerical tolerances" is not.** The logits do not meet
-  the proposed thresholds. Whether that is a parity problem or a thresholds
-  problem is unresolved, and resolving it belongs to `T23`, together with the
-  re-export that makes an `ORT_DISABLE_ALL` baseline possible in the first
-  place.
+- **"ORT outputs satisfy numerical tolerances" is satisfied by measurement,
+  against a tolerance that was re-derived first.** Every record ends
+  `passed: true` with an empty `failures[]`. Read the derivation before reading
+  that as a result: the threshold the first measurement missed was one that
+  **rejects float32**, and repairing a broken instrument is a different act
+  from moving a threshold past a number you did not like.
 
 The machinery described in the rest of this document — the invariants, the
 failure taxonomy, the fault-injection evidence, the evidence tiers — is
 unchanged by the measurement and remains the reason its output can be trusted.
+What the measurement added is two diagnostic modes, `--reference-self-error`
+and `--reference-dtype`, which exist to interrogate the *reference* rather than
+the graph. That distinction is the whole story below.
 
-## The first real measurement
+## The measurement
 
 One invocation per context; the full form is in *Reproducing the real
-measurement* below.
+measurement* below. `ORT_DISABLE_ALL` is the runner's default, so no
+optimization-level flag appears — which is the point of the re-export.
 
 ```bash
 SLM_LAB_ARTIFACT_ROOT=<artifact-root> HF_HOME=<local-hf-cache> \
 TRANSFORMERS_OFFLINE=1 PYTHONPATH=src \
   <parity-env-python> -m slm_lab.backends.onnx_cpu \
   --manifest results/manifests/onnx/S128.json --steps 4 --reference torch \
-  --graph-optimization-level ORT_ENABLE_BASIC \
   --output results/graph/parity/S128-ort-cpu.json
 ```
 
 Every record carries the same runtime block: `onnxruntime` 1.28.0, CPython
 3.11.13, `macOS-15.7.7-arm64`, `CPUExecutionProvider` alone, `ORT_SEQUENTIAL`,
 `intra_op_num_threads=1`, `inter_op_num_threads=1`, and
-`graph_optimization_level=ORT_ENABLE_BASIC`.
+`graph_optimization_level=ORT_DISABLE_ALL` on **both** sessions.
 
 | Record | `cosine_similarity` | `max_absolute_error` | worst rel. | worst top-5 | top-1 | cache |
 |---|---|---|---|---|---|---|
-| `S128` | 0.999756 – 0.999904 | 0.2930 – 0.4609 | 0.3602 | 1.00 | 5/5 | pass |
-| `S512` | 0.999784 – 0.999942 | 0.1855 – 0.5781 | 0.4878 | 1.00 | 5/5 | pass |
-| `S1024` | 0.999840 – 0.999967 | 0.2188 – 0.5547 | 0.4531 | 1.00 | 5/5 | pass |
-| `S4096` | 0.999942 – 0.999965 | 0.2266 – 0.3828 | 0.3038 | 0.80 | 5/5 | pass |
+| `S128` | 0.999757 – 0.999901 | 0.2969 – 0.4609 | 0.3640 | 1.00 | 5/5 | pass |
+| `S512` | 0.999783 – 0.999941 | 0.1895 – 0.5781 | 0.4880 | 1.00 | 5/5 | pass |
+| `S1024` | 0.999844 – 0.999967 | 0.2188 – 0.5469 | 0.4500 | 1.00 | 5/5 | pass |
+| `S4096` | 0.999943 – 0.999966 | 0.2266 – 0.3906 | 0.3087 | 0.80 | 5/5 | pass |
 
 Aggregated over all 20 steps — one prefill and four decode steps per context:
 
 | Metric | Observed | Threshold | Verdict |
 |---|---|---|---|
-| `cosine_similarity` | 0.999756 – 0.999967 | ≥ 0.999 | clears |
+| `cosine_similarity` | 0.999757 – 0.999967 | ≥ 0.9993 | clears |
 | `top1_agreement` | 20 / 20 | required | clears |
 | `top5_overlap` | 0.80 – 1.00 | ≥ 0.80 | clears |
-| `max_absolute_error` | 0.1855 – 0.5781 | ≤ 0.25 | **fails** |
-| `max_protected_relative_error` | 0.1738 – 0.4878 | ≤ 0.10 | **fails** |
-| `mean_absolute_error` | 0.032307 – 0.129059 | — | recorded |
+| `max_absolute_error` | 0.1895 – 0.5781 | ≤ 1.15 | clears |
+| `max_protected_relative_error` | 0.1738 – 0.4880 | ≤ 1.05 | clears |
+| `mean_absolute_error` | 0.032551 – 0.128828 | — | recorded |
 
-Every record ends `passed: false` with `failure_kinds: ["numerical_tolerance"]`
-and nothing else.
+Every record ends `passed: true` with `failures: []` and `failure_kinds: []`.
 
-Read the two tables together before drawing a conclusion. Every
-decision-relevant invariant holds: the predicted token agrees with the
-reference at every step of every context, the top five never drop below the
-required overlap, and directional agreement is at worst 0.999756. What fails is
-the raw magnitude of the logit difference, measured against thresholds that no
-execution had ever informed.
+Three of the thresholds in that table are not the ones the first measurement was
+taken against. `atol` was 0.25 and was missed on 16 of 20 steps;
+`protected_relative_max` was 0.10 and was missed on 20 of 20; `cosine_min` was
+0.999, and it is the one that moved in the **tightening** direction, to 0.9993.
+**Do not read the "clears" column until you have read the next paragraph and
+then *Tolerances*.** A table that changed from "fails" to "clears" while the
+observed column barely moved is exactly the pattern that should make a reader
+suspicious, and the reason it is legitimate here is a measurement, not an
+argument.
 
-The reference is bfloat16 and the graph is float16 — two different roundings of
-the same weights, not one rounding of the other — so a magnitude gap of roughly
-this size is unsurprising. That is an explanation, not a justification. The
-honest position is that these thresholds are now known to be wrong for this
-comparison and the derivation that should replace them has not been done. It is
-deliberately not done here: `T23` re-exports the prefill graphs, which will move
-these numbers, and a threshold fitted to superseded measurements would have to
-be re-derived anyway.
+The load-bearing fact is this: run the same PyTorch reference at **float32**
+and compare it against **itself at bfloat16**, with no ONNX graph anywhere in
+the loop, and it also misses `atol = 0.25`. At S512 step 1 — the worst step in
+the whole committed set, the one that missed the old threshold by 2.3x — the
+exact answer misses by **0.609**, more than the graph's own **0.578**. A
+threshold that rejects float32 was never a tolerance the graph failed; it was a
+mis-specified instrument that every possible implementation fails, including a
+bit-exact one. That control is committed under
+`results/graph/parity/diagnostics/S*-reference-dtype-self-error.json` and is
+read back by a test.
 
 One observation, recorded rather than diagnosed: S4096 step 4 is the only step
 of the 20 whose `top5_overlap` is not 1.00. It is exactly 0.80 — one of the five
@@ -140,87 +152,255 @@ executes the exported graph on a foreign runtime. It is not a quantization
 tolerance — nothing here is quantized; `quantization` is `null` in
 `results/manifests/onnx/S128.json`.
 
-### Why this is a strictly harder comparison than T11
-
-`src/slm_lab/generation/reference.py` `DEFAULT_TOLERANCE` governs T11, whose
-comment is explicit: *"Same pinned model, dtype, device, and eager attention
-implementation. These thresholds admit BF16 accumulation-order noise, not
-backend or dtype changes."* T11 compares one model against **itself** — a full
-forward pass against a cached decode loop — in the same BF16, on the same
-backend. The only error source is reduction order inside one library.
-
-T21 keeps every T11 error source and adds two independent ones on top: the
-BF16→FP16 grid change and a different runtime's kernels. A tolerance derived
-for T11 is therefore a *lower bound* on what T21 needs, never an upper bound.
+The asymmetry that decides the tolerance is worth naming here, before the
+thresholds: this is **not** one rounding of the other. The candidate is
+float16, with 11 significand bits; the reference is bfloat16, with 8. The
+reference is the coarser side of its own comparison, by a factor of eight.
 
 ## Tolerances
 
 The thresholds live in `DEFAULT_ORT_CPU_TOLERANCE` in
 `src/slm_lab/backends/onnx_cpu.py`. `ParityTolerance` mirrors T11's
 `NumericalTolerance` field for field so a T21 number and a T11 number are
-directly comparable.
+directly comparable. The block comment above `DEFAULT_ORT_CPU_TOLERANCE` is the
+derivation in full and is the source of truth for every figure below; this
+section is the reading, not a second copy.
 
-| Threshold | T21 proposed | T11 in use, confirmed by a real run | Reason for the T21 value |
-|---|---:|---:|---|
-| `atol` | 0.25 | 0.25 | Qwen3-0.6B next-token logits span roughly ±20; FP16 spacing near 20 is about 0.016, and 28 layers accumulate rounding through the residual stream. 0.25 is ~1% of the logit range — above dtype noise, far below the whole-unit shifts a mis-wired graph produces. |
-| `rtol` | 0.02 | 0.02 | Proportional room where FP16 spacing is widest, without granting that room to the near-zero bulk of the 151,936-entry vocabulary. |
-| `protected_relative_max` | 0.10 | 0.10 | Raw relative error is meaningless where the reference logit is ~0. Above the floor, 10% is generous for dtype noise and still far below what a wrong cache read produces. |
-| `relative_floor` | 1.0 | 1.0 | Denominator floor for the protected relative error, identical to T11. |
-| `cosine_min` | 0.999 | 0.999 | Whole-vocabulary direction check that no per-element bound provides. Dtype noise barely rotates a 151,936-dimensional vector; reading the wrong cache slot rotates it a lot. |
-| `top5_overlap_min` | 0.8 | 0.8 | At most one of the reference's top five may leave the candidate's top five. Reordering within the top five is plausible FP16 behaviour at small margins; losing two is not. |
-| `require_top1` | `True` | `True` | Greedy decoding is only reproducible if argmax agrees. This is the decision-level criterion a deployment actually depends on. |
-| `cache_state` | `EXACT_CACHE_STATE_TOLERANCE` | *(no equivalent)* | Cache regions the contract calls untouched are compared for **exact equality**, never closeness. See the next section. |
+| Threshold | T21 derived | T21 superseded | T11 in use | Where the T21 value comes from |
+|---|---:|---:|---:|---|
+| `atol` | **1.15** | 0.25 | 0.25 | `G_budget · u_eff · Λ` = 9.11 × 3.936e-3 × 32 = 1.147, stated as 1.15. The rounding **down** is inside `G_budget`, where the 2.18x margin was cut to 2.0 — not in the last two figures of the product. |
+| `rtol` | 0.02 | 0.02 | 0.02 | *Confirmed.* Covers only the magnitude-proportional term — the final logit rounding, 1–2 ULP. With the same 2x margin that is 4·u_bf = 0.0156; 0.02 sits just above it. |
+| `protected_relative_max` | **1.05** | 0.10 | 0.10 | 0.93 × `atol` = 1.07, rounded down. A restatement of `atol` at this logit distribution, not an independent check. |
+| `relative_floor` | 1.0 | 1.0 | 1.0 | *Unchanged*, deliberately identical to T11 so a T21 number and a T11 number compare directly. |
+| `cosine_min` | **0.9993** | 0.999 | 0.999 | *Tightened.* `1 − cos ≈ ρ²/2` with ρ = `G_budget · u_eff` = 0.0359, giving `cos ≥ 0.99936`. |
+| `top5_overlap_min` | 0.8 | 0.8 | 0.8 | *Confirmed.* Per-logit noise std ≈ 0.17 against a 5th-to-6th logit gap of ≈ 0.19: a rank-5/6 swap is expected, a rank-4 loss is a 2σ event. |
+| `require_top1` | `True` | `True` | `True` | *Confirmed, with a caveat now on record.* Greedy decoding is only reproducible if argmax agrees. The same 0.17 noise std means a reference top1–top2 margin below ≈ 0.5 makes agreement a coin flip; the measured margins run 0.5 … 12.9 and top-1 held on all 20 steps, so a future disagreement under ≈ 0.5 is a tolerance question, not a wiring one. |
+| `cache_state` | `EXACT_CACHE_STATE_TOLERANCE` | same | *(no equivalent)* | *Unchanged.* Cache regions the contract calls untouched are compared for **exact equality**, never closeness. Nothing in the retolerancing touched this, and nothing may. |
 
-What the middle column means, exactly: T11's `DEFAULT_TOLERANCE` values were
-*authored*, not derived from a measurement — its own comment at
-`src/slm_lab/generation/reference.py:50-51` claims only that they "admit BF16
-accumulation-order noise, not backend or dtype changes". What makes them more
-than a proposal is that a real Qwen3-0.6B run passed them with room to spare:
+`TOLERANCE_STATUS` now reads `derived_and_measured…` and names the evidence.
+`ParityTolerance.as_dict()` emits it under the key `status`, so every evidence
+JSON carries it; `test_evidence_json_is_deterministic_and_digest_is_sensitive`
+asserts that it travels.
+
+### Why widening `atol` by 4.6x is a repair and not an accommodation
+
+This is the part of T21 worth reading twice, because on its face it is the move
+the task's own acceptance criteria forbid. The first real measurement failed
+`protected_relative_max = 0.10` on 20 of 20 steps and `atol = 0.25` on 16 of
+20; the thresholds were then replaced by larger ones and the measurement now
+passes. Stated that way it is indistinguishable from fitting the threshold to
+the data. Four things distinguish it, and the first is the only one that
+matters.
+
+**1. The control: the old threshold rejects float32.** Run the pinned PyTorch
+reference at float32 and compare it against **itself at bfloat16**. No ONNX
+graph, no ONNX Runtime, no export — just the same model held at two storage
+precisions. That comparison also misses `atol = 0.25`:
+
+| context / step | graph (fp16) vs bf16 reference | float32 vs bf16 reference |
+|---|---:|---:|
+| S128 step 0 | 0.343750 | 0.344912 |
+| S128 step 2 | 0.460938 | 0.469389 |
+| S512 step 0 | 0.312500 | 0.313089 |
+| **S512 step 1** | **0.578125** | **0.608955** |
+| S512 step 2 | 0.189453 | 0.189295 |
+
+The two columns agree to about 2%. At S512 step 1 — the single worst step in
+the committed set, the one that missed the old threshold by 2.3x — the **exact
+answer** misses the reference by 0.609, *more* than the graph's 0.578.
+
+A threshold that rejects float32 is not measuring the graph. It is measuring
+bfloat16's own quantization error and reporting it as a defect. `atol = 0.25`
+was therefore never a tolerance the graph failed; it was a mis-specified
+instrument that **every possible implementation fails, including a bit-exact
+one**. Replacing it is a repair to the instrument. Had the control come out the
+other way — float32 comfortably inside 0.25 while the graph sat outside — the
+correct action would have been to record the failure and leave the threshold
+alone.
+
+Committed as `results/graph/parity/diagnostics/S*-reference-dtype-self-error.json`,
+`record_kind: diagnostic_reference_dtype_self_error`. These are diagnostics,
+not T21 parity records; no session is created and no graph is executed.
+
+**2. The replacement is derived from dtype and depth, not from the observed
+error.** No candidate error appears anywhere in the derivation. Its four inputs
+are the two dtypes' unit roundoff, the logit scale, the layer count, and a
+margin taken from the *reference's* own step-to-step spread:
+
+- **Which side is coarser.** The candidate graph is float16 (11 significand
+  bits, u = 2⁻¹¹ = 4.883e-4). The reference is **bfloat16** (8 significand
+  bits, u = 2⁻⁸ = 3.906e-3) per `reference_dtype` in
+  `configs/models/qwen3-0.6b.yaml`. The reference is **eight times coarser than
+  the candidate**. The superseded derivation reasoned from "FP16 spacing near
+  20 is about 0.016" and so sized the budget from the *finer* side of its own
+  comparison — a factor of 8 wrong before anything else is considered. Errors
+  add in quadrature, giving `u_eff = 3.936e-3`, of which the float16 candidate
+  contributes 0.78% of the amplitude. **To within a percent this is a tolerance
+  on bfloat16.**
+- **The logit scale it binds at.** Λ = max |next-token logit|, measured at
+  float32 over the committed T10 workloads: 19.25 … 30.89 across all 20 steps.
+  Every one lies in the binade [16, 32), where `ULP_bf16 = 0.125` and
+  `ULP_fp16 = 0.015625`. Even two pipelines computing the *identical real
+  number* land on grids 0.125 and 0.015625 apart, a representation floor of
+  0.070 at Λ ≈ 25 with no modelling at all. The fp16-only reading of that same
+  floor is 0.0156 — 4.5x too small.
+- **Depth.** 115 roundings reach the output with unit relative gain (one
+  embedding store, 4 × 28 layer stores, two at the head), and round-to-nearest
+  has RMS 0.4247 u, giving `G = 0.4247·√115 = 4.55` ULP. Counting only the 56
+  residual stores gives 3.18, so the counting convention brackets G in
+  [3.18, 4.55]. That analytic bracket was **checked against the reference
+  alone**: reading `G = ρ/u` off the same three-dtype self-comparison gives a
+  combined 2.10 … 5.93 with mean 3.59, inside the bracket and nearer its
+  conservative end. That check never touches the candidate, so it is not a fit
+  to the quantity under test.
+- **Margin.** G is an RMS over a distribution and a threshold that fires on
+  half of a healthy model's steps is not a threshold. Two stated uncertainties
+  — the reference's step-to-step spread (1.65x) and the counting convention
+  (1.43x) — combine in quadrature to 2.18x, **rounded down to 2.0**. A margin
+  rounded down cannot be an accommodation.
+
+`atol = 2 × 4.55 × 3.936e-3 × 32 = 1.147`. Λ = 32 rather than the measured peak
+of 30.89 states the tolerance's domain of validity — the binade ceiling above
+which the ULP figures stop holding — rather than pinning it to one workload.
+
+**3. It could have come out below the measurement, and it did not by much.**
+1.15 is 1.89x the largest irreducible floor (0.609) and 1.99x the largest
+measured candidate error (0.578). Those two are nearly the same number because
+they are nearly the same quantity — see point 1. A tolerance sitting at twice
+the error it must not fire on is a tight one. The derivation would have landed
+*below* the measurement at Λ ≤ 16 (one binade lower), or with the 56-store
+count and no margin (0.400), or against a float16 reference (0.201), and in
+each of those cases the right answer would have been to record the failure.
+
+**4. It still fails loudly on a mis-wired graph.** The question a widened
+tolerance must answer. A cache read landing one slot off makes the model attend
+to a shifted context, so the distance between consecutive decode steps' logits
+is a direct proxy. Measured on the float32 reference, 16 step pairs across the
+four contexts:
+
+| Metric | mis-wiring proxy | healthy (measured) |
+|---|---|---|
+| `max_absolute_error` | 13.29 … 30.44 | 0.19 … 0.58 |
+| `cosine_similarity` | 0.034 … 0.951 | 0.99976 … 0.99997 |
+| `top5_overlap` | 0.0 … 0.6 | 0.8 … 1.0 |
+| `top1_agreement` | false on all 16 | true on all 20 |
+
+Against `atol = 1.15` that is an **11.6x margin at the weakest observed
+mis-wiring signal** (13.29). Cosine has its own weakest case — the highest of
+the 16, at 0.951 — and catches that one with `1 − cos = 0.049`, seventy times
+its 7e-4 threshold. All four logit criteria fire on all 16 pairs. Note which way
+round the guards work: `atol` is the loosest of the three *because the reference
+dtype forces it to be*, and the direction check and the argmax check are what
+make a state defect unmissable. Neither was loosened; `cosine_min` was
+tightened.
+
+Both halves of that two-sided property are asserted by
+`test_committed_diagnostics_show_the_tolerance_is_two_sided`, which reads only
+committed JSON and therefore runs everywhere: every reference-dtype pair must
+pass (the tolerance accepts the exact answer) and every consecutive-step pair
+must fail (it still rejects a cache offset). The superseded `atol = 0.25` had
+only the second. `test_the_tolerance_thresholds_agree_with_one_error_budget`
+pins the four thresholds to that single budget, so tuning one in isolation goes
+red here instead of silently degrading the others.
+
+### What this does *not* license
+
+An `atol` of 1.15 on logits running −22.6 … +30.9 is loose, and it is loose
+because the **reference** is bfloat16, not because the graph is imprecise. The
+measurement that decides whether the graph is faithful is float16-against-
+float16, where the same derivation gives
+
+```
+atol_fp16ref = 2 × 4.55 × √2 × 2⁻¹¹ × 32 = 0.201
+```
+
+a 5.7x tighter bound. Measured on S128 with the reference loaded in float16:
+max absolute error **0.031 … 0.066**, against **0.297 … 0.461** on the same
+steps with the bfloat16 reference. That is **6.9x to 9.8x tighter** — more than
+the 5.7x the ULP ratio alone predicts, because two float16 pipelines make
+partly correlated rounding errors — and it clears the float16-appropriate bound
+with 3x to spare.
+
+That is the evidence that the graph is faithful and that the entire gap was the
+reference dtype. It is committed as
+`results/graph/parity/diagnostics/S128-ort-cpu-float16-reference-probe.json` and
+carries `record_kind = "diagnostic_off_contract_reference_dtype"`, derived from
+`reference_provenance.runtime.dtype` and covered by `evidence_sha256`. It is
+**not** distinguished by `task_id`, which is a fixed field of the schema and
+still reads `T21`, nor by `evidence_tier`, which honestly reads
+`real_onnxruntime_cpu` because real sessions ran. The CLI also refuses outright
+to write a non-contract-dtype run to an `S<N>-ort-cpu.json` name, so placement
+cannot make the claim either. Whether the T21 comparison should move to a
+float16 reference is a contract decision that `T23` deliberately did not take.
+
+Two diagnostics make both of these reproducible from committed code, through
+CLI flags that did not exist when this document was first written:
+
+```bash
+# the float32/bfloat16/float16 self-error control — no ONNX anywhere
+python -m slm_lab.backends.onnx_cpu --reference-self-error \
+  --manifest results/manifests/onnx/S<N>.json --steps 4 \
+  --output results/graph/parity/diagnostics/S<N>-reference-dtype-self-error.json
+
+# the float16-reference parity probe
+python -m slm_lab.backends.onnx_cpu --reference-dtype float16 \
+  --manifest results/manifests/onnx/S128.json --steps 4 --reference torch \
+  --output results/graph/parity/diagnostics/S128-ort-cpu-float16-reference-probe.json
+```
+
+`--reference-self-error` never constructs a session, which
+`test_cli_self_error_mode_never_builds_a_session` asserts.
+
+### Why this is a strictly harder comparison than T11, and what that predicted
+
+`src/slm_lab/generation/reference.py` `DEFAULT_TOLERANCE` governs T11, whose
+comment is explicit: *"Same pinned model, dtype, device, and eager attention
+implementation. These thresholds admit BF16 accumulation-order noise, not
+backend or dtype changes."* T11 compares one model against **itself** — a full
+forward pass against a cached decode loop — in the same BF16, on the same
+backend. The only error source is reduction order inside one library, and a
+real Qwen3-0.6B run passed with room to spare:
 `ai/worklogs/2026-07-25-T11-deterministic-pytorch-reference.md:87` records
 "zero absolute error and identical float32 fingerprints" on all three
-full-versus-cache logit pairs. So they are in use and unfalsified, not fitted to
-data — which is a strictly stronger position than T21's column, where no run of
-any kind has happened.
+full-versus-cache logit pairs.
 
-The logit thresholds are deliberately **no tighter than T11's**, even though
-T21 admits strictly more error. Setting them tighter would guarantee a failure
-that says nothing; setting them looser without evidence would hide real
-defects. Equal-to-T11 is the honest starting hypothesis: it asserts "the extra
-dtype and backend error should not visibly exceed the same-model noise", and it
-is a falsifiable claim that the first real run will settle.
+T21 keeps every T11 error source and adds two independent ones on top: the
+BF16→FP16 grid change and a different runtime's kernels. A tolerance derived
+for T11 is therefore a *lower bound* on what T21 needs, never an upper bound.
 
-### These tolerances are proposed and unvalidated
+An earlier revision of this document set T21's logit thresholds **equal** to
+T11's and called that "the honest starting hypothesis… a falsifiable claim that
+the first real run will settle". It was falsifiable, the first real run settled
+it, and it was false. Worth keeping the reasoning that produced it, because the
+failure is instructive: the argument correctly identified that T21 admits
+strictly more error than T11 and then chose T11's numbers anyway, on the
+grounds that a looser threshold without evidence hides defects. What it missed
+is that the *reference* changed too. T11 compares bfloat16 against bfloat16;
+T21 compares float16 against bfloat16, and the coarser side sets the floor. The
+lower bound was known to be a lower bound and was used as the value regardless,
+which is how a threshold ends up rejecting float32.
 
-No ONNX Runtime execution has ever checked them. The code says so in three
-places, and the evidence record says so in its own serialized payload:
+### The retolerancing rule, restated
 
-- The block comment above `DEFAULT_ORT_CPU_TOLERANCE` opens with
-  `# PROPOSED, NOT MEASURED.`
-- `TOLERANCE_STATUS` is the string
-  `"proposed_unvalidated: no ONNX Runtime run has confirmed these thresholds"`.
-- `ParityTolerance.as_dict()` emits that string under the key `status`, so
-  every evidence JSON — real or fake — carries
-  `tolerance.status: proposed_unvalidated…`. This is asserted by
-  `test_evidence_json_is_deterministic_and_digest_is_sensitive`.
+The rule the earlier revision wrote for the first real run stands, and is worth
+restating now that it has been exercised. Confirm or replace. There is no third
+option, and "loosen until green" is not "confirm":
 
-**What the first real run must do about them.** Confirm or replace. There is no
-third option, and "loosen until green" is not "confirm":
-
-1. If the run passes, record the observed `max_absolute_error`,
-   `max_protected_relative_error`, `cosine_similarity`, and `top5_overlap` from
-   the evidence, and tighten each threshold to a documented margin above the
-   observed value. A threshold ten times larger than the measured error is not
-   a validated threshold — it is an unfalsified one.
+1. If the run passes, do not leave a threshold ten times larger than the
+   measured error in place. That is an unfalsified threshold, not a validated
+   one. Five of the six thresholds in the superseded set could never bind:
+   `atol = 0.25` implied a relative logit error of 0.0078 while
+   `cosine_min = 0.999` implied 0.0447, a factor of 5.7 apart.
 2. If the run fails, do **not** widen the threshold before reading
    `failures[].kind` — which is ordered so the most fundamental class is
    `failures[0]`. A `cache_state_update` failure is not a tolerance problem and
    must never be answered by retolerancing. Neither is a `non_finite_logits`
    failure: no threshold admits a NaN, and the fix is on the export's precision
-   side. Only a `numerical_tolerance`
-   failure with a clean cache report is even a candidate for retolerancing, and
-   then only with the measured error and a written justification for the new
-   value.
-3. Either way, replace `TOLERANCE_STATUS` and record the evidence digest that
+   side. Only a `numerical_tolerance` failure with a clean cache report is even
+   a candidate, and then only with a written derivation for the new value —
+   which, as above, must be derived from something other than the number that
+   failed.
+3. Either way, replace `TOLERANCE_STATUS` and record the evidence that
    justified the change.
 
 ### The `allclose` convention
@@ -358,12 +538,16 @@ legitimate source of a one-ulp difference in them. The comparison in
 bit-identical or a violation.
 
 This is the design decision that makes T21 mean something. A tolerant cache
-check with, say, `atol=0.25` would silently accept a graph that reads the wrong
-cache row, because a wrong-but-nearby row differs by less than FP16 noise in
-many elements. The state bug would then reappear downstream as an unexplained
-"numerical" failure — exactly the confusion the task exists to prevent. Exact
-comparison on the regions the contract says are untouched is what keeps the two
-failure classes separable.
+check borrowing the logit `atol` — 1.15, and 0.25 in the superseded set — would
+silently accept a graph that reads the wrong cache row, because a
+wrong-but-nearby row differs by less than FP16 noise in many elements. The state
+bug would then reappear downstream as an unexplained "numerical" failure —
+exactly the confusion the task exists to prevent. Exact comparison on the
+regions the contract says are untouched is what keeps the two failure classes
+separable. Note that the retolerancing above made the logit `atol` 4.6x looser
+and left this at exact equality; that is the boundary the two failure classes
+sit on, and `test_the_tolerance_thresholds_agree_with_one_error_budget` asserts
+that `cache_state` is still `EXACT_CACHE_STATE_TOLERANCE` with every rule set.
 
 Note the one region that is *not* checked exactly, and cannot be: the newly
 written slot itself. Its correct value is the result of real attention
@@ -651,15 +835,19 @@ writing a *valid* tier onto a record that was never measured; only
 
 ## What was verified in this environment
 
-Commands run on 2026-08-02 in the `task/T21-ort-cpu-parity` worktree, using the
-locked root interpreter:
+Commands run on 2026-08-02, using the locked root interpreter — first in the
+`task/T21-ort-cpu-parity` worktree and re-run in
+`task/T23-prefill-reexport-promotion` after the tolerance derivation landed:
 
 ```bash
 PYTHONPATH=src python -m pytest tests/onnx/test_onnx_cpu_parity.py -v
 ```
 
-Result: **61 passed, 1 skipped** (62 collected), 1.51 s, Python 3.11.13,
-pytest 8.3.5.
+Result: **66 passed, 1 skipped** (67 collected), 1.32 s, Python 3.11.13,
+pytest 8.3.5. The five added tests are the tolerance derivation's own guards —
+the single-error-budget check, the two-sided committed-diagnostics check, the
+self-error mode, its no-session guarantee, and the `--reference-dtype`
+constraint.
 
 The single skip is `test_real_onnxruntime_cpu_parity_when_available`, which
 begins with `pytest.importorskip("onnxruntime")` and
@@ -730,37 +918,50 @@ Verified here:
 
 This section described the environment before `onnxruntime` and `torch` were
 installed. What it listed as unverifiable has since been measured, and the
-results are in *The first real measurement* above. Retained here, corrected,
-because the boundary it drew is what the measurement had to cross:
+results are in *The measurement* above. Retained here, corrected, because the
+boundary it drew is what the measurement had to cross:
 
 - ~~Any parity number whatsoever.~~ Measured; see the aggregate table.
-- **Whether the proposed tolerances are correct, too tight, or too loose.**
-  Still open. The measurement shows the magnitude thresholds are not met, which
-  proves they are wrong *or* that parity is wrong, and does not say which.
+- ~~Whether the proposed tolerances are correct, too tight, or too loose.~~
+  Answered, and the answer was "wrong in a way the first framing could not
+  express". They were not too tight *for the graph*; they were derived from the
+  wrong side of the comparison, and the resulting `atol` rejected float32. They
+  have been replaced by a derivation from dtype and depth; see *Tolerances*.
 - ~~Whether the real T20 decode graph honours the T12 cache contract at
   runtime.~~ Answered. T20's worklog asked T21 to check whether `valid_length`
   remains a live internal slice/scatter dependency rather than a traced
   constant; the invariants that would catch a traced constant held on all 20
   steps, with `valid_length_increment` among them.
 - ~~Whether ONNX Runtime loads an opset-18 model with a 1.19 GB external-data
-  file on the CPU provider at all.~~ It does — for decode at every optimization
-  level, and for prefill only at `ORT_ENABLE_BASIC` and above. The float16
-  prefill graphs do **not** load at `ORT_DISABLE_ALL`; that is the subject of
-  the failure analysis linked at the top of this document.
+  file on the CPU provider at all.~~ It does, and now at every optimization
+  level for both graph kinds. The float16 prefill graphs originally loaded only
+  at `ORT_ENABLE_BASIC` and above; `T23` re-exported them with a `Concat` cache
+  write, and all four now create a CPU-EP session at `ORT_DISABLE_ALL`. The
+  failure analysis linked at the top of this document is the root cause.
 - ~~Whether the reference model loads on the parity host.~~ It does; the
-  bfloat16 reference produced logits for all 20 steps.
+  bfloat16 reference produced logits for all 20 steps, and the float32 and
+  float16 loads used by the tolerance diagnostics work too.
 - ~~Any behaviour of `TorchReferenceSource._materialize`,
   `numpy_tensor_factory`, or `onnxruntime_cpu_session_factory`'s inner
   `factory`.~~ All three executed. Their `# pragma: no cover` markers remain
   correct for the locked root environment, which still has no runtime.
+- ~~Any measurement at `ORT_DISABLE_ALL`, which is what an unfused baseline
+  requires and what `T23` unblocks.~~ It did. All four committed records are
+  taken there, on both sessions.
 
 Still genuinely unverified:
 
-- Any measurement at `ORT_DISABLE_ALL`, which is what an unfused baseline
-  requires and what `T23` unblocks.
 - Whether the newly written cache slot holds the *right* values, as opposed to
   having been written and being finite. That needs a reference cache
   comparison, which is not implemented.
+- The **fusion delta**. Every committed record is at `ORT_DISABLE_ALL`; the
+  paired `ORT_ENABLE_ALL` run that would isolate what ONNX Runtime's
+  optimizations do to these numbers has not been taken.
+- Whether the T21 comparison should use a float16 reference. The S128 probe
+  says the graph is 6.9x–9.8x closer to a float16 reference than to the
+  bfloat16 one, which is evidence about the graph, not a decision about the
+  contract. Changing `reference_dtype` is a T21 contract change and `T23` did
+  not take it.
 - Any behaviour on a non-CPU execution provider, or on any ONNX Runtime version
   other than 1.28.0.
 
@@ -782,16 +983,22 @@ UV_CACHE_DIR=/tmp/slm-lab-ort-cache \
 UV_CACHE_DIR=/tmp/slm-lab-ort-cache \
   uv pip install --python .ai-local/envs/t21-ort-cpu/bin/python \
   torch==2.7.1 transformers==4.51.3 onnx==1.18.0 \
-  "onnxruntime==<smoke-tested-version>" "numpy==<smoke-tested-version>"
+  onnxruntime==1.28.0 numpy==2.4.6
 ```
 
-`torch` 2.7.1, `transformers` 4.51.3, and `onnx` 1.18.0 are already pinned by
-T20 in `configs/models/qwen3-0.6b-onnx-export.json`. The `onnxruntime` and
-`numpy` versions are **not yet chosen**: `environments/README.md` requires a
-platform task to pin exact versions *after* a compatibility smoke test, no
-ONNX Runtime build has been smoke-tested in this repository, and the guide
-correctly declines to invent one. The task that first executes a real parity
-run owns those pins. `latest` is not an acceptable version.
+`torch` 2.7.1, `transformers` 4.51.3, and `onnx` 1.18.0 are pinned by T20 in
+`configs/models/qwen3-0.6b-onnx-export.json`. The `onnxruntime` and `numpy`
+versions were open when this document was first written — `environments/README.md`
+requires a platform task to pin exact versions *after* a compatibility smoke
+test, and the guide correctly declined to invent one. They are now settled by
+the run that produced these records: **`onnxruntime` 1.28.0** and **`numpy`
+2.4.6**, the pair recorded in
+`docs/failures/runtime/2026-08-02-t20-fp16-prefill-pad-unloadable.md`, with the
+runtime version independently read back into every parity record's
+`runtime.onnxruntime_version`. The version table in
+`environments/onnx-cpu/README.md` carried placeholders when this section was
+written and now carries the same two pins, each with the smoke test that
+justifies it.
 
 Then run the measurement:
 
@@ -819,10 +1026,12 @@ Before any session is constructed, `verified_graph_paths` resolves
 `S128/prefill.onnx` and `S128/decode.onnx` under
 `<artifact-root>/onnx/reference/T20/` and compares each file's SHA-256 against
 the digest committed in `results/manifests/onnx/S128.json`
-(`a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1` for
+(`464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3` for
 prefill, `e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2` for
-decode). A mismatch or a missing file aborts with exit `2` and no session is
-created — asserted by `test_cli_digest_mismatch_exits_without_creating_a_session`.
+decode). The prefill digest moved with the `T23` re-export; the decode digest
+did not, because the decode graphs were re-exported byte-identically. A
+mismatch or a missing file aborts with exit `2` and no session is created —
+asserted by `test_cli_digest_mismatch_exits_without_creating_a_session`.
 
 Sessions are pinned for determinism, not speed:
 `intra_op_num_threads=1`, `inter_op_num_threads=1`,
@@ -855,6 +1064,7 @@ Written to the `--output` path (stdout if omitted), as sorted-key JSON with
 | Field | Content |
 |---|---|
 | `schema_version`, `task_id` | `1`, `"T21"` |
+| `record_kind` | derived from the reference's own recorded dtype by `classify_record_kind`; `t21_ort_cpu_parity` only when the reference ran at the contract's `reference_dtype`, otherwise `diagnostic_off_contract_reference_dtype`. It answers a different question from `evidence_tier` — see below. |
 | `evidence_tier` | derived from the session objects; `real_onnxruntime_cpu` only for genuine sessions |
 | `variant_id`, `prompt_length`, `cache_capacity`, `steps_requested` | `"S128"`, `128`, `160`, and the `--steps` value |
 | `graph_digests` | per graph kind: the verified `sha256` and the manifest `relative_path` (e.g. `S128/prefill.onnx`). Built by `graph_digests_payload`, which the CLI and the guarded real-runtime test both call, so the two produce comparable records. No absolute host path appears in the evidence: it is committed under `results/graph/parity/` and covered by `evidence_sha256`, so it must not depend on where the artifact root is mounted. |
@@ -876,15 +1086,23 @@ logit changes it.
 
 None of the work described here establishes:
 
-- **That parity holds.** It was measured and the magnitude thresholds were not
-  met. Top-1, top-5 and cosine agreement all cleared, which is a weaker claim
-  than parity and is the only one the evidence supports.
-- **That the proposed tolerances are correct.** They remain a hypothesis
-  recorded in code and serialized as `proposed_unvalidated`, now with one
-  measurement against them that they failed. They were not adjusted to fit it.
-- **That any of this describes the graphs a compiler will see.** The reference
-  prefill graphs are scheduled for re-export under `T23`; these numbers
-  describe the artifacts as committed on 2026-08-02, at `ORT_ENABLE_BASIC`.
+- **That parity holds in any absolute sense.** It holds against *this*
+  tolerance, against *this* reference at *its* contract dtype. Every criterion
+  is met on all 20 steps at four contexts, which is the claim the evidence
+  supports, and it is a claim about a comparison whose coarser side is
+  bfloat16. The float16-reference probe is the tighter statement, and it is a
+  diagnostic on one context, not a parity record.
+- **That the tolerance is right, only that it is derived and two-sided.** It
+  accepts float32 and rejects a one-slot cache offset, and no observed
+  candidate error set any threshold. It rests on a rounding model — 115
+  independent zero-mean roundings, an error uncorrelated in direction with the
+  hidden state — that is an approximation, and on a 2.0x margin taken from the
+  reference's own spread. A systematically biased kernel could sit inside it.
+- **That any of this describes the graphs a compiler will see.** These numbers
+  describe the promoted `T23` artifacts, at `ORT_DISABLE_ALL`, on the CPU
+  execution provider. `ORT_DISABLE_ALL` is chosen precisely so they describe
+  the *exported graph* rather than a runtime's fusion choices, which is a
+  different thing from describing what a compiler will accept.
 - **That the newly written cache slot holds the right values.** T21 checks only
   that the slot was written and is finite. Verifying its contents needs a
   reference cache comparison, which is not implemented. Relatedly,
@@ -894,27 +1112,35 @@ None of the work described here establishes:
   memory-bandwidth number. The single-threaded, optimization-disabled session
   configuration is chosen for determinism and would be a poor performance
   configuration.
-- **Anything about specific ONNX Runtime versions.** No `onnxruntime` build has
-  been installed, run, or smoke-tested in this repository. No claim is made
-  about which versions load an opset-18 model with external data, or about any
-  execution provider's behaviour.
+- **Anything about ONNX Runtime versions other than 1.28.0.** One build has
+  been installed and run. No claim is made about which other versions load an
+  opset-18 model with external data, and in particular the float16 `Pad`
+  behaviour in the linked failure analysis is established for 1.28.0 only.
 - **Anything about accelerators.** Nothing about CUDA, QNN/QAIRT, Hexagon NPU,
   Adreno GPU, MLX, or Apple Neural Engine. The CPU execution provider is the
-  only target contemplated, and it has not been exercised.
+  only one exercised.
 - **Compiler acceptance or hardware placement.** `results/manifests/onnx/S128.json`
   already records these under `claim_boundary.does_not_establish`, alongside
-  `onnxruntime_numerical_parity` — which this report does not move.
-- **Anything about S512, S1024, or S4096.** The recorded command targets S128
-  only. The other three variants have committed manifests but no parity route
-  has been exercised for them.
+  `onnxruntime_numerical_parity` — which this report now *does* move, for the
+  CPU execution provider at 1.28.0 and for nothing else.
 
 ## Learner checkpoint
 
 - [ ] Explain why the T21 tolerance is a *backend-parity* tolerance under
   `docs/project/plan.md` §6.7, and name the two error sources it admits that
-  T11's tolerance does not. Then explain why T21's logit thresholds are
-  nonetheless numerically identical to T11's, and why that is a hypothesis
-  rather than a conclusion.
+  T11's tolerance does not. An earlier revision set T21's logit thresholds
+  numerically **equal** to T11's and called that a falsifiable hypothesis. Say
+  what the hypothesis was, what falsified it, and identify the specific step in
+  the argument that was wrong — it is not "the numbers were too small".
+- [ ] The tolerance's `atol` grew 4.6x and the measurement now passes. Make the
+  strongest possible case that this is threshold-fitting. Then say which single
+  piece of committed evidence defeats it, and what that evidence would have had
+  to show for the correct action to be "record the failure" instead.
+- [ ] The reference is bfloat16 (8 significand bits) and the candidate is
+  float16 (11). Compute the representation floor of the comparison at a logit
+  of 25 from the two ULPs alone, without any model of the network. Then explain
+  why sizing a tolerance from float16's spacing — the finer side — is an error
+  of a factor of about 8 before any other consideration.
 - [ ] `rtol` scales the candidate, not the reference. Construct a pair of logit
   vectors for which `compare_logits(a, b)` passes `allclose` and
   `compare_logits(b, a)` fails, and say which of the two is the ONNX Runtime
@@ -929,10 +1155,11 @@ None of the work described here establishes:
 - [ ] `detect_evidence_tier` uses `issubclass(type(session), real)` rather than
   `isinstance(session, real)`. Explain the attack the second form permits, and
   why the tier is the minimum over all sessions rather than the maximum.
-- [ ] The first real run passes with `max_absolute_error = 0.03`. State what
-  must change in `DEFAULT_ORT_CPU_TOLERANCE` and `TOLERANCE_STATUS`, and
-  explain why leaving `atol=0.25` in place would leave the criterion
-  unfalsified.
+- [ ] A run passes with `max_absolute_error = 0.03` against `atol = 1.15`.
+  State what must change in `DEFAULT_ORT_CPU_TOLERANCE` and
+  `TOLERANCE_STATUS`, and explain why leaving the threshold at 38x the measured
+  error would leave the criterion unfalsified. Then say why the *current*
+  ratio — 1.99x — is not that situation.
 - [ ] The first real run fails at step 3 with both `numerical_tolerance` and
   `cache_state_update` in `failure_kinds`. Which do you investigate first, and
   why is retolerancing not an available response? Then say how `failures[]`

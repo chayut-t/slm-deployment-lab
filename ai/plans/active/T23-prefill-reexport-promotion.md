@@ -1,7 +1,7 @@
 # T23: Prefill re-export promotion and evidence refresh
 
-Status: draft
-Owner: unassigned
+Status: complete on `task/T23-prefill-reexport-promotion`, awaiting merge
+Owner: Claude t23-main agent
 Updated: 2026-08-02
 
 ## Objective
@@ -68,20 +68,28 @@ Full analysis:
 
 ## Milestones
 
-- [ ] Re-export succeeds and the export attestation verifies against its own
-      tooling, with no digest hand-edited.
-- [ ] All four prefill graphs create a CPU-EP session at `ORT_DISABLE_ALL`.
-- [ ] All four decode digests and the shared `external_data_sha256` are
+- [x] Re-export succeeds and the export attestation verifies against its own
+      tooling, with no digest hand-edited. Re-attested by
+      `scripts/export/write_export_attestation.py` across `321b11b` and
+      `d3494fd`.
+- [x] All four prefill graphs create a CPU-EP session at `ORT_DISABLE_ALL`.
+- [x] All four decode digests and the shared `external_data_sha256` are
       unchanged from the pre-promotion artifacts.
-- [ ] `results/graph/S*.json` regenerated; no new risk finding appears that was
+- [x] `results/graph/S*.json` regenerated; no new risk finding appears that was
       not predicted, and any that does is explained rather than accepted.
-- [ ] Parity re-measured at `ORT_DISABLE_ALL` for all four contexts, at
-      `evidence_tier="real_onnxruntime_cpu"`.
-- [ ] `DEFAULT_ORT_CPU_TOLERANCE` no longer reads `proposed_unvalidated`, with
-      its derivation recorded.
-- [ ] The audit tool reports zero unreconciled numeric claims, and lives in
-      `scripts/` rather than scratch.
-- [ ] `LEARN-10` rebuilt and republished.
+      Finding totals are 14/15/15/15; S128 is 14 because
+      `R-LARGE-INLINE-CONSTANT` does not fire there.
+- [x] Parity re-measured at `ORT_DISABLE_ALL` for all four contexts, at
+      `evidence_tier="real_onnxruntime_cpu"`, on onnxruntime 1.28.0.
+- [x] `DEFAULT_ORT_CPU_TOLERANCE` no longer reads `proposed_unvalidated`, with
+      its derivation recorded. `TOLERANCE_STATUS` is now `derived_and_measured`.
+- [x] The audit tool reports zero unreconciled numeric claims, and lives in
+      `scripts/audit/audit_reference_graph_claims.py` rather than scratch.
+- [x] `LEARN-10` rebuilt and republished.
+
+One in-scope item was deliberately **not** taken, and is recorded as a
+follow-up rather than done: the risk catalogue still has no total-inline-bytes
+rule. See the last entry under "Decisions and discoveries".
 
 ## Verification and acceptance
 
@@ -132,24 +140,99 @@ Full analysis:
 - 2026-08-02: four numeric-claim reconciliations attempted by reasoning were
   each incomplete. Work the list from tool output, never from memory.
 
+### Discovered while executing the plan
+
+- 2026-08-02: **the prescribed promotion order was not executable.** Step 1 of
+  "Progress and restart instructions" says to re-export before re-attesting, but
+  `load_export_config` refuses a config carrying no attestation block, so the
+  export CLI cannot run at the very commit the plan said to export from. The
+  commit-gating described above is real, but it is tighter than the plan
+  realised: the config must first be *un*attested as its own commit (`321b11b`),
+  which is why the sequence ran to three commits rather than two. A plan that
+  prescribes an order should be executed once against the tooling before it is
+  trusted.
+- 2026-08-02: **the interpreter pin moved to the measured value.**
+  `_verify_runtime` pinned `runtime_python_version: 3.11.15` while the parity
+  host runs 3.11.13. The decision was to re-attest on 3.11.13 rather than
+  provision 3.11.15, because the attestation exists to record the interpreter
+  that actually ran. Making the record match the machine is the point; making
+  the machine match the record would have preserved a number at the cost of the
+  thing it asserts.
+- 2026-08-02: **the blast-radius enumeration missed
+  `configs/quantization/calibration.yaml`**, which pins the
+  `canonical_json_sha256` of the export *config* — not of any graph. No search
+  for a graph digest, size, or node count could have found it, because it cites
+  none of them. The test suite found it, via 22 failures. Enumerating a blast
+  radius by searching for the values that moved cannot find a record that pins a
+  digest of the thing that moved.
+- 2026-08-02: **the old ORT CPU tolerance rejected float32 itself.** The
+  load-bearing control was a float32-vs-bfloat16 self-comparison with no ONNX,
+  no runtime and no graph involved: it missed the old `atol` of 0.25 by 0.609,
+  where the actual graph missed by 0.578. The instrument was broken, not the
+  graph. A tolerance that the reference dtype cannot pass is not a threshold the
+  candidate failed. Any tolerance change must lead with a control like this,
+  because otherwise widening a threshold until the measurement agrees with it is
+  indistinguishable from validating it.
+- 2026-08-02: **the re-export inverted which inline-constant family dominates
+  the protobuf.** The `Concat` reserves are 71.5% / 78.9% / 80.5% / 29.5% of the
+  four prefill files against the causal mask's 0.6% / 5.6% / 11.5% / 67.4%, so
+  the mask is the largest inline family only at S4096. A fix aimed at one
+  deployment risk created a larger instance of the same risk, and neither the
+  risk catalogue nor the reports said so until they were re-read against bytes.
+- 2026-08-02: **the risk catalogue cannot see the new family.**
+  `R-LARGE-INLINE-CONSTANT` is per-tensor and fires strictly above 262,144 bytes;
+  every reserve is at most exactly 262,144, so 71.5% of the S128 prefill protobuf
+  is invisible to the catalogue. Adding a total-inline-bytes rule would change
+  findings and is therefore **out of scope for T23** — recorded here as a
+  follow-up for the task that next owns the catalogue. Note also that the clean
+  `R-LARGE-INLINE-CONSTANT` report at S1024 and S4096 rests on a one-byte
+  boundary.
+- 2026-08-02: **reconciliation-by-reasoning failed five times**, not the four
+  recorded above — the fifth surfaced after that entry was written. Two of the
+  five were in briefs written from this plan's own analysis, so a careful
+  document derived from correct analysis is not a substitute for re-running the
+  producer. The audit tool caught every one. The rule this ticket ends with:
+  regenerate from the producer, then let the tool enumerate; never reconcile
+  from a document, however good.
+
 ## Progress and restart instructions
 
-The fix and its analysis are merged; the reference artifacts still carry the
-defect. Nothing about the promotion has been started.
+All eight milestones are met on `task/T23-prefill-reexport-promotion`. The
+promotion is done, the evidence is regenerated, and the audit tool reports zero
+citation disagreements. `CLAIM_DOCUMENTS` holds eight in-scope documents, of
+which `citations` binds the six with `role="reconcile"`; the other two are
+`role="historical"` and are enumerated by `claims` rather than bound.
 
-Next action, in order:
+**The work is not merged, and merging was not authorized.** `T23` therefore
+stays `in_progress` in `ai/tasks/task_graph.yaml`: the schema allows only
+`planned`, `in_progress`, `blocked` and `completed`, and AGENTS.md defines
+`completed` as requiring the changes to be integrated into the branch downstream
+tasks will use. There is no state for "finished on its branch", so the truthful
+choice is `in_progress` with the branch and worklog recorded.
 
-1. Resolve the interpreter question before exporting anything. `_verify_runtime`
-   pins `runtime_python_version: 3.11.15`; the parity host has 3.11.13. Either
-   provision 3.11.15, or change the pin as a recorded decision — it is part of
-   what the attestation asserts, so it is a decision, not a workaround.
-2. Re-export and re-attest through the two-commit sequence in §"Promotion" of
-   the failure analysis.
-3. Regenerate manifests, then inspection reports, then parity — in that order;
-   each reads the previous one's output.
-4. Take the tolerance decision on the `ORT_DISABLE_ALL` numbers, not on the
-   superseded `ORT_ENABLE_BASIC` ones in `results/graph/parity/` today.
-5. Work the audit tool's `MOVES`, `AMBIGUOUS` and `UNCLASSIFIED` queues to zero.
+The worklog is `ai/worklogs/2026-08-02-T23-prefill-reexport-promotion.md`. It is
+**not** referenced from the task graph and cannot be: the validator enforces
+`only completed tasks may set the worklog field`, so `T23`'s `worklog` stays
+`null` until it is `completed`. Set both in the same edit at merge time.
 
-Claim the task in `ai/tasks/task_graph.yaml` before starting, and expect `T22`
-to unblock automatically when this completes.
+Next action, for whoever picks this up:
+
+1. Review and merge `task/T23-prefill-reexport-promotion` into `main`.
+2. Promote `T23` to `completed` **and** set its `worklog` to the path above in
+   the same edit, then re-run `python3 scripts/ai/render_task_status.py`. `T22`
+   unblocks at that point, not before.
+3. Move this plan to `ai/plans/completed/`.
+
+Carried forward as unresolved, and listed in the worklog:
+
+- The **fusion delta is unmeasured**: every committed record is
+  `ORT_DISABLE_ALL`; the paired `ORT_ENABLE_ALL` run has never been taken.
+- The parity evidence is **one build, one EP, one host**.
+- The committed parity records use a **bfloat16** reference. The
+  float16-reference probe, 6.9x-9.8x tighter on S128, is a diagnostic only;
+  switching the reference dtype is a contract decision nobody has taken.
+- The claim that the prefill `Pad` defect reproduces on onnxruntime 1.20.1 and
+  1.22.0 is **hearsay** — no recorded run exists for either.
+- The risk catalogue has no total-inline-bytes rule.
+- The clean `R-LARGE-INLINE-CONSTANT` report at S1024/S4096 sits on a one-byte
+  boundary.

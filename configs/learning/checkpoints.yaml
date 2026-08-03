@@ -860,13 +860,15 @@ checkpoints:
     subject: What an exported graph tells you, and what only a measurement can
     lede: >-
       T20 proved the eight Qwen3 graphs export and match the frozen contract.
-      T21 asks the next two questions and answers them at very different
-      evidence tiers. A dependency-free protobuf reader walks the real graphs
-      and finds a fully static, branch-free, single-domain boundary hiding
-      1,231 computed shape inputs, 56 scatter-based cache writes, a 37 MB
-      per-token I/O boundary, and a 33.5 MB causal mask baked into one node.
-      The ONNX Runtime parity runner, by contrast, has never executed a graph —
-      and the report says so in its first line.
+      T21 asks the next two questions. A dependency-free protobuf reader walks
+      the real graphs and finds a fully static, branch-free, single-domain
+      boundary hiding 1,231 computed shape inputs, 56 scatter-based cache
+      writes, a 37 MB per-token I/O boundary, and a 33.5 MB causal mask baked
+      into one node. Then the graphs are actually run, and the measurement
+      lands on the tolerance rather than on the graph: the first real ONNX
+      Runtime execution missed thresholds that, it turns out, also reject
+      float32. Two very different kinds of evidence, and the second one is a
+      lesson in what a threshold is for.
     tasks: [T21]
     attention: Deep study
     outcomes:
@@ -879,7 +881,11 @@ checkpoints:
       - Read an absent finding correctly, telling "we looked and it is clean"
         apart from "there was nothing to look at".
       - State what a validated mechanism plus a recorded command is worth, and
-        what it is not worth, compared to a measurement.
+        what it is not worth, compared to a measurement — then read the
+        measurement that arrived and say which parts of the mechanism it
+        confirmed and which claim it falsified.
+      - Separate re-deriving a tolerance from widening one, and name the single
+        control that tells them apart when both produce a green run.
     readings:
       - key: inspection
         label: Graph inspection report
@@ -896,9 +902,10 @@ checkpoints:
         path: docs/results/onnx/ort-cpu-parity.md
         required: true
         why: >-
-          How to write up work whose headline result does not exist yet:
-          tolerances argued and labelled unvalidated, invariants named, faults
-          injected, and the exact command that would produce the real number.
+          The measurement, and the tolerance derivation it forced: invariants
+          named, faults injected, and then a threshold shown to reject float32
+          and replaced by one derived from dtype ULP and layer depth. Read the
+          derivation section before the results table.
       - key: catalogue
         label: Risk catalogue
         title: "The ONNX deployment-risk rule catalogue"
@@ -915,14 +922,22 @@ checkpoints:
         why: >-
           The decisions, including why no ONNX Runtime extra was added to the
           root lock and what the first real parity run must do to the
-          tolerances.
+          tolerances — written before that run happened, so it is also the
+          record of a prediction you can now grade.
     labs:
       - what: Run the graph inspection and parity unit tests
         run: uv run pytest tests/onnx
         proves: >-
           The protobuf reader, every detector, and all nine static-cache
-          invariants — including seventeen injected faults — with no torch,
-          onnx, onnxruntime, or numpy installed.
+          invariants — including seventeen injected faults — and the tolerance
+          budget's own guards, with no torch, onnx, onnxruntime, or numpy
+          installed.
+      - what: Read the tolerance's two-sided property off committed JSON
+        run: uv run pytest tests/onnx/test_onnx_cpu_parity.py -k tolerance -v
+        proves: >-
+          That the committed thresholds accept the exact float32 answer and
+          still reject a one-slot cache offset, and that the four logit
+          thresholds come from one error budget rather than four knobs.
       - what: Reproduce the committed inspection reports from the real graphs
         run: SLM_LAB_ARTIFACT_ROOT=<external-root> uv run python -m slm_lab.graph.inspection --all-manifests --check
         proves: >-
@@ -952,14 +967,23 @@ checkpoints:
       - Compute the useful fraction of the S4096 decode boundary traffic and
         explain why that ratio decides long-context viability before any kernel
         question does.
-      - The parity tolerances are looser than T11's. Justify each relaxation
-        from the two error sources the comparison admits, then say what would
-        make you tighten one.
+      - The parity atol is 4.6x looser than T11's while cosine_min is tighter.
+        Justify each from the two error sources the comparison admits, then say
+        which side of the comparison is the coarser one and why that decides
+        the answer.
+      - A measurement misses a threshold and the threshold is then replaced by
+        a larger one. Describe the evidence that would make that legitimate,
+        and the evidence that would make it misconduct. Then find which of the
+        two the committed diagnostics supply.
     boundaries:
       - No compiler, converter, quantizer, or device was run. Every severity is
         a structural judgement about a stated target, not a compile result.
-      - No ONNX Runtime measurement exists. The parity tolerances are proposed
-        and unvalidated, and the runner has never executed a real graph.
+      - The ONNX Runtime measurement is one build (1.28.0), one execution
+        provider (CPU), one host, at ORT_DISABLE_ALL. The paired ORT_ENABLE_ALL
+        run that would isolate the fusion delta has not been taken.
+      - The tolerance is derived and two-sided, not proven correct. It rests on
+        a rounding model and a stated margin, and the comparison's coarser side
+        is the bfloat16 reference rather than the float16 graph.
       - The reader is a structural decoder, not a validator; T20's onnx.checker
         acceptance remains the evidence that the graphs are valid ONNX.
   - id: LEARN-11

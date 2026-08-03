@@ -1796,8 +1796,8 @@
         }
       ],
       "relative_path": "S512/prefill.onnx",
-      "sha256": "05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e",
-      "size_bytes": 2064360
+      "sha256": "6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f",
+      "size_bytes": 9305674
     },
     "root": "${SLM_LAB_ARTIFACT_ROOT}/onnx/reference/T20"
   },
@@ -4878,44 +4878,44 @@
   "export_provenance": {
     "attestation_source": {
       "path": "configs/models/qwen3-0.6b-onnx-export.json",
-      "sha256": "be885020992520443d11b883d890d1ceeac424648107007ef8332f37f629d147"
+      "sha256": "ede6cfc0600ffda01d5fb95e2cc9d920d137cf170255da195f4f0425adc3f70b"
     },
-    "commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+    "commit": "321b11ba922f4bf68471d678e4f5ed987f3c8668",
     "export_config": {
       "path": "configs/models/qwen3-0.6b-onnx-export.json",
       "sha256": "02a2fe3c95333a80ec31baf150ca6591adde5513ffdd2431212d0646bb5850df"
     },
     "exporter_source": {
       "path": "src/slm_lab/export/onnx_matrix.py",
-      "sha256": "74866df0c506d110d1310dd381b2abcb74574d25dd3638e80859151f5bab1334"
+      "sha256": "93d55d02ddc857a8b81220699ccd0b7e9590605fd9d4c41ee136281a1e430a3b"
     },
     "model_contract": {
       "path": "configs/models/qwen3-0.6b.yaml",
       "sha256": "c74e9957bbf5736ffa3c0ab8a34b45aae661327515ec1d1da02d6c004a3c509f"
     },
     "run_attestation": {
-      "exporter_commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+      "exporter_commit": "321b11ba922f4bf68471d678e4f5ed987f3c8668",
       "external_data_sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
       "graph_sha256": {
         "S1024": {
           "decode": "4d25bbd1894213d3539827ddd6bf10ea07bdfa653db5421de40a6fdb726f8759",
-          "prefill": "b19aec5f5b6f9a71462b3777d5de0154b5eac6242e0baaa68ab4fe7992bbb5a6"
+          "prefill": "61d1b8b8b56f97dc44c93c27b02cafece5a2691ac33e51105c91444122521940"
         },
         "S128": {
           "decode": "e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2",
-          "prefill": "a61ed2ef1e3f1ef9313f33ee13ab5af5dc79029291afbd328cb0aaaea470dfd1"
+          "prefill": "464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3"
         },
         "S4096": {
           "decode": "ace3468aee92e93a2db33f54f6dbd07e4af2163d683ef5fd066e62b60fbf94cd",
-          "prefill": "c70a7facdb4428c6dc612aa1ed9e4e9bd43e3e1155b097eb4d9d241691a9e988"
+          "prefill": "cbed215ca4cda9e5ac6fe1d8545795bd853cab321ca14e9dcadd167d720490f0"
         },
         "S512": {
           "decode": "ed2c8b52bd284685a6c549b7ebadd4db257c93e17ec7cae6b09c5b7561e36c8f",
-          "prefill": "05ea2106fdd4dcd37fab537be08dd9c03a0ecfe974c40d876796236c7a48280e"
+          "prefill": "6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f"
         }
       },
-      "run_id": "T20-qwen3-0.6b-reference-onnx-2026-07-30",
-      "runtime_python_version": "3.11.15",
+      "run_id": "T20-qwen3-0.6b-reference-onnx-concat-2026-08-02",
+      "runtime_python_version": "3.11.13",
       "schema_version": 1,
       "source_artifact_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
     },
@@ -4943,7 +4943,7 @@
   },
   "exporter": "torch.onnx.export",
   "exporter_version": "2.7.1",
-  "git_commit": "631fd70bcff9b73b81c08a2a2e0127cad07f09ca",
+  "git_commit": "321b11ba922f4bf68471d678e4f5ed987f3c8668",
   "host_manifest_sha256": "4de649d6489dd0326e8682a53b244e719742436f5f896feb277b463cebb740f7",
   "input_contract": {
     "decode": [
@@ -5034,7 +5034,7 @@
     "attention_implementation": "eager",
     "device": "cpu",
     "onnx": "1.18.0",
-    "python": "3.11.15",
+    "python": "3.11.13",
     "torch": "2.7.1",
     "transformers": "4.51.3"
   },
