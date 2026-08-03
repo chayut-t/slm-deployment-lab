@@ -29,6 +29,22 @@ _EXPORTS: dict[str, str] = {
     "numerical_parity_requirement": "parity",
     "resolve_artifact_root": "parity",
     "write_evidence": "parity",
+    # `w8` also defines build_document, generate_repository, load_inputs, and
+    # validate_repository. Those names collide with `calibration`'s and are
+    # deliberately not exported: this map is flat, so one name can only ever
+    # mean one module. Reach them through `slm_lab.quantization.w8` directly.
+    "W8EvidenceError": "w8",
+    "assess_precision_state": "w8",
+    "build_candidate": "w8",
+    "build_readiness_record": "w8",
+    "build_stage_request": "w8",
+    "compare_quality": "w8",
+    "default_readiness_path": "w8",
+    "precision_state": "w8",
+    "precision_state_scope": "w8",
+    "weight_storage_projection": "w8",
+    "write_readiness_record": "w8",
+    "write_stage_request": "w8",
 }
 
 __all__ = sorted(_EXPORTS)

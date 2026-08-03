@@ -255,15 +255,15 @@
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
       <div class="stat"><div class="num">18<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
-      <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
-      <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">10</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
       <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 18 completed, 4 ready, 9 blocked, of 31 tasks">
+    <div class="bar" role="img" aria-label="Task progress: 18 completed, 3 ready, 10 blocked, of 31 tasks">
       <span style="flex:18;background:var(--bar-done)"></span>
-      <span style="flex:4;background:var(--bar-ready)"></span>
-      <span style="flex:9;background:var(--bar-blocked)"></span>
+      <span style="flex:3;background:var(--bar-ready)"></span>
+      <span style="flex:10;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
     <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection (T21) and a measured CPU-parity
@@ -414,12 +414,6 @@
       <div class="why">Transform the reference exports into compiler-oriented QNN candidates without obscuring source parity, and package them for Workbench submission. Unblocked by the T23 merge: the four reference prefill graphs now load on ONNX Runtime's CPU provider, so the candidates are built from bytes that are on <code>main</code> rather than a task branch. The reference and QNN-candidate artifacts must stay distinct, and every transformation recorded.</div>
     </div>
 
-    <div class="next priority">
-      <h3><span class="tid">T41</span> · W8 quantization evidence</h3>
-      <span class="prio-tag">Priority 2 · quantization lane</span>
-      <div class="why">Produce the first real quantization results (W8A16 / W8A8) on top of the calibration corpus T40 froze. The first task in the project that actually quantizes a weight.</div>
-    </div>
-
     <div class="next">
       <h3><span class="tid">T52</span> · Apple profiling &amp; context sweep</h3>
       <span class="prio-tag">Parallel</span>
@@ -431,6 +425,14 @@
       <span class="prio-tag">Parallel · lowest priority</span>
       <div class="why">The NVIDIA lane on free Colab/Kaggle. First to be cut if Qualcomm needs the time — the plan protects the NPU outcome.</div>
     </div>
+
+    <p style="color:var(--ink-2);font-size:0.95rem;">
+      <strong>W8 quantization evidence</strong> is no longer on this list: it froze the two W8A16 / W8A8 candidate
+      specifications and their evidence gate, then stopped at three external blockers — no Linux + CUDA AIMET host,
+      no quantize-stage adapter in this repository to produce a W8 artifact through the hosted lane, and no floating
+      Qwen graph that has yet traversed the public Workbench pipeline. No weight has been quantized.
+      See <code>docs/results/quantization/w8.md</code>.
+    </p>
 
     <p style="color:var(--ink-2);font-size:0.95rem;">
       After those: <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →

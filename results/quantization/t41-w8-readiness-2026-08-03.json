@@ -1,0 +1,1092 @@
+{
+  "ai_hub_capability": {
+    "candidate_requests": {
+      "w8a16": {
+        "activations_dtype": "INT16",
+        "weights_dtype": "INT8"
+      },
+      "w8a8": {
+        "activations_dtype": "INT8",
+        "weights_dtype": "INT8"
+      }
+    },
+    "canonical_json_sha256": "2cdfe371ec033a78fb8b6c4a40caa4d8b178715be4be1c56b910266d18cae14d",
+    "client_version": "0.53.0",
+    "cost": "none — read-only capability query, no job submitted",
+    "device_minutes_consumed": 0,
+    "does_not_establish": [
+      "that_either_candidate_compiles",
+      "that_the_compiler_accepts_this_graph_at_any_precision",
+      "that_any_operator_or_the_whole_graph_is_placed_on_the_NPU",
+      "any_latency_throughput_peak_memory_or_energy",
+      "any_accuracy_perplexity_or_quality_delta",
+      "that_a_W8_artifact_exists_anywhere_to_send_to_that_entry_point",
+      "that_this_repository_can_run_a_quantize_job_which_needs_an_adapter_it_lacks",
+      "anything_at_all_about_a_device_that_is_not_one_of_the_three_recorded_here"
+    ],
+    "establishes": [
+      "that_the_public_client_at_the_recorded_version_exposes_a_quantize_entry_point",
+      "that_its_weights_dtype_and_activations_dtype_arguments_accept_the_recorded_dtypes",
+      "that_W8A16_and_W8A8_are_each_expressible_as_one_public_quantize_request",
+      "that_the_three_plan_section_3_2_target_devices_were_live_on_the_observation_date",
+      "that_those_devices_advertise_framework_qnn_and_htp_supports_fp16",
+      "that_the_quantize_entry_point_exposes_no_separate_kv_cache_dtype_argument"
+    ],
+    "kv_cache_dtype": {
+      "quantize_parameters": [
+        "model",
+        "calibration_data",
+        "weights_dtype",
+        "activations_dtype",
+        "name",
+        "options",
+        "project"
+      ],
+      "separate_cache_dtype_argument": false,
+      "statement": "The public quantize entry point takes one weights dtype and one activations dtype, and no argument that names the KV cache. This is consistent with the frozen float16 CACHE_DTYPE finding already in both candidates and is not a way around it: the Q2 row's int8 cache would still have to come from the T12 graph contract and the T20/T23 export boundary, because there is no quantize option that could produce one."
+    },
+    "observation_date": "2026-08-03",
+    "path": "results/quantization/t41-ai-hub-capability-2026-08-03.json",
+    "quantize_dtypes": [
+      "INT16",
+      "INT4",
+      "INT8"
+    ],
+    "quantize_entry_point": "submit_quantize_job",
+    "rebuild_command": "uv run python -m slm_lab.quantization.w8 capabilities --offline-input results/quantization/t41-ai-hub-capability-2026-08-03.json",
+    "submitted_jobs": 0
+  },
+  "candidates": [
+    {
+      "candidate_canonical_json_sha256": "bf7af73572b01ffed21138ccbeecb090add647311ba96cac5be58f0f099ba264",
+      "candidate_id": "w8a16",
+      "config_file_sha256": "0ace14c2360f3c67217e0352894181927e83df9139efcd9726ebde7ffbe4f019",
+      "config_path": "configs/quantization/w8/w8a16.yaml",
+      "kv_cache_applied_dtype": "float16",
+      "kv_cache_satisfied_without_contract_change": true,
+      "plan_matrix_row": "Q1",
+      "precision_evidence": {
+        "deployment_checks": [
+          {
+            "detail": "no compile stage manifest was supplied",
+            "name": "compile_manifest_present",
+            "satisfied": false
+          },
+          {
+            "detail": "no inference stage manifest was supplied",
+            "name": "inference_manifest_present",
+            "satisfied": false
+          },
+          {
+            "detail": "no profile stage manifest was supplied",
+            "name": "profile_manifest_present",
+            "satisfied": false
+          },
+          {
+            "detail": "the compile manifest records the sha256 of the artifact it produced",
+            "name": "compile_target_artifact_digest",
+            "satisfied": false
+          },
+          {
+            "detail": "the compile manifest's source artifact digest equals the quantized-artifact digest the simulation record declared; without this link the compiled artifact is not this candidate's",
+            "name": "compile_source_is_the_simulated_artifact",
+            "satisfied": false
+          },
+          {
+            "detail": "the predecessor manifest digest equals the recomputed digest of the compile manifest supplied here",
+            "name": "inference_cites_the_compile_manifest",
+            "satisfied": false
+          },
+          {
+            "detail": "the stage's compiled_model source artifact digest equals the compile manifest's target artifact digest",
+            "name": "inference_consumed_the_compiled_artifact",
+            "satisfied": false
+          },
+          {
+            "detail": "the predecessor manifest digest equals the recomputed digest of the compile manifest supplied here",
+            "name": "profile_cites_the_compile_manifest",
+            "satisfied": false
+          },
+          {
+            "detail": "the stage's compiled_model source artifact digest equals the compile manifest's target artifact digest",
+            "name": "profile_consumed_the_compiled_artifact",
+            "satisfied": false
+          }
+        ],
+        "scope": "candidate_specification_only_no_weight_was_quantized",
+        "simulation_checks": [
+          {
+            "detail": "no simulation record was supplied, so the candidate is a specification and nothing more",
+            "name": "simulation_record_present",
+            "satisfied": false
+          }
+        ],
+        "source": "absent_at_this_commit",
+        "state": "specified",
+        "unsatisfied_checks": [
+          "simulation_record_present",
+          "compile_manifest_present",
+          "inference_manifest_present",
+          "profile_manifest_present",
+          "compile_target_artifact_digest",
+          "compile_source_is_the_simulated_artifact",
+          "inference_cites_the_compile_manifest",
+          "inference_consumed_the_compiled_artifact",
+          "profile_cites_the_compile_manifest",
+          "profile_consumed_the_compiled_artifact"
+        ]
+      },
+      "precision_state": "specified",
+      "precision_state_scope": "candidate_specification_only_no_weight_was_quantized",
+      "weight_storage_projection": {
+        "cross_check": {
+          "agrees": true,
+          "derived_parameters": 596049920,
+          "external_data_bytes": 1192085504,
+          "external_data_float16_elements": 596042752,
+          "external_initializer_count": 254,
+          "inline_initializer_count": 56,
+          "inline_initializer_elements": 7168,
+          "measurement": "arithmetic_over_committed_inputs",
+          "note": "This is a byte-level reconciliation of two independent committed sources, not a measurement of anything quantized. It is here because a parameter count that disagrees with the artifact would silently poison every ratio in this projection.",
+          "question": "does the parameter total derived from the model contract equal the parameter total the committed float16 export actually stores?",
+          "reconstructed_parameters": 596049920
+        },
+        "derived_from": {
+          "exclusion_policy": "this candidate's excluded_from_quantization block",
+          "fields": [
+            "num_hidden_layers",
+            "hidden_size",
+            "intermediate_size",
+            "num_attention_heads",
+            "num_key_value_heads",
+            "head_dim",
+            "vocab_size",
+            "tie_word_embeddings"
+          ],
+          "model_contract": "configs/models/qwen3-0.6b.yaml"
+        },
+        "does_not_establish": [
+          "on_disk_quantized_artifact_size",
+          "encoding_scale_or_zero_point_storage_overhead_in_the_shipped_format",
+          "runtime_peak_memory",
+          "any_latency_or_throughput_claim",
+          "kv_cache_memory_which_both_candidates_leave_at_the_frozen_float16_contract",
+          "quality_impact_of_any_included_or_excluded_weight_class"
+        ],
+        "kv_cache_left_at_the_frozen_contract": {
+          "by_context": [
+            {
+              "bytes": 18350080,
+              "cache_capacity": 160,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 128,
+              "variant_id": "S128"
+            },
+            {
+              "bytes": 66060288,
+              "cache_capacity": 576,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 512,
+              "variant_id": "S512"
+            },
+            {
+              "bytes": 132120576,
+              "cache_capacity": 1152,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 1024,
+              "variant_id": "S1024"
+            },
+            {
+              "bytes": 484442112,
+              "cache_capacity": 4224,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 4096,
+              "variant_id": "S4096"
+            }
+          ],
+          "contract_source": "slm_lab.contracts.static_cache.CACHE_DTYPE",
+          "dtype": "float16",
+          "measurement": "analytic_projection",
+          "note": "Both W8 candidates leave the cache at float16, so none of the weight saving above applies to it. At the longest frozen context the cache alone is the same order of magnitude as the entire float16 weight set, which is why a weight-only W8 result must never be presented as a memory result for long context."
+        },
+        "measurement": "analytic_projection",
+        "scale_storage_lower_bound": {
+          "candidate_weight_bytes_including_scales": 753074176,
+          "granularity": "per_output_channel",
+          "measurement": "analytic_projection",
+          "note": "A lower bound, and the reason the headline ratio above overstates the saving. It counts one scale per output channel at the declared scale dtype and nothing else: no zero points (the policy is symmetric, so there are none), no QDQ node overhead, no per-tensor activation encodings, and no container framing. The shipped format is not decided at this commit, so the real overhead is unknown rather than estimated.",
+          "per_output_channel_scale_count": 344064,
+          "scale_bytes": 1376256,
+          "scale_dtype": "float32",
+          "weight_byte_ratio_including_scales": 1.582978
+        },
+        "totals": {
+          "candidate_weight_bytes": 751697920,
+          "excluded_parameters": 155648000,
+          "float16_weight_bytes": 1192099840,
+          "measurement": "analytic_projection",
+          "quantized_parameter_fraction": 0.738868,
+          "quantized_parameters": 440401920,
+          "total_parameters": 596049920,
+          "weight_byte_ratio_float16_over_candidate": 1.585876,
+          "weight_bytes_saved": 440401920
+        },
+        "weight_classes": [
+          {
+            "candidate_bytes": 311164928,
+            "class_id": "tied_vocabulary_table",
+            "exclusion_id": "tied_embedding_table",
+            "float16_bytes": 311164928,
+            "instances": 1,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              151936,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "One table of 151936 rows serves both directions. The T21 inventory records the lookup as a Gather rather than a MatMul, so the two uses are not even the same operator class.",
+            "parameters": 155582464,
+            "parameters_per_instance": 155582464,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "token embedding lookup and, because the weights are tied, the final logits projection"
+          },
+          {
+            "candidate_bytes": 58720256,
+            "class_id": "attention_q_proj",
+            "exclusion_id": null,
+            "float16_bytes": 117440512,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              2048,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "16 query heads at head_dim 128 give 2048 output channels, twice the key/value width under GQA.",
+            "parameters": 58720256,
+            "parameters_per_instance": 2097152,
+            "per_output_channel_scales": 57344,
+            "quantized": true,
+            "role": "query projection"
+          },
+          {
+            "candidate_bytes": 29360128,
+            "class_id": "attention_k_proj",
+            "exclusion_id": null,
+            "float16_bytes": 58720256,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "8 key/value heads give 1024 output channels; GQA makes this matrix half the size of q_proj.",
+            "parameters": 29360128,
+            "parameters_per_instance": 1048576,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "key projection"
+          },
+          {
+            "candidate_bytes": 29360128,
+            "class_id": "attention_v_proj",
+            "exclusion_id": null,
+            "float16_bytes": 58720256,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "Same GQA width as k_proj.",
+            "parameters": 29360128,
+            "parameters_per_instance": 1048576,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "value projection"
+          },
+          {
+            "candidate_bytes": 58720256,
+            "class_id": "attention_o_proj",
+            "exclusion_id": null,
+            "float16_bytes": 117440512,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              2048
+            ],
+            "measurement": "analytic_projection",
+            "note": "Reduces over 2048 inputs into 1024 output channels and writes straight into the residual stream.",
+            "parameters": 58720256,
+            "parameters_per_instance": 2097152,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "attention output projection"
+          },
+          {
+            "candidate_bytes": 88080384,
+            "class_id": "mlp_gate_proj",
+            "exclusion_id": null,
+            "float16_bytes": 176160768,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              3072,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "3072 output channels feeding the SiLU gate.",
+            "parameters": 88080384,
+            "parameters_per_instance": 3145728,
+            "per_output_channel_scales": 86016,
+            "quantized": true,
+            "role": "SwiGLU gate projection"
+          },
+          {
+            "candidate_bytes": 88080384,
+            "class_id": "mlp_up_proj",
+            "exclusion_id": null,
+            "float16_bytes": 176160768,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              3072,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "3072 output channels multiplied by the gate.",
+            "parameters": 88080384,
+            "parameters_per_instance": 3145728,
+            "per_output_channel_scales": 86016,
+            "quantized": true,
+            "role": "SwiGLU up projection"
+          },
+          {
+            "candidate_bytes": 88080384,
+            "class_id": "mlp_down_proj",
+            "exclusion_id": null,
+            "float16_bytes": 176160768,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              3072
+            ],
+            "measurement": "analytic_projection",
+            "note": "The widest reduction in the block: 3072 inputs per output channel, so per-output-channel weight error accumulates over the longest dot product here.",
+            "parameters": 88080384,
+            "parameters_per_instance": 3145728,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "SwiGLU down projection"
+          },
+          {
+            "candidate_bytes": 114688,
+            "class_id": "block_rmsnorm_scales",
+            "exclusion_id": "rmsnorm_scales",
+            "float16_bytes": 114688,
+            "instances": 28,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              2048
+            ],
+            "measurement": "analytic_projection",
+            "note": "Two vectors of hidden_size per block. They multiply the normalized residual channel-wise before every matmul.",
+            "parameters": 57344,
+            "parameters_per_instance": 2048,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "input_layernorm and post_attention_layernorm scale vectors"
+          },
+          {
+            "candidate_bytes": 14336,
+            "class_id": "qk_head_norm_scales",
+            "exclusion_id": "qwen3_per_head_qk_norm",
+            "float16_bytes": 14336,
+            "instances": 28,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              256
+            ],
+            "measurement": "analytic_projection",
+            "note": "Two vectors of head_dim 128 per block. These are the 56 initializers the T21 inventory leaves inline in the ONNX protobuf rather than in external data.",
+            "parameters": 7168,
+            "parameters_per_instance": 256,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "Qwen3 per-head q_norm and k_norm scale vectors"
+          },
+          {
+            "candidate_bytes": 2048,
+            "class_id": "final_rmsnorm_scale",
+            "exclusion_id": "rmsnorm_scales",
+            "float16_bytes": 2048,
+            "instances": 1,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "One vector of hidden_size on the model output path.",
+            "parameters": 1024,
+            "parameters_per_instance": 1024,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "final norm scale vector before the logits projection"
+          }
+        ]
+      }
+    },
+    {
+      "candidate_canonical_json_sha256": "11661931df69f1648715e77c2213f41c473809a7f8444a2fdcf774e0f3d07daf",
+      "candidate_id": "w8a8",
+      "config_file_sha256": "6b6ba99838996e71c8cedc16f8c201f88189c6724769814bc8ea0e8716573715",
+      "config_path": "configs/quantization/w8/w8a8.yaml",
+      "kv_cache_applied_dtype": "float16",
+      "kv_cache_satisfied_without_contract_change": false,
+      "plan_matrix_row": "Q2",
+      "precision_evidence": {
+        "deployment_checks": [
+          {
+            "detail": "no compile stage manifest was supplied",
+            "name": "compile_manifest_present",
+            "satisfied": false
+          },
+          {
+            "detail": "no inference stage manifest was supplied",
+            "name": "inference_manifest_present",
+            "satisfied": false
+          },
+          {
+            "detail": "no profile stage manifest was supplied",
+            "name": "profile_manifest_present",
+            "satisfied": false
+          },
+          {
+            "detail": "the compile manifest records the sha256 of the artifact it produced",
+            "name": "compile_target_artifact_digest",
+            "satisfied": false
+          },
+          {
+            "detail": "the compile manifest's source artifact digest equals the quantized-artifact digest the simulation record declared; without this link the compiled artifact is not this candidate's",
+            "name": "compile_source_is_the_simulated_artifact",
+            "satisfied": false
+          },
+          {
+            "detail": "the predecessor manifest digest equals the recomputed digest of the compile manifest supplied here",
+            "name": "inference_cites_the_compile_manifest",
+            "satisfied": false
+          },
+          {
+            "detail": "the stage's compiled_model source artifact digest equals the compile manifest's target artifact digest",
+            "name": "inference_consumed_the_compiled_artifact",
+            "satisfied": false
+          },
+          {
+            "detail": "the predecessor manifest digest equals the recomputed digest of the compile manifest supplied here",
+            "name": "profile_cites_the_compile_manifest",
+            "satisfied": false
+          },
+          {
+            "detail": "the stage's compiled_model source artifact digest equals the compile manifest's target artifact digest",
+            "name": "profile_consumed_the_compiled_artifact",
+            "satisfied": false
+          }
+        ],
+        "scope": "candidate_specification_only_no_weight_was_quantized",
+        "simulation_checks": [
+          {
+            "detail": "no simulation record was supplied, so the candidate is a specification and nothing more",
+            "name": "simulation_record_present",
+            "satisfied": false
+          }
+        ],
+        "source": "absent_at_this_commit",
+        "state": "specified",
+        "unsatisfied_checks": [
+          "simulation_record_present",
+          "compile_manifest_present",
+          "inference_manifest_present",
+          "profile_manifest_present",
+          "compile_target_artifact_digest",
+          "compile_source_is_the_simulated_artifact",
+          "inference_cites_the_compile_manifest",
+          "inference_consumed_the_compiled_artifact",
+          "profile_cites_the_compile_manifest",
+          "profile_consumed_the_compiled_artifact"
+        ]
+      },
+      "precision_state": "specified",
+      "precision_state_scope": "candidate_specification_only_no_weight_was_quantized",
+      "weight_storage_projection": {
+        "cross_check": {
+          "agrees": true,
+          "derived_parameters": 596049920,
+          "external_data_bytes": 1192085504,
+          "external_data_float16_elements": 596042752,
+          "external_initializer_count": 254,
+          "inline_initializer_count": 56,
+          "inline_initializer_elements": 7168,
+          "measurement": "arithmetic_over_committed_inputs",
+          "note": "This is a byte-level reconciliation of two independent committed sources, not a measurement of anything quantized. It is here because a parameter count that disagrees with the artifact would silently poison every ratio in this projection.",
+          "question": "does the parameter total derived from the model contract equal the parameter total the committed float16 export actually stores?",
+          "reconstructed_parameters": 596049920
+        },
+        "derived_from": {
+          "exclusion_policy": "this candidate's excluded_from_quantization block",
+          "fields": [
+            "num_hidden_layers",
+            "hidden_size",
+            "intermediate_size",
+            "num_attention_heads",
+            "num_key_value_heads",
+            "head_dim",
+            "vocab_size",
+            "tie_word_embeddings"
+          ],
+          "model_contract": "configs/models/qwen3-0.6b.yaml"
+        },
+        "does_not_establish": [
+          "on_disk_quantized_artifact_size",
+          "encoding_scale_or_zero_point_storage_overhead_in_the_shipped_format",
+          "runtime_peak_memory",
+          "any_latency_or_throughput_claim",
+          "kv_cache_memory_which_both_candidates_leave_at_the_frozen_float16_contract",
+          "quality_impact_of_any_included_or_excluded_weight_class"
+        ],
+        "kv_cache_left_at_the_frozen_contract": {
+          "by_context": [
+            {
+              "bytes": 18350080,
+              "cache_capacity": 160,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 128,
+              "variant_id": "S128"
+            },
+            {
+              "bytes": 66060288,
+              "cache_capacity": 576,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 512,
+              "variant_id": "S512"
+            },
+            {
+              "bytes": 132120576,
+              "cache_capacity": 1152,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 1024,
+              "variant_id": "S1024"
+            },
+            {
+              "bytes": 484442112,
+              "cache_capacity": 4224,
+              "dtype": "float16",
+              "measurement": "analytic_projection",
+              "prompt_length": 4096,
+              "variant_id": "S4096"
+            }
+          ],
+          "contract_source": "slm_lab.contracts.static_cache.CACHE_DTYPE",
+          "dtype": "float16",
+          "measurement": "analytic_projection",
+          "note": "Both W8 candidates leave the cache at float16, so none of the weight saving above applies to it. At the longest frozen context the cache alone is the same order of magnitude as the entire float16 weight set, which is why a weight-only W8 result must never be presented as a memory result for long context."
+        },
+        "measurement": "analytic_projection",
+        "scale_storage_lower_bound": {
+          "candidate_weight_bytes_including_scales": 753074176,
+          "granularity": "per_output_channel",
+          "measurement": "analytic_projection",
+          "note": "A lower bound, and the reason the headline ratio above overstates the saving. It counts one scale per output channel at the declared scale dtype and nothing else: no zero points (the policy is symmetric, so there are none), no QDQ node overhead, no per-tensor activation encodings, and no container framing. The shipped format is not decided at this commit, so the real overhead is unknown rather than estimated.",
+          "per_output_channel_scale_count": 344064,
+          "scale_bytes": 1376256,
+          "scale_dtype": "float32",
+          "weight_byte_ratio_including_scales": 1.582978
+        },
+        "totals": {
+          "candidate_weight_bytes": 751697920,
+          "excluded_parameters": 155648000,
+          "float16_weight_bytes": 1192099840,
+          "measurement": "analytic_projection",
+          "quantized_parameter_fraction": 0.738868,
+          "quantized_parameters": 440401920,
+          "total_parameters": 596049920,
+          "weight_byte_ratio_float16_over_candidate": 1.585876,
+          "weight_bytes_saved": 440401920
+        },
+        "weight_classes": [
+          {
+            "candidate_bytes": 311164928,
+            "class_id": "tied_vocabulary_table",
+            "exclusion_id": "tied_embedding_table",
+            "float16_bytes": 311164928,
+            "instances": 1,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              151936,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "One table of 151936 rows serves both directions. The T21 inventory records the lookup as a Gather rather than a MatMul, so the two uses are not even the same operator class.",
+            "parameters": 155582464,
+            "parameters_per_instance": 155582464,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "token embedding lookup and, because the weights are tied, the final logits projection"
+          },
+          {
+            "candidate_bytes": 58720256,
+            "class_id": "attention_q_proj",
+            "exclusion_id": null,
+            "float16_bytes": 117440512,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              2048,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "16 query heads at head_dim 128 give 2048 output channels, twice the key/value width under GQA.",
+            "parameters": 58720256,
+            "parameters_per_instance": 2097152,
+            "per_output_channel_scales": 57344,
+            "quantized": true,
+            "role": "query projection"
+          },
+          {
+            "candidate_bytes": 29360128,
+            "class_id": "attention_k_proj",
+            "exclusion_id": null,
+            "float16_bytes": 58720256,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "8 key/value heads give 1024 output channels; GQA makes this matrix half the size of q_proj.",
+            "parameters": 29360128,
+            "parameters_per_instance": 1048576,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "key projection"
+          },
+          {
+            "candidate_bytes": 29360128,
+            "class_id": "attention_v_proj",
+            "exclusion_id": null,
+            "float16_bytes": 58720256,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "Same GQA width as k_proj.",
+            "parameters": 29360128,
+            "parameters_per_instance": 1048576,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "value projection"
+          },
+          {
+            "candidate_bytes": 58720256,
+            "class_id": "attention_o_proj",
+            "exclusion_id": null,
+            "float16_bytes": 117440512,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              2048
+            ],
+            "measurement": "analytic_projection",
+            "note": "Reduces over 2048 inputs into 1024 output channels and writes straight into the residual stream.",
+            "parameters": 58720256,
+            "parameters_per_instance": 2097152,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "attention output projection"
+          },
+          {
+            "candidate_bytes": 88080384,
+            "class_id": "mlp_gate_proj",
+            "exclusion_id": null,
+            "float16_bytes": 176160768,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              3072,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "3072 output channels feeding the SiLU gate.",
+            "parameters": 88080384,
+            "parameters_per_instance": 3145728,
+            "per_output_channel_scales": 86016,
+            "quantized": true,
+            "role": "SwiGLU gate projection"
+          },
+          {
+            "candidate_bytes": 88080384,
+            "class_id": "mlp_up_proj",
+            "exclusion_id": null,
+            "float16_bytes": 176160768,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              3072,
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "3072 output channels multiplied by the gate.",
+            "parameters": 88080384,
+            "parameters_per_instance": 3145728,
+            "per_output_channel_scales": 86016,
+            "quantized": true,
+            "role": "SwiGLU up projection"
+          },
+          {
+            "candidate_bytes": 88080384,
+            "class_id": "mlp_down_proj",
+            "exclusion_id": null,
+            "float16_bytes": 176160768,
+            "instances": 28,
+            "kept_precision": "int8",
+            "logical_shape_per_instance": [
+              1024,
+              3072
+            ],
+            "measurement": "analytic_projection",
+            "note": "The widest reduction in the block: 3072 inputs per output channel, so per-output-channel weight error accumulates over the longest dot product here.",
+            "parameters": 88080384,
+            "parameters_per_instance": 3145728,
+            "per_output_channel_scales": 28672,
+            "quantized": true,
+            "role": "SwiGLU down projection"
+          },
+          {
+            "candidate_bytes": 114688,
+            "class_id": "block_rmsnorm_scales",
+            "exclusion_id": "rmsnorm_scales",
+            "float16_bytes": 114688,
+            "instances": 28,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              2048
+            ],
+            "measurement": "analytic_projection",
+            "note": "Two vectors of hidden_size per block. They multiply the normalized residual channel-wise before every matmul.",
+            "parameters": 57344,
+            "parameters_per_instance": 2048,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "input_layernorm and post_attention_layernorm scale vectors"
+          },
+          {
+            "candidate_bytes": 14336,
+            "class_id": "qk_head_norm_scales",
+            "exclusion_id": "qwen3_per_head_qk_norm",
+            "float16_bytes": 14336,
+            "instances": 28,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              256
+            ],
+            "measurement": "analytic_projection",
+            "note": "Two vectors of head_dim 128 per block. These are the 56 initializers the T21 inventory leaves inline in the ONNX protobuf rather than in external data.",
+            "parameters": 7168,
+            "parameters_per_instance": 256,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "Qwen3 per-head q_norm and k_norm scale vectors"
+          },
+          {
+            "candidate_bytes": 2048,
+            "class_id": "final_rmsnorm_scale",
+            "exclusion_id": "rmsnorm_scales",
+            "float16_bytes": 2048,
+            "instances": 1,
+            "kept_precision": "float16",
+            "logical_shape_per_instance": [
+              1024
+            ],
+            "measurement": "analytic_projection",
+            "note": "One vector of hidden_size on the model output path.",
+            "parameters": 1024,
+            "parameters_per_instance": 1024,
+            "per_output_channel_scales": 0,
+            "quantized": false,
+            "role": "final norm scale vector before the logits projection"
+          }
+        ]
+      }
+    }
+  ],
+  "claim_boundary": {
+    "does_not_establish": [
+      "any_quantized_weight_activation_or_encoding",
+      "simulated_or_deployed_precision_for_either_candidate",
+      "quantized_quality_delta_perplexity_or_accuracy",
+      "compiler_acceptance_operator_support_or_NPU_placement",
+      "on_disk_quantized_artifact_size_or_encoding_overhead",
+      "latency_throughput_peak_memory_or_energy",
+      "that_the_floating_Qwen_graph_traverses_the_public_pipeline_at_all",
+      "that_any_job_was_submitted_or_that_this_repository_could_run_a_quantize_job"
+    ],
+    "establishes": [
+      "two_frozen_regenerable_W8_candidate_specifications_bound_to_committed_inputs",
+      "an_explicit_inclusion_exclusion_policy_separating_policy_from_frozen_graph",
+      "an_analytic_weight_storage_projection_derived_from_the_model_contract",
+      "a_fail_closed_precision_state_function_that_cannot_reach_deployed_here",
+      "an_AI_Hub_schema_v2_request_emitter_that_stops_at_the_submission_boundary",
+      "a_dated_read_only_observation_that_the_public_quantize_API_can_express_both_candidates"
+    ]
+  },
+  "commands": {
+    "capabilities": "uv run python -m slm_lab.quantization.w8 capabilities",
+    "capabilities_offline": "uv run python -m slm_lab.quantization.w8 capabilities --offline-input results/quantization/t41-ai-hub-capability-2026-08-03.json",
+    "check": "uv run python -m slm_lab.quantization.w8 check",
+    "compare": "uv run python -m slm_lab.quantization.w8 compare --baseline <float16-result.json> --candidate <w8-result.json>",
+    "generate": "uv run python -m slm_lab.quantization.w8 generate",
+    "record": "uv run python -m slm_lab.quantization.w8 record",
+    "request": "uv run python -m slm_lab.quantization.w8 request --candidate <w8a16|w8a8> --stage compile --context 128 --graph prefill --quantized-artifact <private-path>.onnx --output-artifact <private-path>.serialized.bin --request-out .ai-local/profiles/T41/compile-request.json",
+    "status": "uv run python -m slm_lab.quantization.w8 status",
+    "tests": "uv run pytest tests/quantization"
+  },
+  "deployment_routes": {
+    "boundary": "Both lanes are unavailable at this commit, and neither is waiting on permission any more. Lane A is blocked on a capability this repository does not have — no quantize-stage adapter, in a module T22 owns — and on T31. Lane B is blocked on hardware. The public API can express both candidates, which is why the remaining gap is worth naming precisely: it is ours, not the service's. Neither blocker is a code defect and neither is resolvable inside this task.",
+    "lane_a_authorization": {
+      "consumed_by_this_repository": {
+        "cost": "none — read-only capability query, no job submitted",
+        "device_minutes": 0,
+        "submitted_jobs": 0
+      },
+      "device_cloud_session": "not cleared here: an interactive Device Cloud lease is a separate lock from job submission, and T41 records the 120-minute ceiling above rather than assuming the lease",
+      "granted_on": "2026-08-03",
+      "note": "Recorded because it changed, and recorded as a permission rather than as progress. Submission is no longer what holds Lane A; nothing has been spent under it, and there is still nothing to submit.",
+      "qai_hub_submission": "granted",
+      "scope": "free capacity only; no spend; any Device Cloud use capped at 120 device minutes"
+    },
+    "lane_a_available": false,
+    "lane_a_blocked_on": [
+      "capability:no_quantize_stage_adapter_in_this_repository",
+      "upstream_task:T31"
+    ],
+    "lane_a_blocked_on_owners": {
+      "capability:no_quantize_stage_adapter_in_this_repository": "T22",
+      "upstream_task:T31": "T31"
+    },
+    "lane_b_available": false,
+    "lane_b_blocked_on": [
+      "hardware:linux_cuda_aimet_host"
+    ]
+  },
+  "evidence_requirements": {
+    "default_status": "not_run",
+    "note": "Status is about evidence, not effort. `satisfied` means this module verified an input on this run; `not_run` means the measurement was never taken; `blocked` means it cannot be taken here and names what would unblock it.",
+    "plan_section": "7.3",
+    "rows": [
+      {
+        "blocked_on": [],
+        "command": {
+          "status": "implemented_at_this_commit",
+          "value": "uv run python -m slm_lab.quantization.w8 check"
+        },
+        "frozen_input_here": "Both candidates bind t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987 and carry the corpus token budget of 6912 token positions, re-read from the committed T40 contract on every validation run.",
+        "id": "calibration_corpus_revision_and_token_budget",
+        "owner_task": "T40",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Calibration corpus revision and token budget.",
+        "status": "satisfied"
+      },
+      {
+        "blocked_on": [
+          "hardware:linux_cuda_aimet_host"
+        ],
+        "command": {
+          "status": "not_implemented_at_this_commit",
+          "value": "<linux-cuda-aimet-host> python -m <t41-lane-b-runner> --candidate <w8a16|w8a8> --calibration configs/quantization/calibration.yaml"
+        },
+        "frozen_input_here": "The calibration inputs and the observer policy are frozen; the runner that would consume them does not exist because there is no host to run it on.",
+        "id": "quantization_and_calibration_time",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Quantization and calibration time.",
+        "status": "blocked"
+      },
+      {
+        "blocked_on": [
+          "hardware:linux_cuda_aimet_host"
+        ],
+        "command": {
+          "status": "not_implemented_at_this_commit",
+          "value": "<linux-cuda-aimet-host> python -m <t41-lane-b-runner> --candidate <w8a16|w8a8> --emit-inclusion-report"
+        },
+        "frozen_input_here": "The intended policy is frozen in excluded_from_quantization, separated into policy choices and frozen-graph constraints. That is a declaration of intent, not a report of what a tool actually excluded, and the two are not the same evidence.",
+        "id": "layer_inclusion_exclusion_report",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Layer inclusion/exclusion report.",
+        "status": "not_run"
+      },
+      {
+        "blocked_on": [
+          "hardware:linux_cuda_aimet_host"
+        ],
+        "command": {
+          "status": "not_implemented_at_this_commit",
+          "value": "<linux-cuda-aimet-host> sha256sum <quantized>.onnx <quantized>.onnx.data <quantized>.encodings"
+        },
+        "frozen_input_here": "The weight and activation policies that determine what an encodings file would contain are frozen; no encodings file exists and the shipped format is not decided.",
+        "id": "encoding_format_and_hashes",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Encoding format and hashes.",
+        "status": "not_run"
+      },
+      {
+        "blocked_on": [
+          "hardware:linux_cuda_aimet_host",
+          "upstream_task:T31"
+        ],
+        "command": {
+          "status": "implemented_at_this_commit",
+          "value": "uv run python -m slm_lab.quantization.w8 compare --baseline <float16-result.json> --candidate <w8-result.json>"
+        },
+        "frozen_input_here": "The evaluation binding, the protocol digest, the metric set, and the refusal rules are frozen, and compare_quality exists and runs. It has nothing to compare: this repository contains no W8 quality result at this commit, which validate_repository enforces.",
+        "id": "perplexity_and_small_benchmark_change",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Perplexity and small benchmark change.",
+        "status": "blocked"
+      },
+      {
+        "blocked_on": [
+          "hardware:linux_cuda_aimet_host",
+          "dependency:torch_and_onnxruntime_absent_on_the_primary_host"
+        ],
+        "command": {
+          "status": "implemented_at_this_commit",
+          "value": "SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src <python-with-torch-and-onnxruntime> -m pytest -q tests/onnx"
+        },
+        "frozen_input_here": "The float16 baseline this error would be measured against is pinned by digest; the quantized side does not exist.",
+        "id": "logit_and_cache_error",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Logit/cache error.",
+        "status": "blocked"
+      },
+      {
+        "blocked_on": [
+          "hardware:linux_cuda_aimet_host"
+        ],
+        "command": {
+          "status": "not_implemented_at_this_commit",
+          "value": "<linux-cuda-aimet-host> wc -c <quantized>.onnx.data"
+        },
+        "frozen_input_here": "An analytic weight-storage projection labelled analytic_projection, whose does_not_establish list names on-disk artifact size first. A projection is not a size.",
+        "id": "artifact_size",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Artifact size.",
+        "status": "not_run"
+      },
+      {
+        "blocked_on": [
+          "capability:no_quantize_stage_adapter_in_this_repository",
+          "hardware:linux_cuda_aimet_host"
+        ],
+        "command": {
+          "status": "implemented_at_this_commit",
+          "value": "PYTHONPATH=src python3 scripts/qualcomm/profile.py --request <private-profile-request>.json --manifest results/processed/qualcomm/t41-profile-manifest.json"
+        },
+        "frozen_input_here": "The projection records the float16 KV cache bytes per context so a reader knows which term W8 weight quantization does not reduce. Runtime peak memory is a profile-job measurement. Submission is permitted as of 2026-08-03; what is missing is the quantized artifact to profile, on both lanes.",
+        "id": "peak_memory",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Peak memory.",
+        "status": "blocked"
+      },
+      {
+        "blocked_on": [
+          "capability:no_quantize_stage_adapter_in_this_repository",
+          "hardware:linux_cuda_aimet_host",
+          "upstream_task:T31"
+        ],
+        "command": {
+          "status": "implemented_at_this_commit",
+          "value": "PYTHONPATH=src python3 scripts/qualcomm/profile.py --request <private-profile-request>.json --manifest results/processed/qualcomm/t41-profile-manifest.json"
+        },
+        "frozen_input_here": "The submission parameters, the compute-unit option, and the target-device selectors are frozen — the selectors now against the observed device vocabulary rather than a name alone — and the request emitter will compose the job. Submission is permitted and no job has been submitted, because there is no quantized artifact to compile and no compiled artifact to profile.",
+        "id": "graph_latency_and_npu_placement",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "Graph latency and NPU placement.",
+        "status": "blocked"
+      },
+      {
+        "blocked_on": [
+          "upstream_task:T32",
+          "upstream_task:T33",
+          "user_authorization:device_cloud_session"
+        ],
+        "command": {
+          "status": "not_implemented_at_this_commit",
+          "value": "<device-cloud-session> PYTHONPATH=src python3 -m slm_lab.deployment.qualcomm.device_cloud <session-args>"
+        },
+        "frozen_input_here": "Nothing. No persistent generation loop exists on any Qualcomm target in this repository, so this row is recorded to keep plan 7.3 complete rather than to claim progress.",
+        "id": "end_to_end_generation_impact",
+        "owner_task": "T41",
+        "plan_reference": "docs/project/plan.md section 7.3",
+        "requirement": "End-to-end generation impact where a persistent loop exists.",
+        "status": "blocked"
+      }
+    ],
+    "summary": [
+      {
+        "count": 1,
+        "status": "satisfied"
+      },
+      {
+        "count": 3,
+        "status": "not_run"
+      },
+      {
+        "count": 6,
+        "status": "blocked"
+      }
+    ]
+  },
+  "generated_at": "2026-08-03T12:47:10Z",
+  "inputs": {
+    "ai_hub_capability_record": "results/quantization/t41-ai-hub-capability-2026-08-03.json",
+    "baseline_manifest_directory": "results/manifests/onnx",
+    "baseline_precision": "float16",
+    "benchmark_protocol_sha256": "2541fa76fb088de3ebb559aeb300aed5cd62e215994b8db0faa2fbc6273f947e",
+    "calibration_dataset_revision": "t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987",
+    "graph_inventory": "results/graph/S128.json"
+  },
+  "record_type": "w8_candidate_readiness",
+  "released_for_submission_preparation_only": true,
+  "released_for_submission_preparation_only_meaning": "Both candidate specifications regenerate byte-identically from committed inputs, every binding still hashes to its recorded value, and the request emitter can compose a schema-v2 stage request. It does not mean a request was written, a job was submitted, a weight was quantized, or a precision was achieved. Submission is permitted as of 2026-08-03 and the scope of this release did not widen when it was: preparation is still all there is, because there is still no artifact to submit.",
+  "repository": {
+    "git_commit": "02004cc0a635b4fb25176631c4a950df745e7884",
+    "git_tree_clean": true
+  },
+  "schema_version": 1,
+  "task_id": "T41"
+}

@@ -1,0 +1,183 @@
+{
+  "boundary": "This is an observation of a public API surface on one date with one client, and that is the whole of it. It moves Lane A's quantization support from an assumption to a dated fact and moves nothing else: no weight is quantized, no graph is compiled, no operator is placed, and no number here was measured on a device. What still holds Lane A is that this repository has no quantize-stage adapter and the module that would own one belongs to T22.",
+  "candidate_quantize_requests": {
+    "by_candidate": {
+      "w8a16": {
+        "activations_dtype": "INT16",
+        "plan_matrix_row": "Q1",
+        "request": "submit_quantize_job(weights_dtype=QuantizeDtype.INT8, activations_dtype=QuantizeDtype.INT16)",
+        "weights_dtype": "INT8"
+      },
+      "w8a8": {
+        "activations_dtype": "INT8",
+        "plan_matrix_row": "Q2",
+        "request": "submit_quantize_job(weights_dtype=QuantizeDtype.INT8, activations_dtype=QuantizeDtype.INT8)",
+        "weights_dtype": "INT8"
+      }
+    },
+    "dtypes_not_used_by_T41": [
+      "INT4"
+    ],
+    "entry_point": "submit_quantize_job",
+    "int4_note": "INT4 is offered by the same two arguments and is not T41's to use: the W4A8 row belongs to T42, which is where a four-bit weight policy, its blocking granularity, and its sensitivity evidence are argued. Recorded here only so T42 does not have to re-observe it.",
+    "note": "Expressible means the public API accepts these two arguments. It is not compiler acceptance, not operator support, not NPU placement, and not a claim that an artifact exists to pass as the model.",
+    "observed_dtypes": [
+      "INT16",
+      "INT4",
+      "INT8"
+    ]
+  },
+  "client_version": "0.53.0",
+  "cost": "none — read-only capability query, no job submitted",
+  "device_minutes_consumed": 0,
+  "does_not_establish": [
+    "that_either_candidate_compiles",
+    "that_the_compiler_accepts_this_graph_at_any_precision",
+    "that_any_operator_or_the_whole_graph_is_placed_on_the_NPU",
+    "any_latency_throughput_peak_memory_or_energy",
+    "any_accuracy_perplexity_or_quality_delta",
+    "that_a_W8_artifact_exists_anywhere_to_send_to_that_entry_point",
+    "that_this_repository_can_run_a_quantize_job_which_needs_an_adapter_it_lacks",
+    "anything_at_all_about_a_device_that_is_not_one_of_the_three_recorded_here"
+  ],
+  "establishes": [
+    "that_the_public_client_at_the_recorded_version_exposes_a_quantize_entry_point",
+    "that_its_weights_dtype_and_activations_dtype_arguments_accept_the_recorded_dtypes",
+    "that_W8A16_and_W8A8_are_each_expressible_as_one_public_quantize_request",
+    "that_the_three_plan_section_3_2_target_devices_were_live_on_the_observation_date",
+    "that_those_devices_advertise_framework_qnn_and_htp_supports_fp16",
+    "that_the_quantize_entry_point_exposes_no_separate_kv_cache_dtype_argument"
+  ],
+  "kv_cache_dtype": {
+    "quantize_parameters": [
+      "model",
+      "calibration_data",
+      "weights_dtype",
+      "activations_dtype",
+      "name",
+      "options",
+      "project"
+    ],
+    "separate_cache_dtype_argument": false,
+    "statement": "The public quantize entry point takes one weights dtype and one activations dtype, and no argument that names the KV cache. This is consistent with the frozen float16 CACHE_DTYPE finding already in both candidates and is not a way around it: the Q2 row's int8 cache would still have to come from the T12 graph contract and the T20/T23 export boundary, because there is no quantize option that could produce one."
+  },
+  "observation": {
+    "client_version": "0.53.0",
+    "device_count": 79,
+    "devices": [
+      {
+        "attributes": [
+          "abi:aarch64-oe-linux-gcc11",
+          "chipset:qcs9075",
+          "chipset:qualcomm-dragonwing-iq-9075",
+          "chipset:qualcomm-qcs9075",
+          "format:iot",
+          "framework:onnx",
+          "framework:qnn",
+          "framework:tflite",
+          "hexagon:v73",
+          "htp-supports-fp16:true",
+          "htp-supports-weight-sharing:true",
+          "os:qc_linux",
+          "soc-model:77",
+          "vendor:qualcomm"
+        ],
+        "name": "Dragonwing IQ-9075 EVK",
+        "os": "1.7"
+      },
+      {
+        "attributes": [
+          "abi:aarch64-android",
+          "chipset:qualcomm-snapdragon-8-elite",
+          "chipset:sm8750",
+          "format:phone",
+          "framework:onnx",
+          "framework:qnn",
+          "framework:tflite",
+          "hexagon:v79",
+          "htp-supports-fp16:true",
+          "htp-supports-weight-sharing:true",
+          "os:android",
+          "soc-model:69",
+          "vendor:qualcomm"
+        ],
+        "name": "Snapdragon 8 Elite QRD",
+        "os": "15"
+      },
+      {
+        "attributes": [
+          "abi:aarch64-windows",
+          "chipset:qualcomm-snapdragon-x-elite",
+          "chipset:sc8380xp",
+          "format:compute",
+          "framework:onnx",
+          "framework:qnn",
+          "hexagon:v73",
+          "htp-supports-fp16:true",
+          "htp-supports-weight-sharing:true",
+          "os:windows",
+          "soc-model:60",
+          "vendor:qualcomm"
+        ],
+        "name": "Snapdragon X Elite CRD",
+        "os": "11"
+      }
+    ],
+    "observation_date": "2026-08-03",
+    "quantize_dtypes": [
+      "INT16",
+      "INT4",
+      "INT8"
+    ],
+    "quantize_entry_point": "submit_quantize_job",
+    "quantize_parameters": [
+      "model",
+      "calibration_data",
+      "weights_dtype",
+      "activations_dtype",
+      "name",
+      "options",
+      "project"
+    ],
+    "quantize_signature": "(model: 'Model | onnx.ModelProto | str | Path | None', calibration_data: 'Dataset | DatasetEntries | str', weights_dtype: 'QuantizeDtype' = <QuantizeDtype.INT8: 1>, activations_dtype: 'QuantizeDtype' = <QuantizeDtype.INT8: 1>, name: 'str | None' = None, options: 'str' = '', project: 'str | Project | None' = None) -> 'QuantizeJob'",
+    "source": "live_read_only_capability_query_transcribed_offline",
+    "submit_entry_points": [
+      "submit_compile_and_link_jobs",
+      "submit_compile_and_profile_jobs",
+      "submit_compile_job",
+      "submit_inference_job",
+      "submit_link_job",
+      "submit_profile_job",
+      "submit_quantize_job"
+    ]
+  },
+  "observation_date": "2026-08-03",
+  "query_scope": {
+    "devices_leased": 0,
+    "jobs_created": 0,
+    "models_uploaded": 0,
+    "operation": "read_only_capability_query",
+    "read": [
+      "the exact installed client version",
+      "the names of every submit_* entry point",
+      "the quantize entry point's signature",
+      "the QuantizeDtype member names",
+      "the number of devices the service lists",
+      "name, os, and attributes for the plan section 3.2 targets only"
+    ],
+    "statement": "The query listed names and read one signature. It called one service function, get_devices, which returns public device metadata. No submit_* function was called and none was even fetched through the descriptor protocol: the entry-point names come from dir() and the signature from inspect.getattr_static, which reads __dict__ directly. No job was created, no model was uploaded, and no device was leased.",
+    "submit_functions_called": []
+  },
+  "record_type": "ai_hub_capability_observation",
+  "reproduction": {
+    "live_command": "uv run python -m slm_lab.quantization.w8 capabilities",
+    "network": "the live command reads the service; the offline command does not",
+    "offline_command": "uv run python -m slm_lab.quantization.w8 capabilities --offline-input results/quantization/t41-ai-hub-capability-2026-08-03.json",
+    "offline_note": "The offline command rebuilds this file from the observation block below, so the record is its own saved query and regenerates without a network. `check` recomputes it on every run and fails if the two disagree.",
+    "requires": "an authenticated qai-hub client at the recorded version. This repository pins no Qualcomm client in pyproject.toml, so the live command does not run here; it ran in an environment that carried one and the sanitized result was carried in."
+  },
+  "reproduction_command": "uv run python -m slm_lab.quantization.w8 capabilities",
+  "schema_version": 1,
+  "submitted_jobs": 0,
+  "task_id": "T41"
+}

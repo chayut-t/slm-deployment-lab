@@ -92,3 +92,68 @@ which half.
   SLM_LAB_T40_VERIFY_ARTIFACT_BYTES=1 PYTHONPATH=src \
     python -m pytest tests/quantization -q
   ```
+
+## W8 candidate readiness records
+
+`t41-w8-readiness-<date>.json` is one run of the T41 offline gate over the two
+frozen W8 candidates:
+
+```bash
+uv run python -m slm_lab.quantization.w8 record
+```
+
+The command validates the whole repository first, so a record cannot claim a
+frozen, consistent specification that does not validate. It carries the same
+`repository` convention as the parity record — `git_commit` and
+`git_tree_clean`, no checkout path — and the committed record honestly reports
+`git_tree_clean: false`, because the T41 files themselves were uncommitted when
+it was written.
+
+**It contains no measurement of a quantized model.** Both candidates read
+`precision_state: specified` with the scope
+`candidate_specification_only_no_weight_was_quantized`, and
+`precision_evidence.source` reads `absent_at_this_commit` with ten unsatisfied
+checks each. The `weight_storage_projection` block is arithmetic over
+`configs/models/qwen3-0.6b.yaml` and the candidate's own exclusion policy,
+labelled `analytic_projection` on every row; the one block labelled
+`arithmetic_over_committed_inputs` is a byte-level reconciliation against the
+committed float16 export, not a measurement of anything quantized.
+
+`evidence_requirements` scores the plan section 7.3 measurement list: 1
+`satisfied`, 3 `not_run`, 6 `blocked`. Status is about evidence rather than
+effort. The single `satisfied` row is *calibration corpus revision and token
+budget*, owned by T40 and satisfied because this module re-reads and re-checks
+that committed input on every run — not because anything about a quantized
+model was measured. Every `blocked` row names its blocker, and the strings the
+record actually carries are `hardware:linux_cuda_aimet_host` (five of the six
+`blocked` rows — three `not_run` rows carry it too),
+`capability:no_quantize_stage_adapter_in_this_repository` (two rows — the
+missing quantize-stage adapter that holds Lane A),
+`dependency:torch_and_onnxruntime_absent_on_the_primary_host` (one row),
+`upstream_task:T31`, `upstream_task:T32`, `upstream_task:T33`, and
+`user_authorization:device_cloud_session` (one row). That last one is an
+interactive Device Cloud lease, which is a separate lock from job submission:
+hosted submission was granted on 2026-08-03 and blocks nothing in this ledger.
+
+The release field is named for its scope, as T40's is:
+`released_for_submission_preparation_only`. It is `true` when both
+specifications regenerate byte-identically, every binding still hashes to its
+recorded value, and the request emitter can compose a schema-v2 stage request.
+It does not mean a request was written, a job was submitted, a weight was
+quantized, or a precision was achieved. Read it beside
+`claim_boundary.does_not_establish`, which is authoritative.
+
+The record is not inert: `tests/quantization/test_w8_evidence.py` asserts that
+the committed record still matches the committed candidate files by digest, and
+that it states its own scope honestly.
+
+A future session drops one candidate's precision evidence at
+`t41-<candidate_id>-precision-evidence.json` — a `simulation` block naming the
+tool, its exact version, the host, and the quantized-artifact digest, plus the
+three sanitized AI Hub stage manifests once they exist. That file is the only
+input that moves a candidate off `specified`, and the state is computed from it
+rather than asserted by it. A file matching `t41-w8-quality-*.json` makes the
+gate fail on purpose: no W8 measurement exists at this commit, so such a record
+is either fabricated or real-and-unvalidated, and both are reasons to stop.
+
+See `docs/results/quantization/w8.md` for the reader-facing report.
