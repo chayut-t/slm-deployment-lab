@@ -117,7 +117,7 @@ graph TD
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
 | T40 — AIMET and calibration environment | completed | T10, T20 | t9_heavy_io | ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md |
-| T41 — W8 quantization evidence | ready | T40 | qai_hub_submission | — |
+| T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
 | T50 — MLX-LM baseline | completed | T11 | apple_m4_heavy | ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md |
@@ -133,9 +133,9 @@ graph TD
 
 ## Summary
 
-- ready: 4
+- ready: 3
 - in_progress: 0
-- blocked: 9
+- blocked: 10
 - completed: 18
 
 ## Resource capacities

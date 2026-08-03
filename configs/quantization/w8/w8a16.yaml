@@ -1,0 +1,1419 @@
+# T41 W8A16 candidate specification for Qwen3-0.6B (plan section 7.2, row Q1).
+#
+# GENERATED FILE. Do not hand-edit. Regenerate with:
+#   uv run python -m slm_lab.quantization.w8 generate
+# and verify with:
+#   uv run python -m slm_lab.quantization.w8 check
+#
+# int8 weights, int16 activations, float16 KV cache.
+#
+# What a reader should take away
+# ------------------------------
+# 1. This file is a *specification*, not a result. No weight is quantized here
+#    and none can be: AIMET publishes Linux + CUDA wheels only and is specified
+#    in environments/linux-aimet/ rather than installed, and Lane A cannot make
+#    a W8 artifact either because this repository has no quantize-stage adapter.
+#    AI Hub submission is permitted as of 2026-08-03 and that changed nothing
+#    here, because there is still nothing to submit.
+#    `candidate.precision_state` reads `specified` for exactly that reason.
+# 2. `specified`, `simulated`, and `deployed` are three different evidence
+#    states, and only slm_lab.quantization.w8.assess_precision_state decides
+#    which one applies. `simulated` needs a host record naming the tool, its
+#    exact version, the host, and the quantized artifact digest. `deployed`
+#    additionally needs all three sanitized AI Hub schema-v2 stage manifests
+#    with a verified digest chain from the simulated artifact through the
+#    compiled artifact into the inference and profile runs. A record that
+#    asserts its own state is not consulted.
+# 3. Everything numeric here is arithmetic over committed repository inputs or
+#    a hash read off a committed file. `weight_storage_projection` is labelled
+#    `analytic_projection` on every row and states, in its own
+#    `does_not_establish` list, that it is not an artifact size, not an
+#    encoding overhead, not a peak memory, and not a latency.
+# 4. The KV cache is where this candidate meets a contract it does not own.
+#    slm_lab.contracts.static_cache freezes CACHE_DTYPE as float16 and that
+#    dtype is declared on the cache tensors at the T20/T23 graph boundary. Read
+#    `candidate.kv_cache.change_control` before proposing to lower it.
+# 5. The exclusion policy separates what T41 chose from what the frozen graph
+#    imposes. Read `candidate.excluded_from_quantization.kind_note`: reversing
+#    a `policy_choice` needs evidence, reversing a `frozen_graph_constraint`
+#    needs another task's consent.
+# 6. Bindings are re-derived and re-hashed on every validation run: the T40
+#    calibration revision, the four committed float16 baseline manifests, the
+#    frozen T13 protocol digest, the T21 structural graph inventory, and the
+#    dated AI Hub capability observation. If any of them moves, `check` fails
+#    rather than silently re-anchoring.
+# 7. `deployment_routes.lane_a_ai_hub_workbench.quantization_support` is an
+#    observation, not an assumption: one read-only query, on one date, with one
+#    client, that submitted no job and consumed no device minute. It records
+#    that both candidates are *expressible* as public quantize requests. Read
+#    its `does_not_establish` list before treating that as compiler acceptance,
+#    NPU placement, or an artifact.
+
+schema_version: 1
+task_id: T41
+candidate_id: w8a16
+plan_matrix_row: Q1
+title: Qwen3-0.6B W8A16 deployment candidate
+summary: 'Conservative post-training quantization (plan section 7.2, Q1): int8
+  weights, int16 activations, KV cache left at the frozen float16 T12 contract.'
+intent: 'Answers one question: is the weight quantizer itself safe on this model?
+  Activations stay at 16 bits and the cache is untouched, so any quality movement
+  this candidate shows is attributable to int8 weight rounding rather than to
+  activation clipping or cache precision. It is the candidate that isolates the
+  variable, and the one to reach for if the aggressive candidate degrades and
+  the cause has to be split.'
+model:
+  id: Qwen/Qwen3-0.6B
+  revision: c1899de289a04d12100db370d81485cdf75e47ca
+  license: Apache-2.0
+  reference_dtype: bfloat16
+  tie_word_embeddings: true
+candidate:
+  candidate_id: w8a16
+  plan_matrix_row: Q1
+  summary: 'Conservative post-training quantization (plan section 7.2, Q1): int8
+    weights, int16 activations, KV cache left at the frozen float16 T12 contract.'
+  intent: 'Answers one question: is the weight quantizer itself safe on this model?
+    Activations stay at 16 bits and the cache is untouched, so any quality movement
+    this candidate shows is attributable to int8 weight rounding rather than to
+    activation clipping or cache precision. It is the candidate that isolates
+    the variable, and the one to reach for if the aggressive candidate degrades
+    and the cause has to be split.'
+  precision_state: specified
+  precision_state_note: 'This field is about the candidate''s *evidence* state,
+    not about an achievable precision. `specified` means the policy below is frozen
+    and nothing has been quantized. `simulated` and `deployed` are different states
+    reached only by different evidence: a simulation record naming its tool, that
+    tool''s exact version, the host, and the quantized artifact digest for the
+    first; all three chained AI Hub stage manifests for the second. slm_lab.quantization.w8.assess_precision_state
+    is the only thing that decides which state applies, and it never reads a state
+    asserted by an input record.'
+  precision_state_scope: candidate_specification_only_no_weight_was_quantized
+  weights:
+    dtype: int8
+    bits: 8
+    signed: true
+    symmetric: true
+    zero_point: 0
+    granularity: per_output_channel
+    scale_dtype: float32
+    granularity_reason: 'Per-output-channel scales cost one float32 per output
+      feature and remove the dominant source of int8 weight error: a per-tensor
+      scale is set by whichever single output channel has the largest weights,
+      and in this model the channel-wise magnitude spread inside one matrix is
+      wide enough that a per-tensor scale throws away most of the range for most
+      channels. Symmetric with a zero zero-point keeps the integer accumulation
+      free of a cross term.'
+    per_channel_axis_note: 'Per output channel means one scale per output feature
+      of the logical [out, in] weight. Which ONNX axis that is in the exported
+      artifact is not asserted here: torch.onnx.export emits these projections
+      as MatMul with a possibly transposed initializer, and the committed T21
+      inventory records the node counts but not any per-initializer axis order.
+      Read the axis off the artifact at quantization time; do not assume it from
+      this file.'
+    per_class:
+    - class_id: tied_vocabulary_table
+      role: token embedding lookup and, because the weights are tied, the final
+        logits projection
+      logical_shape_per_instance:
+      - 151936
+      - 1024
+      instances: 1
+      output_channels_per_instance: 151936
+      scales_per_instance: 151936
+      quantized: false
+      exclusion_id: tied_embedding_table
+      note: One table of 151936 rows serves both directions. The T21 inventory
+        records the lookup as a Gather rather than a MatMul, so the two uses are
+        not even the same operator class.
+    - class_id: attention_q_proj
+      role: query projection
+      logical_shape_per_instance:
+      - 2048
+      - 1024
+      instances: 28
+      output_channels_per_instance: 2048
+      scales_per_instance: 2048
+      quantized: true
+      exclusion_id: null
+      note: 16 query heads at head_dim 128 give 2048 output channels, twice the
+        key/value width under GQA.
+    - class_id: attention_k_proj
+      role: key projection
+      logical_shape_per_instance:
+      - 1024
+      - 1024
+      instances: 28
+      output_channels_per_instance: 1024
+      scales_per_instance: 1024
+      quantized: true
+      exclusion_id: null
+      note: 8 key/value heads give 1024 output channels; GQA makes this matrix
+        half the size of q_proj.
+    - class_id: attention_v_proj
+      role: value projection
+      logical_shape_per_instance:
+      - 1024
+      - 1024
+      instances: 28
+      output_channels_per_instance: 1024
+      scales_per_instance: 1024
+      quantized: true
+      exclusion_id: null
+      note: Same GQA width as k_proj.
+    - class_id: attention_o_proj
+      role: attention output projection
+      logical_shape_per_instance:
+      - 1024
+      - 2048
+      instances: 28
+      output_channels_per_instance: 1024
+      scales_per_instance: 1024
+      quantized: true
+      exclusion_id: null
+      note: Reduces over 2048 inputs into 1024 output channels and writes straight
+        into the residual stream.
+    - class_id: mlp_gate_proj
+      role: SwiGLU gate projection
+      logical_shape_per_instance:
+      - 3072
+      - 1024
+      instances: 28
+      output_channels_per_instance: 3072
+      scales_per_instance: 3072
+      quantized: true
+      exclusion_id: null
+      note: 3072 output channels feeding the SiLU gate.
+    - class_id: mlp_up_proj
+      role: SwiGLU up projection
+      logical_shape_per_instance:
+      - 3072
+      - 1024
+      instances: 28
+      output_channels_per_instance: 3072
+      scales_per_instance: 3072
+      quantized: true
+      exclusion_id: null
+      note: 3072 output channels multiplied by the gate.
+    - class_id: mlp_down_proj
+      role: SwiGLU down projection
+      logical_shape_per_instance:
+      - 1024
+      - 3072
+      instances: 28
+      output_channels_per_instance: 1024
+      scales_per_instance: 1024
+      quantized: true
+      exclusion_id: null
+      note: 'The widest reduction in the block: 3072 inputs per output channel,
+        so per-output-channel weight error accumulates over the longest dot product
+        here.'
+    - class_id: block_rmsnorm_scales
+      role: input_layernorm and post_attention_layernorm scale vectors
+      logical_shape_per_instance:
+      - 2048
+      instances: 28
+      output_channels_per_instance: null
+      scales_per_instance: null
+      quantized: false
+      exclusion_id: rmsnorm_scales
+      note: Two vectors of hidden_size per block. They multiply the normalized
+        residual channel-wise before every matmul.
+    - class_id: qk_head_norm_scales
+      role: Qwen3 per-head q_norm and k_norm scale vectors
+      logical_shape_per_instance:
+      - 256
+      instances: 28
+      output_channels_per_instance: null
+      scales_per_instance: null
+      quantized: false
+      exclusion_id: qwen3_per_head_qk_norm
+      note: Two vectors of head_dim 128 per block. These are the 56 initializers
+        the T21 inventory leaves inline in the ONNX protobuf rather than in external
+        data.
+    - class_id: final_rmsnorm_scale
+      role: final norm scale vector before the logits projection
+      logical_shape_per_instance:
+      - 1024
+      instances: 1
+      output_channels_per_instance: null
+      scales_per_instance: null
+      quantized: false
+      exclusion_id: rmsnorm_scales
+      note: One vector of hidden_size on the model output path.
+  activations:
+    dtype: int16
+    bits: 16
+    signed: true
+    symmetric: true
+    zero_point: 0
+    granularity: per_tensor
+    range_estimator: min_max
+    range_estimator_reason: At 16 bits a symmetric per-tensor range has 32,768
+      positive levels, so covering the full observed range costs very little resolution.
+      A decoder-only transformer's residual stream concentrates its largest magnitudes
+      in a small number of channels that grow with depth; clipping one of those
+      is a large error on the accumulator every later layer reads, while the resolution
+      given up to avoid clipping is roughly one part in ten thousand. At this
+      bit width the trade is one-sided, so the estimator does not clip at all.
+    rejected_range_estimators:
+    - id: percentile
+      reason: Buys resolution that int16 does not need and pays for it by clipping
+        exactly the outlier channels the residual stream depends on.
+    - id: mse
+      reason: Optimizes a reconstruction objective that is nearly flat at 16 bits,
+        so it adds a fitted hyper-parameter and a histogram dependency for no
+        expected gain.
+    sensitive_tensors:
+    - id: residual_stream
+      risk: Highest dynamic range in the graph and the tensor every block both
+        reads and writes.
+    - id: attention_scores_pre_softmax
+      risk: Unbounded below and scaled by 1/sqrt(head_dim); its range grows with
+        sequence length, so a range fitted at S128 does not bound S4096.
+    boundary: 'int16 activations are specified here as the Q1 row requires. Whether
+      the public Workbench compiler accepts a 16-bit activation datapath for this
+      graph on the named targets is unverified in this repository: no compile
+      job has been submitted for any Qwen graph, quantized or floating.'
+  kv_cache:
+    applied_dtype: float16
+    plan_row_requirement: FP16/INT16
+    satisfied_without_contract_change: true
+    argument: The Q1 row admits an FP16 cache outright, so this candidate is fully
+      specifiable against the frozen T12 contract as it stands. No contract change
+      is requested and none is needed.
+    frozen_contract:
+      dtype: float16
+      source: slm_lab.contracts.static_cache.CACHE_DTYPE
+      owner_task: T12
+      decode_graph_cache_inputs: 56
+      decode_graph_cache_outputs: 56
+      layout:
+      - batch
+      - kv_head
+      - cache_position
+      - head_dim
+      note: 'Counted from the frozen contract rather than quoted: the cache dtype
+        appears on this many declared graph tensors per decode variant, which
+        is what makes it a public boundary rather than an internal representation.'
+    change_control:
+      lowering_the_cache_dtype_changes:
+      - the frozen T12 static-cache contract (CACHE_DTYPE)
+      - the T20 exported prefill cache outputs and decode cache inputs/outputs
+      - the T23 promoted prefill export and its committed manifests
+      - results/manifests/onnx/S*.json, which assert float16 on every cache tensor
+      owner_tasks:
+        graph_contract: T12
+        onnx_export_boundary: T20
+        promoted_prefill_export: T23
+      t41_position: T41 owns configs/quantization/w8/ and src/slm_lab/quantization/w8.py.
+        It does not own T12, T20, or T23, so it cannot unilaterally change the
+        cache dtype, and it will not specify a cache precision the exported graphs
+        do not carry. This is a discovered constraint, recorded where it was discovered.
+      request_status: not_raised_at_this_commit
+    bytes:
+      measurement: analytic_projection
+      by_context:
+      - variant_id: S128
+        measurement: analytic_projection
+        prompt_length: 128
+        cache_capacity: 160
+        dtype: float16
+        bytes: 18350080
+      - variant_id: S512
+        measurement: analytic_projection
+        prompt_length: 512
+        cache_capacity: 576
+        dtype: float16
+        bytes: 66060288
+      - variant_id: S1024
+        measurement: analytic_projection
+        prompt_length: 1024
+        cache_capacity: 1152
+        dtype: float16
+        bytes: 132120576
+      - variant_id: S4096
+        measurement: analytic_projection
+        prompt_length: 4096
+        cache_capacity: 4224
+        dtype: float16
+        bytes: 484442112
+      note: Arithmetic from the frozen contract via slm_lab.contracts.static_cache.cache_bytes.
+        It is here so a reader can see that W8 weight quantization does not touch
+        the term that dominates memory at long context.
+  graph_inventory:
+    source:
+      path: results/graph/S128.json
+      canonical_json_sha256: 96913931d1241e50890ad5ba34ace35ae2cf77b36116ba40b4ea70f4491b7efe
+      owner_task: T21
+      variant_id: S128
+      graph_kind: prefill
+      precision: float16
+      onnx_sha256: 464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3
+    node_count: 7634
+    initializer_count: 310
+    external_initializer_count: 254
+    inline_initializer_count: 56
+    largest_inline_initializer_bytes: 256
+    op_counts:
+    - op: MatMul
+      count: 254
+    - op: Transpose
+      count: 338
+    - op: Softmax
+      count: 28
+    - op: Sigmoid
+      count: 28
+    - op: ReduceMean
+      count: 113
+    - op: Cos
+      count: 1
+    - op: Sin
+      count: 1
+    - op: Gather
+      count: 2
+    - op: ScatterND
+      count: 1
+    why_this_is_here: The exclusion policy below argues about operators and tensors.
+      This block is the committed structural evidence those arguments point at,
+      so a reader can check that the operators being excluded are operators this
+      graph actually contains, and in what number. It is a structural inventory
+      of one float16 ONNX file; it establishes nothing about compiler acceptance
+      or placement.
+  excluded_from_quantization:
+    policy: Everything not listed here is quantized to the weight or activation
+      precision declared above. Every entry names why it is excluded and whether
+      the exclusion is a choice T41 is making or a constraint the frozen graph
+      imposes.
+    entries:
+    - id: tied_embedding_table
+      applies_to: the single vocabulary x hidden table
+      kind: frozen_graph_constraint
+      precision_kept: float16
+      reason: 'configs/models/qwen3-0.6b.yaml sets tie_word_embeddings: true,
+        so the embedding lookup and the final logits projection are the same stored
+        tensor. They cannot be given two different precisions without untying
+        them, which changes the model contract and the exported graph. This exclusion
+        is expensive — the table is over a quarter of all parameters — and the
+        projection states the cost rather than hiding it.'
+    - id: final_logits_projection
+      applies_to: the output projection that produces last_logits/next_logits
+      kind: frozen_graph_constraint
+      precision_kept: float16
+      reason: At this model revision this is the tied table above, recorded separately
+        so that an untied future revision does not silently inherit an exclusion
+        it was never argued for. The T12 contract also declares the logits tensors
+        float32, so the last matmul already sits on a wider output path than the
+        rest of the graph.
+    - id: rmsnorm_scales
+      applies_to: input_layernorm, post_attention_layernorm, and the final norm
+      kind: policy_choice
+      precision_kept: float16
+      reason: These vectors multiply the normalized residual channel by channel,
+        so an int8 rounding error on them is a multiplicative error applied to
+        the accumulator at every block. They are a vanishing fraction of the parameters,
+        so the saving is negligible and the risk is not. The T21 inventory records
+        113 ReduceMean nodes in the S128 prefill graph, which is four per block
+        plus the final norm — this class and the per-head norms below account
+        for all of them.
+    - id: qwen3_per_head_qk_norm
+      applies_to: Qwen3's per-head q_norm and k_norm scale vectors
+      kind: policy_choice
+      precision_kept: float16
+      reason: 'Qwen3 normalizes each attention head''s query and key before RoPE,
+        so these vectors act directly on the tensors whose dot product becomes
+        the attention score. They are also the smallest weights in the model:
+        the T21 inventory shows they are the 56 initializers the exporter left
+        inline in the protobuf because each is only head_dim float16 values. Quantizing
+        them would perturb attention scores to save a few kilobytes.'
+    - id: softmax
+      applies_to: the 28 attention softmax nodes
+      kind: policy_choice
+      precision_kept: float16
+      reason: The input is unbounded below and the output is a probability distribution
+        whose small entries are what long-context attention is made of. A symmetric
+        integer quantizer on either side either wastes half its range or rounds
+        the tail to zero, and the normalization itself is what makes the operator
+        numerically well behaved in the first place.
+    - id: rope_sin_cos
+      applies_to: the RoPE sine and cosine tables
+      kind: policy_choice
+      precision_kept: float16
+      reason: They are exact trigonometric constants that encode position. Quantizing
+        them perturbs the phase applied at every position, with an error that
+        grows with position index — precisely the regime the S4096 workload exercises
+        hardest. The T21 inventory shows one Cos and one Sin node, so the tables
+        are computed once and cost effectively nothing to keep.
+    - id: residual_adds
+      applies_to: the residual stream additions around attention and the MLP
+      kind: policy_choice
+      precision_kept: float16
+      reason: The residual stream is the model's accumulator. Re-quantizing it
+        at every block turns a single rounding error into a compounding one along
+        all 28 layers, and it is the tensor with the widest dynamic range in the
+        graph. Keeping the adds wide is the standard way to stop activation quantization
+        error from accumulating with depth.
+    - id: kv_cache_read_write
+      applies_to: cache reads, the indexed cache write, and the cache boundary
+      kind: frozen_graph_constraint
+      precision_kept: float16
+      reason: slm_lab.contracts.static_cache freezes CACHE_DTYPE as float16 and
+        the cache crosses the graph boundary as declared inputs and outputs. The
+        T21 inventory records a single ScatterND in the prefill graph, which is
+        the cache write; changing its dtype changes the public contract, not an
+        internal choice. The owning tasks are named in this candidate's kv_cache
+        block.
+    policy_choice_ids:
+    - rmsnorm_scales
+    - qwen3_per_head_qk_norm
+    - softmax
+    - rope_sin_cos
+    - residual_adds
+    frozen_graph_constraint_ids:
+    - tied_embedding_table
+    - final_logits_projection
+    - kv_cache_read_write
+    kind_note: 'A policy choice is revisable by T41 on evidence. A frozen-graph
+      constraint is not: reversing one means changing the model contract, the
+      T12 graph contract, or the T20/T23 export boundary, and those belong to
+      other tasks.'
+  calibration:
+    calibration_dataset_revision: t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987
+    source:
+      path: configs/quantization/calibration.yaml
+      corpus_canonical_json_sha256: d2b749e15dd5d98789305e06fbe164bfea7c4ce5cb87b2189e1a8374adbfe8f0
+      owner_task: T40
+      note: Read at generation time from the committed T40 contract, never transcribed.
+        A second literal copy of this revision string is a second place for it
+        to drift.
+    observe_ranges_on:
+      graph_kind: prefill
+      variant_ids:
+      - S128
+      - S512
+      - S1024
+      - S4096
+      reason: All four exported prefill contexts, because activation ranges fitted
+        at 128 tokens do not bound those at 4096 and the longest context is the
+        one the benchmark exercises hardest.
+    decode_side_observer_pass:
+      open_question_from: T40
+      question: Calibration only exercises the prefill graph. The decode graph
+        consumes a materialized KV cache, so its activation ranges are a function
+        of the prefill ranges plus the decode step itself; T41 owns whether a
+        decode-side observer pass is needed.
+      t41_position: required_pending_measurement
+      argument: A decode step reads a materialized cache and produces one token's
+        activations at cache position valid_length. Neither the attention denominator
+        over a full cache nor the residual magnitude at that position is observed
+        by any prefill sample, so prefill ranges do not bound decode ranges by
+        construction. For the int8-activation candidate that gap is the difference
+        between a fitted scale and a guessed one; for the int16-activation candidate
+        it is a smaller risk at 256 times the resolution.
+      evidence: none_measured_at_this_commit
+      blocked_on:
+      - hardware:linux_cuda_aimet_host
+      owner_task: T41
+    inherited_bias:
+      from_task: T40
+      total_calibration_tokens: 6912
+      dominant_source_group: context_workloads
+      dominant_source_group_token_share: 0.8333
+      distinct_token_ids: 175
+      model_vocabulary_size: 151936
+      vocabulary_fraction: 0.001152
+      evaluation_overlap:
+        overlaps: true
+        scope: quality_subset (4 of 13 tier-1 samples)
+        statement: The four CC0 quality prompts are both calibrated on and evaluated
+          on. This is deliberate - the observers should see the distribution the
+          delta is measured on - but it biases the measured quality delta optimistically,
+          because the quantized model's ranges were fitted on the evaluation inputs.
+          T41-T43 must report this overlap alongside any quality number, and must
+          not present the delta as evidence of generalization. Admitting a tier-2
+          corpus is the way to remove the overlap.
+      statement: 'The corpus is small and narrow: most of its token positions
+        come from one repeated authored seed, it touches a fraction of a percent
+        of the embedding table, and four of its samples are also evaluation prompts.
+        Any quality delta measured against this calibration is optimistic and
+        must be reported with this block attached.'
+  baseline:
+    role: floating comparison anchor for every W8 delta
+    precision: float16
+    manifests:
+    - variant_id: S128
+      path: results/manifests/onnx/S128.json
+      canonical_json_sha256: 26c30261c4db7d8b159899dba99cbf5bef55df95b92294347b9f1745411e9bfc
+      precision: float16
+      task_id: T20
+      context_length: 128
+      cache_capacity: 160
+      source_artifact_sha256: f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b
+    - variant_id: S512
+      path: results/manifests/onnx/S512.json
+      canonical_json_sha256: f1b6c9c1cfdbe5d7b8afa9861a994071d059aacddc6a015ca5e1a307b3b7b510
+      precision: float16
+      task_id: T20
+      context_length: 512
+      cache_capacity: 576
+      source_artifact_sha256: f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b
+    - variant_id: S1024
+      path: results/manifests/onnx/S1024.json
+      canonical_json_sha256: 02dc67b9d0f064728a6c1adcd681743280edeb3e87b1d71175eff79061cc8eaa
+      precision: float16
+      task_id: T20
+      context_length: 1024
+      cache_capacity: 1152
+      source_artifact_sha256: f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b
+    - variant_id: S4096
+      path: results/manifests/onnx/S4096.json
+      canonical_json_sha256: 19282e0c79edbaf44ceecc4c2e416aa700ad2e6bce5f5641ccaa491d6a6d5f09
+      precision: float16
+      task_id: T20
+      context_length: 4096
+      cache_capacity: 4224
+      source_artifact_sha256: f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b
+    statement: A W8 result is only a delta against these exact manifests. The
+      canonical hashes are recomputed at generation time, so a baseline manifest
+      that is edited after this file was written makes `uv run python -m slm_lab.quantization.w8
+      check` fail rather than silently re-anchoring the comparison.
+  evaluation:
+    benchmark_protocol:
+      path: configs/workloads/benchmark-protocol-v1.json
+      protocol_id: slm-lab-benchmark-v1
+      contract_sha256: 2541fa76fb088de3ebb559aeb300aed5cd62e215994b8db0faa2fbc6273f947e
+      digest_source: slm_lab.benchmark.protocol.protocol_sha256
+      owner_task: T13
+    academic_contract:
+      path: configs/workloads/academic-evaluation-v1.json
+      canonical_json_sha256: 662348ea0233835557a3cd37fc4f55c12ce575e82e623f3e7b3803d0d564b393
+      suite_id: slm-lab-academic-regression-v1
+      prompt_interface: raw_completion
+      apply_chat_template: false
+      fewshot: 0
+      harness_release: v0.4.12
+      harness_release_commit: 6d642546f4688648fced259eb3302efd36ece5af
+      tasks:
+      - id: wikitext_2_raw
+        harness_task: wikitext
+        dataset_id: Salesforce/wikitext
+        dataset_revision: b08601e04326c79dfdd32d625aee71d232d685c3
+        dataset_config: wikitext-2-raw-v1
+        split: test
+        metrics: &id001
+        - word_perplexity
+        - byte_perplexity
+        - bits_per_byte
+      - id: hellaswag_1000
+        harness_task: hellaswag
+        dataset_id: Rowan/hellaswag
+        dataset_revision: 218ec52e09a7e7462a5400043bb9a69a41d06b76
+        dataset_config: default
+        split: validation
+        metrics: &id002
+        - acc
+        - acc_norm
+      - id: arc_easy_full_validation
+        harness_task: arc_easy
+        dataset_id: allenai/ai2_arc
+        dataset_revision: 210d026faf9955653af8916fad021475a3f00453
+        dataset_config: ARC-Easy
+        split: validation
+        metrics: &id003
+        - acc
+        - acc_norm
+    quality_delta_metrics:
+    - task_id: wikitext_2_raw
+      metrics: *id001
+      role: regression detector for the W8 delta; not a capability claim about
+        the model
+    - task_id: hellaswag_1000
+      metrics: *id002
+      role: regression detector for the W8 delta; not a capability claim about
+        the model
+    - task_id: arc_easy_full_validation
+      metrics: *id003
+      role: regression detector for the W8 delta; not a capability claim about
+        the model
+    comparison:
+      function: slm_lab.quantization.w8.compare_quality
+      command: uv run python -m slm_lab.quantization.w8 compare --baseline <float16-result.json>
+        --candidate <w8-result.json>
+      precision_label_convention:
+        baseline:
+        - float16
+        - bfloat16
+        - float32
+        candidate:
+        - <candidate_id>+simulated
+        - <candidate_id>+deployed
+        cross_checked_against: system.evidence_level
+        reason: 'The frozen T13 result schema sets additionalProperties: false
+          at the record root and inside source, so a W8 result has nowhere to
+          add a bespoke precision_state field. The state rides on source.precision,
+          which the schema already requires, and is cross-checked against system.evidence_level,
+          which the schema already constrains. Widening the schema would mean
+          changing a frozen T13 contract T41 does not own.'
+    statement: A quality delta computed under any other protocol digest is not
+      comparable with one computed under 2541fa76fb088de3ebb559aeb300aed5cd62e215994b8db0faa2fbc6273f947e,
+      and compare_quality refuses to subtract two records that do not both cite
+      it.
+  weight_storage_projection:
+    measurement: analytic_projection
+    derived_from:
+      model_contract: configs/models/qwen3-0.6b.yaml
+      fields:
+      - num_hidden_layers
+      - hidden_size
+      - intermediate_size
+      - num_attention_heads
+      - num_key_value_heads
+      - head_dim
+      - vocab_size
+      - tie_word_embeddings
+      exclusion_policy: this candidate's excluded_from_quantization block
+    weight_classes:
+    - class_id: tied_vocabulary_table
+      role: token embedding lookup and, because the weights are tied, the final
+        logits projection
+      measurement: analytic_projection
+      instances: 1
+      logical_shape_per_instance:
+      - 151936
+      - 1024
+      parameters_per_instance: 155582464
+      parameters: 155582464
+      quantized: false
+      kept_precision: float16
+      exclusion_id: tied_embedding_table
+      per_output_channel_scales: 0
+      float16_bytes: 311164928
+      candidate_bytes: 311164928
+      note: One table of 151936 rows serves both directions. The T21 inventory
+        records the lookup as a Gather rather than a MatMul, so the two uses are
+        not even the same operator class.
+    - class_id: attention_q_proj
+      role: query projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 2048
+      - 1024
+      parameters_per_instance: 2097152
+      parameters: 58720256
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 57344
+      float16_bytes: 117440512
+      candidate_bytes: 58720256
+      note: 16 query heads at head_dim 128 give 2048 output channels, twice the
+        key/value width under GQA.
+    - class_id: attention_k_proj
+      role: key projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 1024
+      - 1024
+      parameters_per_instance: 1048576
+      parameters: 29360128
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 28672
+      float16_bytes: 58720256
+      candidate_bytes: 29360128
+      note: 8 key/value heads give 1024 output channels; GQA makes this matrix
+        half the size of q_proj.
+    - class_id: attention_v_proj
+      role: value projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 1024
+      - 1024
+      parameters_per_instance: 1048576
+      parameters: 29360128
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 28672
+      float16_bytes: 58720256
+      candidate_bytes: 29360128
+      note: Same GQA width as k_proj.
+    - class_id: attention_o_proj
+      role: attention output projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 1024
+      - 2048
+      parameters_per_instance: 2097152
+      parameters: 58720256
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 28672
+      float16_bytes: 117440512
+      candidate_bytes: 58720256
+      note: Reduces over 2048 inputs into 1024 output channels and writes straight
+        into the residual stream.
+    - class_id: mlp_gate_proj
+      role: SwiGLU gate projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 3072
+      - 1024
+      parameters_per_instance: 3145728
+      parameters: 88080384
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 86016
+      float16_bytes: 176160768
+      candidate_bytes: 88080384
+      note: 3072 output channels feeding the SiLU gate.
+    - class_id: mlp_up_proj
+      role: SwiGLU up projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 3072
+      - 1024
+      parameters_per_instance: 3145728
+      parameters: 88080384
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 86016
+      float16_bytes: 176160768
+      candidate_bytes: 88080384
+      note: 3072 output channels multiplied by the gate.
+    - class_id: mlp_down_proj
+      role: SwiGLU down projection
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 1024
+      - 3072
+      parameters_per_instance: 3145728
+      parameters: 88080384
+      quantized: true
+      kept_precision: int8
+      exclusion_id: null
+      per_output_channel_scales: 28672
+      float16_bytes: 176160768
+      candidate_bytes: 88080384
+      note: 'The widest reduction in the block: 3072 inputs per output channel,
+        so per-output-channel weight error accumulates over the longest dot product
+        here.'
+    - class_id: block_rmsnorm_scales
+      role: input_layernorm and post_attention_layernorm scale vectors
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 2048
+      parameters_per_instance: 2048
+      parameters: 57344
+      quantized: false
+      kept_precision: float16
+      exclusion_id: rmsnorm_scales
+      per_output_channel_scales: 0
+      float16_bytes: 114688
+      candidate_bytes: 114688
+      note: Two vectors of hidden_size per block. They multiply the normalized
+        residual channel-wise before every matmul.
+    - class_id: qk_head_norm_scales
+      role: Qwen3 per-head q_norm and k_norm scale vectors
+      measurement: analytic_projection
+      instances: 28
+      logical_shape_per_instance:
+      - 256
+      parameters_per_instance: 256
+      parameters: 7168
+      quantized: false
+      kept_precision: float16
+      exclusion_id: qwen3_per_head_qk_norm
+      per_output_channel_scales: 0
+      float16_bytes: 14336
+      candidate_bytes: 14336
+      note: Two vectors of head_dim 128 per block. These are the 56 initializers
+        the T21 inventory leaves inline in the ONNX protobuf rather than in external
+        data.
+    - class_id: final_rmsnorm_scale
+      role: final norm scale vector before the logits projection
+      measurement: analytic_projection
+      instances: 1
+      logical_shape_per_instance:
+      - 1024
+      parameters_per_instance: 1024
+      parameters: 1024
+      quantized: false
+      kept_precision: float16
+      exclusion_id: rmsnorm_scales
+      per_output_channel_scales: 0
+      float16_bytes: 2048
+      candidate_bytes: 2048
+      note: One vector of hidden_size on the model output path.
+    totals:
+      measurement: analytic_projection
+      total_parameters: 596049920
+      quantized_parameters: 440401920
+      excluded_parameters: 155648000
+      quantized_parameter_fraction: 0.738868
+      float16_weight_bytes: 1192099840
+      candidate_weight_bytes: 751697920
+      weight_bytes_saved: 440401920
+      weight_byte_ratio_float16_over_candidate: 1.585876
+    scale_storage_lower_bound:
+      measurement: analytic_projection
+      granularity: per_output_channel
+      scale_dtype: float32
+      per_output_channel_scale_count: 344064
+      scale_bytes: 1376256
+      candidate_weight_bytes_including_scales: 753074176
+      weight_byte_ratio_including_scales: 1.582978
+      note: 'A lower bound, and the reason the headline ratio above overstates
+        the saving. It counts one scale per output channel at the declared scale
+        dtype and nothing else: no zero points (the policy is symmetric, so there
+        are none), no QDQ node overhead, no per-tensor activation encodings, and
+        no container framing. The shipped format is not decided at this commit,
+        so the real overhead is unknown rather than estimated.'
+    kv_cache_left_at_the_frozen_contract:
+      measurement: analytic_projection
+      dtype: float16
+      contract_source: slm_lab.contracts.static_cache.CACHE_DTYPE
+      by_context:
+      - variant_id: S128
+        measurement: analytic_projection
+        prompt_length: 128
+        cache_capacity: 160
+        dtype: float16
+        bytes: 18350080
+      - variant_id: S512
+        measurement: analytic_projection
+        prompt_length: 512
+        cache_capacity: 576
+        dtype: float16
+        bytes: 66060288
+      - variant_id: S1024
+        measurement: analytic_projection
+        prompt_length: 1024
+        cache_capacity: 1152
+        dtype: float16
+        bytes: 132120576
+      - variant_id: S4096
+        measurement: analytic_projection
+        prompt_length: 4096
+        cache_capacity: 4224
+        dtype: float16
+        bytes: 484442112
+      note: Both W8 candidates leave the cache at float16, so none of the weight
+        saving above applies to it. At the longest frozen context the cache alone
+        is the same order of magnitude as the entire float16 weight set, which
+        is why a weight-only W8 result must never be presented as a memory result
+        for long context.
+    does_not_establish:
+    - on_disk_quantized_artifact_size
+    - encoding_scale_or_zero_point_storage_overhead_in_the_shipped_format
+    - runtime_peak_memory
+    - any_latency_or_throughput_claim
+    - kv_cache_memory_which_both_candidates_leave_at_the_frozen_float16_contract
+    - quality_impact_of_any_included_or_excluded_weight_class
+    cross_check:
+      measurement: arithmetic_over_committed_inputs
+      question: does the parameter total derived from the model contract equal
+        the parameter total the committed float16 export actually stores?
+      external_data_bytes: 1192085504
+      external_data_float16_elements: 596042752
+      external_initializer_count: 254
+      inline_initializer_count: 56
+      inline_initializer_elements: 7168
+      reconstructed_parameters: 596049920
+      derived_parameters: 596049920
+      agrees: true
+      note: This is a byte-level reconciliation of two independent committed sources,
+        not a measurement of anything quantized. It is here because a parameter
+        count that disagrees with the artifact would silently poison every ratio
+        in this projection.
+candidate_canonical_json_sha256: bf7af73572b01ffed21138ccbeecb090add647311ba96cac5be58f0f099ba264
+deployment_routes:
+  lane_a_ai_hub_workbench:
+    plan_section: '7.1'
+    available: false
+    blocked_on:
+    - capability:no_quantize_stage_adapter_in_this_repository
+    - upstream_task:T31
+    blocked_on_owners:
+      capability:no_quantize_stage_adapter_in_this_repository: T22
+      upstream_task:T31: T31
+    authorization:
+      qai_hub_submission: granted
+      granted_on: '2026-08-03'
+      scope: free capacity only; no spend; any Device Cloud use capped at 120
+        device minutes
+      consumed_by_this_repository:
+        submitted_jobs: 0
+        device_minutes: 0
+        cost: none — read-only capability query, no job submitted
+      device_cloud_session: 'not cleared here: an interactive Device Cloud lease
+        is a separate lock from job submission, and T41 records the 120-minute
+        ceiling above rather than assuming the lease'
+      note: Recorded because it changed, and recorded as a permission rather than
+        as progress. Submission is no longer what holds Lane A; nothing has been
+        spent under it, and there is still nothing to submit.
+    quantization_support:
+      measurement: observed_public_api_capability
+      observation_date: '2026-08-03'
+      client_version: 0.53.0
+      record:
+        path: results/quantization/t41-ai-hub-capability-2026-08-03.json
+        canonical_json_sha256: 2cdfe371ec033a78fb8b6c4a40caa4d8b178715be4be1c56b910266d18cae14d
+        record_type: ai_hub_capability_observation
+        submitted_jobs: 0
+        device_minutes_consumed: 0
+        cost: none — read-only capability query, no job submitted
+        rebuild_command: uv run python -m slm_lab.quantization.w8 capabilities
+          --offline-input results/quantization/t41-ai-hub-capability-2026-08-03.json
+      submit_entry_points:
+      - submit_compile_and_link_jobs
+      - submit_compile_and_profile_jobs
+      - submit_compile_job
+      - submit_inference_job
+      - submit_link_job
+      - submit_profile_job
+      - submit_quantize_job
+      quantize_entry_point: submit_quantize_job
+      quantize_signature: '(model: ''Model | onnx.ModelProto | str | Path | None'',
+        calibration_data: ''Dataset | DatasetEntries | str'', weights_dtype: ''QuantizeDtype''
+        = <QuantizeDtype.INT8: 1>, activations_dtype: ''QuantizeDtype'' = <QuantizeDtype.INT8:
+        1>, name: ''str | None'' = None, options: ''str'' = '''', project: ''str
+        | Project | None'' = None) -> ''QuantizeJob'''
+      quantize_dtypes:
+      - INT16
+      - INT4
+      - INT8
+      candidate_requests:
+        entry_point: submit_quantize_job
+        by_candidate:
+          w8a16:
+            plan_matrix_row: Q1
+            weights_dtype: INT8
+            activations_dtype: INT16
+            request: submit_quantize_job(weights_dtype=QuantizeDtype.INT8, activations_dtype=QuantizeDtype.INT16)
+          w8a8:
+            plan_matrix_row: Q2
+            weights_dtype: INT8
+            activations_dtype: INT8
+            request: submit_quantize_job(weights_dtype=QuantizeDtype.INT8, activations_dtype=QuantizeDtype.INT8)
+        observed_dtypes:
+        - INT16
+        - INT4
+        - INT8
+        dtypes_not_used_by_T41:
+        - INT4
+        int4_note: 'INT4 is offered by the same two arguments and is not T41''s
+          to use: the W4A8 row belongs to T42, which is where a four-bit weight
+          policy, its blocking granularity, and its sensitivity evidence are argued.
+          Recorded here only so T42 does not have to re-observe it.'
+        note: Expressible means the public API accepts these two arguments. It
+          is not compiler acceptance, not operator support, not NPU placement,
+          and not a claim that an artifact exists to pass as the model.
+      kv_cache_dtype:
+        separate_cache_dtype_argument: false
+        quantize_parameters:
+        - model
+        - calibration_data
+        - weights_dtype
+        - activations_dtype
+        - name
+        - options
+        - project
+        statement: 'The public quantize entry point takes one weights dtype and
+          one activations dtype, and no argument that names the KV cache. This
+          is consistent with the frozen float16 CACHE_DTYPE finding already in
+          both candidates and is not a way around it: the Q2 row''s int8 cache
+          would still have to come from the T12 graph contract and the T20/T23
+          export boundary, because there is no quantize option that could produce
+          one.'
+      establishes:
+      - that_the_public_client_at_the_recorded_version_exposes_a_quantize_entry_point
+      - that_its_weights_dtype_and_activations_dtype_arguments_accept_the_recorded_dtypes
+      - that_W8A16_and_W8A8_are_each_expressible_as_one_public_quantize_request
+      - that_the_three_plan_section_3_2_target_devices_were_live_on_the_observation_date
+      - that_those_devices_advertise_framework_qnn_and_htp_supports_fp16
+      - that_the_quantize_entry_point_exposes_no_separate_kv_cache_dtype_argument
+      does_not_establish:
+      - that_either_candidate_compiles
+      - that_the_compiler_accepts_this_graph_at_any_precision
+      - that_any_operator_or_the_whole_graph_is_placed_on_the_NPU
+      - any_latency_throughput_peak_memory_or_energy
+      - any_accuracy_perplexity_or_quality_delta
+      - that_a_W8_artifact_exists_anywhere_to_send_to_that_entry_point
+      - that_this_repository_can_run_a_quantize_job_which_needs_an_adapter_it_lacks
+      - anything_at_all_about_a_device_that_is_not_one_of_the_three_recorded_here
+      supersedes: 'the earlier assumption that Lane A''s quantization support
+        was unverified. It is now a dated read-only observation of the public
+        API and nothing more: an entry point that can express both candidates
+        is not a compile, not a placement, and not an artifact.'
+    ordered_stages:
+    - quantize (Workbench Quantize Job)
+    - compile
+    - inference
+    - profile
+    - download deployable artifact
+    provided_by_this_repository:
+    - 'src/slm_lab/deployment/qualcomm/ai_hub.py: sanitized schema-v2 compile,
+      inference, and profile stage adapters'
+    - 'scripts/qualcomm/{compile,inference,profile}.py: the three separate stage
+      processes'
+    - 'src/slm_lab/quantization/w8.py: the request emitter that composes a schema-v2
+      request and stops there'
+    missing:
+    - 'a quantize-stage adapter: slm_lab.deployment.qualcomm.ai_hub implements
+      compile, inference, and profile only, so Lane A cannot by itself produce
+      the quantized artifact at this commit — the compile stage consumes one,
+      it does not create one. The public API does expose submit_quantize_job,
+      which is the point: the gap is this repository''s, not the service''s, and
+      src/slm_lab/deployment/qualcomm/ belongs to T22'
+    - 'any W8 artifact to send: an entry point that can express both candidates
+      is not an artifact, and no weight has been quantized on either lane'
+    - any evidence that a floating Qwen graph compiles at all; T31 and T33 are
+      planned
+    submission_parameters:
+      client:
+        name: qai-hub
+        version: 0.53.0
+      runtime:
+        name: QAIRT
+        version: 2.45.0.260326154327
+      retry: false
+      timeout_seconds: 3600
+      stages:
+      - stage: compile
+        order: 0
+        script: scripts/qualcomm/compile.py
+        options: --target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327
+        command: PYTHONPATH=src python3 scripts/qualcomm/compile.py --request
+          <private-request>.json --manifest results/processed/qualcomm/t41-compile-manifest.json
+      - stage: inference
+        order: 1
+        script: scripts/qualcomm/inference.py
+        options: --qairt_framework 2.45.0.260326154327 --compute_unit npu
+        command: PYTHONPATH=src python3 scripts/qualcomm/inference.py --request
+          <private-request>.json --manifest results/processed/qualcomm/t41-inference-manifest.json
+      - stage: profile
+        order: 2
+        script: scripts/qualcomm/profile.py
+        options: --qairt_framework 2.45.0.260326154327 --compute_unit npu
+        command: PYTHONPATH=src python3 scripts/qualcomm/profile.py --request
+          <private-request>.json --manifest results/processed/qualcomm/t41-profile-manifest.json
+      version_evidence:
+      - ai/handoffs/T30-ai-hub-adapters.md
+      - results/hosts/workbench-toy-lifecycle-2026-07-25.json
+    target_devices:
+      policy_section: '3.2'
+      primary:
+        name: Snapdragon X Elite CRD
+        os: '11'
+        attributes:
+        - abi:aarch64-windows
+        - chipset:qualcomm-snapdragon-x-elite
+        - chipset:sc8380xp
+        - format:compute
+        - framework:onnx
+        - framework:qnn
+        - hexagon:v73
+        - htp-supports-fp16:true
+        - htp-supports-weight-sharing:true
+        - os:windows
+        - soc-model:60
+        - vendor:qualcomm
+      comparison:
+      - name: Dragonwing IQ-9075 EVK
+        os: '1.7'
+        attributes:
+        - abi:aarch64-oe-linux-gcc11
+        - chipset:qcs9075
+        - chipset:qualcomm-dragonwing-iq-9075
+        - chipset:qualcomm-qcs9075
+        - format:iot
+        - framework:onnx
+        - framework:qnn
+        - framework:tflite
+        - hexagon:v73
+        - htp-supports-fp16:true
+        - htp-supports-weight-sharing:true
+        - os:qc_linux
+        - soc-model:77
+        - vendor:qualcomm
+      - name: Snapdragon 8 Elite QRD
+        os: '15'
+        attributes:
+        - abi:aarch64-android
+        - chipset:qualcomm-snapdragon-8-elite
+        - chipset:sm8750
+        - format:phone
+        - framework:onnx
+        - framework:qnn
+        - framework:tflite
+        - hexagon:v79
+        - htp-supports-fp16:true
+        - htp-supports-weight-sharing:true
+        - os:android
+        - soc-model:69
+        - vendor:qualcomm
+      observed:
+        path: results/quantization/t41-ai-hub-capability-2026-08-03.json
+        canonical_json_sha256: 2cdfe371ec033a78fb8b6c4a40caa4d8b178715be4be1c56b910266d18cae14d
+        observation_date: '2026-08-03'
+        client_version: 0.53.0
+        devices_listed_by_the_service: 79
+        recorded_here: 3
+      attributes_note: 'Every name, os, and attribute above was read from the
+        service by the read-only capability query recorded at the path above,
+        on that date, with that client. It is no longer a guess and no longer
+        empty. Two things a reader should know. First, os is the SDK''s own version
+        string — the X Elite CRD reports ''11'', not the human label ''Windows
+        11'' this file used to carry, and the platform lives in the os:windows
+        attribute. Second, each list is the full observed vocabulary, which identifies
+        the device exactly and therefore over-constrains the selector: a future
+        authorized session that hits a selector mismatch should trim to name before
+        concluding the device is gone. The selectors are re-checked against the
+        capability record on every generation run, so a service change fails check
+        rather than silently re-anchoring.'
+      does_not_establish:
+      - that_any_of_these_devices_will_accept_this_graph
+      - that_htp_supports_fp16_implies_anything_about_int8_or_int16
+      - any_queue_time_availability_or_cost_for_these_devices
+    quantize_job_note: Committed T02 access evidence records a Workbench Quantize
+      Job running AIMET 2.34 per release notes dated 2026-07-06, while environments/linux-aimet
+      pins aimet-onnx and aimet-torch at 2.36.0. A Lane A and a Lane B W8 artifact
+      would therefore not be the same artifact, and their encodings must not be
+      compared as if a difference between them were a property of the model.
+  lane_b_local_aimet:
+    plan_section: '7.1'
+    available: false
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    ordered_stages:
+    - install the pinned AIMET environment on a Linux + CUDA host
+    - run the range observers over the frozen T40 corpus
+    - simulate W8 and record the quantized artifact digest
+    - export ONNX, external data, and encodings
+    - hand the artifact to Lane A's compile stage
+    provided_by_this_repository:
+    - 'environments/linux-aimet/aimet-requirements.in and .lock: hash-pinned dependency
+      set'
+    - 'environments/linux-aimet/aimet-cuda-wheels.lock: the CUDA wheels that cannot
+      be resolved from PyPI'
+    - 'environments/linux-aimet/aimet-host.template.json: the host manifest a
+      real run must fill in'
+    - 'configs/quantization/calibration.yaml: the frozen inputs'
+    missing:
+    - 'the host itself: AIMET publishes Linux x86-64 wheels only and nothing is
+      installed on the primary macOS development host'
+    - any executed observer pass, so no activation histogram exists anywhere in
+      this repository
+    pinned_versions:
+      aimet-onnx: 2.36.0
+      aimet-torch: 2.36.0
+  boundary: 'Both lanes are unavailable at this commit, and neither is waiting
+    on permission any more. Lane A is blocked on a capability this repository
+    does not have — no quantize-stage adapter, in a module T22 owns — and on T31.
+    Lane B is blocked on hardware. The public API can express both candidates,
+    which is why the remaining gap is worth naming precisely: it is ours, not
+    the service''s. Neither blocker is a code defect and neither is resolvable
+    inside this task.'
+evidence_requirements:
+  plan_section: '7.3'
+  default_status: not_run
+  rows:
+  - id: calibration_corpus_revision_and_token_budget
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Calibration corpus revision and token budget.
+    status: satisfied
+    owner_task: T40
+    blocked_on: []
+    command:
+      status: implemented_at_this_commit
+      value: uv run python -m slm_lab.quantization.w8 check
+    frozen_input_here: Both candidates bind t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987
+      and carry the corpus token budget of 6912 token positions, re-read from
+      the committed T40 contract on every validation run.
+  - id: quantization_and_calibration_time
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Quantization and calibration time.
+    status: blocked
+    owner_task: T41
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    command:
+      status: not_implemented_at_this_commit
+      value: <linux-cuda-aimet-host> python -m <t41-lane-b-runner> --candidate
+        <w8a16|w8a8> --calibration configs/quantization/calibration.yaml
+    frozen_input_here: The calibration inputs and the observer policy are frozen;
+      the runner that would consume them does not exist because there is no host
+      to run it on.
+  - id: layer_inclusion_exclusion_report
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Layer inclusion/exclusion report.
+    status: not_run
+    owner_task: T41
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    command:
+      status: not_implemented_at_this_commit
+      value: <linux-cuda-aimet-host> python -m <t41-lane-b-runner> --candidate
+        <w8a16|w8a8> --emit-inclusion-report
+    frozen_input_here: The intended policy is frozen in excluded_from_quantization,
+      separated into policy choices and frozen-graph constraints. That is a declaration
+      of intent, not a report of what a tool actually excluded, and the two are
+      not the same evidence.
+  - id: encoding_format_and_hashes
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Encoding format and hashes.
+    status: not_run
+    owner_task: T41
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    command:
+      status: not_implemented_at_this_commit
+      value: <linux-cuda-aimet-host> sha256sum <quantized>.onnx <quantized>.onnx.data
+        <quantized>.encodings
+    frozen_input_here: The weight and activation policies that determine what
+      an encodings file would contain are frozen; no encodings file exists and
+      the shipped format is not decided.
+  - id: perplexity_and_small_benchmark_change
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Perplexity and small benchmark change.
+    status: blocked
+    owner_task: T41
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    - upstream_task:T31
+    command:
+      status: implemented_at_this_commit
+      value: uv run python -m slm_lab.quantization.w8 compare --baseline <float16-result.json>
+        --candidate <w8-result.json>
+    frozen_input_here: 'The evaluation binding, the protocol digest, the metric
+      set, and the refusal rules are frozen, and compare_quality exists and runs.
+      It has nothing to compare: this repository contains no W8 quality result
+      at this commit, which validate_repository enforces.'
+  - id: logit_and_cache_error
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Logit/cache error.
+    status: blocked
+    owner_task: T41
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    - dependency:torch_and_onnxruntime_absent_on_the_primary_host
+    command:
+      status: implemented_at_this_commit
+      value: SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src <python-with-torch-and-onnxruntime>
+        -m pytest -q tests/onnx
+    frozen_input_here: The float16 baseline this error would be measured against
+      is pinned by digest; the quantized side does not exist.
+  - id: artifact_size
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Artifact size.
+    status: not_run
+    owner_task: T41
+    blocked_on:
+    - hardware:linux_cuda_aimet_host
+    command:
+      status: not_implemented_at_this_commit
+      value: <linux-cuda-aimet-host> wc -c <quantized>.onnx.data
+    frozen_input_here: An analytic weight-storage projection labelled analytic_projection,
+      whose does_not_establish list names on-disk artifact size first. A projection
+      is not a size.
+  - id: peak_memory
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Peak memory.
+    status: blocked
+    owner_task: T41
+    blocked_on:
+    - capability:no_quantize_stage_adapter_in_this_repository
+    - hardware:linux_cuda_aimet_host
+    command:
+      status: implemented_at_this_commit
+      value: PYTHONPATH=src python3 scripts/qualcomm/profile.py --request <private-profile-request>.json
+        --manifest results/processed/qualcomm/t41-profile-manifest.json
+    frozen_input_here: The projection records the float16 KV cache bytes per context
+      so a reader knows which term W8 weight quantization does not reduce. Runtime
+      peak memory is a profile-job measurement. Submission is permitted as of
+      2026-08-03; what is missing is the quantized artifact to profile, on both
+      lanes.
+  - id: graph_latency_and_npu_placement
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: Graph latency and NPU placement.
+    status: blocked
+    owner_task: T41
+    blocked_on:
+    - capability:no_quantize_stage_adapter_in_this_repository
+    - hardware:linux_cuda_aimet_host
+    - upstream_task:T31
+    command:
+      status: implemented_at_this_commit
+      value: PYTHONPATH=src python3 scripts/qualcomm/profile.py --request <private-profile-request>.json
+        --manifest results/processed/qualcomm/t41-profile-manifest.json
+    frozen_input_here: The submission parameters, the compute-unit option, and
+      the target-device selectors are frozen — the selectors now against the observed
+      device vocabulary rather than a name alone — and the request emitter will
+      compose the job. Submission is permitted and no job has been submitted,
+      because there is no quantized artifact to compile and no compiled artifact
+      to profile.
+  - id: end_to_end_generation_impact
+    plan_reference: docs/project/plan.md section 7.3
+    requirement: End-to-end generation impact where a persistent loop exists.
+    status: blocked
+    owner_task: T41
+    blocked_on:
+    - upstream_task:T32
+    - upstream_task:T33
+    - user_authorization:device_cloud_session
+    command:
+      status: not_implemented_at_this_commit
+      value: <device-cloud-session> PYTHONPATH=src python3 -m slm_lab.deployment.qualcomm.device_cloud
+        <session-args>
+    frozen_input_here: Nothing. No persistent generation loop exists on any Qualcomm
+      target in this repository, so this row is recorded to keep plan 7.3 complete
+      rather than to claim progress.
+  summary:
+  - status: satisfied
+    count: 1
+  - status: not_run
+    count: 3
+  - status: blocked
+    count: 6
+  note: Status is about evidence, not effort. `satisfied` means this module verified
+    an input on this run; `not_run` means the measurement was never taken; `blocked`
+    means it cannot be taken here and names what would unblock it.
+artifact_manifest_contract:
+  plan_section: '17.4'
+  required_fields_when_a_W8_artifact_exists:
+    precision: w8a16 plus the precision state, e.g. w8a16+simulated
+    quantization: the weights/activations/kv_cache blocks of this file, plus the
+      exclusion policy actually applied
+    calibration_dataset_revision: t40-qwen3-0.6b-t10-derived-v1+sha256.d2b749e15dd5d987
+    source_artifact_sha256: the float16 graph the quantized artifact was derived
+      from
+  instruction: No artifact manifest may carry this candidate_id without all four.
+    A manifest whose calibration_dataset_revision differs from the value above
+    was calibrated on a different corpus and its quality delta is not comparable.
+commands:
+  generate: uv run python -m slm_lab.quantization.w8 generate
+  check: uv run python -m slm_lab.quantization.w8 check
+  status: uv run python -m slm_lab.quantization.w8 status
+  record: uv run python -m slm_lab.quantization.w8 record
+  capabilities: uv run python -m slm_lab.quantization.w8 capabilities
+  capabilities_offline: uv run python -m slm_lab.quantization.w8 capabilities
+    --offline-input results/quantization/t41-ai-hub-capability-2026-08-03.json
+  compare: uv run python -m slm_lab.quantization.w8 compare --baseline <float16-result.json>
+    --candidate <w8-result.json>
+  request: uv run python -m slm_lab.quantization.w8 request --candidate <w8a16|w8a8>
+    --stage compile --context 128 --graph prefill --quantized-artifact <private-path>.onnx
+    --output-artifact <private-path>.serialized.bin --request-out .ai-local/profiles/T41/compile-request.json
+  tests: uv run pytest tests/quantization
