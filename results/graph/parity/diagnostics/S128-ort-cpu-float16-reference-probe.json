@@ -1,5 +1,5 @@
 {
-  "cache_capacity": 576,
+  "cache_capacity": 160,
   "cache_report": {
     "passed": true,
     "slot_immutability_violations": [],
@@ -7,7 +7,7 @@
       {
         "graph_kind": "prefill",
         "input_valid_length": 0,
-        "output_valid_length": 512,
+        "output_valid_length": 128,
         "passed": true,
         "step": 0,
         "tensors_checked": 56,
@@ -16,85 +16,85 @@
       },
       {
         "graph_kind": "decode",
-        "input_valid_length": 512,
-        "output_valid_length": 513,
+        "input_valid_length": 128,
+        "output_valid_length": 129,
         "passed": true,
         "step": 1,
         "tensors_checked": 56,
         "violations": [],
-        "write_index": 512
+        "write_index": 128
       },
       {
         "graph_kind": "decode",
-        "input_valid_length": 513,
-        "output_valid_length": 514,
+        "input_valid_length": 129,
+        "output_valid_length": 130,
         "passed": true,
         "step": 2,
         "tensors_checked": 56,
         "violations": [],
-        "write_index": 513
+        "write_index": 129
       },
       {
         "graph_kind": "decode",
-        "input_valid_length": 514,
-        "output_valid_length": 515,
+        "input_valid_length": 130,
+        "output_valid_length": 131,
         "passed": true,
         "step": 3,
         "tensors_checked": 56,
         "violations": [],
-        "write_index": 514
+        "write_index": 130
       },
       {
         "graph_kind": "decode",
-        "input_valid_length": 515,
-        "output_valid_length": 516,
+        "input_valid_length": 131,
+        "output_valid_length": 132,
         "passed": true,
         "step": 4,
         "tensors_checked": 56,
         "violations": [],
-        "write_index": 515
+        "write_index": 131
       }
     ]
   },
-  "evidence_sha256": "c1e81476be0d1f36be90bcedb837b9a7c28be9789413523f13587f926ae768f4",
+  "evidence_sha256": "65ad9e9c91db4f729a914dcf0e7f9d44a8ed3d3d8f43d255e39988bd928a9e38",
   "evidence_tier": "real_onnxruntime_cpu",
   "failure_kinds": [],
   "failures": [],
   "graph_digests": {
     "decode": {
-      "relative_path": "S512/decode.onnx",
-      "sha256": "ed2c8b52bd284685a6c549b7ebadd4db257c93e17ec7cae6b09c5b7561e36c8f"
+      "relative_path": "S128/decode.onnx",
+      "sha256": "e200ecd27e1ab83d2bea17de030c0a0c8a0eea08c6f182eed41c04a457c421d2"
     },
     "prefill": {
-      "relative_path": "S512/prefill.onnx",
-      "sha256": "6fafbe126f4758b6590e697c70b7bb83a5bca58181b193bf2bebe9bb1383670f"
+      "relative_path": "S128/prefill.onnx",
+      "sha256": "464892a720e208a62932a6189e200ecc7433e2f629cbb6ee29775679ddf4efc3"
     }
   },
   "passed": true,
-  "prompt_length": 512,
+  "prompt_length": 128,
   "reference_provenance": {
     "expected_token_ids": [
-      21448,
-      5904,
-      382,
-      32
+      9569,
+      11,
+      323,
+      18662
     ],
     "model_id": "Qwen/Qwen3-0.6B",
     "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
-    "prompt_token_count": 512,
-    "prompt_token_ids_sha256": "a17f17b9de442a6cab929c0c6f40d12a823d4ec0141fc3725e42dd8066cd2c5d",
+    "prompt_token_count": 128,
+    "prompt_token_ids_sha256": "52d8283880b465f99406bcf64f0460f421b3ebe508a347b40eefa20b29d1e5fa",
     "reference_logits_sha256": [
-      "04651cee1213a0eb5753060852bf7849ec09f62bcb0ecb867e251b5c25f0f00d",
-      "61527f9a6a500df14e21c8e8d79025762045a9d7892d0284bc4409b04f82f76d",
-      "c567e902fce963901bcd237e6979ae1da39f7dd19f1a311c9c4b0cdf1eeb47fa",
-      "51e2737ff899cac1920f32f3cece7224dd2e0412b6dc6892c37b984dc560e2a7",
-      "d0d15ab12a1e2813fd9d1571331e9e2dd7bda25d70b733336c0d06ffda0eef5a"
+      "fa36f174a70150eb43111805edbe41ccd1aef02e19671b388b78199f79ad15cb",
+      "7a36973cc394e79af2445fb37831e7acf3ab476f1dfb081d5927d1470cb72b0f",
+      "095805579a803a4e4a359c16af81d7a9f3ee33d15659c5fc3be73b269e7f616f",
+      "81b6d3d53ebc51b033a7d53edbd5096929c620fc808178e91734fcb59f434b8d",
+      "f07215cdc1746f49ad706acc8372a7c667ce5b568662fd5bebc4d5352128daaf"
     ],
     "runtime": {
       "actual_attention_implementation": "eager",
       "deterministic_algorithms": true,
       "device": "cpu",
-      "dtype": "bfloat16",
+      "dtype": "float16",
       "python_version": "3.11.13",
       "requested_attention_implementation": "eager",
       "safetensors_version": "0.8.0",
@@ -135,118 +135,118 @@
   "schema_version": 1,
   "steps": [
     {
-      "candidate_logits_sha256": "942b5a1e6ec27c9e06b6282d5de607c0abd27d82a84da4825280b6c3043fde88",
+      "candidate_logits_sha256": "64d43692039ca2e225f9e4f254b47b3f4b01c9fde4bbd496accad3d32e6a2b1f",
       "graph_kind": "prefill",
       "input_token_id": null,
       "input_valid_length": 0,
       "metrics": {
         "allclose": true,
-        "cosine_similarity": 0.9999414930227537,
-        "max_absolute_error": 0.3125,
-        "max_protected_relative_error": 0.29931640625,
-        "mean_absolute_error": 0.05933196651462933,
+        "cosine_similarity": 0.9999986990105488,
+        "max_absolute_error": 0.03515625,
+        "max_protected_relative_error": 0.033203125,
+        "mean_absolute_error": 0.005762673123553709,
         "passed": true,
-        "reference_top1_top2_margin": 9.625,
+        "reference_top1_top2_margin": 7.84375,
         "top1_agreement": true,
-        "top1_candidate": 21448,
-        "top1_reference": 21448,
+        "top1_candidate": 9569,
+        "top1_reference": 9569,
         "top5_overlap": 1.0
       },
       "non_finite_candidate_logits": 0,
-      "output_valid_length": 512,
-      "reference_logits_sha256": "04651cee1213a0eb5753060852bf7849ec09f62bcb0ecb867e251b5c25f0f00d",
+      "output_valid_length": 128,
+      "reference_logits_sha256": "fa36f174a70150eb43111805edbe41ccd1aef02e19671b388b78199f79ad15cb",
       "step": 0
     },
     {
-      "candidate_logits_sha256": "978e67394c07b29af26a3311243283aaee1b3ae260cc211507bf608ee672ae4b",
+      "candidate_logits_sha256": "b2f68845e912cd7cdc20bc86a1d5864bed2d9ccf137aac4a4f34bf6c126aec48",
       "graph_kind": "decode",
-      "input_token_id": 21448,
-      "input_valid_length": 512,
+      "input_token_id": 9569,
+      "input_valid_length": 128,
       "metrics": {
         "allclose": true,
-        "cosine_similarity": 0.9997827801348704,
-        "max_absolute_error": 0.578125,
-        "max_protected_relative_error": 0.488037109375,
-        "mean_absolute_error": 0.1288282082948862,
+        "cosine_similarity": 0.9999979849492319,
+        "max_absolute_error": 0.03125,
+        "max_protected_relative_error": 0.0302734375,
+        "mean_absolute_error": 0.005113830547873951,
         "passed": true,
-        "reference_top1_top2_margin": 10.0,
+        "reference_top1_top2_margin": 6.671875,
         "top1_agreement": true,
-        "top1_candidate": 5904,
-        "top1_reference": 5904,
+        "top1_candidate": 11,
+        "top1_reference": 11,
         "top5_overlap": 1.0
       },
       "non_finite_candidate_logits": 0,
-      "output_valid_length": 513,
-      "reference_logits_sha256": "61527f9a6a500df14e21c8e8d79025762045a9d7892d0284bc4409b04f82f76d",
+      "output_valid_length": 129,
+      "reference_logits_sha256": "7a36973cc394e79af2445fb37831e7acf3ab476f1dfb081d5927d1470cb72b0f",
       "step": 1
     },
     {
-      "candidate_logits_sha256": "cc3f5767d703e0d7a1c38fcd649e2af67b14b0cdb4b88668a019d2d4c36a6eda",
+      "candidate_logits_sha256": "e3731a3d95dbde7e9244d12ae789c6c1e0145bb30ce139b19fe01fbdfb263f8a",
       "graph_kind": "decode",
-      "input_token_id": 5904,
-      "input_valid_length": 513,
+      "input_token_id": 11,
+      "input_valid_length": 129,
       "metrics": {
         "allclose": true,
-        "cosine_similarity": 0.9998286474797684,
-        "max_absolute_error": 0.189453125,
-        "max_protected_relative_error": 0.173828125,
-        "mean_absolute_error": 0.03255101030248373,
+        "cosine_similarity": 0.999994090882346,
+        "max_absolute_error": 0.06640625,
+        "max_protected_relative_error": 0.05615234375,
+        "mean_absolute_error": 0.015265791460388381,
         "passed": true,
-        "reference_top1_top2_margin": 3.125,
+        "reference_top1_top2_margin": 4.140625,
         "top1_agreement": true,
-        "top1_candidate": 382,
-        "top1_reference": 382,
+        "top1_candidate": 323,
+        "top1_reference": 323,
         "top5_overlap": 1.0
       },
       "non_finite_candidate_logits": 0,
-      "output_valid_length": 514,
-      "reference_logits_sha256": "c567e902fce963901bcd237e6979ae1da39f7dd19f1a311c9c4b0cdf1eeb47fa",
+      "output_valid_length": 130,
+      "reference_logits_sha256": "095805579a803a4e4a359c16af81d7a9f3ee33d15659c5fc3be73b269e7f616f",
       "step": 2
     },
     {
-      "candidate_logits_sha256": "8cc3fdb85d8d626669edf4df564dbfb1b895334bb233264f793cdbd210ac8acc",
+      "candidate_logits_sha256": "65655ef5088c26b516711fa6a1f07bb30f85d5a53746723e55cc4d1a33967b75",
       "graph_kind": "decode",
-      "input_token_id": 382,
-      "input_valid_length": 514,
+      "input_token_id": 323,
+      "input_valid_length": 130,
       "metrics": {
         "allclose": true,
-        "cosine_similarity": 0.9998276366373491,
-        "max_absolute_error": 0.22265625,
-        "max_protected_relative_error": 0.2099609375,
-        "mean_absolute_error": 0.035689833167965486,
+        "cosine_similarity": 0.9999985607119387,
+        "max_absolute_error": 0.04443359375,
+        "max_protected_relative_error": 0.042723004694835684,
+        "mean_absolute_error": 0.006609245037492098,
         "passed": true,
-        "reference_top1_top2_margin": 0.5,
+        "reference_top1_top2_margin": 6.671875,
         "top1_agreement": true,
-        "top1_candidate": 32,
-        "top1_reference": 32,
+        "top1_candidate": 18662,
+        "top1_reference": 18662,
         "top5_overlap": 1.0
       },
       "non_finite_candidate_logits": 0,
-      "output_valid_length": 515,
-      "reference_logits_sha256": "51e2737ff899cac1920f32f3cece7224dd2e0412b6dc6892c37b984dc560e2a7",
+      "output_valid_length": 131,
+      "reference_logits_sha256": "81b6d3d53ebc51b033a7d53edbd5096929c620fc808178e91734fcb59f434b8d",
       "step": 3
     },
     {
-      "candidate_logits_sha256": "9e348c95cdbbfd5dce787d7ee0a05c7e6cada144b30d391c9b5dde33e7975479",
+      "candidate_logits_sha256": "cc33828b14fb115ba1eb89cd395f9fc34b0a200b56298aad0e5fae280e92c0d3",
       "graph_kind": "decode",
-      "input_token_id": 32,
-      "input_valid_length": 515,
+      "input_token_id": 18662,
+      "input_valid_length": 131,
       "metrics": {
         "allclose": true,
-        "cosine_similarity": 0.999893620339299,
-        "max_absolute_error": 0.25390625,
-        "max_protected_relative_error": 0.22314453125,
-        "mean_absolute_error": 0.044923323656572776,
+        "cosine_similarity": 0.9999984932285686,
+        "max_absolute_error": 0.04296875,
+        "max_protected_relative_error": 0.037841796875,
+        "mean_absolute_error": 0.006780164124461388,
         "passed": true,
-        "reference_top1_top2_margin": 9.0625,
+        "reference_top1_top2_margin": 5.53125,
         "top1_agreement": true,
-        "top1_candidate": 52723,
-        "top1_reference": 52723,
+        "top1_candidate": 18732,
+        "top1_reference": 18732,
         "top5_overlap": 1.0
       },
       "non_finite_candidate_logits": 0,
-      "output_valid_length": 516,
-      "reference_logits_sha256": "d0d15ab12a1e2813fd9d1571331e9e2dd7bda25d70b733336c0d06ffda0eef5a",
+      "output_valid_length": 132,
+      "reference_logits_sha256": "f07215cdc1746f49ad706acc8372a7c667ce5b568662fd5bebc4d5352128daaf",
       "step": 4
     }
   ],
@@ -269,5 +269,5 @@
     "status": "derived_and_measured: the proposed thresholds were replaced by a budget derived from bfloat16-reference and float16-candidate ULP at the measured logit scale and from 28-layer residual depth, with no observed candidate error used to set any threshold; measured on onnxruntime 1.28.0 CPU EP at ORT_DISABLE_ALL over four contexts x five steps, which pass (results/graph/parity/S*-ort-cpu.json, 2026-08-02)",
     "top5_overlap_min": 0.8
   },
-  "variant_id": "S512"
+  "variant_id": "S128"
 }

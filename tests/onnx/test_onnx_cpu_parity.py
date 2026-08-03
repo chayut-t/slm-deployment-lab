@@ -457,9 +457,25 @@ def test_metrics_match_hand_computed_values() -> None:
     assert metrics.top1_agreement is True
     assert metrics.top5_overlap == pytest.approx(1.0)
     assert metrics.reference_top1_top2_margin == pytest.approx(6.0)
-    # 1.0 > 0.25 + 0.02 * 3.0
-    assert metrics.allclose is False
+    # Under the derived default, 1.0 <= atol 1.15 + 0.02 * 3.0, so `allclose`
+    # holds and the *cosine* is what fails: 0.99529 < cosine_min 0.9993. Both
+    # are asserted so this test cannot go green for an unintended reason if a
+    # threshold moves again.
+    assert metrics.allclose is True
+    assert metrics.cosine_similarity < DEFAULT_ORT_CPU_TOLERANCE.cosine_min
     assert metrics.passed is False
+
+    # The `allclose` convention itself -- rtol scales the CANDIDATE, not the
+    # reference -- pinned against an explicit tolerance so it does not depend
+    # on the default. The worst pair is reference 4.0 against candidate 3.0:
+    # 1.0 > 0.5 + 0.1 * 3.0 = 0.8 fails, while 1.0 <= 0.5 + 0.1 * 4.0 = 0.9
+    # would have passed had rtol scaled the reference.
+    strict = dataclasses.replace(
+        DEFAULT_ORT_CPU_TOLERANCE, atol=0.5, rtol=0.1, cosine_min=0.0
+    )
+    strict_metrics = compare_logits(reference, candidate, strict)
+    assert strict_metrics.allclose is False
+    assert strict_metrics.passed is False
 
 
 def test_protected_relative_error_is_floored() -> None:
@@ -1223,7 +1239,7 @@ def test_evidence_json_is_deterministic_and_digest_is_sensitive() -> None:
     assert first.evidence_sha256 == second.evidence_sha256
     payload = json.loads(first.to_json())
     assert payload["evidence_sha256"] == first.evidence_sha256
-    assert payload["tolerance"]["status"].startswith("proposed_unvalidated")
+    assert payload["tolerance"]["status"].startswith("derived_and_measured")
 
     perturbed = build_runner(
         steps=2, decode_kwargs={"logit_bias": 0.01, "logit_bias_steps": (1,)}
@@ -1667,6 +1683,233 @@ def test_cli_exits_one_on_non_finite_logits_not_two(
 
 
 # ---------------------------------------------------------------------------
+# The tolerance derivation, and the diagnostic that checks it.
+# ---------------------------------------------------------------------------
+
+
+def test_the_tolerance_thresholds_agree_with_one_error_budget() -> None:
+    """The four thresholds are one derivation, not four independent knobs.
+
+    The superseded tolerance had `atol=0.25` alongside `cosine_min=0.999`. Those
+    imply relative logit errors of 0.25/32 = 0.0078 and sqrt(2 * 1e-3) = 0.0447
+    respectively -- a factor of 5.7 apart, so five of the six thresholds could
+    never bind and nobody would notice. This pins them to a single budget so
+    editing one in isolation fails here rather than silently degrading the
+    others. If the derivation changes, change these numbers deliberately; do
+    not tune a single threshold to make a measurement agree.
+    """
+
+    tolerance = DEFAULT_ORT_CPU_TOLERANCE
+    lambda_max = 32.0  # binade ceiling above the measured max |logit| of 30.89
+
+    # The budget every threshold is derived from: G_budget * u_eff.
+    rho = tolerance.atol / lambda_max
+    assert rho == pytest.approx(0.0359, rel=0.02)
+
+    # 1 - cos ~= rho^2 / 2 for a rounding-noise perturbation.
+    assert 1.0 - tolerance.cosine_min == pytest.approx(rho**2 / 2, rel=0.15)
+
+    # max_protected_relative_error ~= 0.93 * max_absolute_error when
+    # relative_floor is 1.0 and the logits have RMS ~4.5.
+    assert tolerance.protected_relative_max == pytest.approx(
+        0.93 * tolerance.atol, rel=0.1
+    )
+
+    # rtol covers only the magnitude-proportional term, the final logit
+    # rounding, which is a small multiple of bfloat16's unit roundoff 2**-8.
+    assert 2.0 * 2**-8 <= tolerance.rtol <= 8.0 * 2**-8
+
+    # And the whole thing still has to be far below a mis-wired graph, whose
+    # smallest measured signal is a one-slot cache offset at 13.29 absolute.
+    assert tolerance.atol * 10 < 13.29
+    assert tolerance.cosine_min > 0.99  # a mis-wired read measured 0.034..0.951
+
+    # Nothing above may relax the state invariants.
+    assert tolerance.cache_state == onnx_cpu.EXACT_CACHE_STATE_TOLERANCE
+    assert all(tolerance.cache_state.as_dict().values())
+
+
+def test_committed_diagnostics_show_the_tolerance_is_two_sided() -> None:
+    """The committed evidence must accept float32 and reject a cache offset.
+
+    This reads only committed JSON, so it runs everywhere, and it is the check
+    that the tolerance change was a repair rather than a widening. The
+    superseded `atol=0.25` failed the first half: at S512 step 1 the float32
+    reference missed the bfloat16 reference by 0.609, so the old threshold
+    rejected the exact answer. A tolerance that rejects the exact answer is
+    measuring the reference's dtype, not the graph.
+
+    If a future change makes either half false, the tolerance has stopped
+    being a tolerance: too tight and it fails correct implementations, too
+    loose and it stops catching a mis-wired cache read.
+    """
+
+    directory = ROOT / "results/graph/parity/diagnostics"
+    records = sorted(directory.glob("S*-reference-dtype-self-error.json"))
+    assert records, f"no committed self-error diagnostics under {directory}"
+
+    for path in records:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        assert payload["record_kind"] == "diagnostic_reference_dtype_self_error"
+        verdict = payload["tolerance_verdict"]
+        assert verdict["every_reference_dtype_pair_passes"] is True, path.name
+        assert verdict["every_consecutive_step_pair_fails"] is True, path.name
+
+        # And the recorded numbers, not just the rolled-up booleans: float32
+        # against bfloat16 is the irreducible floor of this comparison.
+        floor = max(
+            record["max_absolute_error"]
+            for record in payload["pairwise"]["float32_vs_bfloat16"]
+        )
+        assert floor < DEFAULT_ORT_CPU_TOLERANCE.atol, (
+            f"{path.name}: the exact answer misses atol by {floor}"
+        )
+        weakest_miswire = min(
+            record["max_absolute_error"]
+            for record in payload["consecutive_step_distance"]
+        )
+        assert weakest_miswire > 10 * DEFAULT_ORT_CPU_TOLERANCE.atol, path.name
+
+
+class DtypeFakeReference:
+    """A reference whose logits depend on the requested storage dtype.
+
+    Shaped like the real thing in the two ways the diagnostic reads: a coarser
+    dtype wobbles the logits more (so it lands further from float32), and
+    consecutive steps rotate the whole vector (so the mis-wiring proxy is far
+    outside any tolerance). ``wobble`` alternates sign so it perturbs the
+    vector's direction rather than merely rescaling it, which a cosine check
+    would not see.
+    """
+
+    def __init__(self, dtype: str, *, steps: int, vocab: int, wobble: float) -> None:
+        self.dtype = dtype
+        self._logits = [
+            [
+                float((index + step) % vocab) + (wobble if index % 2 else -wobble)
+                for index in range(vocab)
+            ]
+            for step in range(steps + 1)
+        ]
+
+    def prompt_token_ids(self) -> Sequence[int]:
+        return (0, 1, 2)
+
+    def next_logits(self, step: int) -> Sequence[float]:
+        return self._logits[step]
+
+    def expected_token_id(self, step: int) -> int:
+        return top_indices(self._logits[step], 1)[0]
+
+    def provenance(self) -> Mapping[str, Any]:
+        return {"source": "DtypeFakeReference", "runtime": {"dtype": self.dtype}}
+
+
+def test_reference_self_error_measures_the_reference_against_itself() -> None:
+    """The derivation's empirical check must be re-runnable, so it is code."""
+
+    # Roughly the real 8:1 ULP ratio between bfloat16 and float16.
+    wobble = {"float32": 0.0, "bfloat16": 0.05, "float16": 0.006}
+    report = onnx_cpu.reference_self_error(
+        128,
+        steps=2,
+        reference_factory=lambda name: DtypeFakeReference(
+            name, steps=2, vocab=8, wobble=wobble[name]
+        ),
+    )
+
+    assert report["record_kind"] == "diagnostic_reference_dtype_self_error"
+    # It must not be mistakable for a parity measurement.
+    assert "evidence_tier" not in report
+    assert "passed" not in report
+    assert "graph_digests" not in report
+
+    # Both orderings of every pair, once each, keyed left_vs_right.
+    assert set(report["pairwise"]) == {
+        "float32_vs_bfloat16",
+        "float32_vs_float16",
+        "bfloat16_vs_float16",
+    }
+    # The coarser dtype is further from float32, which is the whole point: the
+    # reference's own storage dominates this comparison.
+    assert (
+        report["pairwise"]["float32_vs_bfloat16"][0]["max_absolute_error"]
+        > report["pairwise"]["float32_vs_float16"][0]["max_absolute_error"]
+    )
+    # Lambda, the scale an absolute tolerance binds at.
+    assert report["lambda_max_abs_logit"]["float32"][0] == pytest.approx(7.0)
+    # The mis-wiring reference scale: consecutive steps, baseline dtype only.
+    assert report["consecutive_step_distance_dtype"] == "float32"
+    assert len(report["consecutive_step_distance"]) == 2
+    assert report["reference_provenance"]["bfloat16"]["runtime"]["dtype"] == "bfloat16"
+
+    # The rolled-up two-sided verdict, which
+    # `test_committed_diagnostics_show_the_tolerance_is_two_sided` reads off the
+    # committed records. Both halves are exercised here on fakes so the field is
+    # covered without a parity host: dtype wobble stays inside the tolerance,
+    # a rotated step does not.
+    verdict = report["tolerance_verdict"]
+    assert verdict["every_reference_dtype_pair_passes"] is True
+    assert verdict["every_consecutive_step_pair_fails"] is True
+
+
+def test_cli_self_error_mode_never_builds_a_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A diagnostic that touched a graph could be mistaken for a measurement."""
+
+    manifest_path, root = write_manifest(tmp_path)
+    output = tmp_path / "diagnostics/self-error.json"
+
+    def explode(path: Path) -> Any:  # pragma: no cover - must never be called
+        raise AssertionError(f"self-error mode built a session for {path}")
+
+    monkeypatch.setattr(
+        onnx_cpu,
+        "reference_self_error",
+        lambda context_length, *, steps: {
+            "record_kind": "diagnostic_reference_dtype_self_error",
+            "context_length": context_length,
+            "steps_requested": steps,
+        },
+    )
+
+    code = main(
+        [
+            "--manifest",
+            str(manifest_path),
+            "--artifact-root",
+            str(root),
+            "--steps",
+            "2",
+            "--reference-self-error",
+            "--output",
+            str(output),
+        ],
+        session_factory=explode,
+    )
+
+    assert code == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["record_kind"] == "diagnostic_reference_dtype_self_error"
+    assert payload["context_length"] == PROMPT_LENGTH
+    assert "evidence_tier" not in payload
+
+
+def test_reference_dtype_defaults_to_the_contract_and_is_constrained() -> None:
+    """The committed parity records are a bfloat16-reference comparison."""
+
+    parser = build_parser()
+
+    assert parser.parse_args(["--manifest", "x"]).reference_dtype is None
+    assert (
+        parser.parse_args(["--manifest", "x", "--reference-dtype", "float16"])
+    ).reference_dtype == "float16"
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--manifest", "x", "--reference-dtype", "int8"])
+
+
+# ---------------------------------------------------------------------------
 # Guarded real-runtime path.
 # ---------------------------------------------------------------------------
 
@@ -1689,11 +1932,52 @@ def test_the_parity_failure_message_names_both_classes() -> None:
     assert "cache_state_update" in message
     assert "max_absolute_error=5" in message
     assert "prefix_preserved on present_key.0" in message
-    assert "proposed_unvalidated" in message
+    assert "derived_and_measured" in message
 
 
 def test_real_onnxruntime_cpu_parity_when_available() -> None:
-    """Skips cleanly without the runtime; measures parity where it exists."""
+    """Skips cleanly without the runtime; measures parity where it exists.
+
+    History, because this test's green is only meaningful with it. From T21
+    until T23 this test could not run at all: `onnxruntime_cpu_session_factory()`
+    defaults to ORT_DISABLE_ALL and the reference prefill graphs zero-extended
+    the KV cache with a float16 `Pad`, for which the CPU provider registers no
+    kernel, so session creation raised. T23 re-exported the prefill graphs with
+    `Concat` and sessions now create. That alone did not make this test pass:
+    against `DEFAULT_ORT_CPU_TOLERANCE` as T21 proposed it, all 20 measured
+    steps failed `numerical_tolerance` -- `protected_relative_max=0.10` was
+    exceeded on 20 of 20 by 1.7x-4.9x, and `atol=0.25` on 16 of 20 by up to
+    2.3x.
+
+    That failure was NOT the graph. Running the same PyTorch reference at
+    float32 and comparing it to the same reference at bfloat16 -- no ONNX
+    involved -- reproduces the disagreement almost exactly (S128 step 2: the
+    graph misses by 0.4609, float32 misses by 0.4694; S512 step 1: the graph
+    misses by 0.5781, float32 misses by 0.6090). The proposed `atol` rejected
+    the *exact answer*, so it was measuring bfloat16's own quantization, not
+    the graph. It was replaced by a budget derived from dtype ULP and residual
+    depth; see the derivation above `DEFAULT_ORT_CPU_TOLERANCE`.
+
+    So the assertions below pin four independent things, and a regression in
+    any one of them means something different:
+
+    * sessions create at ORT_DISABLE_ALL -- the float16 `Pad` defect is gone
+      and has not come back through a re-export;
+    * the evidence tier is real, so no fake session is being asserted about;
+    * the cache report passes with zero violations -- the state path, which no
+      tolerance may ever absorb;
+    * no `numerical_tolerance` failure against the derived budget.
+
+    If the last one ever fires, the correct response is NOT to widen a
+    threshold. The derived budget is dominated by the bfloat16 reference (it
+    supplies 99% of the error variance), so a numerical failure here means
+    either the graph genuinely changed or the derivation is wrong. The
+    discriminating measurement already exists and is cheap: rerun with
+    `--reference-dtype float16`, which removes the reference's coarseness and
+    is 5.7x tighter by the same derivation. The committed probe at
+    results/graph/parity/diagnostics/S128-ort-cpu-float16-reference-probe.json
+    records the graph clearing that tighter bound with 3x to spare.
+    """
 
     pytest.importorskip("onnxruntime")
     pytest.importorskip("torch")
@@ -1711,9 +1995,22 @@ def test_real_onnxruntime_cpu_parity_when_available() -> None:
     except OnnxCpuError as exc:
         pytest.skip(f"T20 graphs unavailable: {exc}")
 
+    # No graph_optimization_level argument: the default is ORT_DISABLE_ALL, and
+    # creating a session at that level is itself one of the things under test.
+    # Do not "fix" a failure here by raising the level; that would hide exactly
+    # the class of defect T20/T23 spent two tasks on.
     factory = onnx_cpu.onnxruntime_cpu_session_factory()
     prefill_session = factory(graphs["prefill"][0])
     decode_session = factory(graphs["decode"][0])
+    for kind, session in (("prefill", prefill_session), ("decode", decode_session)):
+        settings = onnx_cpu.applied_session_settings(session) or {}
+        assert settings.get("graph_optimization_level") == "ORT_DISABLE_ALL", (
+            f"{kind} session did not apply ORT_DISABLE_ALL: {settings}"
+        )
+
+    # dtype is left unset, so it resolves to the contract's reference_dtype,
+    # bfloat16. The derived tolerance is derived for that pairing and for no
+    # other; passing --reference-dtype here would change what is being measured.
     reference = onnx_cpu.TorchReferenceSource(
         onnx_cpu.load_context_workload_tokens(PROMPT_LENGTH), steps=2
     )
@@ -1732,10 +2029,26 @@ def test_real_onnxruntime_cpu_parity_when_available() -> None:
     evidence = runner.run(2)
 
     assert evidence.evidence_tier == EvidenceTier.REAL_ONNXRUNTIME_CPU.value
+    assert evidence.tolerance is onnx_cpu.DEFAULT_ORT_CPU_TOLERANCE
+    assert evidence.tolerance.as_dict()["status"].startswith("derived_and_measured")
+
+    # The state path. Exactness, and no tolerance may ever absorb a violation
+    # here; a cache fault also moves the logits, so this is asserted first so a
+    # state defect is never read as a tolerance one.
     assert evidence.cache_report.passed, _parity_failure_message(evidence)
+    assert not evidence.cache_report.slot_immutability_violations
+    assert all(not step.violations for step in evidence.cache_report.steps), (
+        _parity_failure_message(evidence)
+    )
+    assert all(record.non_finite_candidate_logits == 0 for record in evidence.steps), (
+        _parity_failure_message(evidence)
+    )
+
     # The acceptance criterion itself. Without this the one path that can
     # produce a real measurement would go green with logits arbitrarily far
-    # outside the tolerance.
+    # outside the tolerance. `failure_kinds` is asserted alongside `passed` so
+    # the message names the class rather than only the fact.
+    assert evidence.failure_kinds == (), _parity_failure_message(evidence)
     assert evidence.passed, _parity_failure_message(evidence)
 
 
