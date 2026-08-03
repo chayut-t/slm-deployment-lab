@@ -53,6 +53,11 @@ CRITICAL_PATH = [
         "Inspect graphs + parity machinery",
         "Graph inspection + ORT parity runner",
     ),
+    (
+        "T23",
+        "Fix prefill export + measure parity",
+        "Concat cache write · ORT CPU 1.28.0",
+    ),
     ("T22", "Package QNN candidates", "Compiler-friendly rewrites"),
     ("T31", "Compile &amp; profile on 3 Qualcomm targets", "X Elite, IQ-9075, 8 Elite"),
     ("T33", "Qualcomm floating-point milestone", "End-to-end NPU generation"),

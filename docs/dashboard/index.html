@@ -242,7 +242,7 @@
       running small models on <strong>Qualcomm NPUs</strong>. Apple&nbsp;M4 and NVIDIA CUDA are
       the comparison platforms; Qualcomm is the protected priority.
     </p>
-    <p class="stamp">Dashboard updated 2026-08-02 (adds T21, T40, LEARN-10, LEARN-11) · from <code>ai/tasks/task_graph.yaml</code>, worklogs, and the LEARN sheets · target finish before 2026-09-14</p>
+    <p class="stamp">Dashboard updated 2026-08-03 (adds T23: prefill re-export + first measured ORT parity) · from <code>ai/tasks/task_graph.yaml</code>, worklogs, and the LEARN sheets · target finish before 2026-09-14</p>
   </header>
 
   <!-- ============ STATUS ============ -->
@@ -266,13 +266,13 @@
       <span style="flex:9;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
-    <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection and the CPU-parity machinery (T21),
-      and the quantization lane has opened (T40). The project is now entering Phase 2: getting <strong>your own</strong>
-      Qwen3 graphs compiled and profiled on Qualcomm hardware.</div>
+    <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection (T21) and a measured CPU-parity
+      baseline on the fixed prefill export (T23); the quantization lane has opened (T40). The project is now entering
+      Phase 2: getting <strong>your own</strong> Qwen3 graphs compiled and profiled on Qualcomm hardware.</div>
 
     <p style="margin-top:22px;">
       In plain terms: the lab has a pinned model, a trustworthy measurement rulebook, frozen graph
-      contracts, exported and <em>inspected</em> ONNX graphs, a frozen calibration corpus, working
+      contracts, exported, inspected, and now <em>parity-measured</em> ONNX graphs, a frozen calibration corpus, working
       Qualcomm cloud tooling, a real baseline run on a physical Snapdragon&nbsp;X&nbsp;Elite, and a
       hand-written Apple/MLX runtime. What it does <em>not</em> have yet is the headline act:
       <strong>your own Qwen3 graphs running on the Hexagon NPU</strong>, and the quantization
@@ -293,6 +293,12 @@
           <span class="chip done">Done</span>
           <div class="t">T21 · Inspect graphs + parity machinery</div>
           <div style="font-size:0.8rem;color:var(--ink-2);">Graph inspection + ORT parity runner</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <span class="chip done">Done</span>
+          <div class="t">T23 · Fix prefill export + measure parity</div>
+          <div style="font-size:0.8rem;color:var(--ink-2);">Concat cache write · ORT CPU 1.28.0</div>
         </div>
         <div class="arrow">→</div>
         <div class="node here">
@@ -343,7 +349,7 @@
     </div>
 
     <div class="lane">
-      <h3>Model reference &amp; graph contracts <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">6 tasks</span></h3>
+      <h3>Model reference &amp; graph contracts <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">7 tasks</span></h3>
       <div class="lane-sub">The shared "ground truth" every platform is judged against.</div>
       <ul class="tasklist">
         <li><span class="tid">T10</span><div class="desc">Froze prompt and token fixtures — exact token IDs for 128/512/1,024/4,096-token workloads. <span class="why">Two runs only compare if they ate the same tokens.</span></div></li>
@@ -351,8 +357,13 @@
         <li><span class="tid">T12</span><div class="desc">Froze the static prefill/decode graph contract with explicit fixed-size KV caches. <span class="why">This is the shape the NPU compiler will see.</span></div></li>
         <li><span class="tid">T13</span><div class="desc">Froze the benchmark protocol: five timing classes, warm-up rules, medians with bootstrap intervals. <span class="why">Stops false comparisons before any number exists.</span></div></li>
         <li><span class="tid">T20</span><div class="desc">Exported the full ONNX matrix: 8 graphs (prefill + decode × 4 context sizes) with hash-verified manifests.</div></li>
-        <li><span class="tid">T21</span><div class="desc">Inspected the real exported graphs with a dependency-free reader and built the ONNX Runtime CPU parity runner. <span class="why">The inspection found the compiler risks (see LEARN-10); the parity runner is fault-tested but the first real parity measurement is still to be run.</span></div></li>
+        <li><span class="tid">T21</span><div class="desc">Inspected the real exported graphs with a dependency-free reader and built the ONNX Runtime CPU parity runner. <span class="why">The inspection found the compiler risks (see LEARN-10); the fault-tested runner took its first real measurement in T23.</span></div></li>
+        <li><span class="tid">T23</span><div class="desc">Fixed a real defect the first parity run exposed — the prefill graphs' float16 <code>Pad</code> cache write stopped ONNX Runtime from even loading them — re-exported with a <code>Concat</code> write (decode graphs byte-identical), and measured real CPU parity. <span class="why">The old tolerance was shown to reject float32 itself; it was re-derived from dtype ULP and layer depth, then measured.</span></div></li>
       </ul>
+      <div class="metrics">
+        <div class="metric"><b>4/4 contexts pass</b>Real ONNX Runtime CPU parity on the fixed prefill export<span class="src">T23 · onnxruntime 1.28.0, CPU EP, ORT_DISABLE_ALL, one host</span></div>
+        <div class="metric"><b>cosine ≥ 0.9993</b>Re-derived tolerance — tighter cosine than before, and float32 passes it<span class="src">T23 · derived from dtype ULP + 28-layer depth, no fit to observed error</span></div>
+      </div>
     </div>
 
     <div class="lane">
@@ -432,7 +443,7 @@
   <section id="learning" class="reading" style="max-width:820px;">
     <div class="section-head">
       <h2>The learning digest — LEARN-00 to LEARN-11</h2>
-      <div class="sub">Everything the completed work teaches, in ~35 minutes of reading. Each checkpoint below
+      <div class="sub">Everything the completed work teaches, in ~36 minutes of reading. Each checkpoint below
       summarizes one full study sheet; the deep versions live in <code>build/learning/learn-NN.html</code>.</div>
     </div>
 
@@ -448,8 +459,8 @@
         <tr><td class="mono" style="color:var(--copper);">07</td><td><a href="#l07">A real generation loop on a real device</a></td><td class="minutes">3 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">08</td><td><a href="#l08">Apple Silicon &amp; MLX</a></td><td class="minutes">3 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">09</td><td><a href="#l09">CI as a deployment surface</a></td><td class="minutes">3 min</td></tr>
-        <tr><td class="mono" style="color:var(--copper);">10</td><td><a href="#l10">Reading a graph before a compiler does</a> <span class="chip ready" style="margin-left:6px;">New</span></td><td class="minutes">4 min</td></tr>
-        <tr><td class="mono" style="color:var(--copper);">11</td><td><a href="#l11">Calibration data as a contract</a> <span class="chip ready" style="margin-left:6px;">New</span></td><td class="minutes">3 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">10</td><td><a href="#l10">Reading a graph before a compiler does</a> <span class="chip ready" style="margin-left:6px;">Updated</span></td><td class="minutes">5 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">11</td><td><a href="#l11">Calibration data as a contract</a></td><td class="minutes">3 min</td></tr>
       </table>
     </div>
 
@@ -663,30 +674,35 @@
     </article>
 
     <article class="learn" id="l10">
-      <div class="learn-head"><span class="ln">LEARN-10</span><h3>Reading a graph before a compiler does</h3><span class="chip done">Deep study</span><span class="minutes">~4 min</span></div>
-      <div class="covers">Covers T21 · what an exported graph tells you, and what only a measurement can</div>
-      <p><strong>In plain words:</strong> T20 proved the eight graphs export and match the contract.
-      T21 asked the next question: <em>what will a static-shape compiler think of them?</em> A
-      dependency-free protobuf reader (no torch, no onnx, no numpy) walked the real graphs and found
-      that a graph can be fully static at its boundary and still be hostile inside. The findings,
-      ranked by consequence for T22: <strong>1,231 computed shape inputs</strong> (shapes recomputed
-      at runtime even though every answer is a known constant), <strong>56 scatter-based cache
-      writes</strong>, a <strong>37 MB per-token I/O boundary</strong> on the long-context decode
-      graph, and a <strong>33.5 MB causal mask baked into a single node</strong>. Alongside it, an
-      ONNX Runtime parity runner was built and fault-tested (17 injected faults caught) — but its
-      report says in its first line that it has <em>never executed a real graph</em>. The headline
-      parity number does not exist yet, and the write-up refuses to pretend otherwise.</p>
+      <div class="learn-head"><span class="ln">LEARN-10</span><h3>Reading a graph before a compiler does</h3><span class="chip done">Deep study</span><span class="minutes">~5 min</span></div>
+      <div class="covers">Covers T21 + T23 · what an exported graph tells you, and what only a measurement can</div>
+      <p><strong>In plain words:</strong> T21 asked what a static-shape compiler will think of the
+      exported graphs, and answered with a dependency-free protobuf reader (no torch, no onnx, no
+      numpy). The findings, ranked by consequence for T22: <strong>1,231 computed shape
+      inputs</strong> (shapes recomputed at runtime even though every answer is a known constant),
+      <strong>56 scatter-based cache writes</strong>, a <strong>37 MB per-token I/O boundary</strong>
+      on the long-context decode graph, and a <strong>33.5 MB causal mask baked into a single
+      node</strong>. Then T23 actually <em>ran</em> the graphs, and the measurement taught two
+      lessons. First, the prefill graphs could not even load: ONNX Runtime's CPU provider has no
+      float16 <code>Pad</code> kernel and its automatic rewrite failed, so the cache write was
+      re-exported as <code>Concat</code> — with the decode graphs and weights byte-identical.
+      Second, the first real run missed the proposed tolerance — but a control showed the old
+      tolerance <em>also rejected float32 itself</em>: a broken instrument, not a failing graph. It
+      was re-derived from dtype ULP and 28-layer depth with no observed error used to set it (atol
+      loosened, cosine <em>tightened</em> to 0.9993), and all four contexts now pass on real
+      onnxruntime 1.28.0.</p>
       <h4>Key ideas</h4>
       <ul>
         <li>"Every dimension is static" and "compiler-friendly" are different claims — computed shapes must be folded to constants before QNN sees them.</li>
+        <li>A tolerance the reference dtype cannot pass is not evidence about a candidate. The control measurement is what separates <em>re-deriving</em> a threshold from <em>widening it until green</em>.</li>
         <li>A cache-corruption bug can pass decode step one perfectly and only show at step three; that is why cache prefix checks are exact, never tolerant.</li>
-        <li>Every severity in the report is a structural judgment about a stated target, not a compile result. No compiler or device was run.</li>
-        <li>An absent finding is read carefully: "we looked and it is clean" is different from "there was nothing to look at".</li>
+        <li>The measurement's scope is honest and narrow: one runtime build, one execution provider, one host, optimizations off — the paired <code>ORT_ENABLE_ALL</code> run is still untaken.</li>
       </ul>
       <div class="npu-note"><span class="k">Why this matters for the NPU goal</span>
-      This is exactly the skill of predicting where the QNN compiler will complain before spending a
-      submission on it. The findings list is literally the work order for T22 — the next task on the
-      critical path.</div>
+      This is exactly the QNN discipline: predict where the compiler will complain, run the real thing,
+      and when a number disagrees, question the instrument before blaming the graph. The findings list
+      is literally the work order for T22 — the next task on the critical path — and the fixed export
+      is the bytes T22 now builds from.</div>
     </article>
 
     <article class="learn" id="l11">
@@ -740,7 +756,7 @@
           <li>Honest benchmarking: timing classes, sync, statistics (LEARN-04)</li>
           <li>Version pinning, manifests, and evidence discipline (LEARN-00, -02)</li>
           <li>GQA-aware cache layout and bandwidth thinking, proven in a second backend (LEARN-08)</li>
-          <li>Reading a graph the way a compiler will — finding NPU-hostile structure before spending a submission (LEARN-10)</li>
+          <li>Reading a graph the way a compiler will — finding NPU-hostile structure before spending a submission — and deriving a numerical tolerance you can defend instead of widening one (LEARN-10)</li>
           <li>Calibration data as a frozen, hash-verified contract for quantization (LEARN-11)</li>
         </ul>
       </div>
@@ -802,7 +818,7 @@
   <div class="footer-note">
     Sources: <code>ai/tasks/status.generated.md</code> (2026-08-02 build) · <code>configs/learning/checkpoints.yaml</code> ·
     <code>docs/project/plan.md</code> · worklogs T00–T72 · <code>docs/results/qualcomm/device-cloud.md</code> ·
-    <code>docs/results/onnx/graph-inspection.md</code>.
+    <code>docs/results/onnx/graph-inspection.md</code> · <code>docs/results/onnx/ort-cpu-parity.md</code>.
     All numbers above are labeled real measurements from those records; single runs are marked as single runs.
     Full study sheets: <code>build/learning/learn-00.html</code> … <code>learn-11.html</code>.
     Status regions of this page are generated in place by <code>scripts/dashboard/build_dashboard.py</code>;
