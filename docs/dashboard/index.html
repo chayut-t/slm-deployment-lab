@@ -242,14 +242,14 @@
       running small models on <strong>Qualcomm NPUs</strong>. Apple&nbsp;M4 and NVIDIA CUDA are
       the comparison platforms; Qualcomm is the protected priority.
     </p>
-    <p class="stamp">Dashboard updated 2026-08-03 (adds T23: prefill re-export + first measured ORT parity) · from <code>ai/tasks/task_graph.yaml</code>, worklogs, and the LEARN sheets · target finish before 2026-09-14</p>
+    <p class="stamp">Dashboard updated 2026-08-04 (adds T22 QNN candidates, T34, LEARN-12) · from <code>ai/tasks/task_graph.yaml</code>, worklogs, and the LEARN sheets · target finish before 2026-09-14</p>
   </header>
 
   <!-- ============ STATUS ============ -->
   <section id="status">
     <div class="section-head">
       <h2>Where the project stands</h2>
-      <div class="sub">End of week 2 of the six-week plan. Counts below are generated from <code>ai/tasks/task_graph.yaml</code>.</div>
+      <div class="sub">Start of week 3 of the six-week plan. Counts below are generated from <code>ai/tasks/task_graph.yaml</code>.</div>
     </div>
 
     <!-- BEGIN GENERATED: status -->
@@ -266,29 +266,23 @@
       <span style="flex:9;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
-    <div class="bar-note">Phases 0 and 1 are fully done, including graph inspection (T21) and a measured CPU-parity
-      baseline on the fixed prefill export (T23); the quantization lane has opened (T40). The project is now entering
-      Phase 2: getting <strong>your own</strong> Qwen3 graphs compiled and profiled on Qualcomm hardware.</div>
+    <div class="bar-note">Phases 0 and 1 are fully done, and Phase 2 has begun: the QNN candidate graphs are built,
+      measured, and packaged (T22). The next step is the one the whole project points at — submitting <strong>your
+      own</strong> Qwen3 graphs to Qualcomm's compiler for the first time (T31).</div>
 
     <p style="margin-top:22px;">
-      In plain terms: the lab has a pinned model, a trustworthy measurement rulebook, frozen graph
-      contracts, exported, inspected, and now <em>parity-measured</em> ONNX graphs, a frozen calibration corpus, working
-      Qualcomm cloud tooling, a real baseline run on a physical Snapdragon&nbsp;X&nbsp;Elite, and a
-      hand-written Apple/MLX runtime. What it does <em>not</em> have yet is the headline act:
-      <strong>your own Qwen3 graphs running on the Hexagon NPU</strong>, and the quantization
-      measurements that follow. The NPU packaging work itself, <strong>T22</strong>, is in
-      progress.
+      In plain terms: the lab now has everything up to the compiler's front door — a pinned model,
+      frozen contracts, parity-measured reference graphs, and <em>compiler-oriented QNN candidates</em>
+      that were rewritten, re-measured, packaged, and proven bit-identical to the reference. What it
+      does <em>not</em> have yet is the headline act: <strong>your own Qwen3 graphs running on the
+      Hexagon NPU</strong>. T31 — the first real Workbench submission — is now unblocked, and it is
+      the first task since the toy job that actually contacts the Qualcomm service.
     </p>
 
     <p style="margin-top:14px;">
-      <strong>T22 is in flight on an unmerged branch.</strong> Six declarative graph rewrites now
-      turn the eight reference exports into a distinct <code>qnn_candidate</code> stage: prefill
-      drops from 7,634 nodes to about 2,800, its protobuf stops growing with context length, and
-      the candidates come back <em>bit-identical</em> to the reference on ONNX Runtime's CPU
-      provider. A seventh transformation is recorded as rejected, with measured evidence. None of
-      it has been near a compiler, a converter, or a device — that is <strong>T31</strong>, and
-      T31 is waiting on the merge rather than on any missing T22 work. See
-      <code>docs/results/qualcomm/qnn-candidates.md</code>.
+      One honest boundary to keep in view: none of the candidate evidence has been near a compiler,
+      a converter, or a device yet. Everything T22 proved is about the graphs themselves — whatever
+      Qualcomm's compiler says in T31 will be new information, and that is the point of submitting.
     </p>
 
     <h3 style="margin-top:30px;">The road to the NPU <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">(critical path)</span></h3>
@@ -379,16 +373,18 @@
     </div>
 
     <div class="lane">
-      <h3>Qualcomm lane <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">3 tasks + T02 above</span></h3>
-      <div class="lane-sub">The priority platform. Cloud tooling works, real-device evidence exists, and the quantization lane has opened.</div>
+      <h3>Qualcomm lane <span class="mono" style="color:var(--ink-3);font-size:0.8rem;font-weight:400;">4 tasks + T02 above</span></h3>
+      <div class="lane-sub">The priority platform. Cloud tooling works, real-device evidence exists, the QNN candidates are packaged, and the quantization lane has opened.</div>
       <ul class="tasklist">
         <li><span class="tid">T30</span><div class="desc">Built compile / inference / profile adapters for AI&nbsp;Hub Workbench. <span class="why">Each stage restarts from a saved manifest, never from a live session; job IDs and URLs are kept private.</span></div></li>
         <li><span class="tid">T32</span><div class="desc">Ran Qwen3-0.6B on a physical Snapdragon&nbsp;X&nbsp;Elite in Device Cloud using Qualcomm's ready-made GenieX route, with a full timing breakdown of a real generation loop.</div></li>
-        <li><span class="tid">T40</span><div class="desc">Pinned the AIMET quantization environment and froze the calibration corpus with an exact revision, hash, and license trail. <span class="why">No weight quantized yet — this is the frozen input contract that T41's W8 evidence will consume (see LEARN-11).</span></div></li>
+        <li><span class="tid">T40</span><div class="desc">Pinned the AIMET quantization environment and froze the calibration corpus with an exact revision, hash, and license trail. <span class="why">No weight quantized yet — this is the frozen input contract that the W8 evidence will consume (see LEARN-11).</span></div></li>
+        <li><span class="tid">T22</span><div class="desc">Rewrote the reference graphs into compiler-oriented QNN candidates with a six-pass declarative catalogue, packaged them for Workbench, and proved the candidates bit-identical to the reference. <span class="why">A seventh pass was rejected on four measured grounds; no compiler or service was contacted — that is T31 (see LEARN-12).</span></div></li>
       </ul>
       <div class="metrics">
         <div class="metric"><b>NPU placement ✓</b>Toy graph compiled, ran, and profiled on a physical X Elite<span class="src">T02 · Workbench lifecycle, single toy graph</span></div>
         <div class="metric"><b>363.3 ms</b>Generation total for the Device Cloud baseline (prefill 69.9 ms)<span class="src">T32 · single run, GenieX/llama.cpp route, real X Elite</span></div>
+        <div class="metric"><b>7,634 → 2,785</b>Prefill node count after the six rewrite passes, logits bit-identical<span class="src">T22 · measured on the real graphs, ORT CPU, one host</span></div>
       </div>
     </div>
 
@@ -452,9 +448,9 @@
     </p>
 
     <p style="color:var(--ink-2);font-size:0.95rem;">
-      After those: <strong>T31</strong> (compile/profile Qwen on three Qualcomm chips) →
-      <strong>T33</strong> (the Qualcomm floating-point milestone) → <strong>T42–T43</strong> (W4/LPBQ/LiteMP and quantized NPU deployment),
-      then the demo (T70/T71) and release (T80–T82).
+      After those: <strong>T33</strong> (the Qualcomm floating-point milestone) →
+      <strong>T41</strong> (W8 evidence, once T34 provides the quantize stage) → <strong>T42–T43</strong>
+      (W4/LPBQ/LiteMP and quantized NPU deployment), then the demo (T70/T71) and release (T80–T82).
     </p>
   </section>
 
@@ -478,7 +474,7 @@
         <tr><td class="mono" style="color:var(--copper);">07</td><td><a href="#l07">A real generation loop on a real device</a></td><td class="minutes">3 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">08</td><td><a href="#l08">Apple Silicon &amp; MLX</a></td><td class="minutes">3 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">09</td><td><a href="#l09">CI as a deployment surface</a></td><td class="minutes">3 min</td></tr>
-        <tr><td class="mono" style="color:var(--copper);">10</td><td><a href="#l10">Reading a graph before a compiler does</a> <span class="chip ready" style="margin-left:6px;">Updated</span></td><td class="minutes">5 min</td></tr>
+        <tr><td class="mono" style="color:var(--copper);">10</td><td><a href="#l10">Reading a graph before a compiler does</a></td><td class="minutes">5 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">11</td><td><a href="#l11">Calibration data as a contract</a></td><td class="minutes">3 min</td></tr>
         <tr><td class="mono" style="color:var(--copper);">12</td><td><a href="#l12">Rewriting a graph for a compiler you have not run</a> <span class="chip ready" style="margin-left:6px;">New</span></td><td class="minutes">4 min</td></tr>
       </table>
@@ -792,7 +788,8 @@
       compiling <em>your own</em> Qwen3 graphs onto Hexagon, reading real profiles, and the whole
       quantization study — is still ahead. That is by design (weeks 3–4 in the plan), and the plan
       protects it: if time runs short, NVIDIA and polish get cut first, never the Qualcomm pipeline.
-      The single most important thing for the goal right now is to keep T22 → T31 → T33 moving.
+      The single most important thing for the goal right now is to run T31 — the first real
+      submission of your own graphs — and keep T31 → T33 moving.
     </p>
     <div class="align-grid" style="margin-top:18px;">
       <div class="align-col">
@@ -807,12 +804,13 @@
           <li>GQA-aware cache layout and bandwidth thinking, proven in a second backend (LEARN-08)</li>
           <li>Reading a graph the way a compiler will — finding NPU-hostile structure before spending a submission — and deriving a numerical tolerance you can defend instead of widening one (LEARN-10)</li>
           <li>Calibration data as a frozen, hash-verified contract for quantization (LEARN-11)</li>
+          <li>Rewriting a graph for a compiler — a declarative pass catalogue with measured effects, semantics-preserving parity, and a rejected pass argued from evidence (LEARN-12)</li>
         </ul>
       </div>
       <div class="align-col">
         <h3 style="color:var(--ready);">→ The NPU-expert core still ahead</h3>
         <ul>
-          <li><strong>Compile Qwen3 on Hexagon</strong> — QNN candidate packaging, compiler errors, operator boundaries (T22, T31)</li>
+          <li><strong>Compile Qwen3 on Hexagon</strong> — the candidates are packaged and waiting; the compiler's verdict, its errors, and the operator boundaries are next (T31)</li>
           <li><strong>Read real NPU profiles at model scale</strong> — placement, memory, per-op behavior (T31, T33)</li>
           <li><strong>Quantization for the NPU</strong> — W8A16/W8A8/W4A8, AIMET, LPBQ, LiteMP, sensitivity maps (T41–T43; the inputs are frozen, no weight quantized yet). The deepest Qualcomm-specific skill in the project.</li>
           <li><strong>End-to-end custom generation loop on device</strong> — replacing GenieX with your own graphs (T33)</li>
@@ -842,6 +840,7 @@
       <div class="gterm"><dt>External data (ONNX)</dt><dd>Model weights stored in files beside the graph instead of inside it — required for large models, hashed and transported separately.</dd></div>
       <div class="gterm"><dt>ONNX Runtime (ORT)</dt><dd>Microsoft's engine that executes ONNX graphs on CPU, CUDA, and other backends. Used for CPU parity checks (T21) and the NVIDIA lane (T60).</dd></div>
       <div class="gterm"><dt>QNN</dt><dd>Qualcomm's neural-network SDK/format family. A "QNN candidate" is a graph rewritten and packaged to be acceptable to Qualcomm's compiler.</dd></div>
+      <div class="gterm"><dt>Transformation pass</dt><dd>One recorded, rule-based rewrite of a graph (e.g. folding computed shapes into constants) that changes structure without changing the math. T22's catalogue applies six in a fixed order, each citing the finding it fixes.</dd></div>
       <div class="gterm"><dt>AI Hub Workbench</dt><dd>Qualcomm's free public cloud service: upload a model, then quantize, compile, run inference, and profile it on real hosted devices.</dd></div>
       <div class="gterm"><dt>Device Cloud</dt><dd>Qualcomm's service giving interactive sessions on real Snapdragon machines — used for the end-to-end generation loop, not just single-graph jobs.</dd></div>
       <div class="gterm"><dt>GenieX</dt><dd>Qualcomm's ready-made on-device LLM runtime route (paired with llama.cpp). Used as a device baseline; it does not exercise the project's own graphs.</dd></div>
@@ -865,9 +864,10 @@
   </section>
 
   <div class="footer-note">
-    Sources: <code>ai/tasks/status.generated.md</code> (2026-08-02 build) · <code>configs/learning/checkpoints.yaml</code> ·
+    Sources: <code>ai/tasks/status.generated.md</code> (2026-08-04 build) · <code>configs/learning/checkpoints.yaml</code> ·
     <code>docs/project/plan.md</code> · worklogs T00–T72 · <code>docs/results/qualcomm/device-cloud.md</code> ·
-    <code>docs/results/onnx/graph-inspection.md</code> · <code>docs/results/onnx/ort-cpu-parity.md</code>.
+    <code>docs/results/onnx/graph-inspection.md</code> · <code>docs/results/onnx/ort-cpu-parity.md</code> ·
+    <code>docs/results/qualcomm/qnn-candidates.md</code>.
     All numbers above are labeled real measurements from those records; single runs are marked as single runs.
     Full study sheets: <code>build/learning/learn-00.html</code> … <code>learn-11.html</code>.
     Status regions of this page are generated in place by <code>scripts/dashboard/build_dashboard.py</code>;
