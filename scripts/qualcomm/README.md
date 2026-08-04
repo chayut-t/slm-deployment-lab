@@ -156,3 +156,60 @@ public-safety projection, field set, client version, device selector, runtime,
 option allowlist, timeout, retry, source-artifact existence and digest, input
 specs, and output-path policy — and returns the same `request_id` the compile
 stage would record. It builds no backend and touches no network.
+
+## Planning the T31 three-target run
+
+`plan_workbench_run.py` derives the whole T31 matrix — three targets, four
+context variants, two graph kinds — from the committed target selectors, T22
+package records, T22 candidate manifests, T22 structural inspections, and the
+ONNX Runtime CPU parity records. It runs in the common environment, needs no
+artifact root, makes no network call, and imports no Qualcomm client:
+
+```bash
+PYTHONPATH=src python3 scripts/qualcomm/plan_workbench_run.py
+PYTHONPATH=src python3 scripts/qualcomm/plan_workbench_run.py --check
+```
+
+The committed record is
+`results/raw/qualcomm/workbench/t31-workbench-run-plan-2026-08-04.json`.
+`--record` writes elsewhere and `--targets-dir` points at another selector
+directory. `--check` re-derives the plan from its committed inputs, fails on
+the first differing key path, and additionally refuses a record that claims a
+submitted job or a contacted service.
+
+Each of the 24 compile stages is `ready`: its request satisfies the committed
+T30 compile validation chain, and the planner derives the same deterministic
+`request_id` that `preflight_compile_request` would return, without reading
+an artifact byte. For the eight Snapdragon X Elite CRD entries that id is
+identical to the one already committed in
+`results/manifests/qnn/packages/S*.json`, because it is the same request.
+
+Each of the 48 inference and profile stages is `pending_predecessor`: fully
+specified except for the fields only a real compile job can produce — the
+predecessor manifest and the compiled artifact's digest, plus an input dataset
+for inference. Those fields are `null` rather than filled with a placeholder,
+because a placeholder would make the request validate here and fail at the
+service.
+
+The optional full check runs the real preflight over all 24 requests. It needs
+the assembled T22 packages on the external artifact root, writes each request
+into `.ai-local/profiles/T31/<config-id>/<variant>/<graph>-compile-request.json`,
+and refuses any request whose real preflight id differs from the planned one:
+
+```bash
+SLM_LAB_ARTIFACT_ROOT=<external-root> PYTHONPATH=src python3 \
+  scripts/qualcomm/plan_workbench_run.py --preflight
+```
+
+`--preflight` is a build mode and is refused together with `--check`.
+
+### The honest boundary
+
+The plan is a plan. No AI Hub job has been submitted for any Qwen graph on any
+target, no device has produced any evidence, and the record's `cost` block
+reads zero jobs, zero device minutes, US$0.00. Two things are missing before
+anything may be submitted, and the record names both: the `qai-hub` client is
+not installed anywhere in this repository, and explicit user permission for
+hosted jobs is not held by the session that wrote the record. A note in a
+handoff file recording an earlier grant is context for a future session, not
+consent. See `docs/results/qualcomm/workbench.md`.

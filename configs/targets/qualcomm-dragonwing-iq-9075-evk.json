@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "config_id": "qualcomm-dragonwing-iq-9075-evk",
+  "task_id": "T31",
+  "description": "Qualcomm AI Hub Workbench compile target for the Dragonwing IQ-9075 EVK leg of T31. This selector rests on weaker evidence than the Snapdragon X Elite CRD selector: the device name is copied from an unauthenticated public model-catalog listing, and no authenticated device query has ever confirmed that this name resolves or that this account can reach the device. Only the client and runtime identities come from authenticated evidence, and those are device-independent.",
+  "evidence": {
+    "device_name": "docs/results/access/2026-07-24-public-platform-access.md",
+    "device_name_machine_readable": "results/hosts/public-platform-access-2026-07-24.json",
+    "device_name_source": "unauthenticated_public_model_catalog",
+    "device_confirmation": "none_no_authenticated_device_query_has_been_run_for_this_selector",
+    "client_and_runtime": "docs/results/access/2026-07-25-workbench-toy-lifecycle.md",
+    "client_and_runtime_machine_readable": "results/hosts/workbench-toy-lifecycle-2026-07-25.json",
+    "client_and_runtime_source": "authenticated_framework_query_and_installed_client_version",
+    "adapter_contract": "scripts/qualcomm/README.md"
+  },
+  "client": {
+    "name": "qai-hub",
+    "version": "0.53.0"
+  },
+  "device": {
+    "name": "Dragonwing IQ-9075 EVK",
+    "attributes": []
+  },
+  "runtime": {
+    "name": "QAIRT",
+    "version": "2.45.0.260326154327"
+  },
+  "compile": {
+    "options": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+    "target_runtime": "qnn_context_binary",
+    "job_name_prefix": "slm-lab-t31-compile-iq-9075",
+    "timeout_seconds": 3600,
+    "retry": false
+  },
+  "notes": [
+    "The device name is the exact string recorded under workbench.public_qwen_targets in results/hosts/public-platform-access-2026-07-24.json. That listing was read from the public Qwen3-0.6B model page without authentication. Catalog support does not prove that the service resolves this selector for this account, that the device is schedulable, or that quota exists.",
+    "No os field is declared. The committed T30 validator _device in src/slm_lab/deployment/qualcomm/ai_hub.py requires only device.name and treats os as optional, and no committed evidence in this repository records an operating system for this Workbench device. The Snapdragon X Elite CRD selector can carry Windows 11 only because an authenticated device query returned it; nothing equivalent exists here, and inventing one would be fabrication.",
+    "The Device Cloud catalog in the same 2026-07-24 record does not list an IQ-9075 entry at all: device_cloud.iq_9075_account_visibility is null. So there is no second, weaker source to fall back on either.",
+    "The device selector carries no attributes. No chipset, Hexagon version, SoC model, or backend has ever been observed for this device by this repository. The Hexagon v73, HTP backend, and SoC model 60 values in the T02 lifecycle were resolved by the service for a Snapdragon X Elite CRD compile job and are not transferable to a different device.",
+    "The client version and the QAIRT version are the only fields carried over from the authenticated 2026-07-25 lifecycle. The QAIRT default 2.45.0.260326154327 came from an authenticated get_frameworks query, which lists hosted frameworks service-wide rather than per device, so reusing it here imports no device claim. Whether this QAIRT version is supported on this device is unverified.",
+    "No AI Hub job has been submitted with this configuration and this device has never been reached by this repository. The configuration has only been proven to satisfy the committed T30 adapter validation offline. If T31 finds the device unreachable, it must report the exact blocker rather than substituting a Snapdragon X Elite CRD result."
+  ],
+  "claim_boundary": {
+    "establishes": [
+      "device_name_string_matches_the_committed_unauthenticated_public_catalog_listing",
+      "client_and_runtime_identity_match_the_committed_T02_authenticated_framework_evidence",
+      "option_string_is_accepted_by_the_committed_T30_compile_allowlist"
+    ],
+    "does_not_establish": [
+      "an_authenticated_device_query_confirmed_this_selector_resolves",
+      "this_account_can_reach_or_schedule_this_device",
+      "device_os_chipset_hexagon_or_soc_identity",
+      "qairt_version_support_on_this_device",
+      "qualcomm_ai_hub_accepted_a_job_with_this_configuration",
+      "device_availability_or_account_quota_at_submission_time",
+      "compiler_acceptance_of_any_qwen3_graph",
+      "latency_or_memory_performance"
+    ]
+  }
+}
