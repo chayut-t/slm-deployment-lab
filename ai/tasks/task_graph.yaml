@@ -201,8 +201,8 @@
       "status": "planned",
       "depends_on": ["T22", "T30"],
       "resource_locks": ["qai_hub_submission"],
-      "owner": null,
-      "branch": null,
+      "owner": "Claude T31 agent",
+      "branch": "task/T31-qwen-workbench",
       "github_issue": null,
       "worklog": null
     },

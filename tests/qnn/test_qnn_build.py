@@ -346,6 +346,154 @@ def test_claim_boundary_names_what_the_build_does_not_establish() -> None:
 
 
 # --------------------------------------------------------------------------
+# The onnx.checker claim, stamped only when the checker passed
+# --------------------------------------------------------------------------
+
+
+def _checker_verdict(status: str = "passed", **extra: object) -> dict[str, object]:
+    verdict: dict[str, object] = {
+        "status": status,
+        "checker": "onnx.checker.check_model",
+        "full_check": False,
+    }
+    verdict.update(extra)
+    return verdict
+
+
+def _checker_block(
+    *, prefill: str = "passed", decode: str = "passed"
+) -> dict[str, object]:
+    """The ``verification.onnx_checker`` block build_variant assembles."""
+
+    return {
+        "prefill": _checker_verdict(prefill),
+        "decode": _checker_verdict(decode),
+    }
+
+
+def test_a_passing_checker_stamps_the_claim_and_changes_nothing_else() -> None:
+    boundary = qnn_build.checker_claim_boundary(_checker_block())
+
+    assert boundary["establishes"] == list(qnn_build.CLAIM_BOUNDARY["establishes"])
+    assert boundary["does_not_establish"] == list(
+        qnn_build.CLAIM_BOUNDARY["does_not_establish"]
+    )
+    assert qnn_build.CHECKER_CLAIM_PASSED in boundary["establishes"]
+    assert qnn_build.CHECKER_CLAIM_FAILED not in boundary["establishes"]
+    assert qnn_build.CHECKER_NOT_ESTABLISHED not in boundary["does_not_establish"]
+
+
+def test_a_rejected_graph_withdraws_the_checker_claim_and_records_the_failure() -> None:
+    checker = _checker_block(decode="failed")
+    checker["decode"] = _checker_verdict(
+        "failed", error="ValidationError: node output is not produced"
+    )
+
+    boundary = qnn_build.checker_claim_boundary(checker)
+
+    # The claim the checker did not back is gone ...
+    assert qnn_build.CHECKER_CLAIM_PASSED not in boundary["establishes"]
+    # ... and the failure is stated rather than silently omitted.
+    assert qnn_build.CHECKER_CLAIM_FAILED in boundary["establishes"]
+    assert qnn_build.CHECKER_NOT_ESTABLISHED in boundary["does_not_establish"]
+    # Nothing else in the boundary moves.
+    assert "compiler_acceptance" in boundary["does_not_establish"]
+    assert (
+        "candidate_graph_was_produced_by_the_committed_transform_catalogue"
+        in boundary["establishes"]
+    )
+
+
+def test_a_rejected_prefill_graph_withdraws_the_claim_too() -> None:
+    boundary = qnn_build.checker_claim_boundary(_checker_block(prefill="failed"))
+
+    assert qnn_build.CHECKER_CLAIM_PASSED not in boundary["establishes"]
+    assert qnn_build.CHECKER_CLAIM_FAILED in boundary["establishes"]
+
+
+def test_a_missing_or_malformed_verdict_counts_as_a_rejection() -> None:
+    """Fail-closed: only a recorded ``passed`` licenses the claim."""
+
+    for checker in (
+        {},
+        {"prefill": _checker_verdict()},
+        {"prefill": _checker_verdict(), "decode": "passed"},
+        {"prefill": _checker_verdict(), "decode": None},
+    ):
+        boundary = qnn_build.checker_claim_boundary(checker)
+        assert qnn_build.CHECKER_CLAIM_PASSED not in boundary["establishes"], checker
+        assert qnn_build.CHECKER_CLAIM_FAILED in boundary["establishes"], checker
+
+
+def test_rejected_graph_kinds_names_every_kind_without_a_passing_verdict() -> None:
+    assert qnn_build.checker_rejected_graph_kinds(_checker_block()) == ()
+    assert qnn_build.checker_rejected_graph_kinds(_checker_block(decode="failed")) == (
+        "decode",
+    )
+    assert qnn_build.checker_rejected_graph_kinds({}) == qnn_build.GRAPH_KINDS
+
+
+def test_a_checker_failure_does_not_disturb_a_passing_parity_claim() -> None:
+    """The two conditional claims are independent adjustments."""
+
+    boundary = qnn_build.claim_boundary_for(
+        {"status": "measured", "passed": True},
+        checker=_checker_block(decode="failed"),
+    )
+
+    assert qnn_build.CHECKER_CLAIM_PASSED not in boundary["establishes"]
+    assert qnn_build.CHECKER_CLAIM_FAILED in boundary["establishes"]
+    assert qnn_build.PARITY_CLAIM_PASSED in boundary["establishes"]
+    assert qnn_build.PARITY_NOT_ESTABLISHED not in boundary["does_not_establish"]
+
+
+def test_the_committed_manifests_re_derive_their_claim_boundary() -> None:
+    """The conditional path collapses to what the four manifests already carry.
+
+    Rebuilding the candidates means multi-gigabyte graphs, so this drives the
+    manifest-assembly function with each committed manifest's own recorded
+    verification blocks and asserts the derived boundary is the committed one,
+    element for element and in order. Everything else in those manifests is
+    untouched by this change.
+    """
+
+    for variant_id in ("S128", "S512", "S1024", "S4096"):
+        manifest = json.loads(
+            (ROOT / f"results/manifests/qnn/{variant_id}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        verification = manifest["verification"]
+        derived = qnn_build.claim_boundary_for(
+            verification["ort_cpu_parity"], checker=verification["onnx_checker"]
+        )
+
+        assert derived == manifest["claim_boundary"], variant_id
+        assert qnn_build.CHECKER_CLAIM_PASSED in derived["establishes"], variant_id
+
+
+def test_the_committed_inspection_reports_re_derive_their_claim_boundary() -> None:
+    """The same invariant for the four committed inspection reports."""
+
+    for variant_id in ("S128", "S512", "S1024", "S4096"):
+        report = json.loads(
+            (ROOT / f"results/manifests/qnn/inspection/{variant_id}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        manifest = json.loads(
+            (ROOT / f"results/manifests/qnn/{variant_id}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        derived = qnn_build.checker_claim_boundary(
+            manifest["verification"]["onnx_checker"]
+        )
+
+        assert derived == report["claim_boundary"], variant_id
+
+
+# --------------------------------------------------------------------------
 # The ORT CPU parity record, read rather than produced
 # --------------------------------------------------------------------------
 
@@ -605,10 +753,17 @@ def test_the_derivation_is_deterministic_for_one_record(tmp_path: Path) -> None:
 
 
 def test_only_a_passing_measurement_clears_the_parity_claim() -> None:
-    unmeasured = qnn_build.claim_boundary_for({"status": "not_measured"})
-    passed = qnn_build.claim_boundary_for({"status": "measured", "passed": True})
-    failed = qnn_build.claim_boundary_for({"status": "measured", "passed": False})
-    stale = qnn_build.claim_boundary_for({"status": "stale_record"})
+    checker = _checker_block()
+    unmeasured = qnn_build.claim_boundary_for(
+        {"status": "not_measured"}, checker=checker
+    )
+    passed = qnn_build.claim_boundary_for(
+        {"status": "measured", "passed": True}, checker=checker
+    )
+    failed = qnn_build.claim_boundary_for(
+        {"status": "measured", "passed": False}, checker=checker
+    )
+    stale = qnn_build.claim_boundary_for({"status": "stale_record"}, checker=checker)
 
     for boundary in (unmeasured, stale):
         assert qnn_build.PARITY_NOT_ESTABLISHED in boundary["does_not_establish"]

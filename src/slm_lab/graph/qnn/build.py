@@ -34,6 +34,14 @@ from it.
 Nothing in a manifest this tool writes is a compiler result. Every count is a
 count of graph structure, every byte size is a file on disk, and anything that
 could not be measured is written as an explicit ``not_measured`` with a reason.
+
+The two claims that depend on a verdict rather than on the build having run --
+``onnx.checker`` acceptance and ONNX Runtime CPU parity -- are conditional. A
+manifest states the checker accepted the candidate only when the checker
+actually returned ``passed`` for every graph kind it describes; otherwise the
+claim is withdrawn from ``establishes``, the failure is named there instead, and
+checker acceptance moves to ``does_not_establish``. See
+:func:`checker_claim_boundary` and :func:`claim_boundary_for`.
 """
 
 from __future__ import annotations
@@ -114,12 +122,22 @@ PARITY_COMMAND = (
 # layout and inlines every weight back into the protobuf.
 ORT_PROBE_MAX_BYTES = 4 * 1024 * 1024 * 1024
 
+#: What ``onnx.checker`` acceptance licenses, what a rejection establishes in
+#: its place, and what a rejection leaves open. The base boundary below carries
+#: :data:`CHECKER_CLAIM_PASSED` because the common case is a graph the checker
+#: accepted; :func:`checker_claim_boundary` withdraws it whenever the recorded
+#: verdicts do not back it, exactly as :func:`claim_boundary_for` does for
+#: parity. Defined above :data:`CLAIM_BOUNDARY` so the tuple can name it.
+CHECKER_CLAIM_PASSED = "onnx_checker_accepted_the_candidate_graph"
+CHECKER_CLAIM_FAILED = "onnx_checker_did_not_accept_at_least_one_candidate_graph"
+CHECKER_NOT_ESTABLISHED = "onnx_checker_acceptance_of_every_candidate_graph"
+
 CLAIM_BOUNDARY: Mapping[str, tuple[str, ...]] = MappingProxyType(
     {
         "establishes": (
             "reference_graph_and_sidecar_sha256_match_the_committed_T20_manifest",
             "candidate_graph_was_produced_by_the_committed_transform_catalogue",
-            "onnx_checker_accepted_the_candidate_graph",
+            CHECKER_CLAIM_PASSED,
             "candidate_public_boundary_is_identical_to_the_reference_boundary",
             "T12_static_cache_write_survives_in_all_56_cache_outputs",
             "structural_before_and_after_scored_by_the_committed_T21_rule_engine",
@@ -822,18 +840,71 @@ def ort_cpu_parity_record(
     }
 
 
-def claim_boundary_for(parity: Mapping[str, Any]) -> dict[str, list[str]]:
-    """Adjust the claim boundary for what the parity record actually shows.
+def checker_rejected_graph_kinds(checker: Mapping[str, Any]) -> tuple[str, ...]:
+    """The graph kinds for which no passing ``onnx.checker`` verdict is on file.
 
-    A manifest that carries a passing, on-these-bytes parity measurement may no
-    longer say it does not establish ONNX Runtime numerical parity, and one
-    that carries a failing measurement most certainly still must. The
-    adjustment is a pure function of the derived block, so ``--check``
-    re-derives it byte for byte.
+    Fail-closed: a graph kind with no recorded verdict counts the same as one
+    the checker rejected, because the claim is about what the checker returned
+    and a missing verdict is not a return of ``passed``.
+    """
+
+    rejected: list[str] = []
+    for graph_kind in GRAPH_KINDS:
+        verdict = checker.get(graph_kind)
+        if not isinstance(verdict, Mapping) or verdict.get("status") != "passed":
+            rejected.append(graph_kind)
+    return tuple(rejected)
+
+
+def checker_claim_boundary(checker: Mapping[str, Any]) -> dict[str, list[str]]:
+    """Adjust the claim boundary for what ``onnx.checker`` actually returned.
+
+    :func:`check_candidate` reports a rejection rather than raising, so the
+    build continues and the manifest still describes the graph it wrote. What
+    must not continue is the claim: a manifest may say the checker accepted the
+    candidate only when the checker returned ``passed`` for every graph kind.
+
+    When it did not, the claim is withdrawn from ``establishes``,
+    :data:`CHECKER_CLAIM_FAILED` is stated there in its place so the failure is
+    recorded rather than silently omitted, and
+    :data:`CHECKER_NOT_ESTABLISHED` is added to ``does_not_establish``. The
+    per-graph-kind verdicts and the checker's own error text stay in
+    ``verification.onnx_checker``.
+
+    This mirrors :func:`claim_boundary_for`: a pure function of a derived
+    block, so ``--check`` re-derives it byte for byte, and it collapses to the
+    base boundary exactly when every verdict passed.
     """
 
     establishes = list(CLAIM_BOUNDARY["establishes"])
     does_not = list(CLAIM_BOUNDARY["does_not_establish"])
+    if not checker_rejected_graph_kinds(checker):
+        return {"establishes": establishes, "does_not_establish": does_not}
+    establishes = [item for item in establishes if item != CHECKER_CLAIM_PASSED]
+    establishes.append(CHECKER_CLAIM_FAILED)
+    does_not.append(CHECKER_NOT_ESTABLISHED)
+    return {"establishes": establishes, "does_not_establish": does_not}
+
+
+def claim_boundary_for(
+    parity: Mapping[str, Any], *, checker: Mapping[str, Any]
+) -> dict[str, list[str]]:
+    """Adjust the claim boundary for what the recorded verdicts actually show.
+
+    A manifest that carries a passing, on-these-bytes parity measurement may no
+    longer say it does not establish ONNX Runtime numerical parity, and one
+    that carries a failing measurement most certainly still must. The
+    adjustment is a pure function of the derived blocks, so ``--check``
+    re-derives it byte for byte.
+
+    ``checker`` is the ``verification.onnx_checker`` block and is required, not
+    defaulted: the checker claim is only stamped when the verdict backing it is
+    passed in. :func:`checker_claim_boundary` applies that part.
+    """
+
+    checker_boundary = checker_claim_boundary(checker)
+    establishes = checker_boundary["establishes"]
+    does_not = checker_boundary["does_not_establish"]
     if parity.get("status") != "measured":
         return {"establishes": establishes, "does_not_establish": does_not}
     establishes.append(PARITY_CLAIM_MEASURED)
@@ -1281,7 +1352,7 @@ def build_variant(
             },
             "ort_cpu_parity": parity,
         },
-        "claim_boundary": claim_boundary_for(parity),
+        "claim_boundary": claim_boundary_for(parity, checker=checker),
         "generated_by": {
             "module": MODULE_NAME,
             "schema_version": SCHEMA_VERSION,
@@ -1309,7 +1380,7 @@ def build_variant(
             "rules_path": _repository_relative(rules_path),
             "rules_sha256": _sha256_file(rules_path),
         },
-        "claim_boundary": {key: list(values) for key, values in CLAIM_BOUNDARY.items()},
+        "claim_boundary": checker_claim_boundary(checker),
         "graphs": inspections,
     }
     return manifest_payload, inspection_payload

@@ -1,0 +1,2179 @@
+{
+  "adapter_schema_version": 2,
+  "claim_boundary": {
+    "does_not_establish": [
+      "qualcomm_ai_hub_accepted_or_would_accept_any_request_in_this_plan",
+      "qualcomm_ai_hub_accepts_the_external_data_package_layout_this_plan_names",
+      "compiler_acceptance_or_operator_support_for_any_qwen3_graph",
+      "that_any_of_the_three_devices_resolves_is_schedulable_or_is_reachable_by_this_account",
+      "accelerator_placement_or_fallback_behaviour",
+      "latency_throughput_peak_memory_or_energy_on_any_target",
+      "device_numerical_parity_or_any_comparison_against_the_T22_reference_logits",
+      "that_a_result_on_one_target_transfers_to_another_target"
+    ],
+    "establishes": [
+      "a_deterministic_three_target_run_plan_derived_only_from_committed_inputs",
+      "every_compile_request_in_the_plan_satisfies_the_committed_T30_compile_validation_chain_offline",
+      "each_compile_request_id_equals_the_value_the_T30_preflight_records_for_the_same_request",
+      "inference_and_profile_specifications_that_are_explicitly_blocked_on_a_real_compile_output_rather_than_completed_with_a_placeholder",
+      "a_deterministic_submission_order_whose_reason_is_derived_from_the_committed_T22_inspection_manifests",
+      "each_target_device_evidence_strength_read_from_that_target_own_committed_claim_boundary",
+      "a_dated_record_that_no_job_was_submitted_no_service_was_contacted_and_nothing_was_spent"
+    ]
+  },
+  "cost": {
+    "amount_spent": "0.00",
+    "currency": "USD",
+    "device_minutes_consumed": 0,
+    "free_capacity_only": true,
+    "jobs_submitted": 0,
+    "note": "Nothing was submitted, leased, or spent. This row exists so the external-job ledger AGENTS.md requires has an entry for T31 that reads zero rather than being absent."
+  },
+  "first_failure_hypothesis": {
+    "affected_stage": "compile",
+    "attribution_rule": "A failure whose diagnostic names the model upload, a missing external data file, or the source artifact is a PACKAGING result. It must not be recorded as a graph result, a compiler result, or an operator-support result, and it says nothing about the target it happened on. Re-attempt the same graph with a directory or archive source before concluding anything about the graph.",
+    "distinguishing_observation": "A packaging failure reproduces identically on every target and for every variant, because the layout is target-independent. A compiler or operator failure varies with the graph. The plan's submission order makes that test cheap: the first two positions are the same graph kind at different residual shape populations.",
+    "expected_position": 1,
+    "external_data_by_graph": [
+      {
+        "external_data": [
+          {
+            "logical_name": "decode.onnx.data",
+            "size_bytes": 1192085504
+          }
+        ],
+        "graph_byte_size": 1752538,
+        "graph_kind": "decode",
+        "variant_id": "S1024"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "prefill.onnx.data",
+            "size_bytes": 1208895488
+          }
+        ],
+        "graph_byte_size": 958649,
+        "graph_kind": "prefill",
+        "variant_id": "S1024"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "decode.onnx.data",
+            "size_bytes": 1192085504
+          }
+        ],
+        "graph_byte_size": 1752536,
+        "graph_kind": "decode",
+        "variant_id": "S128"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "prefill.onnx.data",
+            "size_bytes": 1196378112
+          }
+        ],
+        "graph_byte_size": 949559,
+        "graph_kind": "prefill",
+        "variant_id": "S128"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "decode.onnx.data",
+            "size_bytes": 1192085504
+          }
+        ],
+        "graph_byte_size": 1752538,
+        "graph_kind": "decode",
+        "variant_id": "S4096"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "prefill.onnx.data",
+            "size_bytes": 1240451072
+          }
+        ],
+        "graph_byte_size": 958654,
+        "graph_kind": "prefill",
+        "variant_id": "S4096"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "decode.onnx.data",
+            "size_bytes": 1192085504
+          }
+        ],
+        "graph_byte_size": 1752536,
+        "graph_kind": "decode",
+        "variant_id": "S512"
+      },
+      {
+        "external_data": [
+          {
+            "logical_name": "prefill.onnx.data",
+            "size_bytes": 1201014784
+          }
+        ],
+        "graph_byte_size": 956509,
+        "graph_kind": "prefill",
+        "variant_id": "S512"
+      }
+    ],
+    "id": "packaging:external_data_sidecar_layout_unverified",
+    "sources": [
+      "ai/handoffs/T22-qnn-candidates.md",
+      "ai/handoffs/T31-first-submission.md",
+      "results/manifests/qnn/packages/README.md"
+    ],
+    "statement": "The compile request names only the .onnx file, because the committed T30 adapter requires source_artifact.path to be one existing file. Every candidate in the matrix carries an external-data sidecar of roughly 1.19 GB beside it. Whether the service reads that sidecar from the same directory, or wants a directory or an archive instead, has never been tested against Qualcomm AI Hub."
+  },
+  "generated_by": "slm_lab.deployment.qualcomm.workbench",
+  "graphs": [
+    {
+      "cache_capacity": 160,
+      "context_length": 128,
+      "external_data": [
+        {
+          "logical_name": "prefill.onnx.data",
+          "sha256": "adbca551d245106eefb3faf0a6fe850ea1f859ffff9a28b5d68ce2d9a3fe2760",
+          "size_bytes": 1196378112
+        }
+      ],
+      "graph_kind": "prefill",
+      "graph_order": 1,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 949559,
+        "residual_high_severity_shape_findings": 0
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S128.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 3,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S128.json",
+          "sha256": "dc8c4c3639dd3a60df95f335005dbfcf03d1dcc35cc21f61dfc97e53cdbdbc2d"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S128.json",
+          "sha256": "a982d212f6f38796d1e0e1f53a475d298e33415cc365758265839a1fdb585e3a"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S128.json",
+          "sha256": "71a23f771c641042a47bb8586c4dfb8a978f5f62ef027ede3b33e87271df5654"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S128-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "19181104e6f4ddcef9a70cfd40791e17d629e4a0bab75ae372c3c0109f0905ce",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S128/prefill",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 0,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 2785,
+          "total": 0
+        },
+        "candidate_source_sha256": "463313d4ba05bc0f769b53efa91496cfb9b59be818966e0a496ba4da9782ee3f",
+        "note": "The shape fold takes S128 prefill from 804 residual high-severity shape findings on the reference to 0 on the candidate.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 804,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 7634,
+          "total": 804
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 949559,
+      "source_logical_name": "prefill.onnx",
+      "source_sha256": "463313d4ba05bc0f769b53efa91496cfb9b59be818966e0a496ba4da9782ee3f",
+      "variant_id": "S128"
+    },
+    {
+      "cache_capacity": 576,
+      "context_length": 512,
+      "external_data": [
+        {
+          "logical_name": "prefill.onnx.data",
+          "sha256": "1a73b5dc83be5288c5247709ffd49cd1101d6cd8a70f8ad71552601a8a991b0a",
+          "size_bytes": 1201014784
+        }
+      ],
+      "graph_kind": "prefill",
+      "graph_order": 2,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 956509,
+        "residual_high_severity_shape_findings": 14
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S512.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 3,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S512.json",
+          "sha256": "218ca75e4150224438989751e19d308606bea94deafa18ba7f1412e3ba3ff8db"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S512.json",
+          "sha256": "00af8bbf84fc3dc9664b87df373fade51482a836b1987b67809f51fec2a49112"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S512.json",
+          "sha256": "b44c606b8cf809f708134cd89a2fb0db630b055a33b8d72da09eab6c8b6a185d"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S512-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "674f2906748d645b0a85afe2a5fa680b928e36558fd9c15143f03e93a974ffeb",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S512/prefill",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 5,
+          "R-INTERNAL-DYNAMIC-SHAPE": 9,
+          "node_count": 2817,
+          "total": 14
+        },
+        "candidate_source_sha256": "9097e1873f23765c696f17bb7c3125c5aa06f5aeccd71e304a69d92945f406c6",
+        "note": "The shape fold takes S512 prefill from 804 residual high-severity shape findings on the reference to 14 on the candidate.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 804,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 7634,
+          "total": 804
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 956509,
+      "source_logical_name": "prefill.onnx",
+      "source_sha256": "9097e1873f23765c696f17bb7c3125c5aa06f5aeccd71e304a69d92945f406c6",
+      "variant_id": "S512"
+    },
+    {
+      "cache_capacity": 1152,
+      "context_length": 1024,
+      "external_data": [
+        {
+          "logical_name": "prefill.onnx.data",
+          "sha256": "272d846256cc22a384a4a6f7a33779339d5153d128381b3efb0eb32dad9ba531",
+          "size_bytes": 1208895488
+        }
+      ],
+      "graph_kind": "prefill",
+      "graph_order": 3,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 958649,
+        "residual_high_severity_shape_findings": 15
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S1024.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 3,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S1024.json",
+          "sha256": "2cd7192128d5d33aeca49966c1eee2945c3079ceb59e291974f8d2af16735982"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S1024.json",
+          "sha256": "80443dd0bc1388d55ee28f424e5f2e4bfe622b4038f05c9e9e09fd5e69935eb4"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S1024.json",
+          "sha256": "d60f6b1b84d8f7d0445afcca6f3e18684633a854db5cfbcebd071e902d63282e"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S1024-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "2d4d0c75a4967462d4b790bcee12a311e96cb0c0ba3cc7dc098c614eccf5c7e4",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S1024/prefill",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 6,
+          "R-INTERNAL-DYNAMIC-SHAPE": 9,
+          "node_count": 2824,
+          "total": 15
+        },
+        "candidate_source_sha256": "da0ae3dcd8f27464fed7b6db92e2f52d33087e50f78e71ee0cf2b4c7dd79613d",
+        "note": "The shape fold takes S1024 prefill from 804 residual high-severity shape findings on the reference to 15 on the candidate.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 804,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 7634,
+          "total": 804
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 958649,
+      "source_logical_name": "prefill.onnx",
+      "source_sha256": "da0ae3dcd8f27464fed7b6db92e2f52d33087e50f78e71ee0cf2b4c7dd79613d",
+      "variant_id": "S1024"
+    },
+    {
+      "cache_capacity": 4224,
+      "context_length": 4096,
+      "external_data": [
+        {
+          "logical_name": "prefill.onnx.data",
+          "sha256": "f476f51267e0c7ee09e9e97166afa9900158b22adcf5acec895b94d96e3d0dd3",
+          "size_bytes": 1240451072
+        }
+      ],
+      "graph_kind": "prefill",
+      "graph_order": 4,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 958654,
+        "residual_high_severity_shape_findings": 15
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S4096.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 3,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S4096.json",
+          "sha256": "2f31bb07cafd50c89f0bd5ff784e5959ec920bc31d42fcae19181127f73847d6"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S4096.json",
+          "sha256": "f4a717df27b901ee65bd93a08f204f5a717cf43580a703f425873268bb7eea11"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S4096.json",
+          "sha256": "ff6c5f9c6b7f0c62840c3c5e00d2ec0e824013ef44c5603c8489949ef2dc0eda"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S4096-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "1ae960fb8b5ed296f9133e161146e0b54184312c1bbf6bbf71e5d565283a1ad9",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S4096/prefill",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 6,
+          "R-INTERNAL-DYNAMIC-SHAPE": 9,
+          "node_count": 2824,
+          "total": 15
+        },
+        "candidate_source_sha256": "b2534ad68999f7df60c2be2118a44f473db66b075e4cdfd40f343b150e3613b7",
+        "note": "The shape fold takes S4096 prefill from 804 residual high-severity shape findings on the reference to 15 on the candidate.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 804,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 7634,
+          "total": 804
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 958654,
+      "source_logical_name": "prefill.onnx",
+      "source_sha256": "b2534ad68999f7df60c2be2118a44f473db66b075e4cdfd40f343b150e3613b7",
+      "variant_id": "S4096"
+    },
+    {
+      "cache_capacity": 160,
+      "context_length": 128,
+      "external_data": [
+        {
+          "logical_name": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "graph_order": 5,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 1752536,
+        "residual_high_severity_shape_findings": 1492
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S128.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 60,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S128.json",
+          "sha256": "dc8c4c3639dd3a60df95f335005dbfcf03d1dcc35cc21f61dfc97e53cdbdbc2d"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S128.json",
+          "sha256": "a982d212f6f38796d1e0e1f53a475d298e33415cc365758265839a1fdb585e3a"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S128.json",
+          "sha256": "71a23f771c641042a47bb8586c4dfb8a978f5f62ef027ede3b33e87271df5654"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S128-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "19181104e6f4ddcef9a70cfd40791e17d629e4a0bab75ae372c3c0109f0905ce",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S128/decode",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 423,
+          "R-INTERNAL-DYNAMIC-SHAPE": 1069,
+          "node_count": 5421,
+          "total": 1492
+        },
+        "candidate_source_sha256": "fc220a31ddf3dc3b460d8e0a843d38376c89ec49be9dae1a7e9b66c0cd16111a",
+        "note": "The shape fold takes S128 decode from 1231 residual high-severity shape findings on the reference to 1492 on the candidate. On decode the fold converts one rule's population into the other's rather than removing it, so the candidate scores worse than the reference by raw count.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 1231,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 10191,
+          "total": 1231
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 1752536,
+      "source_logical_name": "decode.onnx",
+      "source_sha256": "fc220a31ddf3dc3b460d8e0a843d38376c89ec49be9dae1a7e9b66c0cd16111a",
+      "variant_id": "S128"
+    },
+    {
+      "cache_capacity": 576,
+      "context_length": 512,
+      "external_data": [
+        {
+          "logical_name": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "graph_order": 6,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 1752536,
+        "residual_high_severity_shape_findings": 1492
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S512.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 60,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S512.json",
+          "sha256": "218ca75e4150224438989751e19d308606bea94deafa18ba7f1412e3ba3ff8db"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S512.json",
+          "sha256": "00af8bbf84fc3dc9664b87df373fade51482a836b1987b67809f51fec2a49112"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S512.json",
+          "sha256": "b44c606b8cf809f708134cd89a2fb0db630b055a33b8d72da09eab6c8b6a185d"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S512-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "674f2906748d645b0a85afe2a5fa680b928e36558fd9c15143f03e93a974ffeb",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S512/decode",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 423,
+          "R-INTERNAL-DYNAMIC-SHAPE": 1069,
+          "node_count": 5421,
+          "total": 1492
+        },
+        "candidate_source_sha256": "47dbad3a2f4fe1356d4083506e7cff2af303e5545d6af5dacba29c8beeb31871",
+        "note": "The shape fold takes S512 decode from 1231 residual high-severity shape findings on the reference to 1492 on the candidate. On decode the fold converts one rule's population into the other's rather than removing it, so the candidate scores worse than the reference by raw count.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 1231,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 10191,
+          "total": 1231
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 1752536,
+      "source_logical_name": "decode.onnx",
+      "source_sha256": "47dbad3a2f4fe1356d4083506e7cff2af303e5545d6af5dacba29c8beeb31871",
+      "variant_id": "S512"
+    },
+    {
+      "cache_capacity": 1152,
+      "context_length": 1024,
+      "external_data": [
+        {
+          "logical_name": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "graph_order": 7,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 1752538,
+        "residual_high_severity_shape_findings": 1492
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S1024.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 60,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S1024.json",
+          "sha256": "2cd7192128d5d33aeca49966c1eee2945c3079ceb59e291974f8d2af16735982"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S1024.json",
+          "sha256": "80443dd0bc1388d55ee28f424e5f2e4bfe622b4038f05c9e9e09fd5e69935eb4"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S1024.json",
+          "sha256": "d60f6b1b84d8f7d0445afcca6f3e18684633a854db5cfbcebd071e902d63282e"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S1024-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "2d4d0c75a4967462d4b790bcee12a311e96cb0c0ba3cc7dc098c614eccf5c7e4",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S1024/decode",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 423,
+          "R-INTERNAL-DYNAMIC-SHAPE": 1069,
+          "node_count": 5421,
+          "total": 1492
+        },
+        "candidate_source_sha256": "7d7e816d110df7d48b584f7ef37b17f844920a52f5172694e64e9a5f4dcdc1b6",
+        "note": "The shape fold takes S1024 decode from 1231 residual high-severity shape findings on the reference to 1492 on the candidate. On decode the fold converts one rule's population into the other's rather than removing it, so the candidate scores worse than the reference by raw count.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 1231,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 10191,
+          "total": 1231
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 1752538,
+      "source_logical_name": "decode.onnx",
+      "source_sha256": "7d7e816d110df7d48b584f7ef37b17f844920a52f5172694e64e9a5f4dcdc1b6",
+      "variant_id": "S1024"
+    },
+    {
+      "cache_capacity": 4224,
+      "context_length": 4096,
+      "external_data": [
+        {
+          "logical_name": "decode.onnx.data",
+          "sha256": "e9d4b051fa86283dc96a29ceb4eb99107dbe8aff1036e54628e8725e3dac5cde",
+          "size_bytes": 1192085504
+        }
+      ],
+      "graph_kind": "decode",
+      "graph_order": 8,
+      "graph_order_key": {
+        "candidate_graph_protobuf_bytes": 1752538,
+        "residual_high_severity_shape_findings": 1492
+      },
+      "input_specs_source": "results/manifests/qnn/packages/S4096.json package.graphs[].compile_request.input_specs",
+      "input_tensor_count": 60,
+      "inputs": {
+        "candidate_manifest": {
+          "path": "results/manifests/qnn/S4096.json",
+          "sha256": "2f31bb07cafd50c89f0bd5ff784e5959ec920bc31d42fcae19181127f73847d6"
+        },
+        "inspection_manifest": {
+          "path": "results/manifests/qnn/inspection/S4096.json",
+          "sha256": "f4a717df27b901ee65bd93a08f204f5a717cf43580a703f425873268bb7eea11"
+        },
+        "package_record": {
+          "path": "results/manifests/qnn/packages/S4096.json",
+          "sha256": "ff6c5f9c6b7f0c62840c3c5e00d2ec0e824013ef44c5603c8489949ef2dc0eda"
+        }
+      },
+      "numerical_reference": {
+        "blocked_by": [
+          "no_inference_stage_has_run_on_any_target",
+          "no_ai_hub_input_dataset_exists_in_this_repository"
+        ],
+        "evidence_tier": "real_onnxruntime_cpu",
+        "note": "The T22 candidates are bit-identical to the reference on the ONNX Runtime CPU provider, so a divergence observed on a device belongs to the compiler, the runtime, or the hardware. Nothing was compared here: this field names the reference an inference stage would be compared against.",
+        "record": "results/manifests/qnn/parity/S4096-ort-cpu.json",
+        "reference_logits_sha256_source": "reference_provenance.reference_logits_sha256",
+        "sha256": "1ae960fb8b5ed296f9133e161146e0b54184312c1bbf6bbf71e5d565283a1ad9",
+        "status": "not_compared"
+      },
+      "package_relative_path": "S4096/decode",
+      "precision": "float16",
+      "shape_residue": {
+        "candidate": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 423,
+          "R-INTERNAL-DYNAMIC-SHAPE": 1069,
+          "node_count": 5421,
+          "total": 1492
+        },
+        "candidate_source_sha256": "81394648522eaf1cbe1365915b6a6019022c19d9270390b469c07bd29312c79d",
+        "note": "The shape fold takes S4096 decode from 1231 residual high-severity shape findings on the reference to 1492 on the candidate. On decode the fold converts one rule's population into the other's rather than removing it, so the candidate scores worse than the reference by raw count.",
+        "reference": {
+          "R-DATA-DEPENDENT-SHAPE-INPUT": 1231,
+          "R-INTERNAL-DYNAMIC-SHAPE": 0,
+          "node_count": 10191,
+          "total": 1231
+        },
+        "rules": [
+          "R-DATA-DEPENDENT-SHAPE-INPUT",
+          "R-INTERNAL-DYNAMIC-SHAPE"
+        ]
+      },
+      "source_byte_size": 1752538,
+      "source_logical_name": "decode.onnx",
+      "source_sha256": "81394648522eaf1cbe1365915b6a6019022c19d9270390b469c07bd29312c79d",
+      "variant_id": "S4096"
+    }
+  ],
+  "job_naming": {
+    "note": "The Snapdragon X Elite CRD selector is owned by T22 and its prefix says t22. That is kept rather than rewritten: the job name is part of the hashed request, so renaming it would change the compile request id and break its equality with the request id the committed T22 package record already carries.",
+    "rule": "Each job name is the target config's own compile.job_name_prefix with the stage name substituted for its first compile token, followed by the variant id and the graph kind."
+  },
+  "no_proxy_rule": "A target that cannot be reached is reported with its exact blocker. A result measured on one target is never presented as a result for another, and the T02 toy-model lifecycle on Snapdragon X Elite CRD is not Qwen evidence for any target including that one.",
+  "ordering_policy": {
+    "graphs": {
+      "keys": [
+        "residual_high_severity_shape_findings_on_the_candidate",
+        "candidate_graph_protobuf_bytes",
+        "variant_id",
+        "graph_kind"
+      ],
+      "statement": "Smallest residual shape population first, then smallest protobuf. A static-shape ahead-of-time compiler is exactly the consumer that cares about unresolved interior shapes, so the graph carrying fewest of them is the one whose failure would be attributable to the pipeline rather than to the graph. The population is read off the committed T22 inspection manifests, not asserted here."
+    },
+    "matrix": {
+      "keys": [
+        "target_order",
+        "graph_order"
+      ],
+      "statement": "One target is exhausted before the next begins, so a failure that repeats across every graph on the first target is distinguishable from one that follows a particular graph across targets."
+    },
+    "targets": {
+      "keys": [
+        "device_evidence_rank",
+        "config_id"
+      ],
+      "statement": "Authenticated device evidence first, then catalog-only selectors in config_id order. The first target is the only one whose device identity an authenticated T02 query has ever returned; the other two are names read off an unauthenticated public catalog page, and nothing has confirmed that either resolves for this account."
+    }
+  },
+  "plan": [
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "prefill",
+      "graph_order": 1,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S128-prefill",
+          "output_logical_name": "S128-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-83b8813c19a37ac036ad",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S128-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S128-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S128-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S128-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 1,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S128"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "prefill",
+      "graph_order": 2,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S512-prefill",
+          "output_logical_name": "S512-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-a68c351354ce00086e67",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S512-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S512-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S512-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S512-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 2,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S512"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "prefill",
+      "graph_order": 3,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S1024-prefill",
+          "output_logical_name": "S1024-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-38d8cbc349a0456a75a1",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S1024-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S1024-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S1024-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S1024-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 3,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S1024"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "prefill",
+      "graph_order": 4,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S4096-prefill",
+          "output_logical_name": "S4096-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-768a6848cdb20ab3ff03",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S4096-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S4096-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S4096-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S4096-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 4,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S4096"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "decode",
+      "graph_order": 5,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S128-decode",
+          "output_logical_name": "S128-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-ea3c5969c8f1a3b3ad86",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S128-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S128-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S128-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S128-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 5,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S128"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "decode",
+      "graph_order": 6,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S512-decode",
+          "output_logical_name": "S512-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-c318744b4ebf9f934c72",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S512-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S512-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S512-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S512-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 6,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S512"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "decode",
+      "graph_order": 7,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S1024-decode",
+          "output_logical_name": "S1024-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-2d5e76ee9a253ff07ccf",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S1024-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S1024-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S1024-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S1024-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 7,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S1024"
+    },
+    {
+      "device_evidence_strength": "authenticated_device_query",
+      "graph_kind": "decode",
+      "graph_order": 8,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t22-compile-S4096-decode",
+          "output_logical_name": "S4096-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-d67a8d43d368af1da061",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S4096-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-inference-S4096-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S4096-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t22-profile-S4096-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 8,
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "target_order": 1,
+      "variant_id": "S4096"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 1,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S128-prefill",
+          "output_logical_name": "S128-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-5a2c42680d40bc00a5d0",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S128-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S128-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S128-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S128-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 9,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S128"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 2,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S512-prefill",
+          "output_logical_name": "S512-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-a6149d9aec8fd7ad0489",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S512-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S512-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S512-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S512-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 10,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S512"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 3,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S1024-prefill",
+          "output_logical_name": "S1024-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-a291650f55bbc3417c08",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S1024-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S1024-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S1024-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S1024-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 11,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S1024"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 4,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S4096-prefill",
+          "output_logical_name": "S4096-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-028e585ae6558dc92e55",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S4096-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S4096-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S4096-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S4096-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 12,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S4096"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 5,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S128-decode",
+          "output_logical_name": "S128-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-de5d3e4652651141fa61",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S128-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S128-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S128-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S128-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 13,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S128"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 6,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S512-decode",
+          "output_logical_name": "S512-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-9f24c51d41c8df3eb4bd",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S512-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S512-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S512-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S512-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 14,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S512"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 7,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S1024-decode",
+          "output_logical_name": "S1024-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-167b86513030a90f344b",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S1024-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S1024-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S1024-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S1024-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 15,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S1024"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 8,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-iq-9075-S4096-decode",
+          "output_logical_name": "S4096-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-3b0476f8e3ec3c8c59ce",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S4096-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-iq-9075-S4096-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S4096-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-iq-9075-S4096-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 16,
+      "target": "qualcomm-dragonwing-iq-9075-evk",
+      "target_order": 2,
+      "variant_id": "S4096"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 1,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S128-prefill",
+          "output_logical_name": "S128-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-1317d9e83b5b2b756095",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S128-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S128-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S128-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S128-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 17,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S128"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 2,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S512-prefill",
+          "output_logical_name": "S512-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-1cd1903a3bfead29d9c1",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S512-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S512-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S512-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S512-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 18,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S512"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 3,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S1024-prefill",
+          "output_logical_name": "S1024-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-749efe58261c01737006",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S1024-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S1024-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S1024-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S1024-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 19,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S1024"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "prefill",
+      "graph_order": 4,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S4096-prefill",
+          "output_logical_name": "S4096-prefill.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-7db96f3dbf6f545e5741",
+          "source_logical_name": "prefill.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S4096-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S4096-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S4096-prefill.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S4096-prefill",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 20,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S4096"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 5,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S128-decode",
+          "output_logical_name": "S128-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-7350f81da13aaa120b3a",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S128-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S128-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S128-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S128-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 21,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S128"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 6,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S512-decode",
+          "output_logical_name": "S512-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-87f21cb71b20d384ba9f",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S512-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S512-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S512-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S512-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 22,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S512"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 7,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S1024-decode",
+          "output_logical_name": "S1024-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-d5b0a7f39ada709c6602",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S1024-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S1024-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S1024-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S1024-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 23,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S1024"
+    },
+    {
+      "device_evidence_strength": "unauthenticated_public_catalog_listing",
+      "graph_kind": "decode",
+      "graph_order": 8,
+      "stages": {
+        "compile": {
+          "job_name": "slm-lab-t31-compile-8-elite-S4096-decode",
+          "output_logical_name": "S4096-decode.serialized.bin",
+          "readiness": "ready",
+          "request_id": "t30-compile-030ad110f0f299697f03",
+          "source_logical_name": "decode.onnx"
+        },
+        "inference": {
+          "compiled_artifact_logical_name": "S4096-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-inference-8-elite-S4096-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "input_dataset",
+            "output_path"
+          ]
+        },
+        "profile": {
+          "compiled_artifact_logical_name": "S4096-decode.serialized.bin",
+          "compiled_artifact_sha256": null,
+          "depends_on_stage": "compile",
+          "job_name": "slm-lab-t31-profile-8-elite-S4096-decode",
+          "predecessor_manifest": null,
+          "readiness": "pending_predecessor",
+          "request_id": null,
+          "unresolved_input_ids": [
+            "predecessor_manifest",
+            "compiled_artifact_sha256",
+            "output_path"
+          ]
+        }
+      },
+      "submission_order": 24,
+      "target": "qualcomm-snapdragon-8-elite-qrd",
+      "target_order": 3,
+      "variant_id": "S4096"
+    }
+  ],
+  "plan_entry_join": "Every plan entry names a target config_id and a (variant_id, graph_kind) pair. The option strings, timeouts, retry policy, and device selector live once under targets[]; the digests, byte sizes, input tensor counts, and shape residues live once under graphs[]. A plan entry carries only what is specific to the pair.",
+  "record_type": "slm_lab.qualcomm.workbench_run_plan",
+  "run_observation": {
+    "client_probe": {
+      "importable": false,
+      "method": "importlib.util.find_spec",
+      "module": "qai_hub",
+      "module_imported": false,
+      "note": "find_spec locates a module without executing it. This planner never imports the client under any code path."
+    },
+    "created_at_utc": "2026-08-04T10:34:47.194624Z",
+    "jobs_submitted": 0,
+    "note": "Excluded from the --check comparison on purpose: it is a dated observation of one machine, not a contract. The plan above is the part that must re-derive.",
+    "preflight": {
+      "all_request_ids_matched_the_plan": true,
+      "job_submitted": false,
+      "mode": "ran",
+      "requests_validated": 24,
+      "service_contacted": false
+    },
+    "service_contacted": false
+  },
+  "schema_version": 1,
+  "source_task_id": "T22",
+  "stage_contracts": {
+    "compile": {
+      "deferred_to_submission_time": [
+        "source_artifact_path_exists_and_its_bytes_hash_to_the_recorded_sha256",
+        "output_artifact_parent_is_private_storage_and_can_be_prepared"
+      ],
+      "equivalent_full_check": "slm_lab.deployment.qualcomm.ai_hub.preflight_compile_request",
+      "readiness": "ready",
+      "readiness_rule": "Every field the T30 compile stage requires is fixed by committed inputs. The request is submittable the moment a qai-hub client at the pinned version and explicit user permission both exist.",
+      "validated_by": "slm_lab.deployment.qualcomm.workbench.validate_compile_request_offline",
+      "validated_now": [
+        "adapter_schema_version_and_stage",
+        "exact_compile_request_field_set",
+        "client_version_is_an_exact_version",
+        "device_selector_through_the_committed_T30_device_validator",
+        "runtime_identity_is_QAIRT_at_an_exact_version",
+        "option_string_through_the_committed_T30_compile_allowlist",
+        "job_name_timeout_and_retry_is_false",
+        "input_specs_shapes_are_positive_and_dtypes_are_supported",
+        "source_and_output_logical_names_are_path_free",
+        "source_digest_is_a_lowercase_sha256_matching_the_committed_package_record",
+        "public_request_projection_is_free_of_paths_urls_and_private_text"
+      ],
+      "validation_scope": "the committed T30 compile validation chain except the two filesystem checks named in deferred_to_submission_time"
+    },
+    "inference": {
+      "no_placeholder_rule": "A synthetic predecessor manifest would make the request validate here and fail at the service. The stage is left incomplete on purpose and its missing fields are null.",
+      "readiness": "pending_predecessor",
+      "readiness_rule": "Specified but not submittable. ai_hub._load_predecessor requires a successful compile manifest, and ai_hub._compiled_artifact requires the compiled artifact's logical name and digest to equal that manifest's. Neither exists before a real compile job runs.",
+      "unresolved_inputs": [
+        {
+          "id": "predecessor_manifest",
+          "produced_by": "a successful compile stage on the same target",
+          "reason": "The path of a sanitized schema-v2 compile manifest with status success. No such manifest exists in this repository for any target."
+        },
+        {
+          "id": "compiled_artifact_sha256",
+          "produced_by": "the compile stage's downloaded target model",
+          "reason": "The digest is read off the bytes the service returns, and the adapter refuses a compiled artifact whose digest differs from the predecessor manifest's."
+        },
+        {
+          "id": "input_dataset",
+          "produced_by": "T31 at submission time",
+          "reason": "The inference stage needs an AI Hub-compatible HDF5 dataset. This repository contains none at this commit; the T22 parity record names the prompt token ids by digest but is not that dataset."
+        },
+        {
+          "id": "output_path",
+          "produced_by": "the submitting session",
+          "reason": "A machine-local private path under ignored storage, chosen at submission time and never committed."
+        }
+      ],
+      "validated_now": [
+        "device_selector_through_the_committed_T30_device_validator",
+        "runtime_identity_is_QAIRT_at_an_exact_version",
+        "option_string_through_the_committed_T30_allowlist_for_this_stage",
+        "job_name_timeout_and_retry_is_false"
+      ]
+    },
+    "profile": {
+      "no_placeholder_rule": "Same rule as inference: nothing is filled in that only a real compile job can produce.",
+      "readiness": "pending_predecessor",
+      "readiness_rule": "Specified but not submittable, for the same predecessor reason as inference. Profile needs no dataset.",
+      "unresolved_inputs": [
+        {
+          "id": "predecessor_manifest",
+          "produced_by": "a successful compile stage on the same target",
+          "reason": "The path of a sanitized schema-v2 compile manifest with status success."
+        },
+        {
+          "id": "compiled_artifact_sha256",
+          "produced_by": "the compile stage's downloaded target model",
+          "reason": "Read off the returned bytes and cross-checked against the predecessor manifest."
+        },
+        {
+          "id": "output_path",
+          "produced_by": "the submitting session",
+          "reason": "raw_profile_output is a machine-local private path under ignored storage. The raw service profile is never committed; only the normalized profile is."
+        }
+      ],
+      "validated_now": [
+        "device_selector_through_the_committed_T30_device_validator",
+        "runtime_identity_is_QAIRT_at_an_exact_version",
+        "option_string_through_the_committed_T30_allowlist_for_this_stage",
+        "job_name_timeout_and_retry_is_false"
+      ]
+    }
+  },
+  "submission_boundary": {
+    "deliberately_not_done": [
+      "installing_the_qai_hub_client",
+      "any_network_call",
+      "any_job_submission",
+      "any_device_cloud_lease"
+    ],
+    "jobs_submitted": 0,
+    "network_calls_made": 0,
+    "required_before_any_submission": [
+      {
+        "id": "capability:qai_hub_client_absent",
+        "kind": "capability",
+        "note": "find_spec does not execute the module, so the recheck itself never imports the client.",
+        "offline_recheck": "python3 -c \"import importlib.util,sys; sys.exit(0 if importlib.util.find_spec('qai_hub') else 1)\"",
+        "owner": "environment",
+        "requirement": "The optional qai-hub client at the exact version every target config names. pyproject.toml pins no Qualcomm client, and no environment in this repository provides one."
+      },
+      {
+        "id": "user_authorization:qai_hub_submission_for_T31",
+        "kind": "permission",
+        "note": "AGENTS.md requires explicit user permission before any external job. The budget paragraph in ai/handoffs/T31-first-submission.md records an earlier grant written into a file by an earlier agent; that is context for a future session, not consent held by this one.",
+        "offline_recheck": "not_machine_checkable",
+        "owner": "user",
+        "requirement": "Explicit user permission, given in the session that submits, for hosted AI Hub jobs under T31."
+      }
+    ],
+    "resource_lock": "qai_hub_submission",
+    "service_contacted": false,
+    "stops_at": "compile_stage_submission"
+  },
+  "summary": {
+    "first_submission": {
+      "graph_kind": "prefill",
+      "reason": "The only graph in the matrix whose residual high-severity shape population is zero, the smallest candidate protobuf in the matrix, and the only target whose device identity an authenticated query has returned. If it fails, the failure is about the pipeline, not about the graph.",
+      "request_id": "t30-compile-83b8813c19a37ac036ad",
+      "stage": "compile",
+      "target": "qualcomm-snapdragon-x-elite-crd",
+      "variant_id": "S128"
+    },
+    "graphs": 8,
+    "plan_entries": 24,
+    "stages_pending_predecessor": 48,
+    "stages_ready": 24,
+    "targets": 3
+  },
+  "targets": [
+    {
+      "client": {
+        "name": "qai-hub",
+        "version": "0.53.0"
+      },
+      "compute_unit_note": "No --compute_unit flag is set. The T30 allowlist accepts one, but constraining the compute unit would decide the placement question that the profile stage exists to observe. The normalized profile reports the compute units it actually saw, and a plan that pinned them would return its own input.",
+      "config_id": "qualcomm-snapdragon-x-elite-crd",
+      "device": {
+        "attributes": [],
+        "name": "Snapdragon X Elite CRD",
+        "os": "Windows 11"
+      },
+      "device_evidence": {
+        "decided_by_marker": "device_and_runtime_identity_match_committed_T02_evidence",
+        "device_confirmed_by_authenticated_query": true,
+        "does_not_establish": [
+          "qualcomm_ai_hub_accepted_a_job_with_this_configuration",
+          "device_availability_or_account_quota_at_submission_time",
+          "compiler_acceptance_of_any_qwen3_graph",
+          "latency_or_memory_performance"
+        ],
+        "no_proxy_rule": "A target that cannot be reached is reported with its exact blocker. A result measured on one target is never presented as a result for another, and the T02 toy-model lifecycle on Snapdragon X Elite CRD is not Qwen evidence for any target including that one.",
+        "rank": 0,
+        "strength": "authenticated_device_query"
+      },
+      "job_name_prefix_source": "target_config.compile.job_name_prefix",
+      "job_name_prefixes": {
+        "compile": "slm-lab-t22-compile",
+        "inference": "slm-lab-t22-inference",
+        "profile": "slm-lab-t22-profile"
+      },
+      "retry": false,
+      "runtime": {
+        "name": "QAIRT",
+        "version": "2.45.0.260326154327"
+      },
+      "source": {
+        "path": "configs/targets/qualcomm-snapdragon-x-elite-crd.json",
+        "sha256": "20b284060beb6de64bac3cf903858f87a6e5683e0669af539d177d4c92327846"
+      },
+      "stage_options": {
+        "compile": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+        "inference": "--qairt_framework 2.45.0.260326154327",
+        "profile": "--qairt_framework 2.45.0.260326154327"
+      },
+      "target_order": 1,
+      "timeout_seconds": 3600
+    },
+    {
+      "client": {
+        "name": "qai-hub",
+        "version": "0.53.0"
+      },
+      "compute_unit_note": "No --compute_unit flag is set. The T30 allowlist accepts one, but constraining the compute unit would decide the placement question that the profile stage exists to observe. The normalized profile reports the compute units it actually saw, and a plan that pinned them would return its own input.",
+      "config_id": "qualcomm-dragonwing-iq-9075-evk",
+      "device": {
+        "attributes": [],
+        "name": "Dragonwing IQ-9075 EVK",
+        "os": ""
+      },
+      "device_evidence": {
+        "decided_by_marker": "an_authenticated_device_query_confirmed_this_selector_resolves",
+        "device_confirmed_by_authenticated_query": false,
+        "does_not_establish": [
+          "an_authenticated_device_query_confirmed_this_selector_resolves",
+          "this_account_can_reach_or_schedule_this_device",
+          "device_os_chipset_hexagon_or_soc_identity",
+          "qairt_version_support_on_this_device",
+          "qualcomm_ai_hub_accepted_a_job_with_this_configuration",
+          "device_availability_or_account_quota_at_submission_time",
+          "compiler_acceptance_of_any_qwen3_graph",
+          "latency_or_memory_performance"
+        ],
+        "no_proxy_rule": "A target that cannot be reached is reported with its exact blocker. A result measured on one target is never presented as a result for another, and the T02 toy-model lifecycle on Snapdragon X Elite CRD is not Qwen evidence for any target including that one.",
+        "rank": 1,
+        "strength": "unauthenticated_public_catalog_listing"
+      },
+      "job_name_prefix_source": "target_config.compile.job_name_prefix",
+      "job_name_prefixes": {
+        "compile": "slm-lab-t31-compile-iq-9075",
+        "inference": "slm-lab-t31-inference-iq-9075",
+        "profile": "slm-lab-t31-profile-iq-9075"
+      },
+      "retry": false,
+      "runtime": {
+        "name": "QAIRT",
+        "version": "2.45.0.260326154327"
+      },
+      "source": {
+        "path": "configs/targets/qualcomm-dragonwing-iq-9075-evk.json",
+        "sha256": "2c98cb882828547f2795f478779914420af0102ee4124e4a017819bd1f960875"
+      },
+      "stage_options": {
+        "compile": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+        "inference": "--qairt_framework 2.45.0.260326154327",
+        "profile": "--qairt_framework 2.45.0.260326154327"
+      },
+      "target_order": 2,
+      "timeout_seconds": 3600
+    },
+    {
+      "client": {
+        "name": "qai-hub",
+        "version": "0.53.0"
+      },
+      "compute_unit_note": "No --compute_unit flag is set. The T30 allowlist accepts one, but constraining the compute unit would decide the placement question that the profile stage exists to observe. The normalized profile reports the compute units it actually saw, and a plan that pinned them would return its own input.",
+      "config_id": "qualcomm-snapdragon-8-elite-qrd",
+      "device": {
+        "attributes": [],
+        "name": "Snapdragon 8 Elite QRD",
+        "os": ""
+      },
+      "device_evidence": {
+        "decided_by_marker": "an_authenticated_device_query_confirmed_this_selector_resolves",
+        "device_confirmed_by_authenticated_query": false,
+        "does_not_establish": [
+          "an_authenticated_device_query_confirmed_this_selector_resolves",
+          "this_account_can_reach_or_schedule_this_device",
+          "device_os_chipset_hexagon_or_soc_identity",
+          "device_cloud_catalog_attributes_apply_to_the_workbench_selector",
+          "qairt_version_support_on_this_device",
+          "qualcomm_ai_hub_accepted_a_job_with_this_configuration",
+          "device_availability_or_account_quota_at_submission_time",
+          "compiler_acceptance_of_any_qwen3_graph",
+          "latency_or_memory_performance"
+        ],
+        "no_proxy_rule": "A target that cannot be reached is reported with its exact blocker. A result measured on one target is never presented as a result for another, and the T02 toy-model lifecycle on Snapdragon X Elite CRD is not Qwen evidence for any target including that one.",
+        "rank": 1,
+        "strength": "unauthenticated_public_catalog_listing"
+      },
+      "job_name_prefix_source": "target_config.compile.job_name_prefix",
+      "job_name_prefixes": {
+        "compile": "slm-lab-t31-compile-8-elite",
+        "inference": "slm-lab-t31-inference-8-elite",
+        "profile": "slm-lab-t31-profile-8-elite"
+      },
+      "retry": false,
+      "runtime": {
+        "name": "QAIRT",
+        "version": "2.45.0.260326154327"
+      },
+      "source": {
+        "path": "configs/targets/qualcomm-snapdragon-8-elite-qrd.json",
+        "sha256": "f5063fc3190af388895120172b0d1fa8d683bc68a84e04b6a678d313f78f54a7"
+      },
+      "stage_options": {
+        "compile": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
+        "inference": "--qairt_framework 2.45.0.260326154327",
+        "profile": "--qairt_framework 2.45.0.260326154327"
+      },
+      "target_order": 3,
+      "timeout_seconds": 3600
+    }
+  ],
+  "task_id": "T31"
+}
