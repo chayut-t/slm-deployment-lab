@@ -25,6 +25,7 @@ graph TD
     T31["T31: Qwen Workbench results on three Qualcomm targets"]
     T32["T32: Device Cloud Qwen GenieX baseline and generation loop"]
     T33["T33: Integrated floating-point Qualcomm milestone or fallback"]
+    T34["T34: AI Hub quantize-stage adapter"]
     T40["T40: AIMET and calibration environment"]
     T41["T41: W8 quantization evidence"]
     T42["T42: W4A8, LPBQ, LiteMP, and sensitivity evidence"]
@@ -60,9 +61,11 @@ graph TD
     T02 --> T32
     T31 --> T33
     T32 --> T33
+    T30 --> T34
     T10 --> T40
     T20 --> T40
     T40 --> T41
+    T34 --> T41
     T41 --> T42
     T33 --> T43
     T42 --> T43
@@ -116,8 +119,9 @@ graph TD
 | T31 — Qwen Workbench results on three Qualcomm targets | ready | T22, T30 | qai_hub_submission | — |
 | T32 — Device Cloud Qwen GenieX baseline and generation loop | completed | T02 | device_cloud_x_elite | ai/worklogs/2026-07-28-T32-device-cloud-baseline.md |
 | T33 — Integrated floating-point Qualcomm milestone or fallback | blocked | T31, T32 | qai_hub_submission, device_cloud_x_elite | — |
+| T34 — AI Hub quantize-stage adapter | ready | T30 | qai_hub_submission | — |
 | T40 — AIMET and calibration environment | completed | T10, T20 | t9_heavy_io | ai/worklogs/2026-08-02-T40-aimet-calibration-environment.md |
-| T41 — W8 quantization evidence | blocked | T40 | qai_hub_submission | — |
+| T41 — W8 quantization evidence | blocked | T40, T34 | qai_hub_submission | — |
 | T42 — W4A8, LPBQ, LiteMP, and sensitivity evidence | blocked | T41 | qai_hub_submission | — |
 | T43 — Quantized compile, inference, and profile | blocked | T33, T42 | qai_hub_submission, device_cloud_x_elite | — |
 | T50 — MLX-LM baseline | completed | T11 | apple_m4_heavy | ai/worklogs/2026-07-27-T50-mlx-lm-baseline.md |
@@ -133,7 +137,7 @@ graph TD
 
 ## Summary
 
-- ready: 3
+- ready: 4
 - in_progress: 0
 - blocked: 9
 - completed: 19
@@ -190,10 +194,10 @@ graph LR
 
 | Checkpoint | Subject | Covers | Built | Sheet |
 |---|---|---|---|---|
-| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-03 | `build/learning/learn-00.html` |
-| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-03 | `build/learning/learn-01.html` |
+| LEARN-00 — The evidence contract | Why a deployment claim needs a pinned revision behind it | T00, T01 | 2026-08-03 (stale: 1) | `build/learning/learn-00.html` |
+| LEARN-01 — Agentic delivery | A task graph that survives losing the conversation | T03, T04 | 2026-08-03 (stale: 1) | `build/learning/learn-01.html` |
 | LEARN-02 — Fixtures as a contract | Frozen prompts, exact token IDs, and the limits of "same input" | T10 | 2026-08-03 | `build/learning/learn-02.html` |
-| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-03 | `build/learning/learn-03.html` |
+| LEARN-03 — Static graphs and the KV-cache contract | What a compiler-facing graph family has to promise | T11, T12 | 2026-08-03 (stale: 1) | `build/learning/learn-03.html` |
 | LEARN-04 — Benchmarking without false equivalence | Where a timer starts, and what a median is allowed to claim | T13 | 2026-08-03 | `build/learning/learn-04.html` |
 | LEARN-05 — ONNX export as a compiler contract | Eight graphs, four manifests, and one very narrow claim | T20 | 2026-08-03 | `build/learning/learn-05.html` |
 | LEARN-06 — The Qualcomm public pipeline | Authentication, a bounded toy lifecycle, and real NPU placement | T02, T30 | 2026-08-03 | `build/learning/learn-06.html` |
@@ -203,3 +207,9 @@ graph LR
 | LEARN-10 — Reading a graph before a compiler does | What an exported graph tells you, and what only a measurement can | T21, T23 | 2026-08-03 | `build/learning/learn-10.html` |
 | LEARN-11 — Calibration data as a contract | Freezing the inputs to quantization before quantizing anything | T40 | 2026-08-03 | `build/learning/learn-11.html` |
 | LEARN-12 — Rewriting a graph for a compiler you have not run | What a transformation catalogue can prove, and where the proof stops | T22 | 2026-08-03 | `build/learning/learn-12.html` |
+
+Rebuild and republish these sheets:
+
+- LEARN-00: `docs/project/plan.md` changed since 2026-08-03. Run `scripts/learning/build_learning_sheet.py LEARN-00 --record` after republishing.
+- LEARN-01: `docs/project/plan.md` changed since 2026-08-03. Run `scripts/learning/build_learning_sheet.py LEARN-01 --record` after republishing.
+- LEARN-03: `docs/project/plan.md` changed since 2026-08-03. Run `scripts/learning/build_learning_sheet.py LEARN-03 --record` after republishing.

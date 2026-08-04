@@ -852,6 +852,7 @@ flowchart TD
     T31["T31 Qwen Workbench compile/infer/profile"]
     T32["T32 Device Cloud GenieX and generation loop"]
     T33["T33 Qualcomm floating milestone"]
+    T34["T34 AI Hub quantize-stage adapter"]
 
     T40["T40 AIMET environment and calibration"]
     T41["T41 W8A16 and W8A8"]
@@ -894,10 +895,12 @@ flowchart TD
     T02 --> T32
     T31 --> T33
     T32 --> T33
+    T30 --> T34
 
     T10 --> T40
     T20 --> T40
     T40 --> T41
+    T34 --> T41
     T41 --> T42
     T33 --> T43
     T42 --> T43
@@ -955,8 +958,9 @@ flowchart TD
 | T31 | Qwen Workbench results on three targets | T22, T30 | T32, T40, T51 |
 | T32 | Device Cloud Qwen/GenieX and generation loop | T02 | T20–T31 |
 | T33 | Integrated floating Qualcomm milestone or fallback | T31, T32 | T41, T51 |
+| T34 | AI Hub quantize-stage adapter | T30 | T41 |
 | T40 | AIMET/calibration environment | T10, T20 | T31, T50, T51 |
-| T41 | W8 quantization evidence | T40 | T33, T51, T60 |
+| T41 | W8 quantization evidence | T40, T34 | T33, T51, T60 |
 | T42 | W4/LiteMP/LPBQ/sensitivity evidence | T41 | T52, T60 |
 | T43 | Quantized compile/infer/profile | T33, T42 | T52, T60 |
 | T50 | MLX-LM baseline | T11 | T20–T40 |

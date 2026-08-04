@@ -231,6 +231,18 @@
       "worklog": null
     },
     {
+      "id": "T34",
+      "title": "AI Hub quantize-stage adapter",
+      "definition": "ai/tasks/definitions/T34.yaml",
+      "status": "planned",
+      "depends_on": ["T30"],
+      "resource_locks": ["qai_hub_submission"],
+      "owner": null,
+      "branch": null,
+      "github_issue": null,
+      "worklog": null
+    },
+    {
       "id": "T40",
       "title": "AIMET and calibration environment",
       "definition": "ai/tasks/definitions/T40.yaml",
@@ -246,8 +258,8 @@
       "id": "T41",
       "title": "W8 quantization evidence",
       "definition": "ai/tasks/definitions/T41.yaml",
-      "status": "blocked",
-      "depends_on": ["T40"],
+      "status": "planned",
+      "depends_on": ["T40", "T34"],
       "resource_locks": ["qai_hub_submission"],
       "owner": "Claude T41 agent",
       "branch": "task/T41-w8-quantization-evidence",

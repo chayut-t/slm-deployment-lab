@@ -63,17 +63,26 @@ here as a packaging result, not a graph result, and record it as such.
 
 ## Why T31 before T41
 
-T41 merged `blocked`, and the T22 merge did not unblock it.
+T41 merged with status `blocked`, and the T22 merge did not unblock it.
 `src/slm_lab/deployment/qualcomm/ai_hub.py` exposes `submit_compile_job`,
 `submit_inference_job` and `submit_profile_job` and nothing else; there is no
 quantize stage, and `/Volumes/T9/slm-deployment-lab/onnx/quantized/` is empty.
 
+That blocker is now modelled rather than external. **T34, "AI Hub quantize-stage
+adapter"**, was created on 2026-08-04 to own it, and `T41.depends_on` is now
+`["T40", "T34"]`. T41's status moved `blocked` → `planned` as a consequence: the
+validator reserves `blocked` for an external blocker after dependency
+completion, so a modelled dependency cannot coexist with it. Read T41's
+`planned` as "waiting on T34", not as "not started" — its candidate
+specifications are merged and frozen, and
+`ai/handoffs/T41-w8-submission-boundary.md` is the record of what exists.
+
 T41's own capability record
 (`results/quantization/t41-ai-hub-capability-2026-08-03.json`) establishes that
-the service accepts INT4/INT8/INT16, so unblocking T41 is an adapter extension
-rather than a hardware purchase. The reason to still do T31 first is
-attribution: quantizing before anything has compiled means a failure cannot be
-separated into "W8 did this" and "the graph did this."
+the service accepts INT4/INT8/INT16, so T34 is an adapter extension rather than
+a hardware purchase. The reason to still do T31 before T34 is attribution:
+quantizing before anything has compiled means a failure cannot be separated
+into "W8 did this" and "the graph did this."
 
 T22's parity measurement is what makes that separation possible. The candidates
 are bit-identical to the reference on the ONNX Runtime CPU provider, so any

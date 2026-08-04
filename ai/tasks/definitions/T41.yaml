@@ -1,7 +1,7 @@
 {
   "id": "T41",
   "title": "W8 quantization evidence",
-  "depends_on": ["T40"],
+  "depends_on": ["T40", "T34"],
   "resource_locks": ["qai_hub_submission"],
   "objective": "Evaluate deployable W8A16 and W8A8 candidates with quality and hardware evidence.",
   "owned_paths": ["configs/quantization/w8/", "src/slm_lab/quantization/w8.py", "docs/results/quantization/w8.md"],

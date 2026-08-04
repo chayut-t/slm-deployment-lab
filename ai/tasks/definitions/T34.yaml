@@ -1,0 +1,10 @@
+{
+  "id": "T34",
+  "title": "AI Hub quantize-stage adapter",
+  "depends_on": ["T30"],
+  "resource_locks": ["qai_hub_submission"],
+  "objective": "Expose the public AI Hub quantize stage so a W8 candidate can be produced without an AIMET host, and record deployed precision from the returned artifact rather than from the request.",
+  "owned_paths": ["src/slm_lab/deployment/qualcomm/ai_hub.py", "scripts/qualcomm/", "tests/deployment/qualcomm/"],
+  "outputs": ["Quantize-stage adapter alongside the compile, inference, and profile stages", "Sanitized quantize job and result manifests", "Mocked adapter tests covering the weight and activation precision matrix"],
+  "acceptance": ["Quantize is independently runnable from compile, inference, and profile", "Tokens and job URLs are never logged", "Deployed weight and activation precision are read back from the produced artifact and distinguished from the requested precision", "An unsupported precision combination fails closed with the service's reason rather than a local guess"]
+}

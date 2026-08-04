@@ -254,15 +254,15 @@
 
     <!-- BEGIN GENERATED: status -->
     <div class="tiles">
-      <div class="stat"><div class="num">19<span style="color:var(--ink-3);font-size:1.1rem;">/31</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
-      <div class="stat"><div class="num">3</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
+      <div class="stat"><div class="num">19<span style="color:var(--ink-3);font-size:1.1rem;">/32</span></div><div class="lbl"><span class="dot" style="background:var(--bar-done)"></span>Completed</div></div>
+      <div class="stat"><div class="num">4</div><div class="lbl"><span class="dot" style="background:var(--bar-ready)"></span>Ready to start</div></div>
       <div class="stat"><div class="num">9</div><div class="lbl"><span class="dot" style="background:var(--bar-blocked)"></span>Blocked (waiting on others)</div></div>
       <div class="stat"><div class="num">0</div><div class="lbl">In progress</div></div>
     </div>
 
-    <div class="bar" role="img" aria-label="Task progress: 19 completed, 3 ready, 9 blocked, of 31 tasks">
+    <div class="bar" role="img" aria-label="Task progress: 19 completed, 4 ready, 9 blocked, of 32 tasks">
       <span style="flex:19;background:var(--bar-done)"></span>
-      <span style="flex:3;background:var(--bar-ready)"></span>
+      <span style="flex:4;background:var(--bar-ready)"></span>
       <span style="flex:9;background:var(--bar-blocked)"></span>
     </div>
     <!-- END GENERATED: status -->
@@ -423,6 +423,12 @@
     <div class="next priority">
       <h3><span class="tid">T31</span> · Workbench compile of your own graphs <span class="prio-tag">Priority 1 · Qualcomm lane</span></h3>
       <div class="why">Unblocked by the T22 merge. The eight QNN candidate graphs, their packages, and the X Elite target selector are all committed, and the candidates are bit-identical to the reference on CPU — so whatever the compiler says next is attributable to the compiler, not to the rewrites. Expect the package layout for an external-data ONNX model to be the first thing that breaks: the compile request names only the <code>.onnx</code> file, and whether the service reads the <code>.onnx.data</code> sidecar from the same directory is untested. Inputs and traps are in <code>ai/handoffs/T22-qnn-candidates.md</code>.</div>
+    </div>
+
+    <div class="next">
+      <h3><span class="tid">T34</span> · AI Hub quantize-stage adapter</h3>
+      <span class="prio-tag">Priority 2 · unblocks the quantization lane</span>
+      <div class="why">New task, created to make T41's blocker visible in the graph rather than only in a handoff. <code>ai_hub.py</code> exposes compile, inference and profile and nothing else, so there is no way to produce a W8 artifact through the public pipeline — and <code>onnx/quantized/</code> is empty. T41's capability record already establishes the service accepts INT4/INT8/INT16, so this is an adapter extension, not a hardware purchase. Do it after T31, so that a quantize failure can be told apart from a graph the compiler never accepted.</div>
     </div>
 
     <div class="next">
