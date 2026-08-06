@@ -102,8 +102,13 @@ leaves the plan identical and only changes that observation, which is why
 ## The boundary, stated plainly
 
 `request_id` values in this record are the ids the T30 compile stage *would*
-record. The first one, `t30-compile-83b8813c19a37ac036ad` for Snapdragon X
-Elite CRD / S128 / prefill, is byte-identical to the id already committed in
-`results/manifests/qnn/packages/S128.json`, because it is the same request.
-That equality is evidence about this repository's own contract and about
-nothing else. Qualcomm AI Hub has never seen any of these requests.
+record. The first one, `t30-compile-4002ded9a30ed87a692c` for Snapdragon X
+Elite CRD / S128 / prefill, differs from the id committed in
+`results/manifests/qnn/packages/S128.json` in exactly one input: the device
+selector's os value, corrected from the superseded `Windows 11` to the
+service's own `11` after the authenticated device query recorded in
+`t31-device-query-2026-08-04.json`. A test rebuilds every X Elite request
+with the superseded value and reproduces the committed T22 id, so the
+divergence is fully explained. These ids are evidence about this repository's
+own contract and about nothing else. Qualcomm AI Hub has never seen any of
+these requests.

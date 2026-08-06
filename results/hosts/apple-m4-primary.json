@@ -36,7 +36,7 @@
   "project_environment": {
     "python_version": "3.11.13",
     "package_lock": "uv.lock",
-    "package_lock_sha256": "b4d52253e99d2179f639b51516e106095699ede19f17d2a695bd7585c1019a11",
+    "package_lock_sha256": "f1fc89228060c3d0412f0a66d0cef0c333c6bafd8c62b73c787b8395e667551a",
     "build_constraints": "environments/build-requirements.lock",
     "build_constraints_sha256": "1ef5d81f189b606ad1246cde4a59c996825360a15e50a564197dc4f9af83bcaa",
     "build_command": "uv build --python 3.11.13 --build-constraints environments/build-requirements.lock --require-hashes --out-dir /tmp/slm-lab-dist"

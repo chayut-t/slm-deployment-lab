@@ -209,7 +209,7 @@ A resuming session should, in this order:
    the optional `--preflight` mode with `SLM_LAB_ARTIFACT_ROOT` set to validate
    all 24 compile requests against the assembled T22 packages.
 3. Submit **only** the first plan entry: Snapdragon X Elite CRD, S128, prefill,
-   request id `t30-compile-83b8813c19a37ac036ad`. It is the only graph in the
+   request id `t30-compile-4002ded9a30ed87a692c`. It is the only graph in the
    matrix with zero residual high-severity shape findings and the smallest
    candidate protobuf, on the only target with an authenticated device
    identity, so a failure there is attributable to the pipeline rather than to

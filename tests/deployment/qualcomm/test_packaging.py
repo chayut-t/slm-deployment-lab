@@ -346,7 +346,7 @@ class RecordPrivacyTests(PackagingTestCase):
         self.build()
         record = self.record()
         self.assertEqual(record["device"]["name"], "Snapdragon X Elite CRD")
-        self.assertEqual(record["device"]["os"], "Windows 11")
+        self.assertEqual(record["device"]["os"], "11")
         self.assertEqual(record["device"]["attributes"], [])
         self.assertEqual(record["runtime"], {"name": "QAIRT", "version": QAIRT_VERSION})
         self.assertEqual(
@@ -716,7 +716,7 @@ class CommittedTargetConfigTests(unittest.TestCase):
     def test_committed_target_matches_the_recorded_workbench_evidence(self) -> None:
         config = packaging.load_target_config(TARGET_CONFIG)
         self.assertEqual(config["device"]["name"], "Snapdragon X Elite CRD")
-        self.assertEqual(config["device"]["os"], "Windows 11")
+        self.assertEqual(config["device"]["os"], "11")
         self.assertEqual(config["device"]["attributes"], [])
         self.assertEqual(config["runtime"]["version"], QAIRT_VERSION)
         self.assertEqual(config["client"]["version"], "0.53.0")
@@ -729,6 +729,23 @@ class CommittedTargetConfigTests(unittest.TestCase):
         self.assertIn("Snapdragon X Elite CRD, Windows 11", text)
         self.assertIn(QAIRT_VERSION, text)
         self.assertIn("qai-hub==0.53.0", text)
+
+    def test_committed_target_records_the_device_os_correction(self) -> None:
+        """The T02 write-up recorded the human label; the selector needs '11'.
+
+        The authenticated 2026-08-04 device query is the evidence for the
+        correction, and the config must point at it and agree with it.
+        """
+
+        config = packaging.load_target_config(TARGET_CONFIG)
+        correction = REPO_ROOT / config["evidence"]["device_os_correction"]
+        query = json.loads(correction.read_text(encoding="utf-8"))
+        device = query["devices"]["Snapdragon X Elite CRD"]
+        self.assertEqual(config["device"]["os"], device["os"])
+        self.assertTrue(device["selector_resolves_with_os"])
+        self.assertEqual(device["superseded_os_value"]["value"], "Windows 11")
+        self.assertIs(device["superseded_os_value"]["resolves"], False)
+        self.assertEqual(query["jobs_submitted"], 0)
 
 
 if __name__ == "__main__":

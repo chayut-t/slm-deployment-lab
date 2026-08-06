@@ -1,0 +1,84 @@
+{
+  "client": {
+    "name": "qai-hub",
+    "version": "0.53.0"
+  },
+  "devices": {
+    "Dragonwing IQ-9075 EVK": {
+      "attributes": [
+        "abi:aarch64-oe-linux-gcc11",
+        "chipset:qcs9075",
+        "chipset:qualcomm-dragonwing-iq-9075",
+        "chipset:qualcomm-qcs9075",
+        "format:iot",
+        "framework:onnx",
+        "framework:qnn",
+        "framework:tflite",
+        "hexagon:v73",
+        "htp-supports-fp16:true",
+        "htp-supports-weight-sharing:true",
+        "os:qc_linux",
+        "soc-model:77",
+        "vendor:qualcomm"
+      ],
+      "name": "Dragonwing IQ-9075 EVK",
+      "os": "1.9",
+      "selector_resolves_with_os": true
+    },
+    "Snapdragon 8 Elite QRD": {
+      "attributes": [
+        "abi:aarch64-android",
+        "chipset:qualcomm-snapdragon-8-elite",
+        "chipset:sm8750",
+        "format:phone",
+        "framework:onnx",
+        "framework:qnn",
+        "framework:tflite",
+        "hexagon:v79",
+        "htp-supports-fp16:true",
+        "htp-supports-weight-sharing:true",
+        "os:android",
+        "soc-model:69",
+        "vendor:qualcomm"
+      ],
+      "name": "Snapdragon 8 Elite QRD",
+      "os": "15",
+      "selector_resolves_with_os": true
+    },
+    "Snapdragon X Elite CRD": {
+      "attributes": [
+        "abi:aarch64-windows",
+        "chipset:qualcomm-snapdragon-x-elite",
+        "chipset:sc8380xp",
+        "format:compute",
+        "framework:onnx",
+        "framework:qnn",
+        "hexagon:v73",
+        "htp-supports-fp16:true",
+        "htp-supports-weight-sharing:true",
+        "os:windows",
+        "soc-model:60",
+        "vendor:qualcomm"
+      ],
+      "name": "Snapdragon X Elite CRD",
+      "os": "11",
+      "selector_resolves_with_os": true,
+      "superseded_os_value": {
+        "resolves": false,
+        "source": "docs/results/access/2026-07-25-workbench-toy-lifecycle.md",
+        "value": "Windows 11"
+      }
+    }
+  },
+  "devices_visible": 69,
+  "jobs_submitted": 0,
+  "notes": [
+    "Read-only. No job was submitted by this query and no artifact was uploaded.",
+    "The os value is the SDK's own version string. It is the value a Device selector must carry; the human platform label lives in the os:* attribute."
+  ],
+  "observed_at_utc": "2026-08-04T11:31:32Z",
+  "query": "qai_hub.get_devices()",
+  "query_kind": "authenticated_device_query",
+  "schema_version": 1,
+  "task_id": "T31"
+}

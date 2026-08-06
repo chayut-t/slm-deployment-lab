@@ -25,6 +25,9 @@ tokenizer = [
     "jinja2==3.1.6",
     "transformers==4.51.3",
 ]
+qualcomm = [
+    "qai-hub==0.53.0",
+]
 
 [project.scripts]
 slm-lab-fixtures = "slm_lab.evaluation.fixtures:main"

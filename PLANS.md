@@ -51,4 +51,14 @@ override repository state.
 
 ## Active-plan index
 
-- `T02`: `ai/plans/active/T02-platform-access.md`
+- `T20`: `ai/plans/active/T20-prefill-concat-cache-write.md` — exporter fix
+  committed; promotion into the reference artifacts is not authorized and not
+  done
+- `T31`: `ai/plans/active/T31-qwen-workbench.md` — three-target Workbench run
+  plan built; submission evidence outstanding
+- `T41`: `ai/plans/active/T41-w8-quantization-evidence.md` — candidate
+  specifications frozen; waiting on `T34`
+
+A plan leaves this index when it moves to `ai/plans/completed/`. `T02` was
+listed here after its plan had already been completed and moved; the index is
+now derived from the contents of `ai/plans/active/`.

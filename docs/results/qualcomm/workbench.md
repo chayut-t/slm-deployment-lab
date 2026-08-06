@@ -106,14 +106,22 @@ private parent. Both are recorded on the plan under
 `--preflight` mode runs the real `ai_hub.preflight_compile_request` over all
 24 requests against the assembled packages on the external artifact root.
 
-The check that makes the offline derivation trustworthy is an equality. The
-planner derives each compile request's deterministic `request_id` without
-reading a single artifact byte, and for the eight X Elite entries that id is
-**identical to the id already committed in
-`results/manifests/qnn/packages/S*.json`**, which T22 obtained by running the
-real preflight. The first one is `t30-compile-83b8813c19a37ac036ad`. A test
-asserts all eight, and `--preflight` asserts all 24 against the real function
-and refuses any mismatch.
+The check that makes the offline derivation trustworthy is an explained
+relationship to the committed T22 records. The planner derives each compile
+request's deterministic `request_id` without reading a single artifact byte.
+The eight X Elite ids originally equalled the ids committed in
+`results/manifests/qnn/packages/S*.json`, which T22 obtained by running the
+real preflight. An authenticated device query on 2026-08-04
+(`results/raw/qualcomm/workbench/t31-device-query-2026-08-04.json`) then
+showed that the X Elite selector must carry `os="11"` — the SDK's own version
+string — because `qai-hub` 0.53.0 refuses `os="Windows 11"` before any
+upload. The corrected selector enters the hashed public request, so the eight
+X Elite ids changed; the first is now `t30-compile-4002ded9a30ed87a692c`. The
+T22 package records keep the superseded selector as the historical record of
+what T22 requested. A test proves, for all eight entries, that rebuilding the
+request with the superseded os value reproduces the committed T22 id — the
+divergence is exactly the os correction and nothing else — and `--preflight`
+asserts all 24 ids against the real function and refuses any mismatch.
 
 ### `pending_predecessor` means the opposite
 
@@ -174,7 +182,7 @@ Leading with decode would mean a first failure that could not be separated
 from that population.
 
 The first submission is therefore Snapdragon X Elite CRD / S128 / prefill /
-compile, request `t30-compile-83b8813c19a37ac036ad`.
+compile, request `t30-compile-4002ded9a30ed87a692c`.
 
 ## What is expected to break first, and how to attribute it
 

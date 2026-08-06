@@ -23,10 +23,30 @@ from slm_lab.deployment.qualcomm.ai_hub import (
 
 REPO_ROOT = Path(workbench.__file__).resolve().parents[4]
 
-#: The compile request id the committed T22 package record already carries for
-#: Snapdragon X Elite CRD / S128 / prefill. The planner must derive the same
-#: value offline, because it is the same request.
-COMMITTED_S128_PREFILL_REQUEST_ID = "t30-compile-83b8813c19a37ac036ad"
+#: The compile request id the planner derives for Snapdragon X Elite CRD /
+#: S128 / prefill with the corrected device selector (os "11"), matching the
+#: committed run plan record.
+PLANNED_S128_PREFILL_REQUEST_ID = "t30-compile-4002ded9a30ed87a692c"
+
+#: The compile request id the committed T22 package record carries for the
+#: same graph. It embeds the superseded os "Windows 11" selector, which the
+#: 2026-08-04 device query showed the service refuses, so the planner must not
+#: reproduce it. The two ids differ in exactly the device os field; the tests
+#: below prove that.
+T22_S128_PREFILL_REQUEST_ID = "t30-compile-83b8813c19a37ac036ad"
+
+#: The evidence record for the selector correction. The superseded os value
+#: used in the divergence proofs is read from here rather than hardcoded.
+DEVICE_QUERY_RECORD = (
+    "results/raw/qualcomm/workbench/t31-device-query-2026-08-04.json"
+)
+
+
+def _superseded_x_elite_os() -> str:
+    query = json.loads((REPO_ROOT / DEVICE_QUERY_RECORD).read_text(encoding="utf-8"))
+    superseded = query["devices"]["Snapdragon X Elite CRD"]["superseded_os_value"]
+    assert superseded["resolves"] is False
+    return superseded["value"]
 
 #: Key names that would only appear if a measurement had been taken. None may
 #: appear anywhere in the record.
@@ -132,11 +152,11 @@ class PlanConstructionTest(_PlanFixture, unittest.TestCase):
                 "input_dataset", entry["stages"]["profile"]["unresolved_input_ids"]
             )
 
-    def test_compile_request_id_matches_the_committed_package_record(self) -> None:
+    def test_compile_request_id_uses_the_corrected_selector(self) -> None:
         first = self.plan["plan"][0]
         self.assertEqual(
             first["stages"]["compile"]["request_id"],
-            COMMITTED_S128_PREFILL_REQUEST_ID,
+            PLANNED_S128_PREFILL_REQUEST_ID,
         )
         committed = json.loads(
             (REPO_ROOT / workbench.PACKAGE_RECORD_DIRECTORY / "S128.json").read_text(
@@ -150,15 +170,22 @@ class PlanConstructionTest(_PlanFixture, unittest.TestCase):
         )
         self.assertEqual(
             prefill["compile_request"]["request_id"],
-            COMMITTED_S128_PREFILL_REQUEST_ID,
+            T22_S128_PREFILL_REQUEST_ID,
         )
 
-    def test_every_x_elite_request_id_matches_its_committed_package_record(
+    def test_every_x_elite_divergence_from_t22_is_exactly_the_os_correction(
         self,
     ) -> None:
-        """The T22 records were written by the real preflight; these are equal."""
+        """The plan must not reuse a T22 id, and only the os field explains why.
+
+        The T22 package records embed the superseded ``Windows 11`` selector,
+        kept as the historical record of what T22 requested. For every X Elite
+        entry, rebuilding the request with the superseded os value must
+        reproduce the T22 id, and the corrected selector must not.
+        """
 
         committed: dict[tuple[str, str], str] = {}
+        specs: dict[tuple[str, str], Any] = {}
         for variant in workbench.VARIANT_IDS:
             record = json.loads(
                 (
@@ -166,15 +193,39 @@ class PlanConstructionTest(_PlanFixture, unittest.TestCase):
                 ).read_text(encoding="utf-8")
             )
             for graph in record["package"]["graphs"]:
-                committed[(variant, graph["graph_kind"])] = graph["compile_request"][
-                    "request_id"
-                ]
+                key = (variant, graph["graph_kind"])
+                committed[key] = graph["compile_request"]["request_id"]
+                specs[key] = graph["compile_request"]["input_specs"]
+        targets = workbench.load_targets(self.paths["targets"])
+        x_elite = next(
+            target
+            for target in targets
+            if target["config_id"] == "qualcomm-snapdragon-x-elite-crd"
+        )
+        superseded_target = json.loads(json.dumps(x_elite))
+        superseded_target["device"]["os"] = _superseded_x_elite_os()
+        graphs = {
+            (graph["variant_id"], graph["graph_kind"]): graph
+            for graph in workbench.load_graphs(
+                package_paths=self.paths["packages"],
+                inspection_paths=self.paths["inspections"],
+                parity_paths=self.paths["parity"],
+                repository_root=self.paths["repository_root"],
+            )
+        }
         checked = 0
         for entry in self.plan["plan"]:
             if entry["target"] != "qualcomm-snapdragon-x-elite-crd":
                 continue
             key = (entry["variant_id"], entry["graph_kind"])
-            self.assertEqual(entry["stages"]["compile"]["request_id"], committed[key])
+            graph = graphs[key]
+            planned_id = entry["stages"]["compile"]["request_id"]
+            self.assertNotEqual(planned_id, committed[key])
+            superseded = workbench.validate_compile_request_offline(
+                workbench.compile_request_for(superseded_target, graph, specs[key]),
+                source_byte_size=graph["source_byte_size"],
+            )
+            self.assertEqual(superseded["request_id"], committed[key])
             checked += 1
         self.assertEqual(checked, 8)
 
@@ -410,13 +461,22 @@ class OfflineValidationTest(unittest.TestCase):
     def _request(self) -> dict[str, Any]:
         return workbench.compile_request_for(self.targets[0], self.graph, self.specs)
 
-    def test_the_committed_request_validates_and_reproduces_its_id(self) -> None:
+    def test_the_planned_request_validates_and_reproduces_its_id(self) -> None:
         validated = workbench.validate_compile_request_offline(
             self._request(), source_byte_size=self.graph["source_byte_size"]
         )
-        self.assertEqual(validated["request_id"], COMMITTED_S128_PREFILL_REQUEST_ID)
+        self.assertEqual(validated["request_id"], PLANNED_S128_PREFILL_REQUEST_ID)
         self.assertNotIn("path", validated["public_request"])
         self.assertNotIn("output_artifact", validated["public_request"])
+
+    def test_the_superseded_selector_reproduces_the_t22_id(self) -> None:
+        superseded_target = json.loads(json.dumps(self.targets[0]))
+        superseded_target["device"]["os"] = _superseded_x_elite_os()
+        validated = workbench.validate_compile_request_offline(
+            workbench.compile_request_for(superseded_target, self.graph, self.specs),
+            source_byte_size=self.graph["source_byte_size"],
+        )
+        self.assertEqual(validated["request_id"], T22_S128_PREFILL_REQUEST_ID)
 
     def test_a_flag_outside_the_compile_allowlist_is_refused(self) -> None:
         request = self._request()
@@ -694,6 +754,76 @@ class PreflightObservationTest(unittest.TestCase):
         observation = self._observation(None)
         self.assertEqual(observation["mode"], "not_run")
         self.assertNotIn("service_contacted", observation)
+
+
+class TopLevelObservationTest(unittest.TestCase):
+    """The top-level pair must be derived, not stamped as a literal."""
+
+    def setUp(self) -> None:
+        self.paths = workbench.default_paths(REPO_ROOT)
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.path = Path(self.directory.name) / "record.json"
+
+    def _observation(self, preflight: list[dict[str, Any]] | None) -> dict[str, Any]:
+        record = workbench.build_record(
+            record_path=self.path, paths=self.paths, preflight=preflight
+        )
+        return record["run_observation"]
+
+    def test_a_clean_preflight_derives_zero_and_false(self) -> None:
+        observation = self._observation(
+            [
+                {"service_contacted": False, "job_submitted": False},
+                {"service_contacted": False, "job_submitted": False},
+            ]
+        )
+        self.assertEqual(observation["jobs_submitted"], 0)
+        self.assertIs(observation["service_contacted"], False)
+
+    def test_a_contacted_request_reaches_the_top_level(self) -> None:
+        observation = self._observation(
+            [
+                {"service_contacted": False, "job_submitted": False},
+                {"service_contacted": True, "job_submitted": False},
+            ]
+        )
+        self.assertIs(observation["service_contacted"], True)
+        self.assertIs(
+            observation["service_contacted"],
+            observation["preflight"]["service_contacted"],
+        )
+
+    def test_submitted_requests_are_counted_at_the_top_level(self) -> None:
+        observation = self._observation(
+            [
+                {"service_contacted": True, "job_submitted": True},
+                {"service_contacted": True, "job_submitted": False},
+                {"service_contacted": True, "job_submitted": True},
+            ]
+        )
+        self.assertEqual(observation["jobs_submitted"], 2)
+        self.assertIs(observation["preflight"]["job_submitted"], True)
+
+    def test_an_unreported_flag_is_refused_at_the_top_level(self) -> None:
+        with self.assertRaises(AiHubAdapterError) as caught:
+            self._observation([{"service_contacted": False}])
+        self.assertIn("job_submitted", str(caught.exception))
+
+    def test_no_preflight_folds_an_empty_sequence(self) -> None:
+        observation = self._observation(None)
+        self.assertEqual(observation["jobs_submitted"], 0)
+        self.assertIs(observation["service_contacted"], False)
+
+    def test_check_record_now_rejects_a_derived_submission_claim(self) -> None:
+        workbench.build_record(
+            record_path=self.path,
+            paths=self.paths,
+            preflight=[{"service_contacted": True, "job_submitted": True}],
+        )
+        with self.assertRaises(AiHubAdapterError) as caught:
+            workbench.check_record(record_path=self.path, paths=self.paths)
+        self.assertIn("claims a submitted job", str(caught.exception))
 
 
 class CommandLineTest(unittest.TestCase):

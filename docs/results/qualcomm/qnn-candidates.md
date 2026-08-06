@@ -977,6 +977,15 @@ source-artifact existence and digest, input specs, output-path policy) and
 returns the same `request_id` `run_compile` would record. It constructs no
 backend, imports no client, and contacts no service.
 
+> **Correction (2026-08-04).** The `Windows 11` os value above is the human
+> platform label the T02 write-up recorded, and an authenticated device query
+> (`results/raw/qualcomm/workbench/t31-device-query-2026-08-04.json`) showed
+> the service refuses it as a selector: the os field must carry the SDK's own
+> version string, `11`. The request ids in this document and in the committed
+> package records embed the superseded selector and are kept as the historical
+> record of what T22 requested; no submission should reuse them. The corrected
+> selector and the re-derived ids live in the T31 run plan record.
+
 **One known unverified assumption, recorded rather than assumed away.** The
 compile request names only the `.onnx` file, because the committed T30 adapter
 requires `source_artifact.path` to be a single existing file. Whether the

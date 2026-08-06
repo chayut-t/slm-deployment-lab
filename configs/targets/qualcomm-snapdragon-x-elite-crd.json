@@ -6,7 +6,8 @@
   "evidence": {
     "device_and_runtime": "docs/results/access/2026-07-25-workbench-toy-lifecycle.md",
     "machine_readable": "results/hosts/workbench-toy-lifecycle-2026-07-25.json",
-    "adapter_contract": "scripts/qualcomm/README.md"
+    "adapter_contract": "scripts/qualcomm/README.md",
+    "device_os_correction": "results/raw/qualcomm/workbench/t31-device-query-2026-08-04.json"
   },
   "client": {
     "name": "qai-hub",
@@ -14,7 +15,7 @@
   },
   "device": {
     "name": "Snapdragon X Elite CRD",
-    "os": "Windows 11",
+    "os": "11",
     "attributes": []
   },
   "runtime": {
@@ -31,7 +32,8 @@
   "notes": [
     "The device selector carries no attributes. The T02 lifecycle recorded Hexagon v73, the HTP backend, and SoC model 60 as properties the service resolved for a compile job, not as selector attributes that were requested, so publishing them here would overstate what was observed.",
     "The QAIRT version is the resolved default variant from the same T02 lifecycle. The authenticated framework query also returned 2.47.0.260601114230 and 2.48.0.260626120635; neither has been exercised by this repository.",
-    "No AI Hub job has been submitted with this configuration. It has only been proven to satisfy the committed T30 adapter validation offline. T31 owns the first real submission."
+    "The os field is the SDK's own version string, not a human platform label. An authenticated device query on 2026-08-04 returned os '11' for this device, and qai-hub 0.53.0 rejects Device(name='Snapdragon X Elite CRD', os='Windows 11') with 'is not available' before any upload. The platform lives in the os:windows attribute instead. This selector previously carried 'Windows 11', copied from the T02 lifecycle write-up, which recorded the human label rather than the selector value. src/slm_lab/quantization/w8.py records the same correction for the T41 selector.",
+    "The committed T22 package records under results/manifests/qnn/packages/ still embed the unusable 'Windows 11' selector. They are left as the historical record of what T22 requested; they are not a selector any submission should reuse."
   ],
   "claim_boundary": {
     "establishes": [

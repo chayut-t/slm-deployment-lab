@@ -184,7 +184,7 @@ class CatalogOnlyBoundaryTest(unittest.TestCase):
             "device_and_runtime_identity_match_committed_T02_evidence",
             config["claim_boundary"]["establishes"],
         )
-        self.assertEqual(config["device"]["os"], "Windows 11")
+        self.assertEqual(config["device"]["os"], "11")
 
 
 if __name__ == "__main__":  # pragma: no cover - convenience entry point

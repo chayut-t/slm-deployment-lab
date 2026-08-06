@@ -1411,6 +1411,25 @@ def _observed_preflight_flag(preflight: Sequence[Mapping[str, Any]], key: str) -
     return observed
 
 
+def _observed_preflight_count(preflight: Sequence[Mapping[str, Any]], key: str) -> int:
+    """Count the per-request preflight observations that report ``key`` true.
+
+    The top-level ``jobs_submitted`` is a count where the nested claim is a
+    boolean, so it cannot be a copy of :func:`_observed_preflight_flag`. It
+    carries the same rule: a missing key is an error, never a silent zero.
+    """
+
+    observed = 0
+    for entry in preflight:
+        if key not in entry:
+            raise WorkbenchPlanError(
+                f"a preflight observation does not report {key!r}; the run "
+                "observation may not claim what was not measured"
+            )
+        observed += 1 if entry[key] else 0
+    return observed
+
+
 def build_record(
     *,
     record_path: Path,
@@ -1427,10 +1446,16 @@ def build_record(
         repository_root=paths["repository_root"],
     )
     record = dict(plan)
+    # The top-level pair is derived from the same per-request observations the
+    # nested preflight claim folds, so the two levels cannot disagree. A run
+    # with no preflight folds an empty sequence: the preflight is the only
+    # component of this planner that could reach the service, so not running it
+    # yields 0 and False by derivation rather than by literal.
+    observed = () if preflight is None else preflight
     record["run_observation"] = {
         "created_at_utc": _observed_at(),
-        "jobs_submitted": 0,
-        "service_contacted": False,
+        "jobs_submitted": _observed_preflight_count(observed, "job_submitted"),
+        "service_contacted": _observed_preflight_flag(observed, "service_contacted"),
         "client_probe": _client_probe(),
         "preflight": (
             {"mode": "not_run", "reason": "not requested on this run"}

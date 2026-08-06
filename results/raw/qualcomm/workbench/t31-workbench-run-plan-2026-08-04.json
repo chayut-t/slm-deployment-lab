@@ -743,7 +743,7 @@
           "job_name": "slm-lab-t22-compile-S128-prefill",
           "output_logical_name": "S128-prefill.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-83b8813c19a37ac036ad",
+          "request_id": "t30-compile-4002ded9a30ed87a692c",
           "source_logical_name": "prefill.onnx"
         },
         "inference": {
@@ -790,7 +790,7 @@
           "job_name": "slm-lab-t22-compile-S512-prefill",
           "output_logical_name": "S512-prefill.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-a68c351354ce00086e67",
+          "request_id": "t30-compile-383f8f734678a05252cf",
           "source_logical_name": "prefill.onnx"
         },
         "inference": {
@@ -837,7 +837,7 @@
           "job_name": "slm-lab-t22-compile-S1024-prefill",
           "output_logical_name": "S1024-prefill.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-38d8cbc349a0456a75a1",
+          "request_id": "t30-compile-0ddcf868b036d7ca2e3a",
           "source_logical_name": "prefill.onnx"
         },
         "inference": {
@@ -884,7 +884,7 @@
           "job_name": "slm-lab-t22-compile-S4096-prefill",
           "output_logical_name": "S4096-prefill.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-768a6848cdb20ab3ff03",
+          "request_id": "t30-compile-9782c78d7bfb8e482990",
           "source_logical_name": "prefill.onnx"
         },
         "inference": {
@@ -931,7 +931,7 @@
           "job_name": "slm-lab-t22-compile-S128-decode",
           "output_logical_name": "S128-decode.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-ea3c5969c8f1a3b3ad86",
+          "request_id": "t30-compile-95e549b694a8ad9843fb",
           "source_logical_name": "decode.onnx"
         },
         "inference": {
@@ -978,7 +978,7 @@
           "job_name": "slm-lab-t22-compile-S512-decode",
           "output_logical_name": "S512-decode.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-c318744b4ebf9f934c72",
+          "request_id": "t30-compile-27fae73b14ea16de6ead",
           "source_logical_name": "decode.onnx"
         },
         "inference": {
@@ -1025,7 +1025,7 @@
           "job_name": "slm-lab-t22-compile-S1024-decode",
           "output_logical_name": "S1024-decode.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-2d5e76ee9a253ff07ccf",
+          "request_id": "t30-compile-d65cf616557539e5b6be",
           "source_logical_name": "decode.onnx"
         },
         "inference": {
@@ -1072,7 +1072,7 @@
           "job_name": "slm-lab-t22-compile-S4096-decode",
           "output_logical_name": "S4096-decode.serialized.bin",
           "readiness": "ready",
-          "request_id": "t30-compile-d67a8d43d368af1da061",
+          "request_id": "t30-compile-150b04afa4c284e4a776",
           "source_logical_name": "decode.onnx"
         },
         "inference": {
@@ -1867,13 +1867,13 @@
   "record_type": "slm_lab.qualcomm.workbench_run_plan",
   "run_observation": {
     "client_probe": {
-      "importable": false,
+      "importable": true,
       "method": "importlib.util.find_spec",
       "module": "qai_hub",
       "module_imported": false,
       "note": "find_spec locates a module without executing it. This planner never imports the client under any code path."
     },
-    "created_at_utc": "2026-08-04T10:34:47.194624Z",
+    "created_at_utc": "2026-08-06T14:18:39.713235Z",
     "jobs_submitted": 0,
     "note": "Excluded from the --check comparison on purpose: it is a dated observation of one machine, not a contract. The plan above is the part that must re-derive.",
     "preflight": {
@@ -2009,7 +2009,7 @@
     "first_submission": {
       "graph_kind": "prefill",
       "reason": "The only graph in the matrix whose residual high-severity shape population is zero, the smallest candidate protobuf in the matrix, and the only target whose device identity an authenticated query has returned. If it fails, the failure is about the pipeline, not about the graph.",
-      "request_id": "t30-compile-83b8813c19a37ac036ad",
+      "request_id": "t30-compile-4002ded9a30ed87a692c",
       "stage": "compile",
       "target": "qualcomm-snapdragon-x-elite-crd",
       "variant_id": "S128"
@@ -2031,7 +2031,7 @@
       "device": {
         "attributes": [],
         "name": "Snapdragon X Elite CRD",
-        "os": "Windows 11"
+        "os": "11"
       },
       "device_evidence": {
         "decided_by_marker": "device_and_runtime_identity_match_committed_T02_evidence",
@@ -2059,7 +2059,7 @@
       },
       "source": {
         "path": "configs/targets/qualcomm-snapdragon-x-elite-crd.json",
-        "sha256": "20b284060beb6de64bac3cf903858f87a6e5683e0669af539d177d4c92327846"
+        "sha256": "831d5d7eb1bf03ea4ee41ebca0ea124e7d54df8ac8aae255688baf3e4b08cfac"
       },
       "stage_options": {
         "compile": "--target_runtime qnn_context_binary --qairt_version 2.45.0.260326154327",
